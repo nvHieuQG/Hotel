@@ -3,7 +3,7 @@
 @section('title', 'Contact Us')
 
 @section('content')
-    <div class="hero-wrap" style="background-image: url('images/bg_1.jpg');">
+    <div class="hero-wrap" style="background-image: url('client/images/bg_1.jpg');">
         <div class="overlay"></div>
         <div class="container">
             <div class="row no-gutters slider-text d-flex align-itemd-end justify-content-center">
@@ -67,7 +67,7 @@
                 </div>
 
                 <div class="col-md-6 d-flex">
-                    <div id="map" class="bg-white"></div>
+                    <div id="map" class="bg-white" style="height: 400px;"></div>
                 </div>
             </div>
         </div>

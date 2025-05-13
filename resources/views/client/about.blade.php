@@ -3,7 +3,7 @@
 @section('title', 'About Us')
 
 @section('content')
-    <div class="hero-wrap" style="background-image: url('images/bg_1.jpg');">
+    <div class="hero-wrap" style="background-image: url('client/images/bg_1.jpg');">
         <div class="overlay"></div>
         <div class="container">
             <div class="row no-gutters slider-text d-flex align-itemd-end justify-content-center">
@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <section class="ftco-section ftco-counter img" id="section-counter" style="background-image: url(images/bg_2.jpg);">
+    <section class="ftco-section ftco-counter img" id="section-counter" style="background-image: url(client/images/bg_2.jpg);">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-10">
@@ -63,7 +63,7 @@
     <section class="ftco-section ftc-no-pb ftc-no-pt">
         <div class="container">
             <div class="row">
-                <div class="col-md-5 p-md-5 img img-2 img-3 d-flex justify-content-center align-items-center" style="background-image: url(images/bg_2.jpg);">
+                <div class="col-md-5 p-md-5 img img-2 img-3 d-flex justify-content-center align-items-center" style="background-image: url(client/images/about.jpg);">
                     <a href="https://vimeo.com/45830194" class="icon popup-vimeo d-flex justify-content-center align-items-center">
                         <span class="icon-play"></span>
                     </a>
@@ -78,6 +78,119 @@
                     <div class="pb-md-4">
                         <p>On her way she met a copy. The copy warned the Little Blind Text, that where it came from it would have been rewritten a thousand times.</p>
                         <p class="pl-md-5">When she reached the first hills of the Italic Mountains, she had a last view back on the skyline of her hometown Bookmarksgrove, the headline of Alphabet Village and the subline of her own road, the Line Lane. Pityful a rethoric question ran over her cheek, then she continued her way.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="ftco-section">
+        <div class="container">
+            <div class="row justify-content-center mb-5 pb-3">
+                <div class="col-md-7 heading-section text-center ftco-animate">
+                    <h2>Our Menu</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="pricing-entry d-flex ftco-animate">
+                        <div class="img" style="background-image: url(client/images/menu-1.jpg);"></div>
+                        <div class="desc pl-3">
+                            <div class="d-flex text align-items-center">
+                                <h3><span>Grilled Beef with potatoes</span></h3>
+                                <span class="price">$20.00</span>
+                            </div>
+                            <div class="d-block">
+                                <p>A small river named Duden flows by their place and supplies</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pricing-entry d-flex ftco-animate">
+                        <div class="img" style="background-image: url(client/images/menu-2.jpg);"></div>
+                        <div class="desc pl-3">
+                            <div class="d-flex text align-items-center">
+                                <h3><span>Grilled Beef with potatoes</span></h3>
+                                <span class="price">$29.00</span>
+                            </div>
+                            <div class="d-block">
+                                <p>A small river named Duden flows by their place and supplies</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pricing-entry d-flex ftco-animate">
+                        <div class="img" style="background-image: url(client/images/menu-3.jpg);"></div>
+                        <div class="desc pl-3">
+                            <div class="d-flex text align-items-center">
+                                <h3><span>Grilled Beef with potatoes</span></h3>
+                                <span class="price">$20.00</span>
+                            </div>
+                            <div class="d-block">
+                                <p>A small river named Duden flows by their place and supplies</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pricing-entry d-flex ftco-animate">
+                        <div class="img" style="background-image: url(client/images/menu-4.jpg);"></div>
+                        <div class="desc pl-3">
+                            <div class="d-flex text align-items-center">
+                                <h3><span>Grilled Beef with potatoes</span></h3>
+                                <span class="price">$20.00</span>
+                            </div>
+                            <div class="d-block">
+                                <p>A small river named Duden flows by their place and supplies</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="pricing-entry d-flex ftco-animate">
+                        <div class="img" style="background-image: url(client/images/menu-5.jpg);"></div>
+                        <div class="desc pl-3">
+                            <div class="d-flex text align-items-center">
+                                <h3><span>Grilled Beef with potatoes</span></h3>
+                                <span class="price">$49.91</span>
+                            </div>
+                            <div class="d-block">
+                                <p>A small river named Duden flows by their place and supplies</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pricing-entry d-flex ftco-animate">
+                        <div class="img" style="background-image: url(client/images/menu-6.jpg);"></div>
+                        <div class="desc pl-3">
+                            <div class="d-flex text align-items-center">
+                                <h3><span>Ultimate Overload</span></h3>
+                                <span class="price">$20.00</span>
+                            </div>
+                            <div class="d-block">
+                                <p>A small river named Duden flows by their place and supplies</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pricing-entry d-flex ftco-animate">
+                        <div class="img" style="background-image: url(client/images/menu-7.jpg);"></div>
+                        <div class="desc pl-3">
+                            <div class="d-flex text align-items-center">
+                                <h3><span>Grilled Beef with potatoes</span></h3>
+                                <span class="price">$20.00</span>
+                            </div>
+                            <div class="d-block">
+                                <p>A small river named Duden flows by their place and supplies</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pricing-entry d-flex ftco-animate">
+                        <div class="img" style="background-image: url(client/images/menu-8.jpg);"></div>
+                        <div class="desc pl-3">
+                            <div class="d-flex text align-items-center">
+                                <h3><span>Ham &amp; Pineapple</span></h3>
+                                <span class="price">$20.00</span>
+                            </div>
+                            <div class="d-block">
+                                <p>A small river named Duden flows by their place and supplies</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

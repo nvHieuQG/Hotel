@@ -1,7 +1,7 @@
 @extends('client.layouts.master')
 
 @section('content')
-    <div class="hero-wrap" style="background-image: url('images/bg_1.jpg');">
+    <div class="hero-wrap" style="background-image: url('client/images/bg_1.jpg');">
       <div class="overlay"></div>
       <div class="container">
         <div class="row no-gutters slider-text d-flex align-itemd-end justify-content-center">
@@ -18,7 +18,7 @@
 		<section class="ftco-section ftc-no-pb ftc-no-pt">
 			<div class="container">
 				<div class="row">
-					<div class="col-md-5 p-md-5 img img-2 img-3 d-flex justify-content-center align-items-center" style="background-image: url(images/about.jpg);">
+					<div class="col-md-5 p-md-5 img img-2 img-3 d-flex justify-content-center align-items-center" style="background-image: url(client/images/about.jpg);">
 					</div>
 					<div class="col-md-7 py-5 wrap-about pb-md-5 ftco-animate">
 	          <div class="heading-section heading-section-wo-line pt-md-4 mb-5">
@@ -47,7 +47,7 @@
 				<div class="row">
         	<div class="col-md-6">
         		<div class="pricing-entry d-flex ftco-animate">
-        			<div class="img" style="background-image: url(images/menu-1.jpg);"></div>
+        			<div class="img" style="background-image: url(client/images/menu-1.jpg);"></div>
         			<div class="desc pl-3">
 	        			<div class="d-flex text align-items-center">
 	        				<h3><span>Grilled Beef with potatoes</span></h3>
@@ -59,7 +59,7 @@
         			</div>
         		</div>
         		<div class="pricing-entry d-flex ftco-animate">
-        			<div class="img" style="background-image: url(images/menu-2.jpg);"></div>
+        			<div class="img" style="background-image: url(client/images/menu-2.jpg);"></div>
         			<div class="desc pl-3">
 	        			<div class="d-flex text align-items-center">
 	        				<h3><span>Grilled Beef with potatoes</span></h3>
@@ -71,7 +71,7 @@
 	        		</div>
         		</div>
         		<div class="pricing-entry d-flex ftco-animate">
-        			<div class="img" style="background-image: url(images/menu-3.jpg);"></div>
+        			<div class="img" style="background-image: url(client/images/menu-3.jpg);"></div>
         			<div class="desc pl-3">
 	        			<div class="d-flex text align-items-center">
 	        				<h3><span>Grilled Beef with potatoes</span></h3>
@@ -83,7 +83,7 @@
 	        		</div>
         		</div>
         		<div class="pricing-entry d-flex ftco-animate">
-        			<div class="img" style="background-image: url(images/menu-4.jpg);"></div>
+        			<div class="img" style="background-image: url(client/images/menu-4.jpg);"></div>
         			<div class="desc pl-3">
 	        			<div class="d-flex text align-items-center">
 	        				<h3><span>Grilled Beef with potatoes</span></h3>
@@ -98,7 +98,7 @@
 
         	<div class="col-md-6">
         		<div class="pricing-entry d-flex ftco-animate">
-        			<div class="img" style="background-image: url(images/menu-5.jpg);"></div>
+        			<div class="img" style="background-image: url(client/images/menu-5.jpg);"></div>
         			<div class="desc pl-3">
 	        			<div class="d-flex text align-items-center">
 	        				<h3><span>Grilled Beef with potatoes</span></h3>
@@ -110,7 +110,7 @@
 	        		</div>
         		</div>
         		<div class="pricing-entry d-flex ftco-animate">
-        			<div class="img" style="background-image: url(images/menu-6.jpg);"></div>
+        			<div class="img" style="background-image: url(client/images/menu-6.jpg);"></div>
         			<div class="desc pl-3">
 	        			<div class="d-flex text align-items-center">
 	        				<h3><span>Ultimate Overload</span></h3>
@@ -122,7 +122,7 @@
 	        		</div>
         		</div>
         		<div class="pricing-entry d-flex ftco-animate">
-        			<div class="img" style="background-image: url(images/menu-7.jpg);"></div>
+        			<div class="img" style="background-image: url(client/images/menu-7.jpg);"></div>
         			<div class="desc pl-3">
 	        			<div class="d-flex text align-items-center">
 	        				<h3><span>Grilled Beef with potatoes</span></h3>
@@ -134,7 +134,7 @@
 	        		</div>
         		</div>
         		<div class="pricing-entry d-flex ftco-animate">
-        			<div class="img" style="background-image: url(images/menu-8.jpg);"></div>
+        			<div class="img" style="background-image: url(client/images/menu-8.jpg);"></div>
         			<div class="desc pl-3">
 	        			<div class="d-flex text align-items-center">
 	        				<h3><span>Ham &amp; Pineapple</span></h3>
