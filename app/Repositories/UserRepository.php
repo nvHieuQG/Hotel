@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Interfaces\Repositories\UserRepositoryInterface;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Collection;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -82,5 +83,15 @@ class UserRepository implements UserRepositoryInterface
         
         $user->update($data);
         return $user->fresh();
+    }
+    
+    /**
+     * Lấy tất cả người dùng
+     *
+     * @return Collection
+     */
+    public function getAll(): Collection
+    {
+        return $this->model->all();
     }
 } 

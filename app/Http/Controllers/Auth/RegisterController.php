@@ -7,6 +7,7 @@ use App\Interfaces\Services\AuthServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
 {
@@ -30,19 +31,18 @@ class RegisterController extends Controller
      */
     public function register(Request $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'phone' => ['nullable', 'string', 'max:20'],
-        ]);
-
-        $user = $this->authService->register($validated);
-
-        // Đăng nhập sau khi đăng ký
-        Auth::login($user);
-
-        return redirect()->route('verification.notice');
+        try {
+            // Sử dụng service để xác thực và tạo tài khoản
+            $user = $this->authService->register($request->all());
+            
+            // Đăng nhập sau khi đăng ký
+            Auth::login($user);
+            
+            return redirect()->route('verification.notice');
+        } catch (ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
+        }
     }
 }

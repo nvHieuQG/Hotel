@@ -27,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\RoomRepository::class
         );
         
+        // Admin Repository Bindings
+        $this->app->bind(
+            \App\Interfaces\Repositories\Admin\AdminBookingRepositoryInterface::class,
+            \App\Repositories\Admin\AdminBookingRepository::class
+        );
+        
         // Đăng ký Service Bindings
         $this->app->bind(
             \App\Interfaces\Services\AuthServiceInterface::class,
@@ -36,6 +42,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \App\Interfaces\Services\BookingServiceInterface::class,
             \App\Services\BookingService::class
+        );
+        
+        // Admin Service Bindings
+        $this->app->bind(
+            \App\Interfaces\Services\Admin\AdminBookingServiceInterface::class,
+            \App\Services\Admin\AdminBookingService::class
+        );
+        
+        $this->app->bind(
+            \App\Interfaces\Services\Admin\AdminDashboardServiceInterface::class,
+            \App\Services\Admin\AdminDashboardService::class
         );
     }
 

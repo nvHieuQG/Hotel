@@ -3,6 +3,7 @@
 namespace App\Interfaces\Repositories;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 
 interface UserRepositoryInterface
 {
@@ -46,4 +47,11 @@ interface UserRepositoryInterface
      * @return User
      */
     public function update(User $user, array $data): User;
+    
+    /**
+     * Lấy tất cả người dùng
+     *
+     * @return Collection
+     */
+    public function getAll(): Collection;
 } 

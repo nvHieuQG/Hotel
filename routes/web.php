@@ -6,7 +6,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\BookingController;
-
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminBookingController;
 // Route::get('/', function () {
 //     return view('client.index');
 // });
@@ -62,4 +63,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/booking', [BookingController::class, 'storeBooking']);
     Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('my-bookings');
     Route::post('/booking/cancel/{id}', [BookingController::class, 'cancelBooking'])->name('booking.cancel');
+});
+
+// Admin Routes
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    // Dashboard
+    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    
+    // Quản lý đặt phòng
+    Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
+    Route::patch('bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
+    Route::resource('bookings', AdminBookingController::class);
 });

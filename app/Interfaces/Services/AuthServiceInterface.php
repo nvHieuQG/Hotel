@@ -12,6 +12,7 @@ interface AuthServiceInterface
      *
      * @param array $data
      * @return User
+     * @throws ValidationException
      */
     public function register(array $data): User;
 
@@ -47,4 +48,30 @@ interface AuthServiceInterface
      * @return bool
      */
     public function hasRole(User $user, string $roleName): bool;
+    
+    /**
+     * Xác minh email người dùng
+     *
+     * @param int $userId
+     * @param string $hash
+     * @return bool
+     */
+    public function verifyEmail(int $userId, string $hash): bool;
+    
+    /**
+     * Tạo URL xác minh email
+     *
+     * @param User $user
+     * @return string
+     */
+    public function createVerificationUrl(User $user): string;
+    
+    /**
+     * Gửi email xác minh
+     *
+     * @param User $user
+     * @param string $verificationUrl
+     * @return void
+     */
+    public function sendVerificationEmail(User $user, string $verificationUrl): void;
 } 
