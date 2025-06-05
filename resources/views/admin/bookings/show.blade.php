@@ -1,10 +1,9 @@
 @extends('admin.layouts.admin-master')
 
-@section('title', 'Chi tiết đặt phòng')
+@section('header', 'Chi tiết đặt phòng')
 
 @section('content')
 <div class="container-fluid px-4">
-    <h1 class="mt-4">Chi tiết đặt phòng</h1>
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
         <li class="breadcrumb-item"><a href="{{ route('admin.bookings.index') }}">Quản lý đặt phòng</a></li>

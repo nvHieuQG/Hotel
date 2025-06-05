@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('admin.layouts.admin-master')
 
 @section('title', 'Báo cáo đặt phòng')
 

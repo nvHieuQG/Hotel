@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('admin.layouts.admin-master')
 
 @section('title', 'Chỉnh sửa đặt phòng')
 
@@ -7,7 +7,7 @@
 @section('content')
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Chỉnh sửa đặt phòng #{{ $booking->booking_id }}</h6>
+        <h6 class="m-0 font-weight-bold">Phòng #{{ $booking->booking_id }}</h6>
         <div>
             <a href="{{ route('admin.bookings.show', $booking->id) }}" class="btn btn-sm btn-info">
                 <i class="fas fa-eye"></i> Xem chi tiết
