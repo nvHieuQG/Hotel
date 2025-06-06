@@ -46,8 +46,6 @@ class AuthService implements AuthServiceInterface
             throw new ValidationException($validator);
         }
         
-        // Mã hóa mật khẩu
-        $data['password'] = Hash::make($data['password']);
         
         // Thêm trường email_verified_at là null để đánh dấu tài khoản chưa xác minh
         $data['email_verified_at'] = null;
@@ -72,20 +70,48 @@ class AuthService implements AuthServiceInterface
      */
     public function login(array $credentials, bool $remember = false): bool
     {
+        // Kiểm tra xem đang đăng nhập bằng email hay username
         $fieldType = filter_var($credentials['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
         
-        $loginData = [
-            $fieldType => $credentials['login'],
-            'password' => $credentials['password']
-        ];
+        // Kiểm tra tài khoản có tồn tại không
+        $userExists = false;
         
-        if (!Auth::attempt($loginData, $remember)) {
-            throw ValidationException::withMessages([
-                'login' => ['Thông tin đăng nhập không chính xác.'],
-            ]);
+        if ($fieldType == 'email') {
+            $user = $this->userRepository->findByEmail($credentials['login']);
+            if (!$user) {
+                throw ValidationException::withMessages([
+                    'login' => ['Email không tồn tại trong hệ thống.'],
+                ]);
+            }
+            $userExists = true;
+        } else {
+            $user = $this->userRepository->findByUsername($credentials['login']);
+            if (!$user) {
+                throw ValidationException::withMessages([
+                    'login' => ['Tên đăng nhập không tồn tại trong hệ thống.'],
+                ]);
+            }
+            $userExists = true;
         }
         
-        return true;
+        // Nếu tài khoản tồn tại, kiểm tra mật khẩu
+        if ($userExists) {
+            // Kiểm tra mật khẩu
+            if (!Hash::check($credentials['password'], $user->password)) {
+                throw ValidationException::withMessages([
+                    'password' => ['Mật khẩu không chính xác.'],
+                ]);
+            }
+            
+            // Đăng nhập người dùng
+            Auth::login($user, $remember);
+            return true;
+        }
+        
+        // Không nên đến được đây, nhưng để đảm bảo
+        throw ValidationException::withMessages([
+            'login' => ['Thông tin đăng nhập không chính xác.'],
+        ]);
     }
 
     /**
