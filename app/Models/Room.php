@@ -39,18 +39,18 @@ class Room extends Model
     /**
      * Lấy hình ảnh của phòng
      */
-    public function images()
-    {
-        return $this->hasMany(RoomImage::class);
-    }
+    // public function images()
+    // {
+    //     return $this->hasMany(RoomImage::class);
+    // }
     
-    /**
-     * Lấy dịch vụ của phòng
-     */
-    public function services()
-    {
-        return $this->belongsToMany(Service::class, 'room_services');
-    }
+    // /**
+    //  * Lấy dịch vụ của phòng
+    //  */
+    // public function services()
+    // {
+    //     return $this->belongsToMany(Service::class, 'room_services');
+    // }
     
     /**
      * Accessor để lấy tên phòng (kết hợp từ loại phòng và số phòng)
