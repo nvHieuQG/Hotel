@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Interfaces\Repositories\UserRepositoryInterface;
+use App\Repositories\UserRepository;
+use App\Interfaces\Services\PasswordResetServiceInterface;
+use App\Services\PasswordResetService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Repositories\Admin\AdminBookingRepositoryInterface::class,
             \App\Repositories\Admin\AdminBookingRepository::class
         );
-        
+
         // Đăng ký Service Bindings
         $this->app->bind(
             \App\Interfaces\Services\AuthServiceInterface::class,
@@ -54,6 +58,17 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Services\Admin\AdminDashboardServiceInterface::class,
             \App\Services\Admin\AdminDashboardService::class
         );
+
+        // Password Reset Bindings
+        $this->app->bind(UserRepositoryInterface::class, function ($app) {
+            return new UserRepository($app->make('App\Models\User'));
+        });
+
+        $this->app->bind(PasswordResetServiceInterface::class, function ($app) {
+            return new PasswordResetService(
+                $app->make(UserRepositoryInterface::class)
+            );
+        });
     }
 
     /**
