@@ -9,6 +9,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Admin\AdminRoomController;
 // Route::get('/', function () {
 //     return view('client.index');
 // });

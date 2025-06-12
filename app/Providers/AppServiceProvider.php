@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 use App\Interfaces\Repositories\UserRepositoryInterface;
 use App\Repositories\UserRepository;
@@ -69,6 +70,26 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(UserRepositoryInterface::class)
             );
         });
+
+        $this->app->bind(
+            \App\Interfaces\Repositories\Admin\AdminRoomRepositoryInterface::class,
+            \App\Repositories\Admin\AdminRoomRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Interfaces\Services\Admin\AdminRoomServiceInterface::class,
+            \App\Services\Admin\AdminRoomService::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Repositories\Admin\AdminRoomTypeRepositoryInterface::class,
+            \App\Repositories\Admin\AdminRoomTypeRepository::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Services\Admin\AdminRoomTypeServiceInterface::class,
+            \App\Services\Admin\AdminRoomTypeService::class
+        );
     }
 
     /**
@@ -76,6 +97,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Paginator::useBootstrapFive();
     }
 }

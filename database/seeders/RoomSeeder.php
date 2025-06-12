@@ -14,7 +14,7 @@ class RoomSeeder extends Seeder
      */
     public function run(): void
     {
-        // Đầu tiên tạo các loại phòng
+        // Đầu tiên tạo các loại phòng                                                                  
         $roomTypes = [
             [
                 'name' => 'Phòng Đơn Tiêu Chuẩn',
@@ -26,7 +26,7 @@ class RoomSeeder extends Seeder
                 'name' => 'Phòng Đôi Tiêu Chuẩn',
                 'description' => 'Phòng đôi tiêu chuẩn với 2 giường đơn, thích hợp cho gia đình nhỏ hoặc nhóm bạn.',
                 'price' => 800000,
-                'capacity' => 4
+                'capacity' => 4 
             ],
             [
                 'name' => 'Phòng Deluxe',
