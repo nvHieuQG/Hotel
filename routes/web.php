@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 // Route::get('/', function () {
 //     return view('client.index');
 // });
@@ -75,3 +76,23 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::patch('bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
     Route::resource('bookings', AdminBookingController::class);
 });
+
+// Password reset routes
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
+    ->middleware('guest')
+    ->name('password.request');
+
+// Gửi link đặt lại mật khẩu
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])
+    ->middleware('guest')
+    ->name('password.email');
+
+// Hiển thị form đặt lại mật khẩu
+Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])
+    ->middleware('guest')
+    ->name('password.reset');
+
+// Đặt lại mật khẩu
+Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])
+    ->middleware('guest')
+    ->name('password.update');

@@ -94,4 +94,52 @@ class UserRepository implements UserRepositoryInterface
     {
         return $this->model->all();
     }
+
+    /**
+     * Cập nhật mật khẩu mới
+     *
+     * @param int $userId
+     * @param string $password
+     * @return bool
+     */
+    public function updatePassword(int $userId, string $password): bool
+    {
+        $user = $this->model->find($userId);
+        if ($user) {
+            $user->password = Hash::make($password);
+            $user->reset_token = null;
+            $user->save();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Cập nhật reset token
+     *
+     * @param int $userId
+     * @param string $token
+     * @return bool
+     */
+    public function updateResetToken(int $userId, string $token): bool
+    {
+        $user = $this->model->find($userId);
+        if ($user) {
+            $user->reset_token = $token;
+            $user->save();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Tìm user theo reset token
+     *
+     * @param string $token
+     * @return User|null
+     */
+    public function findByResetToken(string $token): ?User
+    {
+        return $this->model->where('reset_token', $token)->first();
+    }
 } 

@@ -44,13 +44,14 @@
                         <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" placeholder="Mật khẩu" required>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group d-flex justify-content-between align-items-center">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
                             <label class="form-check-label" for="remember">
                                 Ghi nhớ đăng nhập
                             </label>
                         </div>
+                        <a href="{{ route('password.request') }}" class="text-primary">Quên mật khẩu?</a>
                     </div>
 
                     <div class="form-group">
