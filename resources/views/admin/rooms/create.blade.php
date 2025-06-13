@@ -50,13 +50,6 @@
                     @enderror
                 </div>
 
-                <div class="mb-3">
-                    <label for="capacity" class="form-label">Sức chứa</label>
-                    <input type="number" name="capacity" id="capacity" class="form-control" value="{{ old('capacity') }}" required>
-                    @error('capacity')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
 
                 <div class="mb-3">
                     <label for="status" class="form-label">Trạng thái</label>

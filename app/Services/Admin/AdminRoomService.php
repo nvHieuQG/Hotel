@@ -57,15 +57,19 @@ class AdminRoomService implements AdminRoomServiceInterface
      * @throws ValidationException
      */
     protected function validateRoomData(array $data)
-    {
-        $validator = Validator::make($data, [
-            'room_type_id' => 'required|exists:room_types,id',
-            'room_number' => 'required|string|max:20',
-            'status' => 'required|in:available,booked,repair',
-        ]);
+{
+    $validator = Validator::make($data, [
+        'room_type_id' => 'required|exists:room_types,id',
+        'room_number' => 'required|string|max:20',
+        'status' => 'required|in:available,booked,repair',
+        
+    ]);
 
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
+    // Kiểm tra validate cơ bản
+    if ($validator->fails()) {
+        throw new ValidationException($validator);
     }
+
+    
+}
 }

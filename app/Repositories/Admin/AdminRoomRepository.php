@@ -18,7 +18,7 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
                 // Lọc phòng có booking đang pending hoặc confirmed
                 $query->whereHas('bookings', function($q) {
                     $q->whereIn('status', ['pending', 'confirmed']);
-                });
+                })->orWhere('status', 'booked');;
             } else {
                 // Lọc theo trạng thái phòng
                 $query->where('status', $status);

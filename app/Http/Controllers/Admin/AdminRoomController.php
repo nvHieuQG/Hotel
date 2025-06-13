@@ -40,7 +40,7 @@ class AdminRoomController extends Controller
     {
         try {
             $this->roomService->createRoom($request->all());
-            return redirect()->route('admin.rooms.index')->with('success', 'Tạo phòng thành công');
+        return redirect()->route('admin.rooms.index')->with('success', 'Tạo phòng thành công');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->validator)->withInput();
         }
@@ -57,7 +57,7 @@ class AdminRoomController extends Controller
     {
         try {
             $this->roomService->updateRoom($id, $request->all());
-            return redirect()->route('admin.rooms.index')->with('success', 'Cập nhật phòng thành công');
+        return redirect()->route('admin.rooms.index')->with('success', 'Cập nhật phòng thành công');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->validator)->withInput();
         }
