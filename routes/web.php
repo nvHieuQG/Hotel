@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\AdminRoomController;
+use App\Http\Controllers\RoomController;
+
 // Route::get('/', function () {
 //     return view('client.index');
 // });
@@ -100,3 +102,8 @@ Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showRes
 Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])
     ->middleware('guest')
     ->name('password.update');
+
+// Search Rooms
+Route::get('/rooms', [HotelController::class, 'rooms'])->name('rooms');
+Route::get('/search-rooms', [RoomController::class, 'search'])->name('rooms.search');
+
