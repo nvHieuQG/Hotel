@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 use App\Interfaces\Repositories\UserRepositoryInterface;
 use App\Repositories\UserRepository;
