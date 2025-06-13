@@ -32,38 +32,35 @@ class AdminRoomController extends Controller
 
     public function create()
     {
-        // Lấy dữ liệu cần thiết cho form tạo phòng (nếu cần)
-        $roomTypes = RoomType::all();
+        $roomTypes = $this->roomService->getRoomTypes();
         return view('admin.rooms.create', compact('roomTypes'));
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'room_type_id' => 'required|exists:room_types,id',
-            'room_number' => 'required|string|max:20',
-            'status' => 'required|in:available,booked,repair',
-        ]);
-        $this->roomService->createRoom($data);
-        return redirect()->route('admin.rooms.index')->with('success', 'Tạo phòng thành công');
+        try {
+            $this->roomService->createRoom($request->all());
+            return redirect()->route('admin.rooms.index')->with('success', 'Tạo phòng thành công');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->validator)->withInput();
+        }
     }
 
     public function edit($id)
     {
-        $roomTypes = RoomType::all();
+        $roomTypes = $this->roomService->getRoomTypes();
         $room = $this->roomService->getRoom($id);
         return view('admin.rooms.edit', compact('room', 'roomTypes'));
     }
 
     public function update(Request $request, $id)
     {
-        $data = $request->validate([
-            'room_type_id' => 'required|exists:room_types,id',
-            'room_number' => 'required|string|max:20',
-            'status' => 'required|in:available,booked,repair',
-        ]);
-        $this->roomService->updateRoom($id, $data);
-        return redirect()->route('admin.rooms.index')->with('success', 'Cập nhật phòng thành công');
+        try {
+            $this->roomService->updateRoom($id, $request->all());
+            return redirect()->route('admin.rooms.index')->with('success', 'Cập nhật phòng thành công');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->validator)->withInput();
+        }
     }
 
     public function destroy($id)

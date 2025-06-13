@@ -3,7 +3,9 @@
 namespace App\Repositories\Admin;
 
 use App\Models\Room;
+use App\Models\RoomType;
 use App\Interfaces\Repositories\Admin\AdminRoomRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 
 class AdminRoomRepository implements AdminRoomRepositoryInterface
 {
@@ -23,7 +25,7 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
             }
         }
     
-    return $query->paginate(10);
+        return $query->paginate(10);
     }
 
     public function find($id)
@@ -62,5 +64,15 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
             'success' => true,
             'message' => 'Xóa phòng thành công!'
         ];
+    }
+
+    /**
+     * Lấy tất cả loại phòng
+     *
+     * @return Collection
+     */
+    public function getAllRoomTypes(): Collection
+    {
+        return RoomType::all();
     }
 }

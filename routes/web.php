@@ -76,6 +76,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
     Route::patch('bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
     Route::resource('bookings', AdminBookingController::class);
+
+    // Quản lý phòng
+    Route::resource('rooms', AdminRoomController::class);
 });
 
 // Password reset routes
