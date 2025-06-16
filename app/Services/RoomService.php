@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Interfaces\Services\RoomServiceInterface;
 use Illuminate\Database\Eloquent\Collection;
 use App\Interfaces\Repositories\RoomRepositoryInterface;
-use App\Models\Room;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
