@@ -16,7 +16,7 @@ class RoomController extends Controller
 
     public function search(Request $request)
     {
-        $filters = $request->only(['keyword', 'capacity', 'price_min', 'price_max', 'type']);
+        $filters = $request->only(['keyword', 'price_min', 'price_max', 'type']);
         $rooms = $this->roomService->searchRooms($filters);
         return view('client.rooms', compact('rooms'));
     }
