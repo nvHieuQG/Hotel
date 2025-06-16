@@ -659,7 +659,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link {{ request()->routeIs('admin.rooms.*') ? 'active' : '' }}" href="{{ route('admin.rooms.index')}}">
                                 <i class="fas fa-bed"></i> Phòng
                             </a>
                         </li>
