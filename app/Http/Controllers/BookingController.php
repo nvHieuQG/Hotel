@@ -35,24 +35,23 @@ class BookingController extends Controller
     {
         try {
             $booking = $this->bookingService->createBooking($request->all());
-            
-            return redirect()->route('index')
-                ->with('success', 'Đặt phòng thành công! Mã đặt phòng của bạn là: ' . $booking->id);
+            // Chuyển hướng đến trang thanh toán với ID đặt phòng
+            return redirect()->route('payment', ['booking' => $booking->id]);
         } catch (\Exception $e) {
             return back()->withErrors(['message' => $e->getMessage()])->withInput();
         }
     }
-    
+
     /**
      * Hiển thị danh sách đặt phòng của người dùng
      */
     public function myBookings()
     {
         $bookings = $this->bookingService->getCurrentUserBookings();
-        
+
         return view('client.my-bookings', compact('bookings'));
     }
-    
+
     /**
      * Hủy đặt phòng
      */
@@ -60,10 +59,10 @@ class BookingController extends Controller
     {
         try {
             $this->bookingService->cancelBooking($id);
-            
+
             return back()->with('success', 'Đã hủy đặt phòng thành công.');
         } catch (\Exception $e) {
             return back()->withErrors(['message' => $e->getMessage()]);
         }
     }
-} 
+}

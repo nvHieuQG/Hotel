@@ -37,4 +37,12 @@ interface BookingServiceInterface
      * @return bool
      */
     public function cancelBooking(int $bookingId): bool;
+
+    /**
+     * Lấy chi tiết đặt phòng theo ID
+     *
+     * @param int $id
+     * @return Booking
+     */
+    public function getBookingDetail(int $id): Booking;
 } 

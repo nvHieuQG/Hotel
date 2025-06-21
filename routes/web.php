@@ -1,16 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\HotelController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Admin\AdminRoomController;
 use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Admin\AdminRoomController;
-use App\Http\Controllers\RoomController;
+use App\Http\Controllers\Auth\EmailVerificationController;
 
 // Route::get('/', function () {
 //     return view('client.index');
@@ -107,3 +108,5 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])
 Route::get('/rooms', [HotelController::class, 'rooms'])->name('rooms');
 Route::get('/search-rooms', [RoomController::class, 'search'])->name('rooms.search');
 
+// Payment
+Route::get('/payment/{booking}', [PaymentController::class, 'confirmPayment'])->name('payment');
