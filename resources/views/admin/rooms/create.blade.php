@@ -16,7 +16,7 @@
             Thêm phòng mới
         </div>
         <div class="card-body">
-            <form action="{{route('admin.rooms.store')}}" method="POST">
+            <form action="{{route('admin.rooms.store')}}" method="POST" enctype="multipart/form-data">
                 @csrf
 
                 <div class="mb-3">
@@ -59,6 +59,15 @@
                         <option value="repair" {{ old('status') == 'repair' ? 'selected' : '' }}>Bảo trì</option>
                     </select>
                     @error('status')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="images" class="form-label">Hình ảnh phòng</label>
+                    <input type="file" name="images[]" id="images" class="form-control" multiple accept="image/*">
+                    <div class="form-text">Có thể chọn nhiều ảnh. Ảnh đầu tiên sẽ là ảnh chính.</div>
+                    @error('images.*')
                         <div class="text-danger small">{{ $message }}</div>
                     @enderror
                 </div>

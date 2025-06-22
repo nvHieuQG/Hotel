@@ -45,6 +45,7 @@
                     <thead>
                         <tr>
                             <th>STT</th>
+                            <th>Ảnh</th>
                             <th>Số phòng</th>
                             <th>Loại phòng</th>
                             <th>Giá</th>
@@ -57,6 +58,21 @@
                         @foreach($rooms as $room)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
+                            <td>
+                                @if($room->primaryImage)
+                                    <img src="{{ $room->primaryImage->full_image_url }}" 
+                                         alt="Room Image" 
+                                         style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                @elseif($room->firstImage)
+                                    <img src="{{ $room->firstImage->full_image_url }}" 
+                                         alt="Room Image" 
+                                         style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                @else
+                                    <div style="width: 60px; height: 40px; background-color: #f8f9fa; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                @endif
+                            </td>
                             <td>{{ $room->room_number }}</td>
                             <td>{{ $room->roomType->name ?? '' }}</td>
                             <td>{{ number_format($room->price) }} VND</td>

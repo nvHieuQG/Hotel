@@ -40,10 +40,26 @@ class Room extends Model
     /**
      * Lấy hình ảnh của phòng
      */
-    // public function images()
-    // {
-    //     return $this->hasMany(RoomImage::class);
-    // }
+    public function images()
+    {
+        return $this->hasMany(RoomImage::class);
+    }
+
+    /**
+     * Lấy ảnh chính của phòng
+     */
+    public function primaryImage()
+    {
+        return $this->hasOne(RoomImage::class)->where('is_primary', true);
+    }
+
+    /**
+     * Lấy ảnh đầu tiên của phòng (fallback)
+     */
+    public function firstImage()
+    {
+        return $this->hasOne(RoomImage::class)->orderBy('is_primary', 'desc')->orderBy('id', 'asc');
+    }
     
     // /**
     //  * Lấy dịch vụ của phòng

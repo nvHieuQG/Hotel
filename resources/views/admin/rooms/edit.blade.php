@@ -16,7 +16,7 @@
             Cập nhật phòng
         </div>
         <div class="card-body">
-            <form action="{{ route('admin.rooms.update', $room->id) }}" method="POST">
+            <form action="{{ route('admin.rooms.update', $room->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT') <!-- Sử dụng phương thức PUT cho cập nhật -->
 
@@ -64,6 +64,46 @@
                         <div class="text-danger small">{{ $message }}</div>
                     @enderror
                 </div>
+                <div class="mb-3">
+                    <label for="images" class="form-label">Thêm hình ảnh mới</label>
+                    <input type="file" name="images[]" id="images" class="form-control" multiple accept="image/*">
+                    <div class="form-text">Có thể chọn nhiều ảnh. Ảnh đầu tiên sẽ là ảnh chính.</div>
+                    @error('images.*')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+                </div>
+                
+                @if($room->images && $room->images->count() > 0)
+                <div class="mb-3">
+                    <label class="form-label">Hình ảnh hiện tại</label>
+                    <div class="row">
+                        @foreach($room->images as $image)
+                        <div class="col-md-3 mb-2">
+                            <div class="card">
+                                <img src="{{ $image->full_image_url }}" class="card-img-top" alt="Room Image" style="height: 150px; object-fit: cover;">
+                                <div class="card-body p-2">
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        @if($image->is_primary)
+                                            <span class="badge bg-success">Ảnh chính</span>
+                                        @else
+                                            <button type="button" class="btn btn-sm btn-outline-primary set-primary" 
+                                                    data-room-id="{{ $room->id }}" data-image-id="{{ $image->id }}">
+                                                Đặt làm ảnh chính
+                                            </button>
+                                        @endif
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-image" 
+                                                data-room-id="{{ $room->id }}" data-image-id="{{ $image->id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
 
                 <div class="mt-4">
                     <a href="{{ route('admin.rooms.index') }}" class="btn btn-secondary">Quay lại</a>
@@ -73,4 +113,71 @@
         </div>
     </div>
 </div>
+@endsection
+@section('scripts')
+<script>
+$(document).ready(function() {
+    console.log('Script loaded');
+    
+    // Xóa ảnh
+    $('.delete-image').click(function() {
+        console.log('Delete image clicked');
+        if (confirm('Bạn có chắc chắn muốn xóa ảnh này?')) {
+            const roomId = $(this).data('room-id');
+            const imageId = $(this).data('image-id');
+            
+            console.log('Room ID:', roomId, 'Image ID:', imageId);
+            
+            $.ajax({
+                url: `/admin/rooms/${roomId}/images/${imageId}`,
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    console.log('Success:', response);
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert(response.message || 'Có lỗi xảy ra khi xóa ảnh');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', xhr.responseText);
+                    alert('Có lỗi xảy ra khi xóa ảnh. Vui lòng thử lại.');
+                }
+            });
+        }
+    });
+    
+    // Đặt ảnh chính
+    $('.set-primary').click(function() {
+        console.log('Set primary clicked');
+        const roomId = $(this).data('room-id');
+        const imageId = $(this).data('image-id');
+        
+        console.log('Room ID:', roomId, 'Image ID:', imageId);
+        
+        $.ajax({
+            url: `/admin/rooms/${roomId}/images/${imageId}/primary`,
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                console.log('Success:', response);
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert(response.message || 'Có lỗi xảy ra khi đặt ảnh chính');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', xhr.responseText);
+                alert('Có lỗi xảy ra khi đặt ảnh chính. Vui lòng thử lại.');
+            }
+        });
+    });
+});
+</script>
 @endsection
