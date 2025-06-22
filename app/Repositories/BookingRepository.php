@@ -24,9 +24,9 @@ class BookingRepository implements BookingRepositoryInterface
     public function getByUserId(int $userId): Collection
     {
         return $this->model->where('user_id', $userId)
-                           ->with('room.roomType')
-                           ->latest()
-                           ->get();
+            ->with('room.roomType')
+            ->latest()
+            ->get();
     }
 
     /**
@@ -50,8 +50,8 @@ class BookingRepository implements BookingRepositoryInterface
     public function findByIdAndUserId(int $id, int $userId): ?Booking
     {
         return $this->model->where('id', $id)
-                           ->where('user_id', $userId)
-                           ->first();
+            ->where('user_id', $userId)
+            ->first();
     }
 
     /**
@@ -65,4 +65,9 @@ class BookingRepository implements BookingRepositoryInterface
     {
         return $booking->update($data);
     }
-} 
+
+    public function getDetailById(int $id): ?Booking
+    {
+        return Booking::with('room.roomType')->findOrFail($id);
+    }
+}
