@@ -36,7 +36,7 @@ class BookingController extends Controller
         try {
             $booking = $this->bookingService->createBooking($request->all());
             // Chuyển hướng đến trang thanh toán với ID đặt phòng
-            return redirect()->route('payment', ['booking' => $booking->id]);
+            return redirect()->route('confirm-info-payment', ['booking' => $booking->id]);
         } catch (\Exception $e) {
             return back()->withErrors(['message' => $e->getMessage()])->withInput();
         }

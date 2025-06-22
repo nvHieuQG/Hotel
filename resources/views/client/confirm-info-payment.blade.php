@@ -3,7 +3,8 @@
 @section('title', 'Xác nhận Thanh Toán')
 
 @section('content')
-    <div class="hero-wrap" style="background-image: url('{{ asset('client/images/bg_1.jpg') }}'); font-family: 'Segoe UI', sans-serif;">
+    <div class="hero-wrap"
+        style="background-image: url('{{ asset('client/images/bg_1.jpg') }}'); font-family: 'Segoe UI', sans-serif;">
         <div class="overlay"></div>
         <div class="container">
             <div class="row no-gutters slider-text d-flex align-items-end justify-content-center">
@@ -56,38 +57,45 @@
                                 <li class="mb-2"><strong>Mã đặt phòng:</strong>
                                     <span class="badge bg-primary text-white">{{ $booking->booking_id }}</span>
                                 </li>
-                                <li class="mb-2"><strong>Phòng:</strong> {{ $booking->room->room_number }} - {{ $booking->room->roomType->name }}</li>
-                                <li class="mb-2"><strong>Ngày đến:</strong> {{ \Carbon\Carbon::parse($booking->check_in_date)->format('d/m/Y') }}</li>
-                                <li><strong>Ngày đi:</strong> {{ \Carbon\Carbon::parse($booking->check_out_date)->format('d/m/Y') }}</li>
-                                <li class="mb-2"><strong>Số đêm:</strong> {{ \Carbon\Carbon::parse($booking->check_in_date)->diffInDays(\Carbon\Carbon::parse($booking->check_out_date)) }} đêm</li>
+                                <li class="mb-2"><strong>Phòng:</strong> {{ $booking->room->room_number }} -
+                                    {{ $booking->room->roomType->name }}</li>
+                                <li class="mb-2"><strong>Ngày đến:</strong>
+                                    {{ \Carbon\Carbon::parse($booking->check_in_date)->format('d/m/Y') }}</li>
+                                <li><strong>Ngày đi:</strong>
+                                    {{ \Carbon\Carbon::parse($booking->check_out_date)->format('d/m/Y') }}</li>
+                                
                             </ul>
                         </div>
                     </div>
                 </div>
                 {{-- Số tiền --}}
                 <div class="border rounded-3 bg-light p-4 mb-5">
-                <h5 class="text-secondary mb-3"><i class="fas fa-receipt me-2"></i>Chi tiết giá</h5>
-                <div class="row">
-                    <div class="col-md-8">
-                        <p class="mb-2">Giá phòng ({{ $booking->room->roomType->name }})</p>
-                        <p class="mb-2">Thuế & phí dịch vụ</p>
-                        <hr>
-                        <p class="fw-bold mb-0">Tổng cộng</p>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <p class="mb-2">{{ number_format($booking->price * 0.9, 0, ',', '.') }} VNĐ</p>
-                        <p class="mb-2">Miễn phí</p>
-                        <hr>
-                        <p class="fw-bold text-gold mb-0">{{ number_format($booking->price, 0, ',', '.') }} VNĐ</p>
+                    <h5 class="text-secondary mb-3"><i class="fas fa-receipt me-2"></i>Chi tiết giá</h5>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="mb-2">Giá phòng ({{ $booking->room->roomType->name }})</p>
+                            <p class="mb-2">Số đêm</p>
+                            <p class="mb-2">Thuế & phí dịch vụ</p>
+                            <hr>
+                            <p class="fw-bold mb-0">Tổng cộng</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <p class="mb-2">{{ number_format($booking->room->price, 0, ',', '.') }} VNĐ</p>
+                            <p class="mb-2">{{ \Carbon\Carbon::parse($booking->check_in_date)->diffInDays(\Carbon\Carbon::parse($booking->check_out_date)) }}
+                                    đêm</p>
+                            <p class="mb-2">Miễn phí</p>
+                            <hr>
+                            <p class="fw-bold text-gold mb-0">{{ number_format($booking->price, 0, ',', '.') }} VNĐ</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-
+                <form action="{{ route('payment-method', $booking->id) }}" method="GET">
                     <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary btn-lg px-5">
                             <i class="fas fa-check-circle mr-2"></i> Tiếp tục thanh toán
                         </button>
                     </div>
+                </form>
             </div>
         </div>
     </section>
@@ -120,15 +128,14 @@
             background-color: #f1f1f1;
         }
 
-        .payment-method-label input:checked + img,
-        .payment-method-label input:checked + div {
+        .payment-method-label input:checked+img,
+        .payment-method-label input:checked+div {
             font-weight: bold;
             color: #007bff;
         }
 
-        .payment-method-label input:checked ~ img {
+        .payment-method-label input:checked~img {
             transform: scale(1.1);
         }
     </style>
 @endsection
-

@@ -109,4 +109,5 @@ Route::get('/rooms', [HotelController::class, 'rooms'])->name('rooms');
 Route::get('/search-rooms', [RoomController::class, 'search'])->name('rooms.search');
 
 // Payment
-Route::get('/payment/{booking}', [PaymentController::class, 'confirmPayment'])->name('payment');
+Route::get('/confirm-info-payment/{booking}', [PaymentController::class, 'confirmInfo'])->name('confirm-info-payment');
+Route::get('/payment-method/{booking}', [PaymentController::class, 'paymentMethod'])->name('payment-method');

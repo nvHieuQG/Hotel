@@ -14,14 +14,19 @@ class PaymentController extends Controller
         $this->bookingService = $bookingService;
     }
 
-    public function confirmPayment($id)
+    public function confirmInfo($id)
     {
         try {
             $booking = $this->bookingService->getBookingDetail($id);
-            return view('client.payment', compact('booking'));
+            return view('client.confirm-info-payment', compact('booking'));
         } catch (\Exception $e) {
             return redirect()->route('index')->withErrors(['message' => $e->getMessage()]);
         }
     }
 
+    public function paymentMethod($bookingId)
+    {
+        $booking = $this->bookingService->getBookingDetail($bookingId);
+        return view('client.payment-method', compact('booking'));
+    }
 }
