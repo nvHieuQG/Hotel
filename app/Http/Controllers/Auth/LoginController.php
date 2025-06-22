@@ -31,14 +31,14 @@ class LoginController extends Controller
     {
         $validated = $request->validate([
             'login' => ['required', 'string'],
-            'password' => ['required', 'string'],
-            'remember' => ['nullable', 'boolean'],
+            'password' => ['required', 'string', 'min:8'],
+            'remember' => ['nullable', 'in:on,1,true'],
         ]);
 
         try {
             $this->authService->login(
                 $validated,
-                $request->boolean('remember')
+                $request->input('remember') === 'on'
             );
 
             $request->session()->regenerate();

@@ -36,9 +36,9 @@ class AuthService implements AuthServiceInterface
         // Xác thực dữ liệu
         $validator = Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users'],
+            'username' => ['required', 'string', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9]+$/'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'confirmed', 'regex:/^[a-zA-Z0-9@$!%*?&]+$/'],
             'phone' => ['nullable', 'string', 'max:20'],
         ]);
         

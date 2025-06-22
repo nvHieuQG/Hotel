@@ -62,7 +62,8 @@ class AdminRoomService implements AdminRoomServiceInterface
         'room_type_id' => 'required|exists:room_types,id',
         'room_number' => 'required|string|max:20',
         'status' => 'required|in:available,booked,repair',
-        
+        'price' => 'nullable|numeric|min:0',
+        'capacity' => 'nullable|integer|min:1',
     ]);
 
     // Kiểm tra validate cơ bản
