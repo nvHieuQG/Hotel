@@ -18,6 +18,7 @@ class Room extends Model
         'room_type_id',
         'room_number',
         'status',
+        'price',
         'capacity',
     ];
 
@@ -80,9 +81,9 @@ class Room extends Model
     /**
      * Accessor để lấy giá phòng từ loại phòng
      */
-    public function getPriceAttribute()
+    public function getPriceAttribute($value)
     {
-        return $this->roomType->price;
+        return $value ?? $this->roomType->price;
     }
     
     /**
@@ -96,8 +97,8 @@ class Room extends Model
     /**
      * Accessor để lấy sức chứa từ loại phòng
      */
-    public function getCapacityAttribute()
+    public function getCapacityAttribute($value)
     {
-        return $this->roomType->capacity;
+        return $value ?? $this->roomType->capacity;
     }
 } 

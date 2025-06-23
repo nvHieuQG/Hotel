@@ -14,7 +14,7 @@ interface BookingRepositoryInterface
      * @return Collection
      */
     public function getByUserId(int $userId): Collection;
-    
+
     /**
      * Tạo đặt phòng mới
      *
@@ -22,7 +22,7 @@ interface BookingRepositoryInterface
      * @return Booking
      */
     public function create(array $data): Booking;
-    
+
     /**
      * Tìm đặt phòng theo ID
      *
@@ -31,7 +31,7 @@ interface BookingRepositoryInterface
      * @return Booking|null
      */
     public function findByIdAndUserId(int $id, int $userId): ?Booking;
-    
+
     /**
      * Cập nhật đặt phòng
      *
@@ -40,4 +40,12 @@ interface BookingRepositoryInterface
      * @return bool
      */
     public function update(Booking $booking, array $data): bool;
-} 
+
+    /**
+     * Lấy chi tiết đặt phòng theo ID
+     *
+     * @param int $id
+     * @return Booking|null
+     */
+    public function getDetailById(int $id): ?Booking;
+}

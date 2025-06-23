@@ -33,17 +33,17 @@ class BookingService implements BookingServiceInterface
     public function getBookingPageData(): array
     {
         $user = Auth::user();
-        
+
         // Kiểm tra người dùng đã xác thực email chưa
         if ($user->email_verified_at === null) {
             throw ValidationException::withMessages([
                 'email' => ['Bạn cần xác thực email trước khi đặt phòng.'],
             ]);
         }
-        
+
         // Lấy danh sách phòng
         $rooms = $this->roomRepository->getAll();
-        
+
         return [
             'user' => $user,
             'rooms' => $rooms
@@ -67,21 +67,21 @@ class BookingService implements BookingServiceInterface
             'phone' => 'nullable|string|max:20',
             'notes' => 'nullable|string'
         ]);
-        
+
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
-        
+
         // Tính toán tổng tiền
         $room = $this->roomRepository->findById($data['room_id']);
         $checkIn = new \DateTime($data['check_in']);
         $checkOut = new \DateTime($data['check_out']);
         $nights = $checkIn->diff($checkOut)->days;
         $totalPrice = $room->price * $nights;
-        
+
         // Tạo booking ID duy nhất
         $bookingId = 'BK' . date('ymd') . strtoupper(Str::random(5));
-        
+
         // Chuẩn bị dữ liệu
         $bookingData = [
             'user_id' => Auth::id(),
@@ -92,7 +92,7 @@ class BookingService implements BookingServiceInterface
             'price' => $totalPrice,
             'status' => 'pending'
         ];
-        
+
         // Tạo đặt phòng
         return $this->bookingRepository->create($bookingData);
     }
@@ -117,22 +117,27 @@ class BookingService implements BookingServiceInterface
     {
         // Tìm đặt phòng
         $booking = $this->bookingRepository->findByIdAndUserId($bookingId, Auth::id());
-        
+
         // Nếu không tìm thấy hoặc không phải của người dùng hiện tại
         if (!$booking) {
             throw ValidationException::withMessages([
                 'booking' => ['Không tìm thấy đặt phòng.'],
             ]);
         }
-        
+
         // Kiểm tra trạng thái
         if ($booking->status !== 'pending') {
             throw ValidationException::withMessages([
                 'status' => ['Không thể hủy đặt phòng này.'],
             ]);
         }
-        
+
         // Cập nhật trạng thái
         return $this->bookingRepository->update($booking, ['status' => 'cancelled']);
     }
-} 
+
+    public function getBookingDetail(int $id): Booking
+    {
+        return $this->bookingRepository->getDetailById($id);
+    }
+}
