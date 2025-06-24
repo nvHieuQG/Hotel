@@ -30,7 +30,7 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
 
     public function find($id)
     {
-        return Room::with(['roomType'])->findOrFail($id);
+        return Room::with(['roomType', 'images'])->findOrFail($id);
     }
 
     public function create(array $data)

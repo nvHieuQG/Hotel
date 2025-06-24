@@ -82,6 +82,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Quản lý phòng
     Route::resource('rooms', AdminRoomController::class);
+
+    // Routes cho quản lý ảnh phòng
+    Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete');
+    Route::post('rooms/{room}/images/{image}/primary', [AdminRoomController::class, 'setPrimaryImage'])->name('rooms.images.primary');
 });
 
 // Password reset routes
