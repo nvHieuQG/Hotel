@@ -43,8 +43,18 @@ class LoginController extends Controller
 
             $request->session()->regenerate();
 
-            //trả về view index
-            return redirect()->route('index');
+            // Kiểm tra role của user để chuyển hướng
+            $user = Auth::user();
+            
+            if ($user && $user->role) {
+                // Nếu user có role admin, super_admin hoặc staff thì chuyển đến admin dashboard
+                if (in_array($user->role->name, ['admin', 'super_admin', 'staff'])) {
+                    return redirect()->route('admin.dashboard')->with('success', 'Chào mừng bạn đến với trang quản trị!');
+                }
+            }
+
+            // Nếu không phải admin thì chuyển đến trang chủ
+            return redirect()->route('index')->with('success', 'Đăng nhập thành công!');
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         }

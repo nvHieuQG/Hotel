@@ -1,0 +1,148 @@
+/* Custom CSS for Reviews - Chỉ áp dụng cho phần reviews */
+.reviews-section .reviews-list {
+    margin-top: 2rem;
+}
+
+.reviews-section .review-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.reviews-section .review-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.reviews-section .review-item .stars {
+    display: inline-flex;
+    align-items: center;
+}
+
+.reviews-section .review-item .stars .icon-star {
+    color: #ffc107;
+    font-size: 1.1rem;
+    margin-right: 2px;
+}
+
+.reviews-section .review-item .stars .icon-star-o {
+    color: #dee2e6;
+    font-size: 1.1rem;
+    margin-right: 2px;
+}
+
+.reviews-section .review-item .stars .icon-star-half {
+    color: #ffc107;
+    font-size: 1.1rem;
+    margin-right: 2px;
+}
+
+.reviews-section .review-content {
+    margin-top: 0.5rem;
+}
+
+.reviews-section .review-content p {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.reviews-section .review-content p:last-child {
+    margin-bottom: 0;
+}
+
+.reviews-section .rating-summary {
+    background: linear-gradient(135deg, #78d5ef 0%, #34c0e7 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.reviews-section .rating-summary h2 {
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.reviews-section .rating-summary .stars {
+    margin-bottom: 1rem;
+}
+
+.reviews-section .rating-summary .stars .icon-star,
+.reviews-section .rating-summary .stars .icon-star-half {
+    color: #ffd700;
+    font-size: 1.5rem;
+    margin-right: 3px;
+}
+
+.reviews-section .rating-summary .stars .icon-star-o {
+    color: rgba(255,255,255,0.5);
+    font-size: 1.5rem;
+    margin-right: 3px;
+}
+
+.reviews-section .no-reviews {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.reviews-section .no-reviews .icon-star-o {
+    color: #dee2e6;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.reviews-section .review-actions {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.reviews-section .review-actions .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive cho reviews */
+@media (max-width: 768px) {
+    .reviews-section .review-item {
+        padding: 1rem;
+    }
+    
+    .reviews-section .rating-summary {
+        padding: 1.5rem;
+    }
+    
+    .reviews-section .rating-summary h2 {
+        font-size: 1.5rem;
+    }
+    
+    .reviews-section .rating-summary .stars .icon-star,
+    .reviews-section .rating-summary .stars .icon-star-half,
+    .reviews-section .rating-summary .stars .icon-star-o {
+        font-size: 1.2rem;
+    }
+}
+
+/* Đảm bảo không ảnh hưởng đến các phần khác */
+.reviews-section {
+    /* Cô lập CSS cho phần reviews */
+    contain: layout style;
+}
+
+/* Override cho các class có thể xung đột */
+.reviews-section .room-single {
+    /* Đảm bảo không ảnh hưởng đến layout phòng */
+    margin-bottom: 2rem;
+}
+
+.reviews-section .ftco-animate {
+    /* Giữ nguyên animation của theme */
+    opacity: 1;
+    visibility: visible;
+} 

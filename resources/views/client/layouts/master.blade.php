@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="{{ asset('client/css/flaticon.css') }}">
     <link rel="stylesheet" href="{{ asset('client/css/icomoon.css') }}">
     <link rel="stylesheet" href="{{ asset('client/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('client/css/reviews.css') }}">
     <style>
         .alert-container {
             position: fixed;

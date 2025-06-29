@@ -27,6 +27,12 @@
                     </div>
                 @endif
 
+                @if (session('error'))
+                    <div class="alert alert-danger">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <ul class="mb-0">
@@ -38,7 +44,12 @@
                 @endif
 
                 <div class="bg-white p-4">
-                    <h3 class="mb-4">Lịch Sử Đặt Phòng</h3>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3>Lịch Sử Đặt Phòng</h3>
+                        <a href="{{ route('reviews.my-reviews') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-star"></i> Đánh giá của tôi
+                        </a>
+                    </div>
                     
                     @if ($bookings->count() > 0)
                         <div class="table-responsive">
@@ -51,6 +62,7 @@
                                         <th>Ngày trả</th>
                                         <th>Tổng tiền</th>
                                         <th>Trạng thái</th>
+                                        <th>Đánh giá</th>
                                         <th>Hành động</th>
                                     </tr>
                                 </thead>
@@ -63,14 +75,39 @@
                                             <td>{{ $booking->check_out_date->format('d/m/Y') }}</td>
                                             <td>{{ number_format($booking->price) }}đ</td>
                                             <td>
-                                                @if ($booking->status == 'pending')
-                                                    <span class="badge badge-warning">Chờ xác nhận</span>
-                                                @elseif ($booking->status == 'confirmed')
-                                                    <span class="badge badge-success">Đã xác nhận</span>
-                                                @elseif ($booking->status == 'cancelled')
-                                                    <span class="badge badge-danger">Đã hủy</span>
-                                                @elseif ($booking->status == 'completed')
-                                                    <span class="badge badge-primary">Hoàn thành</span>
+                                                <span class="badge badge-{{ $booking->status == 'pending' ? 'warning' : ($booking->status == 'confirmed' ? 'success' : ($booking->status == 'cancelled' ? 'danger' : 'primary')) }}">
+                                                    {{ $booking->status_text }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if ($booking->hasReview())
+                                                    @php $review = $booking->review @endphp
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="text-warning mr-2">
+                                                            @for ($i = 1; $i <= 5; $i++)
+                                                                <i class="fas fa-star{{ $i <= $review->rating ? '' : '-o' }}"></i>
+                                                            @endfor
+                                                        </div>
+                                                        <span class="badge badge-{{ $review->status == 'approved' ? 'success' : ($review->status == 'rejected' ? 'danger' : 'warning') }}">
+                                                            {{ $review->status_text }}
+                                                        </span>
+                                                    </div>
+                                                    @if ($review->canBeEdited())
+                                                        <div class="mt-1">
+                                                            <a href="{{ route('reviews.edit', $review->id) }}" class="btn btn-sm btn-outline-primary">Sửa</a>
+                                                            <form action="{{ route('reviews.destroy', $review->id) }}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?')">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                                                            </form>
+                                                        </div>
+                                                    @endif
+                                                @elseif ($booking->canBeReviewed())
+                                                    <a href="{{ route('reviews.create', $booking->id) }}" class="btn btn-sm btn-success">
+                                                        <i class="fas fa-star"></i> Đánh giá ngay
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted">Chưa thể đánh giá</span>
                                                 @endif
                                             </td>
                                             <td>
@@ -87,6 +124,10 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                        </div>
+                        
+                        <div class="d-flex justify-content-center mt-4">
+                            {{ $bookings->links() }}
                         </div>
                     @else
                         <div class="text-center py-5">
