@@ -29,6 +29,28 @@ interface BookingServiceInterface
      * @return Collection
      */
     public function getCurrentUserBookings(): Collection;
+
+    /**
+     * Lấy các booking đã hoàn thành và chưa đánh giá của người dùng hiện tại
+     *
+     * @return Collection
+     */
+    public function getCompletedBookingsWithoutReview(): Collection;
+
+    /**
+     * Lấy các booking đã hoàn thành của người dùng hiện tại
+     *
+     * @return Collection
+     */
+    public function getCompletedBookings(): Collection;
+
+    /**
+     * Kiểm tra xem booking có thể đánh giá không
+     *
+     * @param int $bookingId
+     * @return bool
+     */
+    public function canBeReviewed(int $bookingId): bool;
     
     /**
      * Hủy đặt phòng
@@ -37,4 +59,12 @@ interface BookingServiceInterface
      * @return bool
      */
     public function cancelBooking(int $bookingId): bool;
+
+    /**
+     * Lấy chi tiết đặt phòng theo ID
+     *
+     * @param int $id
+     * @return Booking
+     */
+    public function getBookingDetail(int $id): Booking;
 } 

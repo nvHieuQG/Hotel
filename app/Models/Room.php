@@ -18,6 +18,7 @@ class Room extends Model
         'room_type_id',
         'room_number',
         'status',
+        'price',
         'capacity',
     ];
 
@@ -56,10 +57,26 @@ class Room extends Model
     /**
      * Lấy hình ảnh của phòng
      */
-    // public function images()
-    // {
-    //     return $this->hasMany(RoomImage::class);
-    // }
+    public function images()
+    {
+        return $this->hasMany(RoomImage::class);
+    }
+
+    /**
+     * Lấy ảnh chính của phòng
+     */
+    public function primaryImage()
+    {
+        return $this->hasOne(RoomImage::class)->where('is_primary', true);
+    }
+
+    /**
+     * Lấy ảnh đầu tiên của phòng (fallback)
+     */
+    public function firstImage()
+    {
+        return $this->hasOne(RoomImage::class)->orderBy('is_primary', 'desc')->orderBy('id', 'asc');
+    }
     
     // /**
     //  * Lấy dịch vụ của phòng
@@ -80,9 +97,9 @@ class Room extends Model
     /**
      * Accessor để lấy giá phòng từ loại phòng
      */
-    public function getPriceAttribute()
+    public function getPriceAttribute($value)
     {
-        return $this->roomType->price;
+        return $value ?? $this->roomType->price;
     }
     
     /**
@@ -96,9 +113,9 @@ class Room extends Model
     /**
      * Accessor để lấy sức chứa từ loại phòng
      */
-    public function getCapacityAttribute()
+    public function getCapacityAttribute($value)
     {
-        return $this->roomType->capacity;
+        return $value ?? $this->roomType->capacity;
     }
 
     /**

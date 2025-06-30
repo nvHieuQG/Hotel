@@ -40,4 +40,23 @@ interface AdminRoomServiceInterface
      * @return array
      */
     public function deleteRoom($id): array;
+
+    /**
+     * Xóa ảnh của phòng
+     *
+     * @param int $roomId
+     * @param int $imageId
+     * @return array
+     */
+
+     public function deleteRoomImage($roomId, $imageId): array;
+
+    /**
+     * Đặt ảnh làm ảnh chính
+     *
+     * @param int $roomId
+     * @param int $imageId
+     * @return array
+     */
+    public function setPrimaryImage($roomId, $imageId): array;
 }

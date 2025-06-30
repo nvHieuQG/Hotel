@@ -46,9 +46,14 @@
                 <div class="bg-white p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h3>Lịch Sử Đặt Phòng</h3>
-                        <a href="{{ route('reviews.my-reviews') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-star"></i> Đánh giá của tôi
-                        </a>
+                        <div>
+                            <a href="{{ route('reviews.index') }}" class="btn btn-outline-success">
+                                <i class="fas fa-star"></i> Viết đánh giá
+                            </a>
+                            <a href="{{ route('reviews.my-reviews') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-list"></i> Đánh giá của tôi
+                            </a>
+                        </div>
                     </div>
                     
                     @if ($bookings->count() > 0)

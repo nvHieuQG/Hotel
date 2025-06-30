@@ -1,6 +1,5 @@
-@extends('admin.layouts.master')
-
-@section('title', 'Thống kê đánh giá')
+@extends('admin.layouts.admin-master')
+@section('header', 'Thống kê đánh giá')
 
 @section('content')
 <div class="container-fluid">

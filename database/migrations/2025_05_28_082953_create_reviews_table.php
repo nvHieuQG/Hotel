@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('booking_id')->constrained('bookings')->onDelete('cascade');
+            $table->foreignId('booking_id')->nullable()->constrained('bookings')->onDelete('cascade');
             $table->foreignId('room_id')->constrained('rooms')->onDelete('cascade');
             $table->integer('rating')->comment('Điểm đánh giá từ 1-5');
             $table->text('comment')->nullable()->comment('Bình luận của khách hàng');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->boolean('is_anonymous')->default(false)->comment('Đánh giá ẩn danh');
             $table->timestamps();
             
-            // Đảm bảo mỗi booking chỉ có 1 review
+            // Đảm bảo mỗi booking chỉ có 1 review (nếu có booking_id)
             $table->unique('booking_id');
         });
     }

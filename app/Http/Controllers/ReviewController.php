@@ -3,17 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Services\ReviewService;
+use App\Services\BookingService;
 use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ReviewController extends Controller
 {
     protected $reviewService;
+    protected $bookingService;
 
-    public function __construct(ReviewService $reviewService)
+    public function __construct(ReviewService $reviewService, BookingService $bookingService)
     {
         $this->reviewService = $reviewService;
+        $this->bookingService = $bookingService;
+    }
+
+    /**
+     * Hiển thị danh sách booking có thể đánh giá
+     */
+    public function index()
+    {
+        if (!Auth::check()) {
+            return view('client.reviews.index', ['bookings' => collect()]);
+        }
+        
+        $bookings = $this->bookingService->getCompletedBookingsWithoutReview();
+        
+        return view('client.reviews.index', compact('bookings'));
     }
 
     /**
@@ -21,15 +39,18 @@ class ReviewController extends Controller
      */
     public function create($bookingId)
     {
-        $booking = Booking::where('id', $bookingId)
-            ->where('user_id', Auth::id())
-            ->firstOrFail();
-
         // Kiểm tra xem booking có thể đánh giá không
-        if (!$this->reviewService->canBeReviewed($booking)) {
-            return redirect()->route('my-bookings')
+        if (!$this->bookingService->canBeReviewed($bookingId)) {
+            return redirect()->route('reviews.index')
                 ->with('error', 'Booking này không thể đánh giá hoặc đã được đánh giá rồi.');
         }
+
+        $booking = Booking::where('id', $bookingId)
+            ->where('user_id', Auth::id())
+            ->where('status', 'completed')
+            ->whereDoesntHave('review')
+            ->with('room.roomType')
+            ->firstOrFail();
 
         return view('client.reviews.create', compact('booking'));
     }
@@ -62,12 +83,34 @@ class ReviewController extends Controller
     public function store(Request $request, $bookingId)
     {
         try {
-            $validatedData = $this->reviewService->validateReviewData($request->all());
-            $this->reviewService->createReview($validatedData, $bookingId);
+            // Kiểm tra xem booking có thể đánh giá không
+            if (!$this->bookingService->canBeReviewed($bookingId)) {
+                return redirect()->route('reviews.index')
+                    ->with('error', 'Booking này không thể đánh giá hoặc đã được đánh giá rồi.');
+            }
 
-            return redirect()->route('my-bookings')
+            // Debug: Log request data
+            Log::info('Review store request:', [
+                'booking_id' => $bookingId,
+                'data' => $request->all()
+            ]);
+            
+            $validatedData = $this->reviewService->validateReviewData($request->all());
+            
+            // Debug: Log validated data
+            Log::info('Validated data:', $validatedData);
+            
+            $this->reviewService->createReviewFromBooking($validatedData, $bookingId);
+
+            return redirect()->route('reviews.index')
                 ->with('success', 'Đánh giá của bạn đã được gửi và đang chờ duyệt.');
         } catch (\Exception $e) {
+            // Debug: Log error
+            Log::error('Review store error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return redirect()->back()
                 ->withInput()
                 ->with('error', $e->getMessage());
@@ -82,12 +125,12 @@ class ReviewController extends Controller
         $review = $this->reviewService->getReviewById($id);
         
         if (!$review || $review->user_id !== Auth::id()) {
-            return redirect()->route('my-bookings')
+            return redirect()->route('reviews.index')
                 ->with('error', 'Không tìm thấy review hoặc không có quyền chỉnh sửa.');
         }
 
         if (!$this->reviewService->canBeEdited($review)) {
-            return redirect()->route('my-bookings')
+            return redirect()->route('reviews.index')
                 ->with('error', 'Không thể chỉnh sửa đánh giá này.');
         }
 
@@ -103,7 +146,7 @@ class ReviewController extends Controller
             $validatedData = $this->reviewService->validateReviewData($request->all());
             $this->reviewService->updateReview($id, $validatedData);
 
-            return redirect()->route('my-bookings')
+            return redirect()->route('reviews.index')
                 ->with('success', 'Đánh giá đã được cập nhật thành công.');
         } catch (\Exception $e) {
             return redirect()->back()
@@ -120,7 +163,7 @@ class ReviewController extends Controller
         try {
             $this->reviewService->deleteReview($id);
 
-            return redirect()->route('my-bookings')
+            return redirect()->route('reviews.index')
                 ->with('success', 'Đánh giá đã được xóa thành công.');
         } catch (\Exception $e) {
             return redirect()->back()

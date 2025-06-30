@@ -18,18 +18,37 @@ class ReviewService
     }
 
     /**
+     * Tạo review mới cho admin
+     */
+    public function createReview(array $data): Review
+    {
+        $reviewData = [
+            'user_id' => $data['user_id'],
+            'room_id' => $data['room_id'],
+            'rating' => $data['rating'],
+            'comment' => $data['comment'] ?? null,
+            'is_anonymous' => $data['is_anonymous'] ?? false,
+            'status' => $data['status'] ?? 'pending',
+        ];
+
+        // Thêm booking_id nếu có
+        if (isset($data['booking_id']) && $data['booking_id']) {
+            $reviewData['booking_id'] = $data['booking_id'];
+        }
+
+        return $this->reviewRepository->createReview($reviewData);
+    }
+
+    /**
      * Tạo review mới
      */
-    public function createReview(array $data, int $bookingId): Review
+    public function createReviewFromBooking(array $data, int $bookingId): Review
     {
         $booking = Booking::where('id', $bookingId)
             ->where('user_id', Auth::id())
+            ->where('status', 'completed')
+            ->whereDoesntHave('review')
             ->firstOrFail();
-
-        // Kiểm tra xem booking có thể đánh giá không
-        if (!$this->canBeReviewed($booking)) {
-            throw new \Exception('Booking này không thể đánh giá hoặc đã được đánh giá rồi.');
-        }
 
         $reviewData = [
             'user_id' => Auth::id(),
@@ -37,7 +56,7 @@ class ReviewService
             'room_id' => $booking->room_id,
             'rating' => $data['rating'],
             'comment' => $data['comment'] ?? null,
-            'is_anonymous' => $data['is_anonymous'] ?? false,
+            'is_anonymous' => isset($data['is_anonymous']) && $data['is_anonymous'] == '1',
             'status' => 'pending',
         ];
 
@@ -60,6 +79,20 @@ class ReviewService
         }
 
         return $this->reviewRepository->updateReview($reviewId, $data);
+    }
+
+    /**
+     * Xóa review (Admin)
+     */
+    public function deleteReviewForAdmin(int $reviewId): bool
+    {
+        $review = $this->reviewRepository->getReviewById($reviewId);
+        
+        if (!$review) {
+            throw new \Exception('Không tìm thấy review.');
+        }
+
+        return $this->reviewRepository->deleteReview($reviewId);
     }
 
     /**
@@ -141,7 +174,7 @@ class ReviewService
      */
     public function canBeReviewed(Booking $booking): bool
     {
-        return $booking->isCompleted() && !$this->reviewRepository->hasUserReviewedRoom(Auth::id(), $booking->room_id);
+        return $booking->isCompleted() && !$booking->review;
     }
 
     /**

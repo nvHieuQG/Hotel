@@ -101,6 +101,15 @@ class ReviewRepository implements ReviewRepositoryInterface
             $query->where('user_id', $filters['user_id']);
         }
 
+        // Tìm kiếm theo tên khách hàng
+        if (isset($filters['search']) && !empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 

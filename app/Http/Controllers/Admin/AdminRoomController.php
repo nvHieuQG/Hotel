@@ -72,4 +72,32 @@ class AdminRoomController extends Controller
         
         return redirect()->route('admin.rooms.index')->with('error', $result['message']);
     }
+
+    /**
+ * Xóa ảnh phòng
+ */
+public function deleteImage(Request $request, $roomId, $imageId)
+{
+    $result = $this->roomService->deleteRoomImage($roomId, $imageId);
+    
+    if ($request->ajax()) {
+        return response()->json($result);
+    }
+    
+    return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+}
+
+/**
+ * Đặt ảnh làm ảnh chính
+ */
+public function setPrimaryImage(Request $request, $roomId, $imageId)
+{
+    $result = $this->roomService->setPrimaryImage($roomId, $imageId);
+    
+    if ($request->ajax()) {
+        return response()->json($result);
+    }
+    
+    return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+}
 }

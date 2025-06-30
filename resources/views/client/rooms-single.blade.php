@@ -95,7 +95,7 @@
                                 </div>
                                 <div class="col-md-6 text-right">
                                     @auth
-                                        <a href="{{ route('reviews.create-room', $room->id) }}" class="btn btn-outline-primary">
+                                        <a href="{{ route('reviews.index') }}" class="btn btn-outline-primary">
                                             <i class="icon-pencil"></i> Viết đánh giá
                                         </a>
                                     @else
@@ -155,7 +155,7 @@
                                     <i class="icon-star-o text-muted" style="font-size: 3rem;"></i>
                                     <p class="text-muted mt-2">Chưa có đánh giá nào cho phòng này</p>
                                     @auth
-                                        <a href="{{ route('reviews.create-room', $room->id) }}" class="btn btn-primary">
+                                        <a href="{{ route('reviews.index') }}" class="btn btn-primary">
                                             Viết đánh giá đầu tiên
                                         </a>
                                     @else
