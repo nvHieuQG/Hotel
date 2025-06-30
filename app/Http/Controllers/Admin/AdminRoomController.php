@@ -19,9 +19,16 @@ class AdminRoomController extends Controller
 
     public function index(Request $request)
     {
-        $status = $request->get('status');
-        $rooms = $this->roomService->getAllRooms($status);
-        return view('admin.rooms.index', compact('rooms'));
+        $filters = [
+            'floor' => $request->get('floor'),
+            'room_type' => $request->get('room_type'),
+            'status' => $request->get('status'),
+            'search' => $request->get('search')
+        ];
+        $rooms = $this->roomService->getAllRoomsWithFilters($filters);
+        $roomTypes = $this->roomService->getRoomTypes();
+        $floors = $this->roomService->getAvailableFloors();
+        return view('admin.rooms.index', compact('rooms','roomTypes', 'floors', 'filters'));
     }
 
     public function show($id)
