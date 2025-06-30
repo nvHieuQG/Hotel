@@ -7,6 +7,7 @@ use App\Interfaces\Services\Admin\AdminRoomServiceInterface;
 use App\Models\RoomType;
 use App\Services\Admin\AdminRoomService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class AdminRoomController extends Controller
 {
@@ -19,9 +20,45 @@ class AdminRoomController extends Controller
 
     public function index(Request $request)
     {
-        $status = $request->get('status');
-        $rooms = $this->roomService->getAllRooms($status);
-        return view('admin.rooms.index', compact('rooms'));
+        $filters = [
+            'floor' => $request->get('floor'),
+            'room_type' => $request->get('room_type'),
+            'status' => $request->get('status'),
+            'search' => $request->get('search')
+        ];
+        
+        // 1. Lấy tất cả phòng đã lọc (dưới dạng Collection)
+        $allRooms = $this->roomService->getAllRoomsWithFilters($filters);
+
+        // 2. Nhóm các phòng theo tầng
+        $roomsByFloor = $allRooms->groupBy('floor');
+
+        // 3. Tự tạo phân trang cho các tầng
+        $perPage = 5; // Hiển thị 5 tầng trên mỗi trang
+        $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
+        $currentPageItems = $roomsByFloor->slice(($currentPage - 1) * $perPage, $perPage);
+
+        $paginatedFloors = new LengthAwarePaginator(
+            $currentPageItems,
+            $roomsByFloor->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]
+        );
+
+        $roomTypes = $this->roomService->getRoomTypes();
+        $floors = $this->roomService->getAvailableFloors();
+
+        return view('admin.rooms.index', [
+            'paginatedFloors' => $paginatedFloors,
+            'roomTypes' => $roomTypes,
+            'floors' => $floors,
+            'filters' => $filters,
+            'totalRooms' => $allRooms->count()
+        ]);
     }
 
     public function show($id)
