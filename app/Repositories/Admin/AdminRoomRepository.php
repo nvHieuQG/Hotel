@@ -30,7 +30,7 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
 
     public function getAllRoomsWithFilters($filters = [])
     {
-        $query = Room::with(['roomType', 'bookings']);
+        $query = Room::with(['roomType', 'bookings', 'primaryImage']);
 
         if (!empty($filters['floor'])) {
             $query->where('floor', $filters['floor']);
@@ -59,7 +59,7 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
 
         return $query->orderBy('floor', 'asc')
                     ->orderBy('room_number', 'asc')
-                    ->paginate(50);
+                    ->get(); 
     }
 
     public function getRoomsByFloor($floor)

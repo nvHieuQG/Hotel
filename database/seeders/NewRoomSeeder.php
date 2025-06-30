@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Room;
 use App\Models\RoomType;
+use Illuminate\Support\Facades\DB;
 
 class NewRoomSeeder extends Seeder
 {
@@ -14,6 +15,11 @@ class NewRoomSeeder extends Seeder
      */
     public function run(): void
     {
+        // xoá dữ liệu cũ 
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('rooms')->truncate();
+        DB::table('room_types')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         // Đầu tiên tạo các loại phòng
         $roomTypes = [
             [
