@@ -60,7 +60,8 @@ class RoomSeeder extends Seeder
                 Room::create([
                     'room_type_id' => $type->id,
                     'room_number' => $prefixes[$index] . '-' . sprintf('%03d', $i),
-                    'status' => 'available'
+                    'status' => 'available',
+                    'floor' => $index + 1
                 ]);
             }
         }

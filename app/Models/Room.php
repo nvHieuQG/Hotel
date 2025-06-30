@@ -16,6 +16,7 @@ class Room extends Model
      */
     protected $fillable = [
         'room_type_id',
+        'floor',
         'room_number',
         'status',
         'price',
@@ -116,6 +117,47 @@ class Room extends Model
     public function getCapacityAttribute($value)
     {
         return $value ?? $this->roomType->capacity;
+    }
+
+    
+    /**
+     * Accessor để lấy tên phòng đầy đủ (Tầng + Số phòng)
+     */
+    public function getFullNameAttribute()
+    {
+        return 'Tầng ' . $this->floor . ' - Phòng ' . $this->room_number;
+    }
+
+    /**
+     * Accessor để lấy tên phòng ngắn gọn
+     */
+    public function getShortNameAttribute()
+    {
+        return $this->floor . $this->room_number;
+    }
+
+    /**
+     * Scope để lọc theo tầng
+     */
+    public function scopeByFloor($query, $floor)
+    {
+        return $query->where('floor', $floor);
+    }
+
+    /**
+     * Scope để lọc theo loại phòng
+     */
+    public function scopeByType($query, $roomTypeId)
+    {
+        return $query->where('room_type_id', $roomTypeId);
+    }
+
+    /**
+     * Scope để lọc theo trạng thái
+     */
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('status', $status);
     }
 
     /**
