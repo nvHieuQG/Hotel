@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="{{ asset('client/css/flaticon.css') }}">
     <link rel="stylesheet" href="{{ asset('client/css/icomoon.css') }}">
     <link rel="stylesheet" href="{{ asset('client/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('client/css/reviews.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         .alert-container {
             position: fixed;

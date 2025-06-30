@@ -38,6 +38,22 @@ class Room extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    /**
+     * Lấy tất cả reviews của phòng
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Lấy reviews đã được duyệt của phòng
+     */
+    public function approvedReviews()
+    {
+        return $this->reviews()->approved();
+    }
     
     /**
      * Lấy hình ảnh của phòng
@@ -142,5 +158,38 @@ class Room extends Model
     public function scopeByStatus($query, $status)
     {
         return $query->where('status', $status);
+    }
+
+    /**
+     * Lấy rating trung bình của phòng
+     */
+    public function getAverageRatingAttribute()
+    {
+        $rating = $this->approvedReviews()->avg('rating');
+        return $rating ? round($rating, 1) : 0;
+    }
+
+    /**
+     * Lấy số lượng reviews của phòng
+     */
+    public function getReviewsCountAttribute()
+    {
+        return $this->approvedReviews()->count();
+    }
+
+    /**
+     * Lấy số sao hiển thị (1-5)
+     */
+    public function getStarsAttribute()
+    {
+        return round($this->average_rating);
+    }
+
+    /**
+     * Lấy phần trăm rating (cho hiển thị progress bar)
+     */
+    public function getRatingPercentageAttribute()
+    {
+        return ($this->average_rating / 5) * 100;
     }
 } 

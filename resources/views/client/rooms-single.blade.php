@@ -65,6 +65,108 @@
                             @endif
                         </div>
 
+                        <!-- Phần đánh giá và bình luận -->
+                        <div class="col-md-12 room-single ftco-animate mb-5 reviews-section">
+                            <h4 class="mb-4">Đánh giá và bình luận</h4>
+                            
+                            <!-- Thống kê đánh giá -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="mr-3">
+                                            <h2 class="mb-0 text-primary">{{ number_format($averageRating, 1) }}</h2>
+                                            <div class="stars">
+                                                @for ($i = 1; $i <= 5; $i++)
+                                                    @if ($i <= $averageRating)
+                                                        <span class="icon-star text-warning"></span>
+                                                    @elseif ($i - $averageRating < 1)
+                                                        <span class="icon-star-half text-warning"></span>
+                                                    @else
+                                                        <span class="icon-star-o text-muted"></span>
+                                                    @endif
+                                                @endfor
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="mb-1"><strong>{{ $reviewsCount }}</strong> đánh giá</p>
+                                            <p class="mb-0 text-muted">Dựa trên {{ $reviewsCount }} đánh giá thực tế</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    @auth
+                                        <a href="{{ route('reviews.index') }}" class="btn btn-outline-primary">
+                                            <i class="icon-pencil"></i> Viết đánh giá
+                                        </a>
+                                    @else
+                                        <a href="{{ route('login') }}" class="btn btn-outline-primary">
+                                            <i class="icon-user"></i> Đăng nhập để đánh giá
+                                        </a>
+                                    @endauth
+                                </div>
+                            </div>
+
+                            <!-- Danh sách đánh giá -->
+                            @if($reviews->count() > 0)
+                                <div class="reviews-list">
+                                    @foreach($reviews as $review)
+                                        <div class="review-item border-bottom pb-3 mb-3">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="stars mr-2">
+                                                        @for ($i = 1; $i <= 5; $i++)
+                                                            @if ($i <= $review->rating)
+                                                                <span class="icon-star text-warning"></span>
+                                                            @else
+                                                                <span class="icon-star-o text-muted"></span>
+                                                            @endif
+                                                        @endfor
+                                                    </div>
+                                                    <span class="text-muted">{{ $review->rating }}/5</span>
+                                                </div>
+                                                <small class="text-muted">{{ $review->created_at->format('d/m/Y H:i') }}</small>
+                                            </div>
+                                            
+                                            <div class="review-content">
+                                                @if($review->is_anonymous)
+                                                    <p class="mb-1"><strong>Khách hàng ẩn danh</strong></p>
+                                                @else
+                                                    <p class="mb-1"><strong>{{ $review->user->name }}</strong></p>
+                                                @endif
+                                                
+                                                @if($review->comment)
+                                                    <p class="mb-0">{{ $review->comment }}</p>
+                                                @else
+                                                    <p class="mb-0 text-muted"><em>Không có bình luận</em></p>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                
+                                <!-- Phân trang -->
+                                @if($reviews->hasPages())
+                                    <div class="d-flex justify-content-center">
+                                        {{ $reviews->links() }}
+                                    </div>
+                                @endif
+                            @else
+                                <div class="text-center py-4">
+                                    <i class="icon-star-o text-muted" style="font-size: 3rem;"></i>
+                                    <p class="text-muted mt-2">Chưa có đánh giá nào cho phòng này</p>
+                                    @auth
+                                        <a href="{{ route('reviews.index') }}" class="btn btn-primary">
+                                            Viết đánh giá đầu tiên
+                                        </a>
+                                    @else
+                                        <a href="{{ route('login') }}" class="btn btn-primary">
+                                            Đăng nhập để đánh giá
+                                        </a>
+                                    @endauth
+                                </div>
+                            @endif
+                        </div>
+
                         <div class="col-md-12 room-single ftco-animate mb-5 mt-5">
                             <h4 class="mb-4">Các phòng khác cùng loại</h4>
                             <div class="row">

@@ -33,6 +33,12 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\RoomRepository::class
         );
 
+        // Review Repository Binding
+        $this->app->bind(
+            \App\Interfaces\Repositories\ReviewRepositoryInterface::class,
+            \App\Repositories\ReviewRepository::class
+        );
+
         // Admin Repository Bindings
         $this->app->bind(
             \App\Interfaces\Repositories\Admin\AdminBookingRepositoryInterface::class,
@@ -49,6 +55,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \App\Interfaces\Services\BookingServiceInterface::class,
             \App\Services\BookingService::class
+        );
+
+        // Review Service Binding
+        $this->app->bind(
+            \App\Services\ReviewService::class,
+            function ($app) {
+                return new \App\Services\ReviewService(
+                    $app->make(\App\Interfaces\Repositories\ReviewRepositoryInterface::class)
+                );
+            }
         );
 
         // Admin Service Bindings

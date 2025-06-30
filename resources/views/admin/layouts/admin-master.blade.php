@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Admin Reviews CSS -->
+    <link rel="stylesheet" href="{{ asset('admin/css/reviews.css') }}">
     <!-- Custom CSS -->
     <style>
         :root {
@@ -667,6 +669,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="#">
                                 <i class="fas fa-users"></i> Người dùng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" href="{{ route('admin.reviews.index') }}">
+                                <i class="fas fa-star"></i> Đánh giá
                             </a>
                         </li>
                         <li class="nav-item">

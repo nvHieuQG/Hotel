@@ -30,6 +30,55 @@ class BookingRepository implements BookingRepositoryInterface
     }
 
     /**
+     * Lấy các booking đã hoàn thành và chưa đánh giá của người dùng
+     *
+     * @param int $userId
+     * @return Collection
+     */
+    public function getCompletedBookingsWithoutReview(int $userId): Collection
+    {
+        return $this->model->where('user_id', $userId)
+            ->where('status', 'completed')
+            ->whereDoesntHave('review')
+            ->with(['room.roomType'])
+            ->latest()
+            ->get();
+    }
+
+    /**
+     * Lấy các booking đã hoàn thành của người dùng (có thể đã đánh giá hoặc chưa)
+     *
+     * @param int $userId
+     * @return Collection
+     */
+    public function getCompletedBookings(int $userId): Collection
+    {
+        return $this->model->where('user_id', $userId)
+            ->where('status', 'completed')
+            ->with(['room.roomType', 'review'])
+            ->latest()
+            ->get();
+    }
+
+    /**
+     * Kiểm tra xem booking có thể đánh giá không
+     *
+     * @param int $bookingId
+     * @param int $userId
+     * @return bool
+     */
+    public function canBeReviewed(int $bookingId, int $userId): bool
+    {
+        $booking = $this->model->where('id', $bookingId)
+            ->where('user_id', $userId)
+            ->where('status', 'completed')
+            ->whereDoesntHave('review')
+            ->first();
+
+        return $booking !== null;
+    }
+
+    /**
      * Tạo đặt phòng mới
      *
      * @param array $data

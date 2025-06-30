@@ -49,6 +49,14 @@ class Booking extends Model
     {
         return $this->belongsTo(Room::class);
     }
+
+    /**
+     * Get the review for this booking.
+     */
+    public function review()
+    {
+        return $this->hasOne(Review::class);
+    }
     
     /**
      * Accessor for check_in
@@ -81,5 +89,45 @@ class Booking extends Model
     {
         // Mặc định là 2 khách nếu không có thông tin
         return 2;
+    }
+
+    /**
+     * Kiểm tra xem booking đã hoàn thành chưa (check-out xong)
+     */
+    public function isCompleted()
+    {
+        return $this->status === 'completed' || 
+               ($this->check_out_date && $this->check_out_date->isPast());
+    }
+
+    /**
+     * Kiểm tra xem booking có thể đánh giá không
+     */
+    public function canBeReviewed()
+    {
+        return $this->isCompleted() && !$this->review;
+    }
+
+    /**
+     * Kiểm tra xem booking đã được đánh giá chưa
+     */
+    public function hasReview()
+    {
+        return $this->review()->exists();
+    }
+
+    /**
+     * Lấy trạng thái hiển thị
+     */
+    public function getStatusTextAttribute()
+    {
+        return match($this->status) {
+            'pending' => 'Chờ xác nhận',
+            'confirmed' => 'Đã xác nhận',
+            'checked_in' => 'Đã check-in',
+            'completed' => 'Đã hoàn thành',
+            'cancelled' => 'Đã hủy',
+            default => 'Không xác định'
+        };
     }
 } 

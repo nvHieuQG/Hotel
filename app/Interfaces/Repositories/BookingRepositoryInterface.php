@@ -16,6 +16,31 @@ interface BookingRepositoryInterface
     public function getByUserId(int $userId): Collection;
 
     /**
+     * Lấy các booking đã hoàn thành và chưa đánh giá của người dùng
+     *
+     * @param int $userId
+     * @return Collection
+     */
+    public function getCompletedBookingsWithoutReview(int $userId): Collection;
+
+    /**
+     * Lấy các booking đã hoàn thành của người dùng (có thể đã đánh giá hoặc chưa)
+     *
+     * @param int $userId
+     * @return Collection
+     */
+    public function getCompletedBookings(int $userId): Collection;
+
+    /**
+     * Kiểm tra xem booking có thể đánh giá không
+     *
+     * @param int $bookingId
+     * @param int $userId
+     * @return bool
+     */
+    public function canBeReviewed(int $bookingId, int $userId): bool;
+
+    /**
      * Tạo đặt phòng mới
      *
      * @param array $data

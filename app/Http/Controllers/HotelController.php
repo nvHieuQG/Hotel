@@ -4,14 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Interfaces\Repositories\RoomRepositoryInterface;
+use App\Services\ReviewService;
 
 class HotelController extends Controller
 {
     protected $roomRepository;
+    protected $reviewService;
 
-    public function __construct(RoomRepositoryInterface $roomRepository)
+    public function __construct(RoomRepositoryInterface $roomRepository, ReviewService $reviewService)
     {
         $this->roomRepository = $roomRepository;
+        $this->reviewService = $reviewService;
     }
 
     public function index()
@@ -68,7 +71,12 @@ class HotelController extends Controller
             ->where('id', '!=', $room->id)
             ->take(2);
         
-        return view('client.rooms-single', compact('room', 'relatedRooms'));
+        // Lấy đánh giá và bình luận của phòng
+        $reviews = $this->reviewService->getRoomReviews($room->id, 10);
+        $averageRating = $this->reviewService->getRoomAverageRating($room->id);
+        $reviewsCount = $this->reviewService->getRoomReviewsCount($room->id);
+        
+        return view('client.rooms-single', compact('room', 'relatedRooms', 'reviews', 'averageRating', 'reviewsCount'));
     }
 
     public function blogSingle()

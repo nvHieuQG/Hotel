@@ -108,6 +108,37 @@ class BookingService implements BookingServiceInterface
     }
 
     /**
+     * Lấy các booking đã hoàn thành và chưa đánh giá của người dùng hiện tại
+     *
+     * @return Collection
+     */
+    public function getCompletedBookingsWithoutReview(): Collection
+    {
+        return $this->bookingRepository->getCompletedBookingsWithoutReview(Auth::id());
+    }
+
+    /**
+     * Lấy các booking đã hoàn thành của người dùng hiện tại
+     *
+     * @return Collection
+     */
+    public function getCompletedBookings(): Collection
+    {
+        return $this->bookingRepository->getCompletedBookings(Auth::id());
+    }
+
+    /**
+     * Kiểm tra xem booking có thể đánh giá không
+     *
+     * @param int $bookingId
+     * @return bool
+     */
+    public function canBeReviewed(int $bookingId): bool
+    {
+        return $this->bookingRepository->canBeReviewed($bookingId, Auth::id());
+    }
+
+    /**
      * Hủy đặt phòng
      *
      * @param int $bookingId
