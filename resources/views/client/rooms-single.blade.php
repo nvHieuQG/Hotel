@@ -27,7 +27,7 @@
                 <div class="col-lg-8">
                     <div class="row">
                         <div class="col-md-12 ftco-animate">
-                            <h2 class="mb-4">{{ $room->roomType->name }} - {{ $room->room_number }}</h2>
+                            <h2 class="mb-4">{{ $room->roomType->name }}</h2>
                             <div class="single-slider owl-carousel">
                                 <div class="item">
                                     <div class="room-img" style="background-image: url('/client/images/room-1.jpg');"></div>
@@ -50,12 +50,9 @@
                             <div class="d-md-flex mt-5 mb-5">
                                 <ul class="list">
                                     <li><span>Sức chứa tối đa:</span> {{ $room->capacity }} người</li>
-                                    <li><span>Phòng số:</span> {{ $room->room_number }}</li>
                                 </ul>
                                 <ul class="list ml-md-5">
                                     <li><span>Loại phòng:</span> {{ $room->roomType->name }}</li>
-                                    <li><span>Trạng thái:</span>
-                                        {{ $room->status == 'available' ? 'Còn trống' : 'Đã đặt' }}</li>
                                 </ul>
                             </div>
                             @if ($room->status == 'available')
@@ -182,8 +179,7 @@
                                             </a>
                                             <div class="text p-3 text-center">
                                                 <h3 class="mb-3"><a
-                                                        href="{{ route('rooms-single', $relRoom->id) }}">{{ $relRoom->roomType->name }}
-                                                        - {{ $relRoom->room_number }}</a></h3>
+                                                        href="{{ route('rooms-single', $relRoom->id) }}">{{ $relRoom->roomType->name }}</a></h3>
                                                 <p><span class="price mr-2">{{ number_format($relRoom->price) }}đ</span>
                                                     <span class="per">mỗi đêm</span></p>
                                                 <hr>
@@ -213,10 +209,10 @@
                     <div class="sidebar-box ftco-animate">
                         <div class="categories">
                             <h3>Loại phòng</h3>
-                            @foreach (\App\Models\RoomType::all() as $type)
+                            @foreach ($roomTypes as $type)
                                 <li>
                                     <a href="{{ route('rooms.search', ['type' => $type->id]) }}">
-                                        {{ $type->name }} <span>({{ $type->rooms->count() }})</span>
+                                        {{ $type->name }}
                                     </a>
                                 </li>
                             @endforeach

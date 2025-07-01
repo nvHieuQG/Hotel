@@ -2,27 +2,31 @@
 
 namespace App\Services;
 
-use App\Interfaces\Repositories\BookingRepositoryInterface;
-use App\Interfaces\Repositories\RoomRepositoryInterface;
-use App\Interfaces\Services\BookingServiceInterface;
 use App\Models\Booking;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Str;
+use App\Interfaces\Services\BookingServiceInterface;
+use App\Interfaces\Repositories\RoomRepositoryInterface;
+use App\Interfaces\Repositories\BookingRepositoryInterface;
+use App\Interfaces\Repositories\RoomTypeRepositoryInterface;
 
 class BookingService implements BookingServiceInterface
 {
     protected $bookingRepository;
     protected $roomRepository;
+    protected $roomTypeRepository;
 
     public function __construct(
         BookingRepositoryInterface $bookingRepository,
-        RoomRepositoryInterface $roomRepository
+        RoomRepositoryInterface $roomRepository,
+        RoomTypeRepositoryInterface $roomTypeRepository
     ) {
         $this->bookingRepository = $bookingRepository;
         $this->roomRepository = $roomRepository;
+        $this->roomTypeRepository = $roomTypeRepository;
     }
 
     /**
@@ -41,12 +45,12 @@ class BookingService implements BookingServiceInterface
             ]);
         }
 
-        // Lấy danh sách phòng
-        $rooms = $this->roomRepository->getAll();
+        // Lấy danh sách loại phòng
+        $roomTypes = $this->roomTypeRepository->getAllRoomTypes();
 
         return [
             'user' => $user,
-            'rooms' => $rooms
+            'roomTypes' => $roomTypes
         ];
     }
 
@@ -60,7 +64,7 @@ class BookingService implements BookingServiceInterface
     {
         // Xác thực dữ liệu
         $validator = Validator::make($data, [
-            'room_id' => 'required|exists:rooms,id',
+            'room_type_id' => 'required|exists:room_types,id',
             'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
             'guests' => 'required|integer|min:1',
@@ -72,30 +76,44 @@ class BookingService implements BookingServiceInterface
             throw new ValidationException($validator);
         }
 
-        // Tính toán tổng tiền
-        $room = $this->roomRepository->findById($data['room_id']);
         $checkIn = new \DateTime($data['check_in']);
         $checkOut = new \DateTime($data['check_out']);
-        $nights = $checkIn->diff($checkOut)->days;
-        $totalPrice = $room->price * $nights;
 
-        // Tạo booking ID duy nhất
+        // Lấy phòng còn trống thuộc loại đã chọn
+        $availableRoom = $this->roomRepository->findAvailableRoomByType(
+            $data['room_type_id'],
+            $data['check_in'],
+            $data['check_out']
+        );
+
+        if (!$availableRoom) {
+            throw ValidationException::withMessages([
+                'room' => ['Hiện không còn phòng trống cho loại phòng này trong thời gian đã chọn.'],
+            ]);
+        }
+
+        // Tính tiền
+        $nights = $checkIn->diff($checkOut)->days;
+        $totalPrice = $availableRoom->roomType->price * $nights;
+
+        // Tạo booking ID
         $bookingId = 'BK' . date('ymd') . strtoupper(Str::random(5));
 
-        // Chuẩn bị dữ liệu
         $bookingData = [
             'user_id' => Auth::id(),
             'booking_id' => $bookingId,
-            'room_id' => $data['room_id'],
+            'room_id' => $availableRoom->id,
             'check_in_date' => $data['check_in'],
             'check_out_date' => $data['check_out'],
             'price' => $totalPrice,
-            'status' => 'pending'
+            'status' => 'pending',
+            'phone' => $data['phone'] ?? null,
+            'notes' => $data['notes'] ?? null,
         ];
 
-        // Tạo đặt phòng
         return $this->bookingRepository->create($bookingData);
     }
+
 
     /**
      * Lấy danh sách đặt phòng của người dùng hiện tại

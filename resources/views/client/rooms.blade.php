@@ -30,13 +30,13 @@
                 {{-- Danh sách phòng được tìm thấy --}}
                 <div class="col-lg-9">
                     <div class="row">
-                        @if ($rooms->count() > 0)
+                        @if ($roomTypes->count() > 0)
                             {{-- Duyệt qua từng phòng nếu có kết quả --}}
-                            @foreach ($rooms as $room)
+                            @foreach ($roomTypes as $type)
                                 <div class="col-sm col-md-6 col-lg-4 ftco-animate">
                                     <div class="room">
                                         {{-- Đường dẫn và hình ảnh phòng --}}
-                                        <a href="{{ route('rooms-single', $room->id) }}"
+                                        <a href="{{ route('rooms-single', $type->id) }}"
                                             class="img d-flex justify-content-center align-items-center"
                                             style="background-image: url(client/images/room-{{ ($loop->iteration % 6) + 1 }}.jpg);">
                                             <div class="icon d-flex justify-content-center align-items-center">
@@ -45,27 +45,23 @@
                                         </a>
                                         <div class="text p-3 text-center">
                                             <h3 class="mb-3">
-                                                <a href="{{ route('rooms-single', $room->id) }}">
-                                                    {{ $room->roomType->name }}
+                                                <a href="{{ route('rooms-single', $type->id) }}">
+                                                    {{ $type->name }}
                                                 </a>
                                             </h3>
                                             <p>
-                                                <span class="price mr-2">{{ number_format($room->roomType->price) }}đ</span>
+                                                <span class="price mr-2">{{ number_format($type->price) }}đ</span>
                                                 <span class="per">mỗi đêm</span>
                                             </p>
                                             <ul class="list">
-                                                <li><span>Sức chứa:</span> {{ $room->capacity }} Người</li>
-                                                <li><span>Phòng số:</span> {{ $room->room_number }}</li>
-                                                <li><span>Trạng thái:</span>
-                                                    {{ $room->status == 'available' ? 'Còn trống' : 'Đã đặt' }}
-                                                </li>
+                                                <li><span>Sức chứa:</span> {{ $type->capacity }} Người</li>
                                             </ul>
                                             <hr>
                                             <p class="pt-1">
-                                                <a href="{{ route('rooms-single', $room->id) }}" class="btn-custom">
+                                                <a href="{{ route('rooms-single', $type->id) }}" class="btn-custom">
                                                     Chi tiết <span class="icon-long-arrow-right"></span>
                                                 </a>
-                                                @if ($room->status == 'available')
+                                                @if ($type->status == 'available')
                                                     <a href="{{ route('booking') }}" class="btn-custom ml-2">
                                                         Đặt ngay <span class="icon-long-arrow-right"></span>
                                                     </a>

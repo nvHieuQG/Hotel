@@ -237,8 +237,6 @@
                             <p><span class="price mr-2">{{ number_format($room->price) }}đ</span> <span class="per">mỗi đêm</span></p>
                             <ul class="list">
                                 <li><span>Sức chứa:</span> {{ $room->capacity }} Người</li>
-                                <li><span>Phòng số:</span> {{ $room->room_number }}</li>
-                                <li><span>Trạng thái:</span> {{ $room->status == 'available' ? 'Còn trống' : 'Đã đặt' }}</li>
                             </ul>
                             <hr>
                             <p class="pt-1">
