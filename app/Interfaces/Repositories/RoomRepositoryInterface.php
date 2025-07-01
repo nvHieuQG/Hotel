@@ -37,4 +37,7 @@ interface RoomRepositoryInterface
      * @return Collection
      */
     public function search(array $filters);
+
+    public function findAvailableRoomByType(int $roomTypeId, string $checkIn, string $checkOut): ?Room;
+
 }

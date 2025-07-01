@@ -114,6 +114,16 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Services\Admin\AdminRoomTypeServiceInterface::class,
             \App\Services\Admin\AdminRoomTypeService::class
         );
+        
+        $this->app->bind(
+            \App\Interfaces\Repositories\RoomTypeRepositoryInterface::class,
+            \App\Repositories\RoomTypeRepository::class
+        );
+        $this->app->bind(
+            \App\Interfaces\Services\RoomTypeServiceInterface::class,
+            \App\Services\RoomTypeService::class
+        );
+        
     }
 
     /**

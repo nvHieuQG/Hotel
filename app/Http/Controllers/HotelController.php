@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Interfaces\Repositories\RoomRepositoryInterface;
 use App\Services\ReviewService;
+use App\Interfaces\Services\RoomTypeServiceInterface;
+use App\Interfaces\Repositories\RoomRepositoryInterface;
 
 class HotelController extends Controller
 {
     protected $roomRepository;
     protected $reviewService;
-
-    public function __construct(RoomRepositoryInterface $roomRepository, ReviewService $reviewService)
+    protected $roomTypeService;
+    
+    public function __construct(RoomRepositoryInterface $roomRepository, ReviewService $reviewService, RoomTypeServiceInterface $roomTypeService)
     {
         $this->roomRepository = $roomRepository;
         $this->reviewService = $reviewService;
+        $this->roomTypeService = $roomTypeService;
     }
 
     public function index()
@@ -28,7 +31,8 @@ class HotelController extends Controller
     {
         // Lấy tất cả phòng để hiển thị ở trang danh sách phòng
         $rooms = $this->roomRepository->getAll();
-        return view('client.rooms', compact('rooms'));
+        $roomTypes = $this->roomTypeService->getAllRoomTypes();
+        return view('client.rooms', compact('rooms', 'roomTypes'));
     }
 
     public function restaurant()
@@ -75,8 +79,9 @@ class HotelController extends Controller
         $reviews = $this->reviewService->getRoomReviews($room->id, 10);
         $averageRating = $this->reviewService->getRoomAverageRating($room->id);
         $reviewsCount = $this->reviewService->getRoomReviewsCount($room->id);
-        
-        return view('client.rooms-single', compact('room', 'relatedRooms', 'reviews', 'averageRating', 'reviewsCount'));
+
+        $roomTypes = $this->roomTypeService->getAllRoomTypes();
+        return view('client.rooms-single', compact('room', 'relatedRooms', 'reviews', 'averageRating', 'reviewsCount', 'roomTypes'));
     }
 
     public function blogSingle()
