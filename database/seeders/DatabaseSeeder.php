@@ -63,7 +63,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             NewRoomSeeder::class,
-            RoomSeeder::class,
             ReviewSeeder::class,
         ]);
     }

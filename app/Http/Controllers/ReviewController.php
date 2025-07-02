@@ -40,7 +40,7 @@ class ReviewController extends Controller
     public function create($bookingId)
     {
         // Kiểm tra xem booking có thể đánh giá không
-        if (!$this->bookingService->canBeReviewed($bookingId)) {
+        if (!$this->bookingService->canBeReviewed((int)$bookingId)) {
             return redirect()->route('reviews.index')
                 ->with('error', 'Booking này không thể đánh giá hoặc đã được đánh giá rồi.');
         }
@@ -84,7 +84,7 @@ class ReviewController extends Controller
     {
         try {
             // Kiểm tra xem booking có thể đánh giá không
-            if (!$this->bookingService->canBeReviewed($bookingId)) {
+            if (!$this->bookingService->canBeReviewed((int)$bookingId)) {
                 return redirect()->route('reviews.index')
                     ->with('error', 'Booking này không thể đánh giá hoặc đã được đánh giá rồi.');
             }
@@ -189,5 +189,58 @@ class ReviewController extends Controller
     {
         $reviews = $this->reviewService->getUserReviews(10);
         return view('client.reviews.my-reviews', compact('reviews'));
+    }
+
+    /**
+     * Hiển thị chi tiết review cho người dùng
+     */
+    public function show($id)
+    {
+        $review = $this->reviewService->getReviewById($id);
+        // Kiểm tra quyền truy cập: chỉ cho phép user xem review của chính mình
+        if (!$review || $review->user_id !== Auth::id()) {
+            return redirect()->route('reviews.index')
+                ->with('error', 'Không tìm thấy review hoặc không có quyền truy cập.');
+        }
+
+        return view('client.reviews.show', compact('review'));
+    }
+    
+    /**
+     * Lưu review qua AJAX
+     */
+    public function storeAjax(Request $request)
+    {
+        try {
+            $roomId = $request->input('room_id');
+            
+            // Kiểm tra xem user đã có booking hoàn thành cho phòng này chưa
+            $booking = Booking::where('room_id', $roomId)
+                ->where('user_id', Auth::id())
+                ->where('status', 'completed')
+                ->whereDoesntHave('review')
+                ->first();
+                
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn chưa có booking hoàn thành cho phòng này hoặc đã đánh giá rồi.'
+                ], 400);
+            }
+            
+            $validatedData = $this->reviewService->validateReviewData($request->all());
+            $this->reviewService->createReviewFromBooking($validatedData, $booking->id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Đánh giá đã được gửi thành công!'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 } 

@@ -92,76 +92,126 @@
                                 </div>
                                 <div class="col-md-6 text-right">
                                     @auth
-                                        <a href="{{ route('reviews.index') }}" class="btn btn-outline-primary">
-                                            <i class="icon-pencil"></i> Viết đánh giá
-                                        </a>
+                                        @if(isset($canReview) && $canReview)
+                                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#reviewModal">
+                                                <i class="icon-pencil"></i> Viết đánh giá
+                                            </button>
+                                        @else
+                                            <span class="text-muted">
+                                                <i class="icon-info"></i> Cần đặt phòng và hoàn thành để đánh giá
+                                            </span>
+                                        @endif
                                     @else
-                                        <a href="{{ route('login') }}" class="btn btn-outline-primary">
+                                        <a href="{{ route('login') }}?redirect={{ urlencode(request()->url()) }}" class="btn btn-outline-primary">
                                             <i class="icon-user"></i> Đăng nhập để đánh giá
                                         </a>
                                     @endauth
                                 </div>
                             </div>
 
-                            <!-- Danh sách đánh giá -->
-                            @if($reviews->count() > 0)
-                                <div class="reviews-list">
-                                    @foreach($reviews as $review)
-                                        <div class="review-item border-bottom pb-3 mb-3">
-                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="stars mr-2">
-                                                        @for ($i = 1; $i <= 5; $i++)
-                                                            @if ($i <= $review->rating)
-                                                                <span class="icon-star text-warning"></span>
-                                                            @else
-                                                                <span class="icon-star-o text-muted"></span>
-                                                            @endif
-                                                        @endfor
+                            <!-- Form đánh giá (chỉ hiển thị khi đã đăng nhập và có booking hoàn thành) -->
+                            @auth
+                                @if(isset($canReview) && $canReview)
+                                    <div class="review-form mb-4">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Viết đánh giá của bạn</h5>
+                                                <form id="reviewForm" data-room-id="{{ $room->id }}">
+                                                    @csrf
+                                                    <div class="form-group">
+                                                        <label>Điểm đánh giá:</label>
+                                                        <div class="rating-input">
+                                                            @for ($i = 5; $i >= 1; $i--)
+                                                                <input type="radio" name="rating" value="{{ $i }}" id="star{{ $i }}" class="rating-radio">
+                                                                <label for="star{{ $i }}" class="rating-star">☆</label>
+                                                            @endfor
+                                                        </div>
                                                     </div>
-                                                    <span class="text-muted">{{ $review->rating }}/5</span>
-                                                </div>
-                                                <small class="text-muted">{{ $review->created_at->format('d/m/Y H:i') }}</small>
-                                            </div>
-                                            
-                                            <div class="review-content">
-                                                @if($review->is_anonymous)
-                                                    <p class="mb-1"><strong>Khách hàng ẩn danh</strong></p>
-                                                @else
-                                                    <p class="mb-1"><strong>{{ $review->user->name }}</strong></p>
-                                                @endif
-                                                
-                                                @if($review->comment)
-                                                    <p class="mb-0">{{ $review->comment }}</p>
-                                                @else
-                                                    <p class="mb-0 text-muted"><em>Không có bình luận</em></p>
-                                                @endif
+                                                    <div class="form-group">
+                                                        <label for="comment">Bình luận:</label>
+                                                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <div class="custom-control custom-checkbox">
+                                                            <input type="checkbox" class="custom-control-input" id="is_anonymous" name="is_anonymous">
+                                                            <label class="custom-control-label" for="is_anonymous">Đánh giá ẩn danh</label>
+                                                        </div>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="icon-paper-plane"></i> Gửi đánh giá
+                                                    </button>
+                                                </form>
                                             </div>
                                         </div>
-                                    @endforeach
-                                </div>
-                                
-                                <!-- Phân trang -->
-                                @if($reviews->hasPages())
-                                    <div class="d-flex justify-content-center">
-                                        {{ $reviews->links() }}
                                     </div>
                                 @endif
-                            @else
-                                <div class="text-center py-4">
-                                    <i class="icon-star-o text-muted" style="font-size: 3rem;"></i>
-                                    <p class="text-muted mt-2">Chưa có đánh giá nào cho phòng này</p>
-                                    @auth
-                                        <a href="{{ route('reviews.index') }}" class="btn btn-primary">
-                                            Viết đánh giá đầu tiên
-                                        </a>
-                                    @else
-                                        <a href="{{ route('login') }}" class="btn btn-primary">
-                                            Đăng nhập để đánh giá
-                                        </a>
-                                    @endauth
-                                </div>
-                            @endif
+                            @endauth
+
+                            <!-- Danh sách đánh giá -->
+                            <div id="reviewsList">
+                                @if($reviews->count() > 0)
+                                    <div class="reviews-list">
+                                        @foreach($reviews as $review)
+                                            <div class="review-item border-bottom pb-3 mb-3">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="stars mr-2">
+                                                            @for ($i = 1; $i <= 5; $i++)
+                                                                @if ($i <= $review->rating)
+                                                                    <span class="icon-star text-warning"></span>
+                                                                @else
+                                                                    <span class="icon-star-o text-muted"></span>
+                                                                @endif
+                                                            @endfor
+                                                        </div>
+                                                        <span class="text-muted">{{ $review->rating }}/5</span>
+                                                    </div>
+                                                    <small class="text-muted">{{ $review->created_at->format('d/m/Y H:i') }}</small>
+                                                </div>
+                                                
+                                                <div class="review-content">
+                                                    @if($review->is_anonymous)
+                                                        <p class="mb-1"><strong>Khách hàng ẩn danh</strong></p>
+                                                    @else
+                                                        <p class="mb-1"><strong>{{ $review->user->name }}</strong></p>
+                                                    @endif
+                                                    
+                                                    @if($review->comment)
+                                                        <p class="mb-0">{{ $review->comment }}</p>
+                                                    @else
+                                                        <p class="mb-0 text-muted"><em>Không có bình luận</em></p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    
+                                    <!-- Phân trang -->
+                                    @if($reviews->hasPages())
+                                        <div class="d-flex justify-content-center">
+                                            {{ $reviews->links() }}
+                                        </div>
+                                    @endif
+                                @else
+                                    <div class="text-center py-4">
+                                        <i class="icon-star-o text-muted" style="font-size: 3rem;"></i>
+                                        <p class="text-muted mt-2">Chưa có đánh giá nào cho phòng này</p>
+                                        @auth
+                                            @if(isset($canReview) && $canReview)
+                                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#reviewModal">
+                                                    Viết đánh giá đầu tiên
+                                                </button>
+                                            @else
+                                                <span class="text-muted">Cần đặt phòng và hoàn thành để đánh giá</span>
+                                            @endif
+                                        @else
+                                            <a href="{{ route('login') }}?redirect={{ urlencode(request()->url()) }}" class="btn btn-primary">
+                                                Đăng nhập để đánh giá
+                                            </a>
+                                        @endauth
+                                    </div>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="col-md-12 room-single ftco-animate mb-5 mt-5">
@@ -251,4 +301,136 @@
             </div>
         </div>
     </section>
+@endsection
+
+@section('styles')
+<!-- CSS cho reviews đã được include trong master layout -->
+@endsection
+
+@section('scripts')
+<script>
+$(document).ready(function() {
+    // Xử lý form đánh giá
+    $('#reviewForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const form = $(this);
+        const roomId = form.data('room-id');
+        const submitBtn = form.find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        
+        // Disable button và hiển thị loading
+        submitBtn.prop('disabled', true).html('<i class="icon-spinner"></i> Đang gửi...');
+        
+        // Lấy dữ liệu form
+        const formData = new FormData(this);
+        formData.append('room_id', roomId);
+        
+        // Gửi request AJAX
+        fetch('/reviews/store-ajax', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hiển thị thông báo thành công
+                showAlert('Đánh giá đã được gửi thành công!', 'success');
+                
+                // Reset form
+                form[0].reset();
+                $('.rating-star').removeClass('text-warning').addClass('text-muted');
+                
+                // Reload danh sách đánh giá
+                loadReviews(roomId);
+            } else {
+                showAlert(data.message || 'Có lỗi xảy ra khi gửi đánh giá!', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Có lỗi xảy ra khi gửi đánh giá!', 'danger');
+        })
+        .finally(() => {
+            // Enable button và khôi phục text
+            submitBtn.prop('disabled', false).html(originalText);
+        });
+    });
+    
+    // Xử lý hover rating stars
+    $('.rating-star').hover(
+        function() {
+            const rating = $(this).attr('for').replace('star', '');
+            highlightStars(rating);
+        },
+        function() {
+            const selectedRating = $('input[name="rating"]:checked').val();
+            if (selectedRating) {
+                highlightStars(selectedRating);
+            } else {
+                $('.rating-star').removeClass('text-warning').addClass('text-muted');
+            }
+        }
+    );
+    
+    // Xử lý click rating stars
+    $('.rating-star').click(function() {
+        const rating = $(this).attr('for').replace('star', '');
+        $('input[name="rating"]').val([rating]);
+        highlightStars(rating);
+    });
+});
+
+function highlightStars(rating) {
+    $('.rating-star').removeClass('text-warning').addClass('text-muted');
+    for (let i = 1; i <= rating; i++) {
+        $(`label[for="star${i}"]`).removeClass('text-muted').addClass('text-warning');
+    }
+}
+
+function loadReviews(roomId) {
+    fetch(`/rooms/${roomId}/reviews-ajax`)
+        .then(response => response.text())
+        .then(html => {
+            $('#reviewsList').html(html);
+        })
+        .catch(error => {
+            console.error('Error loading reviews:', error);
+        });
+}
+
+function showAlert(message, type) {
+    const alertContainer = $('.alert-container');
+    if (alertContainer.length === 0) {
+        $('body').append('<div class="alert-container"></div>');
+    }
+    
+    const alert = $(`
+        <div class="custom-alert alert-${type}">
+            <button type="button" class="close-alert">&times;</button>
+            ${message}
+        </div>
+    `);
+    
+    $('.alert-container').append(alert);
+    
+    // Tự động ẩn sau 5 giây
+    setTimeout(() => {
+        alert.fadeOut(300, function() {
+            $(this).remove();
+        });
+    }, 5000);
+    
+    // Xử lý nút đóng
+    alert.find('.close-alert').click(function() {
+        alert.fadeOut(300, function() {
+            $(this).remove();
+        });
+    });
+}
+</script>
 @endsection

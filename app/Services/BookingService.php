@@ -116,13 +116,14 @@ class BookingService implements BookingServiceInterface
 
 
     /**
-     * Lấy danh sách đặt phòng của người dùng hiện tại
+     * Lấy danh sách đặt phòng của người dùng hiện tại (có phân trang)
      *
-     * @return Collection
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function getCurrentUserBookings(): Collection
+    public function getCurrentUserBookings($perPage = 10)
     {
-        return $this->bookingRepository->getByUserId(Auth::id());
+        return $this->bookingRepository->getByUserIdPaginate(Auth::id(), $perPage);
     }
 
     /**
@@ -188,5 +189,16 @@ class BookingService implements BookingServiceInterface
     public function getBookingDetail(int $id): Booking
     {
         return $this->bookingRepository->getDetailById($id);
+    }
+
+    /**
+     * Lấy danh sách đặt phòng theo userId
+     *
+     * @param int $userId
+     * @return Collection
+     */
+    public function getBookingsByUser(int $userId): Collection
+    {
+        return $this->bookingRepository->getByUserId($userId);
     }
 }

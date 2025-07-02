@@ -1,0 +1,122 @@
+<div class="booking-detail">
+    <div class="row">
+        <div class="col-md-6">
+            <h6 class="text-info mb-3"><i class="fas fa-calendar-check mr-2"></i>Thông Tin Đặt Phòng</h6>
+            <table class="table table-borderless">
+                <tr>
+                    <td><strong>Mã đặt phòng:</strong></td>
+                    <td>{{ $booking->booking_id }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Phòng:</strong></td>
+                    <td>{{ $booking->room->name }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Loại phòng:</strong></td>
+                    <td>{{ $booking->room->roomType->name }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Ngày check-in:</strong></td>
+                    <td>{{ $booking->check_in_date->format('d/m/Y') }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Ngày check-out:</strong></td>
+                    <td>{{ $booking->check_out_date->format('d/m/Y') }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Số đêm:</strong></td>
+                    <td>{{ $booking->check_in_date->diffInDays($booking->check_out_date) }} đêm</td>
+                </tr>
+                <tr>
+                    <td><strong>Giá:</strong></td>
+                    <td class="text-primary font-weight-bold">{{ number_format($booking->price) }}đ</td>
+                </tr>
+                <tr>
+                    <td><strong>Trạng thái:</strong></td>
+                    <td>
+                        <span class="badge badge-{{ $booking->status == 'pending' ? 'warning' : ($booking->status == 'confirmed' ? 'success' : ($booking->status == 'cancelled' ? 'danger' : 'primary')) }}">
+                            {{ $booking->status_text }}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h6 class="text-info mb-3"><i class="fas fa-user mr-2"></i>Thông Tin Khách Hàng</h6>
+            <table class="table table-borderless">
+                <tr>
+                    <td><strong>Họ tên:</strong></td>
+                    <td>{{ $booking->user->name }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Email:</strong></td>
+                    <td>{{ $booking->user->email }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Số điện thoại:</strong></td>
+                    <td>{{ $booking->phone ?? 'Chưa cung cấp' }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Ghi chú:</strong></td>
+                    <td>{{ $booking->notes ?? 'Không có' }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Ngày đặt:</strong></td>
+                    <td>{{ $booking->created_at->format('d/m/Y H:i') }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    @if($booking->hasReview())
+        <hr>
+        <div class="row">
+            <div class="col-12">
+                <h6 class="text-warning mb-3"><i class="fas fa-star mr-2"></i>Đánh Giá</h6>
+                @php $review = $booking->review @endphp
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="text-warning">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <i class="fas fa-star{{ $i <= $review->rating ? '' : '-o' }}"></i>
+                                @endfor
+                                <span class="ml-2">{{ $review->rating }}/5</span>
+                            </div>
+                            <span class="badge badge-{{ $review->status == 'approved' ? 'success' : ($review->status == 'rejected' ? 'danger' : 'warning') }}">
+                                {{ $review->status_text }}
+                            </span>
+                        </div>
+                        @if($review->comment)
+                            <p class="mb-0">{{ $review->comment }}</p>
+                        @else
+                            <p class="text-muted mb-0"><em>Không có bình luận</em></p>
+                        @endif
+                        <small class="text-muted">Đánh giá ngày: {{ $review->created_at->format('d/m/Y H:i') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @else
+        <hr>
+        <div class="row">
+            <div class="col-12">
+                <h6 class="text-warning mb-3"><i class="fas fa-star mr-2"></i>Đánh Giá</h6>
+                @if ($booking->status == 'completed')
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Bạn có thể đánh giá phòng này để giúp chúng tôi cải thiện dịch vụ.
+                        <a href="{{ route('reviews.create', $booking->id) }}" class="btn btn-sm btn-primary ml-2">
+                            <i class="fas fa-star"></i> Viết đánh giá
+                        </a>
+                    </div>
+                @else
+                    <div class="alert alert-secondary">
+                        <i class="fas fa-clock mr-2"></i>
+                        Bạn chỉ có thể đánh giá sau khi hoàn thành đặt phòng.
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
+</div> 

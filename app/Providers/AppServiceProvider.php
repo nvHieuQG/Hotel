@@ -83,6 +83,16 @@ class AppServiceProvider extends ServiceProvider
             return new UserRepository($app->make('App\Models\User'));
         });
 
+        // Profile Service Binding
+        $this->app->bind(
+            \App\Interfaces\Services\ProfileServiceInterface::class,
+            function ($app) {
+                return new \App\Services\ProfileService(
+                    $app->make(\App\Interfaces\Repositories\UserRepositoryInterface::class)
+                );
+            }
+        );
+
         $this->app->bind(PasswordResetServiceInterface::class, function ($app) {
             return new PasswordResetService(
                 $app->make(UserRepositoryInterface::class)
@@ -123,7 +133,6 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Services\RoomTypeServiceInterface::class,
             \App\Services\RoomTypeService::class
         );
-        
     }
 
     /**

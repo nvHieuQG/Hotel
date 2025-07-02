@@ -56,6 +56,16 @@ class LoginController extends Controller
                 'role_name' => $user->role ? $user->role->name : 'No role'
             ]);
             
+            // Kiểm tra redirect parameter
+            if ($request->has('redirect') && $request->redirect) {
+                $redirectUrl = $request->redirect;
+                // Kiểm tra URL có hợp lệ và thuộc domain của ứng dụng
+                if (filter_var($redirectUrl, FILTER_VALIDATE_URL) && 
+                    parse_url($redirectUrl, PHP_URL_HOST) === request()->getHost()) {
+                    return redirect($redirectUrl)->with('success', 'Đăng nhập thành công!');
+                }
+            }
+            
             if ($user && $user->role) {
                 // Nếu user có role admin, super_admin hoặc staff thì chuyển đến admin dashboard
                 if (in_array($user->role->name, ['admin', 'super_admin', 'staff'])) {
