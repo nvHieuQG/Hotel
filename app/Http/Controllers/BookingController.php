@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Interfaces\Services\BookingServiceInterface;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
@@ -64,5 +65,18 @@ class BookingController extends Controller
         } catch (\Exception $e) {
             return back()->withErrors(['message' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Hiển thị chi tiết booking cho người dùng
+     */
+    public function showDetail($id)
+    {
+        $booking = $this->bookingService->getBookingDetail($id);
+        // Kiểm tra quyền truy cập: chỉ cho phép user xem booking của chính mình
+        if ($booking->user_id !== Auth::id()) {
+            abort(403, 'Bạn không có quyền xem đặt phòng này.');
+        }
+        return view('client.booking-detail', compact('booking'));
     }
 }

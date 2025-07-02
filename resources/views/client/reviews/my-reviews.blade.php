@@ -11,7 +11,7 @@
                 <div class="text">
                     <p class="breadcrumbs mb-2">
                         <span class="mr-2"><a href="{{ route('index') }}">Trang chủ</a></span>
-                        <span class="mr-2"><a href="{{ route('my-bookings') }}">Đặt phòng của tôi</a></span>
+                        <span class="mr-2"><a href="{{ route('user.bookings') }}">Đặt phòng của tôi</a></span>
                         <span>Đánh giá của tôi</span>
                     </p>
                     <h1 class="mb-4 bread">Đánh giá của tôi</h1>
@@ -25,15 +25,29 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
+                <!-- Thông báo đẹp hơn -->
                 @if (session('success'))
-                    <div class="alert alert-success">
-                        {{ session('success') }}
+                    <div class="alert alert-success d-flex align-items-center justify-content-center mb-4" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <div>{{ session('success') }}</div>
                     </div>
                 @endif
 
                 @if (session('error'))
-                    <div class="alert alert-danger">
-                        {{ session('error') }}
+                    <div class="alert alert-danger d-flex align-items-center justify-content-center mb-4" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <div>{{ session('error') }}</div>
+                    </div>
+                @endif
+
+                @if ($errors->any())
+                    <div class="alert alert-danger d-flex align-items-center justify-content-center mb-4" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
                 @endif
 
@@ -44,7 +58,7 @@
                             <a href="{{ route('reviews.index') }}" class="btn btn-outline-primary">
                                 <i class="fas fa-plus"></i> Viết đánh giá mới
                             </a>
-                            <a href="{{ route('my-bookings') }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('user.bookings') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-list"></i> Tất cả đặt phòng
                             </a>
                         </div>
@@ -127,6 +141,9 @@
                                                 @else
                                                     <span class="text-muted">Không thể chỉnh sửa</span>
                                                 @endif
+                                                <a href="{{ route('reviews.show', $review->id) }}" class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-eye"></i> Xem chi tiết
+                                                </a>
                                             </td>
                                         </tr>
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Services\ReviewService;
 use App\Interfaces\Services\RoomTypeServiceInterface;
 use App\Interfaces\Repositories\RoomRepositoryInterface;
@@ -22,9 +23,11 @@ class HotelController extends Controller
 
     public function index()
     {
-        // Lấy 6 phòng ngẫu nhiên để hiển thị ở trang chủ
-        $rooms = $this->roomRepository->getAll()->shuffle()->take(6);
-        return view('client.index', compact('rooms'));
+        // Lấy tất cả phòng để hiển thị ở trang chủ
+        $rooms = $this->roomRepository->getAll()->take(6); // Lấy 6 phòng đầu tiên
+        $roomTypes = $this->roomTypeService->getAllRoomTypes();
+        
+        return view('client.index', compact('rooms', 'roomTypes'));
     }
 
     public function rooms()
@@ -80,12 +83,40 @@ class HotelController extends Controller
         $averageRating = $this->reviewService->getRoomAverageRating($room->id);
         $reviewsCount = $this->reviewService->getRoomReviewsCount($room->id);
 
+        // Kiểm tra quyền đánh giá
+        $canReview = false;
+        if (Auth::check()) {
+            // Kiểm tra xem user đã có booking hoàn thành cho phòng này chưa
+            $completedBooking = Auth::user()->bookings()
+                ->where('room_id', $room->id)
+                ->where('status', 'completed')
+                ->first();
+            
+            $canReview = $completedBooking !== null;
+        }
+
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
-        return view('client.rooms-single', compact('room', 'relatedRooms', 'reviews', 'averageRating', 'reviewsCount', 'roomTypes'));
+        return view('client.rooms-single', compact('room', 'relatedRooms', 'reviews', 'averageRating', 'reviewsCount', 'roomTypes', 'canReview'));
     }
 
     public function blogSingle()
     {
         return view('client.blog-single');
+    }
+    
+    /**
+     * Lấy danh sách reviews của phòng qua AJAX
+     */
+    public function getRoomReviewsAjax($id)
+    {
+        $room = $this->roomRepository->findById($id);
+        
+        if (!$room) {
+            return response()->json(['error' => 'Không tìm thấy phòng'], 404);
+        }
+        
+        $reviews = $this->reviewService->getRoomReviews($room->id, 10);
+        
+        return view('client.partials.room-reviews-list', compact('reviews'))->render();
     }
 }

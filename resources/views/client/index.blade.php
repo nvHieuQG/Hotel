@@ -223,6 +223,7 @@
                     <h2 class="mb-4">Phòng Nổi Bật</h2>
                 </div>
             </div>    
+            
             <div class="row">
                 @foreach($rooms as $room)
                 <div class="col-sm col-md-6 col-lg-4 ftco-animate">
@@ -234,9 +235,14 @@
                         </a>
                         <div class="text p-3 text-center">
                             <h3 class="mb-3"><a href="{{ route('rooms-single', $room->id) }}">{{ $room->roomType->name }}</a></h3>
-                            <p><span class="price mr-2">{{ number_format($room->price) }}đ</span> <span class="per">mỗi đêm</span></p>
+                            <p><span class="price mr-2">{{ number_format($room->roomType->price) }}đ</span> <span class="per">mỗi đêm</span></p>
                             <ul class="list">
                                 <li><span>Sức chứa:</span> {{ $room->capacity }} Người</li>
+                                <li><span>Trạng thái:</span> 
+                                    <span class="badge badge-{{ $room->status == 'available' ? 'success' : 'danger' }}">
+                                        {{ $room->status == 'available' ? 'Còn trống' : 'Đã đặt' }}
+                                    </span>
+                                </li>
                             </ul>
                             <hr>
                             <p class="pt-1">

@@ -12,7 +12,7 @@
                     <p class="breadcrumbs mb-2">
                         <span class="mr-2"><a href="{{ route('index') }}">Trang chủ</a></span>
                         @auth
-                            <span class="mr-2"><a href="{{ route('my-bookings') }}">Đặt phòng của tôi</a></span>
+                            <span class="mr-2"><a href="{{ route('user.bookings') }}">Đặt phòng của tôi</a></span>
                         @else
                             <span class="mr-2"><a href="{{ route('login') }}">Đăng nhập</a></span>
                         @endauth
@@ -59,7 +59,7 @@
                                 <a href="{{ route('reviews.my-reviews') }}" class="btn btn-outline-primary">
                                     <i class="fas fa-star"></i> Đánh giá của tôi
                                 </a>
-                                <a href="{{ route('my-bookings') }}" class="btn btn-outline-secondary">
+                                <a href="{{ route('user.bookings') }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-list"></i> Tất cả đặt phòng
                                 </a>
                             @else
@@ -126,7 +126,7 @@
                                     <a href="{{ route('booking') }}" class="btn btn-primary">
                                         <i class="fas fa-calendar-plus"></i> Đặt phòng ngay
                                     </a>
-                                    <a href="{{ route('my-bookings') }}" class="btn btn-outline-secondary">
+                                    <a href="{{ route('user.bookings') }}" class="btn btn-outline-secondary">
                                         <i class="fas fa-list"></i> Xem tất cả đặt phòng
                                     </a>
                                 </div>

@@ -73,4 +73,13 @@ interface BookingRepositoryInterface
      * @return Booking|null
      */
     public function getDetailById(int $id): ?Booking;
+
+    /**
+     * Lấy tất cả đặt phòng của người dùng (có phân trang)
+     *
+     * @param int $userId
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getByUserIdPaginate(int $userId, $perPage = 10);
 }

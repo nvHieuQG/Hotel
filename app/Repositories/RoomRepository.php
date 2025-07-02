@@ -52,4 +52,15 @@ class RoomRepository implements RoomRepositoryInterface
             })
             ->first();
     }
+
+    public function getByRoomType(int $roomTypeId, int $limit = null): Collection
+    {
+        $query = $this->model->where('room_type_id', $roomTypeId)->with('roomType');
+        
+        if ($limit) {
+            $query->limit($limit);
+        }
+        
+        return $query->get();
+    }
 }

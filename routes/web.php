@@ -14,6 +14,8 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\UserProfileController;
+use Illuminate\Support\Facades\Auth;
 
 // Route::get('/', function () {
 //     return view('client.index');
@@ -68,8 +70,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Booking - Đặt phòng
     Route::get('/booking', [BookingController::class, 'booking'])->name('booking');
     Route::post('/booking', [BookingController::class, 'storeBooking']);
-    Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('my-bookings');
     Route::post('/booking/cancel/{id}', [BookingController::class, 'cancelBooking'])->name('booking.cancel');
+    Route::get('/booking/{id}/detail', [BookingController::class, 'showDetail'])->name('booking.detail');
     
     // Reviews - Đánh giá
     Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
@@ -80,25 +82,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/reviews/{id}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     Route::get('/my-reviews', [ReviewController::class, 'myReviews'])->name('reviews.my-reviews');
+    Route::get('/reviews/{id}', [ReviewController::class, 'show'])->name('reviews.show');
+    
+    // AJAX Reviews
+    Route::post('/reviews/store-ajax', [ReviewController::class, 'storeAjax'])->name('reviews.store-ajax');
+
+    // User Profile Routes (đã được di chuyển ra ngoài để chỉ cần auth, không cần verified)
+   
 });
 
 // Routes công khai cho reviews
 Route::get('/rooms/{roomId}/reviews', [ReviewController::class, 'roomReviews'])->name('reviews.room-reviews');
-
-// Test route để kiểm tra admin access
-Route::get('/test-admin', function() {
-    if (\Illuminate\Support\Facades\Auth::check()) {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        return response()->json([
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'role_id' => $user->role_id,
-            'role_name' => $user->role ? $user->role->name : 'No role',
-            'is_admin' => $user->role && in_array($user->role->name, ['admin', 'super_admin', 'staff'])
-        ]);
-    }
-    return response()->json(['error' => 'Not authenticated']);
-})->middleware('auth');
+Route::get('/rooms/{id}/reviews-ajax', [HotelController::class, 'getRoomReviewsAjax'])->name('rooms.reviews-ajax');
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
@@ -155,3 +150,24 @@ Route::get('/search-rooms', [RoomController::class, 'search'])->name('rooms.sear
 // Payment
 Route::get('/confirm-info-payment/{booking}', [PaymentController::class, 'confirmInfo'])->name('confirm-info-payment');
 Route::get('/payment-method/{booking}', [PaymentController::class, 'paymentMethod'])->name('payment-method');
+
+// User Profile Routes (chỉ cần đăng nhập, không cần xác minh email)
+Route::middleware('auth')->group(function () {
+    Route::get('/user/profile', [UserProfileController::class, 'showUserProfile'])->name('user.profile');
+    Route::post('/user/profile/update', [UserProfileController::class, 'updateUserProfile'])->name('user.profile.update');
+    Route::post('/user/profile/change-password', [UserProfileController::class, 'changeUserPassword'])->name('user.profile.change_password');
+    Route::get('/user/bookings', [UserProfileController::class, 'showUserBookings'])->name('user.bookings');
+    Route::get('/user/reviews', [UserProfileController::class, 'showUserReviews'])->name('user.reviews');
+    
+    // API routes cho AJAX loading
+    Route::get('/user/bookings/partial', [UserProfileController::class, 'getBookingsPartial'])->name('user.bookings.partial');
+    Route::get('/user/reviews/partial', [UserProfileController::class, 'getReviewsPartial'])->name('user.reviews.partial');
+    
+    // API routes cho chi tiết booking và review
+    Route::get('/user/bookings/{id}/detail', [UserProfileController::class, 'getBookingDetail'])->name('user.bookings.detail');
+    Route::get('/user/reviews/{id}/detail', [UserProfileController::class, 'getReviewDetail'])->name('user.reviews.detail');
+});
+// Admin user routes
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('users', App\Http\Controllers\Admin\AdminUserController::class)->except(['create', 'store']);
+});

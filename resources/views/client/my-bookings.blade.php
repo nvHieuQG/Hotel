@@ -21,20 +21,22 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
+                <!-- Thông báo đẹp hơn -->
                 @if (session('success'))
-                    <div class="alert alert-success">
-                        {{ session('success') }}
+                    <div class="alert alert-success d-flex align-items-center justify-content-center mb-4" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <div>{{ session('success') }}</div>
                     </div>
                 @endif
-
                 @if (session('error'))
-                    <div class="alert alert-danger">
-                        {{ session('error') }}
+                    <div class="alert alert-danger d-flex align-items-center justify-content-center mb-4" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <div>{{ session('error') }}</div>
                     </div>
                 @endif
-
                 @if ($errors->any())
-                    <div class="alert alert-danger">
+                    <div class="alert alert-danger d-flex align-items-center justify-content-center mb-4" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
                         <ul class="mb-0">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -124,6 +126,11 @@
                                                 @else
                                                     <button class="btn btn-sm btn-secondary" disabled>{{ $booking->status == 'cancelled' ? 'Đã hủy' : 'Không thể hủy' }}</button>
                                                 @endif
+                                            </td>
+                                            <td>
+                                                <a href="{{ route('booking.detail', $booking->id) }}" class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-eye"></i> Xem chi tiết
+                                                </a>
                                             </td>
                                         </tr>
                                     @endforeach

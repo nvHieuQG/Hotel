@@ -24,11 +24,12 @@ interface BookingServiceInterface
     public function createBooking(array $data): Booking;
     
     /**
-     * Lấy danh sách đặt phòng của người dùng hiện tại
+     * Lấy danh sách đặt phòng của người dùng hiện tại (có phân trang)
      *
-     * @return Collection
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function getCurrentUserBookings(): Collection;
+    public function getCurrentUserBookings($perPage = 10);
 
     /**
      * Lấy các booking đã hoàn thành và chưa đánh giá của người dùng hiện tại
