@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminSupportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\HotelController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\SupportController;
 use App\Http\Controllers\Admin\AdminUserController;
 
 use Illuminate\Support\Facades\Auth;
@@ -72,11 +74,17 @@ Route::middleware('auth')->group(function () {
 });
 
 // Routes yêu cầu xác thực email
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     // Booking - Đặt phòng
     Route::get('/booking', [BookingController::class, 'booking'])->name('booking');
     Route::post('/booking', [BookingController::class, 'storeBooking']);
     Route::post('/booking/cancel/{id}', [BookingController::class, 'cancelBooking'])->name('booking.cancel');
+
+    // Support
+    Route::get('/support', [SupportController::class, 'index'])->name('support.index');
+    Route::post('/support/ticket', [SupportController::class, 'createTicket'])->name('support.createTicket');
+    Route::get('/support/ticket/{id}', [SupportController::class, 'showTicket'])->name('support.showTicket');
+    Route::post('/support/ticket/{id}/message', [SupportController::class, 'sendMessage'])->name('support.sendMessage');
     Route::get('/booking/{id}/detail', [BookingController::class, 'showDetail'])->name('booking.detail');
 
     // AJAX Room Type Reviews - Đặt trước để tránh xung đột
@@ -107,6 +115,11 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
     // Quản lý phòng
     Route::resource('rooms', AdminRoomController::class);
+
+    Route::get('/support', [AdminSupportController::class, 'index'])->name('support.index');
+    Route::get('/support/ticket/{id}', [AdminSupportController::class, 'showTicket'])->name('support.showTicket');
+    Route::post('/support/ticket/{id}/message', [AdminSupportController::class, 'sendMessage'])->name('support.sendMessage');
+
 
     // Routes cho quản lý ảnh phòng
     Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete');

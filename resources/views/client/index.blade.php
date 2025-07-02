@@ -510,4 +510,81 @@
       </div>
     </section>
 
+    @auth
+    <!-- Chat Support Button and Chat Box (Bottom Right) -->
+    <button id="openChatModal" style="position: fixed; bottom: 30px; right: 30px; z-index: 1050; background: #007bff; color: #fff; border: none; border-radius: 50%; width: 60px; height: 60px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 28px; display: flex; align-items: center; justify-content: center;">
+        <span class="icon-chat"></span>
+    </button>
+    <div id="chatBox" style="display: none; position: fixed; bottom: 100px; right: 30px; width: 340px; max-width: 95vw; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.18); z-index: 1060; flex-direction: column; overflow: hidden;">
+      <div style="background: #007bff; color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-weight: 600;">Hỗ trợ trực tuyến</span>
+        <button id="closeChatBox" style="background: transparent; border: none; color: #fff; font-size: 22px; line-height: 1; cursor: pointer;">&times;</button>
+      </div>
+      <div id="chatMessages" style="padding: 16px; background: #f8f9fa; height: 260px; overflow-y: auto;">
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          @php
+            $ticket = Auth::user()->supportTickets()->with(['messages' => function($q){ $q->orderBy('created_at'); }])->latest()->first();
+          @endphp
+          @if($ticket && $ticket->messages->count())
+            @foreach($ticket->messages as $msg)
+              <li style="margin-bottom: 10px; text-align: {{ $msg->sender_type == 'user' ? 'right' : 'left' }};">
+                <div style="font-size: 12px; color: #888; margin-bottom: 2px;">
+                  @if($msg->sender_type == 'user')
+                    {{ $ticket->user && $msg->sender_id == $ticket->user->id ? $ticket->user->name : 'Bạn' }}
+                  @else
+                    Admin
+                  @endif
+                </div>
+                <span style="display: inline-block; background: {{ $msg->sender_type == 'user' ? '#007bff' : '#e9ecef' }}; color: {{ $msg->sender_type == 'user' ? '#fff' : '#222' }}; padding: 8px 14px; border-radius: 16px;">{{ $msg->message }}</span>
+              </li>
+            @endforeach
+          @else
+            <li style="text-align:center; color:#888;">Chưa có cuộc trò chuyện nào. Hãy gửi tin nhắn đầu tiên để tạo yêu cầu hỗ trợ!</li>
+          @endif
+        </ul>
+      </div>
+      <form id="chatForm" style="display: flex; gap: 8px; padding: 12px 16px; background: #fff; border-top: 1px solid #eee;">
+        <input type="text" id="chatInput" name="message" class="form-control" placeholder="Nhập tin nhắn..." style="flex: 1;">
+        <button type="submit" id="sendChatBtn" class="btn btn-primary">Gửi</button>
+      </form>
+      <input type="hidden" id="ticketId" value="{{ $ticket ? $ticket->id : '' }}">
+    </div>
+    <script>
+      const openBtn = document.getElementById('openChatModal');
+      const chatBox = document.getElementById('chatBox');
+      const closeBtn = document.getElementById('closeChatBox');
+      const chatInput = document.getElementById('chatInput');
+      const chatForm = document.getElementById('chatForm');
+      const chatMessages = document.querySelector('#chatMessages ul');
+      const ticketIdInput = document.getElementById('ticketId');
+      openBtn.onclick = function() {
+        chatBox.style.display = 'flex';
+        setTimeout(() => { chatInput.focus(); }, 200);
+      };
+      closeBtn.onclick = function() { chatBox.style.display = 'none'; };
+      chatForm.onsubmit = function(e) {
+        e.preventDefault();
+        const msg = chatInput.value.trim();
+        if (!msg) return;
+        const ticketId = ticketIdInput.value;
+        let url = '';
+        let data = { message: msg, _token: '{{ csrf_token() }}' };
+        if(ticketId) {
+          url = '/support/ticket/' + ticketId + '/message';
+        } else {
+          url = '/support/ticket';
+          data.subject = 'Chat hỗ trợ nhanh';
+        }
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+          body: JSON.stringify(data)
+        })
+        .then(res => res.redirected ? window.location.href = res.url : res.json())
+        .then(res => { window.location.reload(); })
+        .catch(() => { alert('Có lỗi khi gửi tin nhắn!'); });
+      };
+      chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') chatForm.dispatchEvent(new Event('submit')); });
+    </script>
+    @endauth
 @endsection
