@@ -131,9 +131,9 @@
                             </table>
                         </div>
                         
-                        <div class="d-flex justify-content-center mt-4">
+                        {{-- <div class="d-flex justify-content-center mt-4">
                             {{ $bookings->links() }}
-                        </div>
+                        </div> --}}
                     @else
                         <div class="text-center py-5">
                             <p>Bạn chưa có đặt phòng nào.</p>
