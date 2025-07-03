@@ -40,7 +40,7 @@ Route::middleware('guest')->group(function () {
     // Đăng nhập
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
-    
+
     // Đăng ký
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
@@ -53,11 +53,11 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 Route::middleware('auth')->group(function () {
     Route::get('/email/verify', [EmailVerificationController::class, 'notice'])
         ->name('verification.notice');
-        
+
     Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
-        
+
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
@@ -70,7 +70,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/booking', [BookingController::class, 'storeBooking']);
     Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('my-bookings');
     Route::post('/booking/cancel/{id}', [BookingController::class, 'cancelBooking'])->name('booking.cancel');
-    
+
     // Reviews - Đánh giá
     Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
     Route::get('/reviews/create/{bookingId}', [ReviewController::class, 'create'])->name('reviews.create');
@@ -86,7 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/rooms/{roomId}/reviews', [ReviewController::class, 'roomReviews'])->name('reviews.room-reviews');
 
 // Test route để kiểm tra admin access
-Route::get('/test-admin', function() {
+Route::get('/test-admin', function () {
     if (\Illuminate\Support\Facades\Auth::check()) {
         $user = \Illuminate\Support\Facades\Auth::user();
         return response()->json([
@@ -101,10 +101,10 @@ Route::get('/test-admin', function() {
 })->middleware('auth');
 
 // Admin Routes
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     // Dashboard
-    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
-    
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
     // Quản lý đặt phòng
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
     Route::patch('bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
@@ -116,7 +116,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Routes cho quản lý ảnh phòng
     Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete');
     Route::post('rooms/{room}/images/{image}/primary', [AdminRoomController::class, 'setPrimaryImage'])->name('rooms.images.primary');
-    
+
     // Quản lý đánh giá
     Route::get('reviews/statistics', [AdminReviewController::class, 'statistics'])->name('reviews.statistics');
     Route::patch('reviews/{id}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
