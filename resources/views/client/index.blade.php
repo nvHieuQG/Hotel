@@ -222,38 +222,45 @@
                 <div class="col-md-7 heading-section text-center ftco-animate">
                     <h2 class="mb-4">Phòng Nổi Bật</h2>
                 </div>
-            </div>    
-            
+            </div>
             <div class="row">
-                @foreach($rooms as $room)
-                <div class="col-sm col-md-6 col-lg-4 ftco-animate">
-                    <div class="room">
-                        <a href="{{ route('rooms-single', $room->id) }}" class="img d-flex justify-content-center align-items-center" style="background-image: url(client/images/room-{{ $loop->iteration % 6 + 1 }}.jpg);">
-                            <div class="icon d-flex justify-content-center align-items-center">
-                                <span class="icon-search2"></span>
+                @foreach ($roomTypes as $type)
+                    <div class="col-sm col-md-6 col-lg-4 ftco-animate">
+                        <div class="room">
+                            <a href="{{ route('rooms-single', $type->id) }}"
+                                class="img d-flex justify-content-center align-items-center"
+                                style="background-image: url(client/images/room-{{ ($loop->iteration % 6) + 1 }}.jpg);">
+                                <div class="icon d-flex justify-content-center align-items-center">
+                                    <span class="icon-search2"></span>
+                                </div>
+                            </a>
+                            <div class="text p-3 text-center">
+                                <h3 class="mb-3">
+                                    <a href="{{ route('rooms-single', $type->id) }}">
+                                        {{ $type->name }}
+                                    </a>
+                                </h3>
+                                <p>
+                                    <span class="price mr-2">{{ number_format($type->price) }}đ</span>
+                                    <span class="per">mỗi đêm</span>
+                                </p>
+                                <ul class="list">
+                                    <li><span>Sức chứa:</span> {{ $type->capacity }} Người</li>
+                                </ul>
+                                <hr>
+                                <p class="pt-1">
+                                    <a href="{{ route('rooms-single', $type->id) }}" class="btn-custom">
+                                        Chi tiết <span class="icon-long-arrow-right"></span>
+                                    </a>
+                                    @if ($type->status == 'available')
+                                        <a href="{{ route('booking') }}" class="btn-custom ml-2">
+                                            Đặt ngay <span class="icon-long-arrow-right"></span>
+                                        </a>
+                                    @endif
+                                </p>
                             </div>
-                        </a>
-                        <div class="text p-3 text-center">
-                            <h3 class="mb-3"><a href="{{ route('rooms-single', $room->id) }}">{{ $room->roomType->name }}</a></h3>
-                            <p><span class="price mr-2">{{ number_format($room->roomType->price) }}đ</span> <span class="per">mỗi đêm</span></p>
-                            <ul class="list">
-                                <li><span>Sức chứa:</span> {{ $room->capacity }} Người</li>
-                                <li><span>Trạng thái:</span> 
-                                    <span class="badge badge-{{ $room->status == 'available' ? 'success' : 'danger' }}">
-                                        {{ $room->status == 'available' ? 'Còn trống' : 'Đã đặt' }}
-                                    </span>
-                                </li>
-                            </ul>
-                            <hr>
-                            <p class="pt-1">
-                                <a href="{{ route('rooms-single', $room->id) }}" class="btn-custom">Chi tiết <span class="icon-long-arrow-right"></span></a>
-                                @if($room->status == 'available')
-                                <a href="{{ route('booking') }}" class="btn-custom ml-2">Đặt ngay <span class="icon-long-arrow-right"></span></a>
-                                @endif
-                            </p>
                         </div>
                     </div>
-                </div>
                 @endforeach
             </div>
         </div>

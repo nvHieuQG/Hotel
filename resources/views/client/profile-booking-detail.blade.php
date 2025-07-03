@@ -68,12 +68,23 @@
         </div>
     </div>
     
-    @if($booking->hasReview())
+    @php
+        $roomType = $booking->room->roomType;
+        $hasReviewed = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+            ->where('room_type_id', $roomType->id)
+            ->exists();
+    @endphp
+    
+    @if($hasReviewed)
         <hr>
         <div class="row">
             <div class="col-12">
                 <h6 class="text-warning mb-3"><i class="fas fa-star mr-2"></i>Đánh Giá</h6>
-                @php $review = $booking->review @endphp
+                @php 
+                    $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+                        ->where('room_type_id', $roomType->id)
+                        ->first();
+                @endphp
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -105,10 +116,10 @@
                 @if ($booking->status == 'completed')
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle mr-2"></i>
-                        Bạn có thể đánh giá phòng này để giúp chúng tôi cải thiện dịch vụ.
-                        <a href="{{ route('reviews.create', $booking->id) }}" class="btn btn-sm btn-primary ml-2">
+                        Bạn có thể đánh giá loại phòng này để giúp chúng tôi cải thiện dịch vụ.
+                        <button class="btn btn-sm btn-primary ml-2 create-review-btn" data-room-type-id="{{ $roomType->id }}">
                             <i class="fas fa-star"></i> Viết đánh giá
-                        </a>
+                        </button>
                     </div>
                 @else
                     <div class="alert alert-secondary">

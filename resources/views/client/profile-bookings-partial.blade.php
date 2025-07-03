@@ -27,8 +27,19 @@
                             </span>
                         </td>
                         <td>
-                            @if ($booking->hasReview())
-                                @php $review = $booking->review @endphp
+                            @php
+                                $roomType = $booking->room->roomType;
+                                $hasReviewed = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+                                    ->where('room_type_id', $roomType->id)
+                                    ->exists();
+                            @endphp
+                            
+                            @if ($hasReviewed)
+                                @php 
+                                    $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+                                        ->where('room_type_id', $roomType->id)
+                                        ->first();
+                                @endphp
                                 <div class="d-flex align-items-center">
                                     <div class="text-warning mr-2">
                                         @for ($i = 1; $i <= 5; $i++)
@@ -41,9 +52,9 @@
                                 </div>
                             @else
                                 @if ($booking->status == 'completed')
-                                    <a href="{{ route('reviews.create', $booking->id) }}" class="btn btn-sm btn-outline-primary">
+                                    <button class="btn btn-sm btn-outline-primary create-review-btn" data-room-type-id="{{ $roomType->id }}">
                                         <i class="fas fa-star"></i> Đánh giá
-                                    </a>
+                                    </button>
                                 @else
                                     <span class="text-muted">Chưa đánh giá</span>
                                 @endif

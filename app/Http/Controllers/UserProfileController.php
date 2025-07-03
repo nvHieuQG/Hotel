@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Interfaces\Services\ProfileServiceInterface;
 use App\Interfaces\Services\BookingServiceInterface;
-use App\Interfaces\Repositories\ReviewRepositoryInterface;
+use App\Interfaces\Repositories\RoomTypeReviewRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -15,16 +15,16 @@ class UserProfileController extends Controller
 {
     protected $userProfileService;
     protected $userBookingService;
-    protected $userReviewRepository;
+    protected $userRoomTypeReviewRepository;
 
     public function __construct(
         ProfileServiceInterface $profileService,
         BookingServiceInterface $bookingService,
-        ReviewRepositoryInterface $reviewRepository
+        RoomTypeReviewRepositoryInterface $roomTypeReviewRepository
     ) {
         $this->userProfileService = $profileService;
         $this->userBookingService = $bookingService;
-        $this->userReviewRepository = $reviewRepository;
+        $this->userRoomTypeReviewRepository = $roomTypeReviewRepository;
     }
 
     // Trang thông tin cá nhân (chỉ hiển thị thông tin profile, không load bookings/reviews)
@@ -99,7 +99,7 @@ class UserProfileController extends Controller
         try {
             $profileData = $this->userProfileService->getProfileData();
             $profileData['dashboardData'] = $this->userProfileService->getDashboardData();
-            $profileData['reviews'] = $this->userReviewRepository->getReviewsByUser(Auth::id(), 10);
+            $profileData['reviews'] = $this->userRoomTypeReviewRepository->getReviewsByUser(Auth::id(), 10);
             $profileData['active_tab'] = 'reviews';
             
             return view('client.profile', $profileData);
@@ -127,7 +127,7 @@ class UserProfileController extends Controller
     public function getReviewsPartial()
     {
         try {
-            $reviews = $this->userReviewRepository->getReviewsByUser(Auth::id(), 10);
+            $reviews = $this->userRoomTypeReviewRepository->getReviewsByUser(Auth::id(), 10);
             $count = $reviews->total();
             Log::info('Reviews partial', ['count' => $count, 'user_id' => Auth::id()]);
             return view('client.profile-reviews-partial', compact('reviews'));
@@ -155,11 +155,11 @@ class UserProfileController extends Controller
         }
     }
 
-    // API method để trả về chi tiết review
+    // API method để trả về chi tiết review (HTML view)
     public function getReviewDetail($id)
     {
         try {
-            $review = $this->userReviewRepository->getReviewById($id);
+            $review = $this->userRoomTypeReviewRepository->getReviewById($id);
             
             // Kiểm tra quyền truy cập
             if (!$review || $review->user_id != Auth::id()) {
@@ -170,6 +170,120 @@ class UserProfileController extends Controller
         } catch (\Exception $e) {
             Log::error('User Review Detail error: ' . $e->getMessage());
             return response()->json(['error' => 'Có lỗi xảy ra khi tải chi tiết đánh giá', 'exception' => $e->getMessage()], 500);
+        }
+    }
+
+    // API method để lấy dữ liệu review cho form chỉnh sửa (JSON)
+    public function getReviewData($id)
+    {
+        try {
+            $review = $this->userRoomTypeReviewRepository->getReviewById($id);
+            
+            // Kiểm tra quyền truy cập
+            if (!$review || $review->user_id != Auth::id()) {
+                return response()->json(['error' => 'Không tìm thấy đánh giá hoặc không có quyền truy cập'], 404);
+            }
+            
+            return response()->json(['review' => $review]);
+        } catch (\Exception $e) {
+            Log::error('User Review Data error: ' . $e->getMessage());
+            return response()->json(['error' => 'Có lỗi xảy ra khi tải dữ liệu đánh giá', 'exception' => $e->getMessage()], 500);
+        }
+    }
+
+    // Tạo đánh giá mới
+    public function createReview(Request $request, $roomTypeId)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'rating' => 'required|integer|min:1|max:5',
+                'comment' => 'nullable|string|max:1000',
+                'cleanliness_rating' => 'nullable|integer|min:1|max:5',
+                'comfort_rating' => 'nullable|integer|min:1|max:5',
+                'location_rating' => 'nullable|integer|min:1|max:5',
+                'facilities_rating' => 'nullable|integer|min:1|max:5',
+                'value_rating' => 'nullable|integer|min:1|max:5',
+                'is_anonymous' => 'boolean',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $data = $request->all();
+            $data['user_id'] = Auth::id();
+            $data['room_type_id'] = $roomTypeId;
+            $data['status'] = 'approved';
+
+            $review = $this->userRoomTypeReviewRepository->createReview($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đánh giá đã được tạo thành công!',
+                'review' => $review
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Create Review error: ' . $e->getMessage());
+            return response()->json(['error' => 'Có lỗi xảy ra khi tạo đánh giá: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Cập nhật đánh giá
+    public function updateReview(Request $request, $id)
+    {
+        try {
+            $review = $this->userRoomTypeReviewRepository->getReviewById($id);
+            
+            if (!$review || $review->user_id != Auth::id()) {
+                return response()->json(['error' => 'Không tìm thấy đánh giá hoặc không có quyền chỉnh sửa'], 404);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'rating' => 'required|integer|min:1|max:5',
+                'comment' => 'nullable|string|max:1000',
+                'cleanliness_rating' => 'nullable|integer|min:1|max:5',
+                'comfort_rating' => 'nullable|integer|min:1|max:5',
+                'location_rating' => 'nullable|integer|min:1|max:5',
+                'facilities_rating' => 'nullable|integer|min:1|max:5',
+                'value_rating' => 'nullable|integer|min:1|max:5',
+                'is_anonymous' => 'boolean',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $this->userRoomTypeReviewRepository->updateReview($id, $request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đánh giá đã được cập nhật thành công!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Update Review error: ' . $e->getMessage());
+            return response()->json(['error' => 'Có lỗi xảy ra khi cập nhật đánh giá: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Xóa đánh giá
+    public function deleteReview($id)
+    {
+        try {
+            $review = $this->userRoomTypeReviewRepository->getReviewById($id);
+            
+            if (!$review || $review->user_id != Auth::id()) {
+                return response()->json(['error' => 'Không tìm thấy đánh giá hoặc không có quyền xóa'], 404);
+            }
+
+            $this->userRoomTypeReviewRepository->deleteReview($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đánh giá đã được xóa thành công!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Delete Review error: ' . $e->getMessage());
+            return response()->json(['error' => 'Có lỗi xảy ra khi xóa đánh giá: ' . $e->getMessage()], 500);
         }
     }
 } 

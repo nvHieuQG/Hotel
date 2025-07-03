@@ -49,10 +49,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h3>Lịch Sử Đặt Phòng</h3>
                         <div>
-                            <a href="{{ route('reviews.index') }}" class="btn btn-outline-success">
-                                <i class="fas fa-star"></i> Viết đánh giá
-                            </a>
-                            <a href="{{ route('reviews.my-reviews') }}" class="btn btn-outline-primary">
+                            <a href="{{ route('user.reviews') }}" class="btn btn-outline-primary">
                                 <i class="fas fa-list"></i> Đánh giá của tôi
                             </a>
                         </div>
@@ -87,8 +84,20 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                @if ($booking->hasReview())
-                                                    @php $review = $booking->review @endphp
+                                                @php
+                                                    $roomType = $booking->room->roomType;
+                                                    $hasReviewed = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+                                                        ->where('room_type_id', $roomType->id)
+                                                        ->exists();
+                                                    $canReview = $booking->status === 'completed' && !$hasReviewed;
+                                                @endphp
+                                                
+                                                @if ($hasReviewed)
+                                                    @php 
+                                                        $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+                                                            ->where('room_type_id', $roomType->id)
+                                                            ->first();
+                                                    @endphp
                                                     <div class="d-flex align-items-center">
                                                         <div class="text-warning mr-2">
                                                             @for ($i = 1; $i <= 5; $i++)
@@ -99,20 +108,16 @@
                                                             {{ $review->status_text }}
                                                         </span>
                                                     </div>
-                                                    @if ($review->canBeEdited())
+                                                    @if ($review->status === 'pending')
                                                         <div class="mt-1">
-                                                            <a href="{{ route('reviews.edit', $review->id) }}" class="btn btn-sm btn-outline-primary">Sửa</a>
-                                                            <form action="{{ route('reviews.destroy', $review->id) }}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?')">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
-                                                            </form>
+                                                            <button class="btn btn-sm btn-outline-primary edit-review-btn" data-review-id="{{ $review->id }}">Sửa</button>
+                                                            <button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="{{ $review->id }}">Xóa</button>
                                                         </div>
                                                     @endif
-                                                @elseif ($booking->canBeReviewed())
-                                                    <a href="{{ route('reviews.create', $booking->id) }}" class="btn btn-sm btn-success">
+                                                @elseif ($canReview)
+                                                    <button class="btn btn-sm btn-success create-review-btn" data-room-type-id="{{ $roomType->id }}">
                                                         <i class="fas fa-star"></i> Đánh giá ngay
-                                                    </a>
+                                                    </button>
                                                 @else
                                                     <span class="text-muted">Chưa thể đánh giá</span>
                                                 @endif

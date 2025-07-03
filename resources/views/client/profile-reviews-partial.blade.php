@@ -16,10 +16,10 @@
                     <tr>
                         <td>
                             <div>
-                                <strong>{{ $review->room->name }}</strong>
-                                @if($review->booking)
+                                <strong>{{ $review->roomType->name }}</strong>
+                                @if($review->roomType)
                                     <br>
-                                    <small class="text-muted">Mã: {{ $review->booking->booking_id }}</small>
+                                    <small class="text-muted">Loại phòng: {{ $review->roomType->name }}</small>
                                 @endif
                             </div>
                         </td>
@@ -30,6 +30,27 @@
                                 @endfor
                                 <span class="ml-2">{{ $review->rating }}/5</span>
                             </div>
+                            @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
+                                <div class="mt-1">
+                                    <small class="text-muted">
+                                        @if($review->cleanliness_rating)
+                                            <span class="mr-1">Vệ sinh: {{ $review->cleanliness_rating }}/5</span>
+                                        @endif
+                                        @if($review->comfort_rating)
+                                            <span class="mr-1">Tiện nghi: {{ $review->comfort_rating }}/5</span>
+                                        @endif
+                                        @if($review->location_rating)
+                                            <span class="mr-1">Vị trí: {{ $review->location_rating }}/5</span>
+                                        @endif
+                                        @if($review->facilities_rating)
+                                            <span class="mr-1">CSVC: {{ $review->facilities_rating }}/5</span>
+                                        @endif
+                                        @if($review->value_rating)
+                                            <span>Giá trị: {{ $review->value_rating }}/5</span>
+                                        @endif
+                                    </small>
+                                </div>
+                            @endif
                         </td>
                         <td>
                             @if($review->comment)
@@ -52,16 +73,12 @@
                                     <i class="fas fa-eye"></i>
                                 </button>
                                 @if($review->status == 'pending')
-                                    <a href="{{ route('reviews.edit', $review->id) }}" class="btn btn-sm btn-outline-warning" title="Chỉnh sửa">
+                                    <button class="btn btn-sm btn-outline-warning edit-review-btn" data-review-id="{{ $review->id }}" title="Chỉnh sửa">
                                         <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('reviews.destroy', $review->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="{{ $review->id }}" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 @endif
                             </div>
                         </td>
@@ -82,8 +99,5 @@
         <i class="fas fa-star-o fa-3x text-muted mb-3"></i>
         <h5 class="text-muted">Chưa có đánh giá nào</h5>
         <p class="text-muted">Bạn chưa có đánh giá nào cho các đặt phòng.</p>
-        <a href="{{ route('reviews.index') }}" class="btn btn-primary">
-            <i class="fas fa-star"></i> Viết đánh giá ngay
-        </a>
     </div>
 @endif 

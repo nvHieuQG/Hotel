@@ -4,20 +4,20 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Services\ReviewService;
+use App\Services\RoomTypeReviewService;
 use App\Interfaces\Services\RoomTypeServiceInterface;
 use App\Interfaces\Repositories\RoomRepositoryInterface;
 
 class HotelController extends Controller
 {
     protected $roomRepository;
-    protected $reviewService;
+    protected $roomTypeReviewService;
     protected $roomTypeService;
     
-    public function __construct(RoomRepositoryInterface $roomRepository, ReviewService $reviewService, RoomTypeServiceInterface $roomTypeService)
+    public function __construct(RoomRepositoryInterface $roomRepository, RoomTypeReviewService $roomTypeReviewService, RoomTypeServiceInterface $roomTypeService)
     {
         $this->roomRepository = $roomRepository;
-        $this->reviewService = $reviewService;
+        $this->roomTypeReviewService = $roomTypeReviewService;
         $this->roomTypeService = $roomTypeService;
     }
 
@@ -78,21 +78,26 @@ class HotelController extends Controller
             ->where('id', '!=', $room->id)
             ->take(2);
         
-        // Lấy đánh giá và bình luận của phòng
-        $reviews = $this->reviewService->getRoomReviews($room->id, 10);
-        $averageRating = $this->reviewService->getRoomAverageRating($room->id);
-        $reviewsCount = $this->reviewService->getRoomReviewsCount($room->id);
+        // Lấy đánh giá và bình luận của loại phòng
+        $reviews = $this->roomTypeReviewService->getRoomTypeReviews($room->room_type_id, 10);
+        $averageRating = $this->roomTypeReviewService->getRoomTypeAverageRating($room->room_type_id);
+        $reviewsCount = $this->roomTypeReviewService->getRoomTypeReviewsCount($room->room_type_id);
 
         // Kiểm tra quyền đánh giá
         $canReview = false;
         if (Auth::check()) {
-            // Kiểm tra xem user đã có booking hoàn thành cho phòng này chưa
-            $completedBooking = Auth::user()->bookings()
-                ->where('room_id', $room->id)
+            // Kiểm tra xem user đã có booking hoàn thành cho loại phòng này chưa
+            $hasCompletedBooking = Auth::user()->bookings()
                 ->where('status', 'completed')
-                ->first();
+                ->whereHas('room', function($query) use ($room) {
+                    $query->where('room_type_id', $room->room_type_id);
+                })
+                ->exists();
             
-            $canReview = $completedBooking !== null;
+            // Kiểm tra xem user đã đánh giá loại phòng này chưa
+            $hasReviewed = $this->roomTypeReviewService->hasUserReviewedRoomType(Auth::id(), $room->room_type_id);
+            
+            $canReview = $hasCompletedBooking && !$hasReviewed;
         }
 
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
@@ -115,7 +120,7 @@ class HotelController extends Controller
             return response()->json(['error' => 'Không tìm thấy phòng'], 404);
         }
         
-        $reviews = $this->reviewService->getRoomReviews($room->id, 10);
+        $reviews = $this->roomTypeReviewService->getRoomTypeReviews($room->room_type_id, 10);
         
         return view('client.partials.room-reviews-list', compact('reviews'))->render();
     }

@@ -14,6 +14,40 @@
                         </div>
                     </td>
                 </tr>
+                @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
+                    <tr>
+                        <td><strong>Đánh giá chi tiết:</strong></td>
+                        <td>
+                            <div class="row">
+                                @if($review->cleanliness_rating)
+                                    <div class="col-md-6 mb-2">
+                                        <small><strong>Vệ sinh:</strong> {{ $review->cleanliness_rating }}/5</small>
+                                    </div>
+                                @endif
+                                @if($review->comfort_rating)
+                                    <div class="col-md-6 mb-2">
+                                        <small><strong>Tiện nghi:</strong> {{ $review->comfort_rating }}/5</small>
+                                    </div>
+                                @endif
+                                @if($review->location_rating)
+                                    <div class="col-md-6 mb-2">
+                                        <small><strong>Vị trí:</strong> {{ $review->location_rating }}/5</small>
+                                    </div>
+                                @endif
+                                @if($review->facilities_rating)
+                                    <div class="col-md-6 mb-2">
+                                        <small><strong>Cơ sở vật chất:</strong> {{ $review->facilities_rating }}/5</small>
+                                    </div>
+                                @endif
+                                @if($review->value_rating)
+                                    <div class="col-md-6 mb-2">
+                                        <small><strong>Giá trị:</strong> {{ $review->value_rating }}/5</small>
+                                    </div>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @endif
                 <tr>
                     <td><strong>Trạng thái:</strong></td>
                     <td>
@@ -33,30 +67,20 @@
             </table>
         </div>
         <div class="col-md-6">
-            <h6 class="text-warning mb-3"><i class="fas fa-bed mr-2"></i>Thông Tin Phòng</h6>
+            <h6 class="text-warning mb-3"><i class="fas fa-bed mr-2"></i>Thông Tin Loại Phòng</h6>
             <table class="table table-borderless">
                 <tr>
-                    <td><strong>Tên phòng:</strong></td>
-                    <td>{{ $review->room->name }}</td>
+                    <td><strong>Loại phòng:</strong></td>
+                    <td>{{ $review->roomType->name }}</td>
                 </tr>
                 <tr>
-                    <td><strong>Loại phòng:</strong></td>
-                    <td>{{ $review->room->roomType->name }}</td>
+                    <td><strong>Mô tả:</strong></td>
+                    <td>{{ $review->roomType->description ?? 'Không có mô tả' }}</td>
                 </tr>
-                @if($review->booking)
-                    <tr>
-                        <td><strong>Mã đặt phòng:</strong></td>
-                        <td>{{ $review->booking->booking_id }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Ngày check-in:</strong></td>
-                        <td>{{ $review->booking->check_in_date->format('d/m/Y') }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Ngày check-out:</strong></td>
-                        <td>{{ $review->booking->check_out_date->format('d/m/Y') }}</td>
-                    </tr>
-                @endif
+                <tr>
+                    <td><strong>Giá:</strong></td>
+                    <td>{{ number_format($review->roomType->price) }}đ/đêm</td>
+                </tr>
             </table>
         </div>
     </div>
@@ -86,16 +110,12 @@
             <div class="col-12">
                 <h6 class="text-info mb-3"><i class="fas fa-edit mr-2"></i>Hành Động</h6>
                 <div class="btn-group" role="group">
-                    <a href="{{ route('reviews.edit', $review->id) }}" class="btn btn-warning">
+                    <button class="btn btn-warning edit-review-btn" data-review-id="{{ $review->id }}">
                         <i class="fas fa-edit"></i> Chỉnh sửa
-                    </a>
-                    <form action="{{ route('reviews.destroy', $review->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash"></i> Xóa
-                        </button>
-                    </form>
+                    </button>
+                    <button class="btn btn-danger delete-review-btn" data-review-id="{{ $review->id }}">
+                        <i class="fas fa-trash"></i> Xóa
+                    </button>
                 </div>
             </div>
         </div>

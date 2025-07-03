@@ -67,6 +67,19 @@
 @else
     <div class="text-center py-4">
         <i class="icon-star-o text-muted" style="font-size: 3rem;"></i>
-        <p class="text-muted mt-2">Chưa có đánh giá nào cho phòng này</p>
+        <p class="text-muted mt-2">Chưa có đánh giá nào cho loại phòng này</p>
+        @auth
+            @if(isset($canReview) && $canReview)
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#reviewModal">
+                    Viết đánh giá đầu tiên
+                </button>
+            @else
+                <span class="text-muted">Cần đặt phòng và hoàn thành để đánh giá</span>
+            @endif
+        @else
+            <a href="{{ route('login') }}?redirect={{ urlencode(request()->url()) }}" class="btn btn-primary">
+                Đăng nhập để đánh giá
+            </a>
+        @endauth
     </div>
 @endif 

@@ -86,7 +86,7 @@ class ProfileService implements ProfileServiceInterface
             // Số booking hoàn thành
             $completedBookings = app(\App\Interfaces\Repositories\BookingRepositoryInterface::class)->getCompletedBookings($userId)->count();
             // Tổng số review
-            $totalReviews = app(\App\Interfaces\Repositories\ReviewRepositoryInterface::class)->getReviewsByUser($userId, 1000)->total();
+            $totalReviews = app(\App\Interfaces\Repositories\RoomTypeReviewRepositoryInterface::class)->getReviewsByUser($userId, 1000)->total();
             // Tổng tiền đã chi tiêu
             $totalSpent = app(\App\Interfaces\Repositories\BookingRepositoryInterface::class)->getByUserId($userId)->sum('price');
             
@@ -99,7 +99,7 @@ class ProfileService implements ProfileServiceInterface
             }
             
             // Thống kê đánh giá
-            $reviews = app(\App\Interfaces\Repositories\ReviewRepositoryInterface::class)->getReviewsByUser($userId, 1000);
+            $reviews = app(\App\Interfaces\Repositories\RoomTypeReviewRepositoryInterface::class)->getReviewsByUser($userId, 1000);
             $approvedReviews = 0;
             $rejectedReviews = 0;
             $ratingCounts = array_fill(1, 5, 0);

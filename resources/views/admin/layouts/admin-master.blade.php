@@ -672,7 +672,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" href="{{ route('admin.reviews.index') }}">
+                            <a class="nav-link {{ request()->routeIs('admin.room-type-reviews.*') ? 'active' : '' }}" href="{{ route('admin.room-type-reviews.index') }}">
                                 <i class="fas fa-star"></i> Đánh giá
                             </a>
                         </li>

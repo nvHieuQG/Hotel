@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Review extends Model
+class RoomTypeReview extends Model
 {
     use HasFactory;
 
@@ -16,10 +16,14 @@ class Review extends Model
      */
     protected $fillable = [
         'user_id',
-        'booking_id',
-        'room_id',
+        'room_type_id',
         'rating',
         'comment',
+        'cleanliness_rating',
+        'comfort_rating',
+        'location_rating',
+        'facilities_rating',
+        'value_rating',
         'status',
         'is_anonymous'
     ];
@@ -31,6 +35,11 @@ class Review extends Model
      */
     protected $casts = [
         'rating' => 'integer',
+        'cleanliness_rating' => 'integer',
+        'comfort_rating' => 'integer',
+        'location_rating' => 'integer',
+        'facilities_rating' => 'integer',
+        'value_rating' => 'integer',
         'is_anonymous' => 'boolean',
     ];
 
@@ -43,19 +52,11 @@ class Review extends Model
     }
 
     /**
-     * Get the booking associated with the review.
+     * Get the room type that was reviewed.
      */
-    public function booking()
+    public function roomType()
     {
-        return $this->belongsTo(Booking::class);
-    }
-
-    /**
-     * Get the room that was reviewed.
-     */
-    public function room()
-    {
-        return $this->belongsTo(Room::class);
+        return $this->belongsTo(RoomType::class);
     }
 
     /**
@@ -67,11 +68,11 @@ class Review extends Model
     }
 
     /**
-     * Scope để lấy reviews theo phòng
+     * Scope để lấy reviews theo loại phòng
      */
-    public function scopeForRoom($query, $roomId)
+    public function scopeForRoomType($query, $roomTypeId)
     {
-        return $query->where('room_id', $roomId);
+        return $query->where('room_type_id', $roomTypeId);
     }
 
     /**

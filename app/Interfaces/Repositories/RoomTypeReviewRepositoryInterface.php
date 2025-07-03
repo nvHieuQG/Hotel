@@ -2,10 +2,10 @@
 
 namespace App\Interfaces\Repositories;
 
-use App\Models\Review;
+use App\Models\RoomTypeReview;
 use Illuminate\Database\Eloquent\Collection;
 
-interface ReviewRepositoryInterface
+interface RoomTypeReviewRepositoryInterface
 {
     /**
      * Lấy tất cả reviews
@@ -13,9 +13,9 @@ interface ReviewRepositoryInterface
     public function getAllReviews(): Collection;
 
     /**
-     * Lấy reviews theo phòng
+     * Lấy reviews theo loại phòng
      */
-    public function getReviewsByRoom(int $roomId, int $perPage = 10): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+    public function getReviewsByRoomType(int $roomTypeId, int $perPage = 10): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
     /**
      * Lấy reviews theo user
@@ -25,12 +25,12 @@ interface ReviewRepositoryInterface
     /**
      * Lấy review theo ID
      */
-    public function getReviewById(int $id): ?Review;
+    public function getReviewById(int $id): ?RoomTypeReview;
 
     /**
      * Tạo review mới
      */
-    public function createReview(array $data): Review;
+    public function createReview(array $data): RoomTypeReview;
 
     /**
      * Cập nhật review
@@ -63,22 +63,27 @@ interface ReviewRepositoryInterface
     public function rejectReview(int $id): bool;
 
     /**
-     * Kiểm tra xem user đã đánh giá phòng này chưa
+     * Kiểm tra xem user đã đánh giá loại phòng này chưa
      */
-    public function hasUserReviewedRoom(int $userId, int $roomId): bool;
+    public function hasUserReviewedRoomType(int $userId, int $roomTypeId): bool;
 
     /**
-     * Lấy rating trung bình của phòng
+     * Lấy rating trung bình của loại phòng
      */
-    public function getAverageRatingByRoom(int $roomId): float;
+    public function getAverageRatingByRoomType(int $roomTypeId): float;
 
     /**
-     * Lấy số lượng reviews của phòng
+     * Lấy số lượng reviews của loại phòng
      */
-    public function getReviewsCountByRoom(int $roomId): int;
+    public function getReviewsCountByRoomType(int $roomTypeId): int;
 
     /**
-     * Lấy top phòng được đánh giá nhiều nhất
+     * Lấy top loại phòng được đánh giá nhiều nhất
      */
-    public function getTopRatedRooms(int $limit = 10): Collection;
+    public function getTopRatedRoomTypes(int $limit = 10): Collection;
+
+    /**
+     * Lấy các loại phòng mà user đã booking hoàn thành nhưng chưa đánh giá
+     */
+    public function getCompletedRoomTypesWithoutReview(int $userId): Collection;
 } 
