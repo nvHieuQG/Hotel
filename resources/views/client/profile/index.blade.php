@@ -283,6 +283,13 @@
         opacity: 0.5;
         pointer-events: none;
     }
+    #toast-notification .alert {
+        box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+        font-size: 1.1rem;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        text-align: center;
+    }
 </style>
 
 <div class="hero-wrap" style="background-image: url('/client/images/bg_1.jpg');">
@@ -342,7 +349,7 @@
                                 </ul>
                             </div>
                         @endif
-                        @include('client.profile-info', ['user' => $user])
+                        @include('client.profile.info', ['user' => $user])
                     </div>
                     <div class="tab-pane fade" id="profile-password" role="tabpanel">
                         <h3 class="mb-3"><i class="fas fa-key mr-2"></i>Đổi Mật Khẩu</h3>
@@ -368,7 +375,7 @@
                                 </ul>
                             </div>
                         @endif
-                        @include('client.profile-password')
+                        @include('client.profile.password')
                     </div>
                     <div class="tab-pane fade" id="profile-bookings" role="tabpanel">
                         <h3 class="mb-3"><i class="fas fa-calendar-check mr-2"></i>Thống Kê Đặt Phòng</h3>
@@ -590,6 +597,39 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Modal cho Form Đánh Giá -->
+<div class="modal fade" id="reviewFormModal" tabindex="-1" role="dialog" aria-labelledby="reviewFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="reviewFormModalLabel">
+                    <i class="fas fa-star mr-2"></i>Viết Đánh Giá
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="review-form-content">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="sr-only">Đang tải...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Đang tải form đánh giá...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Toast Notification -->
+<div id="toast-notification" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; min-width: 300px;">
+    <div id="toast-content" class="alert mb-0"></div>
 </div>
 
 @endsection
@@ -1049,6 +1089,159 @@ function createReviewsChart() {
             }
         }
     });
+}
+
+$(document).on('click', '.btn-view-booking', function() {
+    var bookingId = $(this).data('booking-id');
+    $('#booking-detail-content').html('<div class="text-center py-4"><span class="spinner-border"></span> Đang tải...</div>');
+    $('#bookingDetailModal').modal('show');
+    $.get('/user/bookings/' + bookingId + '/detail', function(html) {
+        $('#booking-detail-content').html(html);
+    }).fail(function() {
+        $('#booking-detail-content').html('<div class="alert alert-danger">Không thể tải chi tiết booking.</div>');
+    });
+});
+
+$(document).on('click', '.btn-view-review', function() {
+    var reviewId = $(this).data('review-id');
+    $('#review-detail-content').html('<div class="text-center py-4"><span class="spinner-border"></span> Đang tải...</div>');
+    $('#reviewDetailModal').modal('show');
+    $.get('/user/reviews/' + reviewId + '/detail', function(html) {
+        $('#review-detail-content').html(html);
+    }).fail(function() {
+        $('#review-detail-content').html('<div class="alert alert-danger">Không thể tải chi tiết đánh giá.</div>');
+    });
+});
+
+$(document).on('click', '.create-review-btn', function() {
+    var roomTypeId = $(this).data('room-type-id');
+    var bookingId = $(this).data('booking-id');
+    console.log('Creating review for room type:', roomTypeId, 'booking:', bookingId);
+    $('#review-form-content').html('<div class="text-center py-4"><span class="spinner-border"></span> Đang tải...</div>');
+    $('#reviewFormModalLabel').html('<i class="fas fa-star mr-2"></i>Viết Đánh Giá');
+    $('#reviewFormModal').modal('show');
+    $.get('/room-type-reviews/' + roomTypeId + '/form?booking_id=' + bookingId, function(html) {
+        console.log('Form loaded successfully');
+        $('#review-form-content').html(html);
+    }).fail(function(xhr, status, error) {
+        console.error('Failed to load form:', status, error);
+        console.error('Response:', xhr.responseText);
+        $('#review-form-content').html('<div class="alert alert-danger">Không thể tải form đánh giá. Lỗi: ' + error + '</div>');
+    });
+});
+
+$(document).on('click', '.edit-review-btn', function() {
+    var reviewId = $(this).data('review-id');
+    $('#review-form-content').html('<div class="text-center py-4"><span class="spinner-border"></span> Đang tải...</div>');
+    $('#reviewFormModalLabel').html('<i class="fas fa-edit mr-2"></i>Chỉnh Sửa Đánh Giá');
+    $('#reviewFormModal').modal('show');
+    $.get('/user/reviews/' + reviewId + '/data', function(data) {
+        if (data.review) {
+            var review = data.review;
+            var formHtml = `
+                <form id="editReviewForm" method="POST" action="/room-type-reviews/${review.id}">
+                    <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
+                    <input type="hidden" name="_method" value="PUT">
+                    <input type="hidden" name="room_type_id" value="${review.room_type_id}">
+                    ${(review.room_type_name ? `<div class='alert alert-info mb-3'><strong>Đánh giá cho loại phòng:</strong> ${review.room_type_name}${review.booking_id ? `<br><strong>Mã booking:</strong> ${review.booking_id}` : ''}</div>` : '')}
+                    <div class="form-group">
+                        <label for="rating">Đánh giá tổng thể (sao):</label>
+                        <select name="rating" id="rating" class="form-control" required>
+                            <option value="">Chọn số sao</option>
+                            ${[5,4,3,2,1].map(i => `<option value="${i}" ${review.rating == i ? 'selected' : ''}>${i} sao</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="comment">Nội dung đánh giá:</label>
+                        <textarea name="comment" id="comment" class="form-control" rows="3" required>${review.comment || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" name="is_anonymous" value="1" ${review.is_anonymous ? 'checked' : ''}> Ẩn danh</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Cập nhật đánh giá</button>
+                </form>
+            `;
+            $('#review-form-content').html(formHtml);
+            
+            // Xử lý submit form
+            $('#editReviewForm').off('submit').on('submit', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                var btn = form.find('button[type=submit]');
+                btn.prop('disabled', true).text('Đang cập nhật...');
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function(res) {
+                        btn.prop('disabled', false).text('Cập nhật đánh giá');
+                        $('#reviewFormModal').modal('hide');
+                        if (typeof loadReviewsData === 'function') loadReviewsData();
+                        if (typeof loadBookingsData === 'function') loadBookingsData();
+                        showToast(res.message || 'Đánh giá đã được cập nhật!', 'success');
+                    },
+                    error: function(xhr) {
+                        btn.prop('disabled', false).text('Cập nhật đánh giá');
+                        var msg = 'Có lỗi xảy ra khi cập nhật đánh giá.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                        showToast(msg, 'danger');
+                    }
+                });
+            });
+        } else {
+            $('#review-form-content').html('<div class="alert alert-danger">Không tìm thấy dữ liệu đánh giá.</div>');
+        }
+    }).fail(function() {
+        $('#review-form-content').html('<div class="alert alert-danger">Không thể tải form chỉnh sửa đánh giá.</div>');
+    });
+});
+
+$(document).on('click', '.delete-review-btn', function() {
+    var reviewId = $(this).data('review-id');
+    if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) return;
+    $.ajax({
+        url: '/room-type-reviews/' + reviewId,
+        method: 'DELETE',
+        data: { _token: $('meta[name="csrf-token"]').attr('content') },
+        success: function(res) {
+            $('#reviewFormModal').modal('hide');
+            if (typeof loadReviewsData === 'function') loadReviewsData();
+            if (typeof loadBookingsData === 'function') loadBookingsData();
+            showToast(res.message || 'Đã xóa đánh giá!', 'success');
+        },
+        error: function(xhr) {
+            var msg = 'Có lỗi xảy ra khi xóa đánh giá.';
+            if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+            showToast(msg, 'danger');
+        }
+    });
+});
+
+$(document).on('click', '.cancel-booking-btn', function() {
+    var bookingId = $(this).data('booking-id');
+    if (!confirm('Bạn có chắc chắn muốn hủy đặt phòng này?')) return;
+    $.post('/booking/cancel/' + bookingId, {_token: $('meta[name="csrf-token"]').attr('content')}, function(res) {
+        if (typeof loadBookingsData === 'function') loadBookingsData();
+        showToast(res.message || 'Đã hủy đặt phòng!', 'success');
+    }).fail(function(xhr) {
+        showToast('Có lỗi xảy ra khi hủy đặt phòng.', 'danger');
+    });
+});
+
+$(document).on('shown.bs.tab', 'a[data-toggle="pill"][href="#profile-bookings"]', function (e) {
+    if (typeof loadBookingsData === 'function') loadBookingsData();
+});
+
+function showToast(message, type = 'success') {
+    var $toast = $('#toast-notification');
+    var $content = $('#toast-content');
+    $content.removeClass('alert-success alert-danger alert-info alert-warning')
+        .addClass('alert-' + type)
+        .html(message);
+    $toast.fadeIn(200);
+    setTimeout(function() {
+        $toast.fadeOut(400);
+    }, 2500);
 }
 </script>
 @endsection 

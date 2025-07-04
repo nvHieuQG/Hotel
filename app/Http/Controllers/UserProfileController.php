@@ -42,7 +42,7 @@ class UserProfileController extends Controller
                 request()->session()->forget('tab');
             }
             
-            return view('client.profile', $profileData);
+            return view('client.profile.index', $profileData);
         } catch (\Exception $e) {
             // Log lỗi để debug
             Log::error('User Profile error: ' . $e->getMessage());
@@ -86,7 +86,7 @@ class UserProfileController extends Controller
             $profileData['bookings'] = $this->userBookingService->getCurrentUserBookings(10);
             $profileData['active_tab'] = 'bookings';
             
-            return view('client.profile', $profileData);
+            return view('client.profile.index', $profileData);
         } catch (\Exception $e) {
             Log::error('User Bookings error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Có lỗi xảy ra khi tải danh sách đặt phòng');
@@ -102,7 +102,7 @@ class UserProfileController extends Controller
             $profileData['reviews'] = $this->userRoomTypeReviewRepository->getReviewsByUser(Auth::id(), 10);
             $profileData['active_tab'] = 'reviews';
             
-            return view('client.profile', $profileData);
+            return view('client.profile.index', $profileData);
         } catch (\Exception $e) {
             Log::error('User Reviews error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Có lỗi xảy ra khi tải danh sách đánh giá');
@@ -116,7 +116,7 @@ class UserProfileController extends Controller
             $bookings = $this->userBookingService->getCurrentUserBookings(10);
             $count = $bookings->total();
             Log::info('Bookings partial', ['count' => $count, 'user_id' => Auth::id()]);
-            return view('client.profile-bookings-partial', compact('bookings'));
+            return view('client.profile.bookings.partial', compact('bookings'));
         } catch (\Exception $e) {
             Log::error('User Bookings Partial error: ' . $e->getMessage());
             return response()->json(['error' => 'Có lỗi xảy ra khi tải dữ liệu đặt phòng', 'exception' => $e->getMessage()], 500);
@@ -130,7 +130,7 @@ class UserProfileController extends Controller
             $reviews = $this->userRoomTypeReviewRepository->getReviewsByUser(Auth::id(), 10);
             $count = $reviews->total();
             Log::info('Reviews partial', ['count' => $count, 'user_id' => Auth::id()]);
-            return view('client.profile-reviews-partial', compact('reviews'));
+            return view('client.profile.reviews.partial', compact('reviews'));
         } catch (\Exception $e) {
             Log::error('User Reviews Partial error: ' . $e->getMessage());
             return response()->json(['error' => 'Có lỗi xảy ra khi tải dữ liệu đánh giá', 'exception' => $e->getMessage()], 500);
@@ -148,7 +148,7 @@ class UserProfileController extends Controller
                 return response()->json(['error' => 'Không tìm thấy đặt phòng hoặc không có quyền truy cập'], 404);
             }
             
-            return view('client.profile-booking-detail', compact('booking'));
+            return view('client.profile.bookings.detail', compact('booking'));
         } catch (\Exception $e) {
             Log::error('User Booking Detail error: ' . $e->getMessage());
             return response()->json(['error' => 'Có lỗi xảy ra khi tải chi tiết đặt phòng', 'exception' => $e->getMessage()], 500);
@@ -166,7 +166,7 @@ class UserProfileController extends Controller
                 return response()->json(['error' => 'Không tìm thấy đánh giá hoặc không có quyền truy cập'], 404);
             }
             
-            return view('client.profile-review-detail', compact('review'));
+            return view('client.profile.reviews.detail', compact('review'));
         } catch (\Exception $e) {
             Log::error('User Review Detail error: ' . $e->getMessage());
             return response()->json(['error' => 'Có lỗi xảy ra khi tải chi tiết đánh giá', 'exception' => $e->getMessage()], 500);

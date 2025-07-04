@@ -3,17 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\RoomTypeReviewService;
-use App\Models\RoomType;
+use App\Interfaces\Services\RoomTypeReviewServiceInterface;
+use App\Interfaces\Services\RoomTypeServiceInterface;
+use App\Interfaces\Services\UserServiceInterface;
 use Illuminate\Http\Request;
 
 class AdminRoomTypeReviewController extends Controller
 {
     protected $roomTypeReviewService;
+    protected $roomTypeService;
+    protected $userService;
 
-    public function __construct(RoomTypeReviewService $roomTypeReviewService)
-    {
+    public function __construct(
+        RoomTypeReviewServiceInterface $roomTypeReviewService,
+        RoomTypeServiceInterface $roomTypeService,
+        UserServiceInterface $userService
+    ) {
         $this->roomTypeReviewService = $roomTypeReviewService;
+        $this->roomTypeService = $roomTypeService;
+        $this->userService = $userService;
     }
 
     /**
@@ -23,7 +31,7 @@ class AdminRoomTypeReviewController extends Controller
     {
         $filters = $request->only(['status', 'room_type_id', 'rating', 'user_id', 'search']);
         $reviews = $this->roomTypeReviewService->getAllReviewsForAdmin($filters, 15);
-        $roomTypes = RoomType::all();
+        $roomTypes = $this->roomTypeService->getAllRoomTypes();
 
         return view('admin.room-type-reviews.index', compact('reviews', 'roomTypes', 'filters'));
     }
@@ -33,8 +41,8 @@ class AdminRoomTypeReviewController extends Controller
      */
     public function create()
     {
-        $roomTypes = RoomType::all();
-        $users = \App\Models\User::all();
+        $roomTypes = $this->roomTypeService->getAllRoomTypes();
+        $users = $this->userService->getAll();
         return view('admin.room-type-reviews.create', compact('roomTypes', 'users'));
     }
 

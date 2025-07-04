@@ -31,11 +31,11 @@
                 <div class="col-lg-9">
                     <div class="row">
                         @if ($roomTypes->count() > 0)
-                            {{-- Duyệt qua từng phòng nếu có kết quả --}}
+                            {{-- Duyệt qua từng loại phòng nếu có kết quả --}}
                             @foreach ($roomTypes as $type)
                                 <div class="col-sm col-md-6 col-lg-4 ftco-animate">
                                     <div class="room">
-                                        {{-- Đường dẫn và hình ảnh phòng --}}
+                                        {{-- Đường dẫn và hình ảnh loại phòng --}}
                                         <a href="{{ route('rooms-single', $type->id) }}"
                                             class="img d-flex justify-content-center align-items-center"
                                             style="background-image: url(client/images/room-{{ ($loop->iteration % 6) + 1 }}.jpg);">
@@ -61,11 +61,9 @@
                                                 <a href="{{ route('rooms-single', $type->id) }}" class="btn-custom">
                                                     Chi tiết <span class="icon-long-arrow-right"></span>
                                                 </a>
-                                                @if ($type->status == 'available')
-                                                    <a href="{{ route('booking') }}" class="btn-custom ml-2">
-                                                        Đặt ngay <span class="icon-long-arrow-right"></span>
-                                                    </a>
-                                                @endif
+                                                <a href="{{ route('booking') }}?room_type_id={{ $type->id }}" class="btn-custom ml-2">
+                                                    Đặt ngay <span class="icon-long-arrow-right"></span>
+                                                </a>
                                             </p>
                                         </div>
                                     </div>

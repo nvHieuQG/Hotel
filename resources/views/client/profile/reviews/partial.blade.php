@@ -69,16 +69,10 @@
                         <td>{{ $review->created_at->format('d/m/Y H:i') }}</td>
                         <td>
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-info btn-view-review" data-review-id="{{ $review->id }}" title="Xem chi tiết">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info btn-view-review" data-review-id="{{ $review->id }}" title="Xem chi tiết">Xem</button>
                                 @if($review->status == 'pending')
-                                    <button class="btn btn-sm btn-outline-warning edit-review-btn" data-review-id="{{ $review->id }}" title="Chỉnh sửa">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="{{ $review->id }}" title="Xóa">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning edit-review-btn" data-review-id="{{ $review->id }}" title="Chỉnh sửa">Sửa</button>
+                                    <button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="{{ $review->id }}" title="Xóa">Xóa</button>
                                 @endif
                             </div>
                         </td>

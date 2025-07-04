@@ -15,6 +15,14 @@
             </thead>
             <tbody>
                 @foreach ($bookings as $booking)
+                    @php
+                        $roomType = $booking->room->roomType;
+                        $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+                            ->where('booking_id', $booking->id)
+                            ->first();
+                        $hasReviewed = !!$review;
+                        $canReview = $booking->status === 'completed' && !$hasReviewed;
+                    @endphp
                     <tr>
                         <td>{{ $booking->booking_id }}</td>
                         <td>{{ $booking->room->name }}</td>
@@ -27,43 +35,28 @@
                             </span>
                         </td>
                         <td>
-                            @php
-                                $roomType = $booking->room->roomType;
-                                $hasReviewed = \App\Models\RoomTypeReview::where('user_id', auth()->id())
-                                    ->where('room_type_id', $roomType->id)
-                                    ->exists();
-                            @endphp
-                            
                             @if ($hasReviewed)
-                                @php 
-                                    $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
-                                        ->where('room_type_id', $roomType->id)
-                                        ->first();
-                                @endphp
-                                <div class="d-flex align-items-center">
-                                    <div class="text-warning mr-2">
-                                        @for ($i = 1; $i <= 5; $i++)
-                                            <i class="fas fa-star{{ $i <= $review->rating ? '' : '-o' }}"></i>
-                                        @endfor
-                                    </div>
-                                    <span class="badge badge-{{ $review->status == 'approved' ? 'success' : ($review->status == 'rejected' ? 'danger' : 'warning') }}">
-                                        {{ $review->status_text }}
-                                    </span>
-                                </div>
-                            @else
-                                @if ($booking->status == 'completed')
-                                    <button class="btn btn-sm btn-outline-primary create-review-btn" data-room-type-id="{{ $roomType->id }}">
-                                        <i class="fas fa-star"></i> Đánh giá
-                                    </button>
-                                @else
-                                    <span class="text-muted">Chưa đánh giá</span>
+                                <span class="badge badge-{{ $review->status == 'approved' ? 'success' : ($review->status == 'rejected' ? 'danger' : 'warning') }}">
+                                    {{ $review->status == 'approved' ? 'Đã duyệt' : ($review->status == 'rejected' ? 'Bị từ chối' : 'Chờ duyệt') }}
+                                </span>
+                                <br>
+                                <i class="fas fa-star"></i> {{ $review->rating }}/5
+                                @if ($review->status === 'rejected')
+                                    <div class="text-danger small mt-1">Đánh giá bị từ chối. Bạn có thể gửi lại.</div>
                                 @endif
+                            @elseif ($canReview)
+                                <button class="btn btn-sm btn-success create-review-btn" data-room-type-id="{{ $roomType->id }}" data-booking-id="{{ $booking->id }}">Đánh giá</button>
+                            @else
+                                <span class="text-muted">Không thể đánh giá</span>
                             @endif
                         </td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-outline-info btn-view-booking" data-booking-id="{{ $booking->id }}" title="Xem chi tiết">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-info btn-view-booking" data-booking-id="{{ $booking->id }}">Chi tiết</button>
+                            @if ($booking->status == 'pending')
+                                <button class="btn btn-sm btn-outline-danger cancel-booking-btn" data-booking-id="{{ $booking->id }}">Hủy</button>
+                            @elseif ($booking->status == 'cancelled')
+                                <button class="btn btn-sm btn-secondary" disabled>Đã hủy</button>
+                            @endif
                         </td>
                     </tr>
                 @endforeach

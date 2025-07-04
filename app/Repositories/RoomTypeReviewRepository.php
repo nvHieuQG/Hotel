@@ -25,8 +25,7 @@ class RoomTypeReviewRepository implements RoomTypeReviewRepositoryInterface
     {
         return RoomTypeReview::where('room_type_id', $roomTypeId)
             ->where('status', 'approved')
-            ->with('user')
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('created_at')
             ->paginate($perPage);
     }
 
@@ -119,15 +118,11 @@ class RoomTypeReviewRepository implements RoomTypeReviewRepositoryInterface
      */
     public function getReviewStatistics(): array
     {
-        $totalReviews = RoomTypeReview::count();
+        $totalReviews = RoomTypeReview::where('status', 'approved')->count();
         $pendingReviews = RoomTypeReview::where('status', 'pending')->count();
         $approvedReviews = RoomTypeReview::where('status', 'approved')->count();
         $rejectedReviews = RoomTypeReview::where('status', 'rejected')->count();
-
         $averageRating = RoomTypeReview::where('status', 'approved')->avg('rating');
-        $averageRating = round($averageRating, 1);
-
-        // Thống kê theo rating
         $ratingStats = [];
         for ($i = 1; $i <= 5; $i++) {
             $ratingStats[$i] = RoomTypeReview::where('status', 'approved')
@@ -207,6 +202,16 @@ class RoomTypeReviewRepository implements RoomTypeReviewRepositoryInterface
     {
         return RoomTypeReview::where('user_id', $userId)
             ->where('room_type_id', $roomTypeId)
+            ->exists();
+    }
+
+    /**
+     * Kiểm tra xem user đã đánh giá booking này chưa
+     */
+    public function hasUserReviewedBooking(int $userId, int $bookingId): bool
+    {
+        return RoomTypeReview::where('user_id', $userId)
+            ->where('booking_id', $bookingId)
             ->exists();
     }
 

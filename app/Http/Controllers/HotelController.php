@@ -6,36 +6,45 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Services\RoomTypeReviewService;
 use App\Interfaces\Services\RoomTypeServiceInterface;
+use App\Interfaces\Services\RoomServiceInterface;
 use App\Interfaces\Repositories\RoomRepositoryInterface;
+use App\Interfaces\Repositories\BookingRepositoryInterface;
 
 class HotelController extends Controller
 {
     protected $roomRepository;
+    protected $roomService;
     protected $roomTypeReviewService;
     protected $roomTypeService;
+    protected $bookingRepository;
     
-    public function __construct(RoomRepositoryInterface $roomRepository, RoomTypeReviewService $roomTypeReviewService, RoomTypeServiceInterface $roomTypeService)
-    {
+    public function __construct(
+        RoomRepositoryInterface $roomRepository,
+        RoomServiceInterface $roomService,
+        RoomTypeReviewService $roomTypeReviewService, 
+        RoomTypeServiceInterface $roomTypeService,
+        BookingRepositoryInterface $bookingRepository
+    ) {
         $this->roomRepository = $roomRepository;
+        $this->roomService = $roomService;
         $this->roomTypeReviewService = $roomTypeReviewService;
         $this->roomTypeService = $roomTypeService;
+        $this->bookingRepository = $bookingRepository;
     }
 
     public function index()
     {
-        // Lấy tất cả phòng để hiển thị ở trang chủ
-        $rooms = $this->roomRepository->getAll()->take(6); // Lấy 6 phòng đầu tiên
-        $roomTypes = $this->roomTypeService->getAllRoomTypes();
+        // Lấy tất cả loại phòng để hiển thị ở trang chủ
+        $roomTypes = $this->roomTypeService->getAllRoomTypes()->take(6); // Lấy 6 loại phòng đầu tiên
         
-        return view('client.index', compact('rooms', 'roomTypes'));
+        return view('client.index', compact('roomTypes'));
     }
 
     public function rooms()
     {
-        // Lấy tất cả phòng để hiển thị ở trang danh sách phòng
-        $rooms = $this->roomRepository->getAll();
+        // Lấy tất cả loại phòng để hiển thị ở trang danh sách loại phòng
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
-        return view('client.rooms', compact('rooms', 'roomTypes'));
+        return view('client.rooms.index', compact('roomTypes'));
     }
 
     public function restaurant()
@@ -60,48 +69,47 @@ class HotelController extends Controller
 
     public function roomsSingle($id = null)
     {
-        // Nếu không có id, chuyển hướng đến trang danh sách phòng
+        // Nếu không có id, chuyển hướng đến trang danh sách loại phòng
         if (!$id) {
             return redirect()->route('rooms');
         }
         
-        // Lấy thông tin chi tiết phòng
-        $room = $this->roomRepository->findById($id);
+        // Lấy thông tin chi tiết loại phòng
+        $roomType = $this->roomTypeService->findById($id);
         
-        if (!$room) {
-            return redirect()->route('rooms')->with('error', 'Không tìm thấy phòng');
+        if (!$roomType) {
+            return redirect()->route('rooms')->with('error', 'Không tìm thấy loại phòng');
         }
         
-        // Lấy các phòng khác cùng loại
-        $relatedRooms = $this->roomRepository->getAll()
-            ->where('room_type_id', $room->room_type_id)
-            ->where('id', '!=', $room->id)
-            ->take(2);
+        // Lấy các phòng thuộc loại phòng này
+        $rooms = $this->roomService->getAll()
+            ->where('room_type_id', $roomType->id);
         
         // Lấy đánh giá và bình luận của loại phòng
-        $reviews = $this->roomTypeReviewService->getRoomTypeReviews($room->room_type_id, 10);
-        $averageRating = $this->roomTypeReviewService->getRoomTypeAverageRating($room->room_type_id);
-        $reviewsCount = $this->roomTypeReviewService->getRoomTypeReviewsCount($room->room_type_id);
+        $reviews = $this->roomTypeReviewService->getRoomTypeReviews($roomType->id, 10);
+        $averageRating = $this->roomTypeReviewService->getRoomTypeAverageRating($roomType->id);
+        $reviewsCount = $this->roomTypeReviewService->getRoomTypeReviewsCount($roomType->id);
 
         // Kiểm tra quyền đánh giá
         $canReview = false;
+        $completedBookings = collect();
         if (Auth::check()) {
-            // Kiểm tra xem user đã có booking hoàn thành cho loại phòng này chưa
-            $hasCompletedBooking = Auth::user()->bookings()
+            // Lấy tất cả booking hoàn thành cho loại phòng này mà chưa đánh giá
+            $completedBookings = \App\Models\Booking::where('user_id', Auth::id())
                 ->where('status', 'completed')
-                ->whereHas('room', function($query) use ($room) {
-                    $query->where('room_type_id', $room->room_type_id);
+                ->whereHas('room', function($query) use ($roomType) {
+                    $query->where('room_type_id', $roomType->id);
                 })
-                ->exists();
+                ->whereDoesntHave('review', function($q) {
+                    $q->where('user_id', Auth::id());
+                })
+                ->get();
             
-            // Kiểm tra xem user đã đánh giá loại phòng này chưa
-            $hasReviewed = $this->roomTypeReviewService->hasUserReviewedRoomType(Auth::id(), $room->room_type_id);
-            
-            $canReview = $hasCompletedBooking && !$hasReviewed;
+            $canReview = $completedBookings->isNotEmpty();
         }
 
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
-        return view('client.rooms-single', compact('room', 'relatedRooms', 'reviews', 'averageRating', 'reviewsCount', 'roomTypes', 'canReview'));
+        return view('client.rooms.single', compact('roomType', 'rooms', 'reviews', 'averageRating', 'reviewsCount', 'roomTypes', 'canReview', 'completedBookings'));
     }
 
     public function blogSingle()
@@ -110,18 +118,18 @@ class HotelController extends Controller
     }
     
     /**
-     * Lấy danh sách reviews của phòng qua AJAX
+     * Lấy danh sách reviews của loại phòng qua AJAX
      */
     public function getRoomReviewsAjax($id)
     {
-        $room = $this->roomRepository->findById($id);
+        $roomType = $this->roomTypeService->findById($id);
         
-        if (!$room) {
-            return response()->json(['error' => 'Không tìm thấy phòng'], 404);
+        if (!$roomType) {
+            return response()->json(['error' => 'Không tìm thấy loại phòng'], 404);
         }
         
-        $reviews = $this->roomTypeReviewService->getRoomTypeReviews($room->room_type_id, 10);
+        $reviews = $this->roomTypeReviewService->getRoomTypeReviews($roomType->id, 10);
         
-        return view('client.partials.room-reviews-list', compact('reviews'))->render();
+        return view('client.rooms.reviews-list', compact('reviews'))->render();
     }
 }

@@ -134,4 +134,21 @@ class BookingRepository implements BookingRepositoryInterface
             ->latest()
             ->paginate($perPage);
     }
+
+    /**
+     * Kiểm tra xem user đã có booking hoàn thành cho loại phòng này chưa
+     *
+     * @param int $userId
+     * @param int $roomTypeId
+     * @return bool
+     */
+    public function hasUserCompletedBookingForRoomType(int $userId, int $roomTypeId): bool
+    {
+        return $this->model->where('user_id', $userId)
+            ->where('status', 'completed')
+            ->whereHas('room', function($query) use ($roomTypeId) {
+                $query->where('room_type_id', $roomTypeId);
+            })
+            ->exists();
+    }
 }

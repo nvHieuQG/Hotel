@@ -35,4 +35,15 @@ class RoomTypeRepository implements RoomTypeRepositoryInterface
     {
         return $this->model->all();
     }
+
+    /**
+     * Tìm loại phòng theo ID
+     *
+     * @param int $id
+     * @return mixed
+     */
+    public function findById(int $id)
+    {
+        return $this->model->find($id);
+    }
 }

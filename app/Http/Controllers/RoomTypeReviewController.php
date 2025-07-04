@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\RoomTypeReviewService;
-use App\Models\RoomType;
+use App\Interfaces\Services\RoomTypeServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -11,10 +11,14 @@ use Illuminate\Support\Facades\Log;
 class RoomTypeReviewController extends Controller
 {
     protected $roomTypeReviewService;
+    protected $roomTypeService;
 
-    public function __construct(RoomTypeReviewService $roomTypeReviewService)
-    {
+    public function __construct(
+        RoomTypeReviewService $roomTypeReviewService,
+        RoomTypeServiceInterface $roomTypeService
+    ) {
         $this->roomTypeReviewService = $roomTypeReviewService;
+        $this->roomTypeService = $roomTypeService;
     }
 
     /**
@@ -42,7 +46,12 @@ class RoomTypeReviewController extends Controller
                 ->with('error', 'Bạn không thể đánh giá loại phòng này hoặc đã đánh giá rồi.');
         }
 
-        $roomType = RoomType::findOrFail($roomTypeId);
+        $roomType = $this->roomTypeService->findById($roomTypeId);
+        
+        if (!$roomType) {
+            return redirect()->route('room-type-reviews.index')
+                ->with('error', 'Không tìm thấy loại phòng.');
+        }
 
         return view('client.room-type-reviews.create', compact('roomType'));
     }
@@ -146,7 +155,13 @@ class RoomTypeReviewController extends Controller
      */
     public function roomTypeReviews($roomTypeId)
     {
-        $roomType = RoomType::findOrFail($roomTypeId);
+        $roomType = $this->roomTypeService->findById($roomTypeId);
+        
+        if (!$roomType) {
+            return redirect()->route('room-type-reviews.index')
+                ->with('error', 'Không tìm thấy loại phòng.');
+        }
+        
         $reviews = $this->roomTypeReviewService->getRoomTypeReviews($roomTypeId, 10);
 
         return view('client.room-type-reviews.room-type-reviews', compact('roomType', 'reviews'));
@@ -183,24 +198,49 @@ class RoomTypeReviewController extends Controller
     {
         try {
             $roomTypeId = $request->input('room_type_id');
+            $bookingId = $request->input('booking_id');
             
-            // Kiểm tra xem user có thể đánh giá loại phòng này không
-            if (!$this->roomTypeReviewService->canReviewRoomType((int)$roomTypeId)) {
+            // Debug log
+            Log::info('StoreAjax request data:', [
+                'room_type_id' => $roomTypeId,
+                'booking_id' => $bookingId,
+                'all_data' => $request->all()
+            ]);
+            
+            if (!is_numeric($roomTypeId)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Bạn không thể đánh giá loại phòng này hoặc đã đánh giá rồi.'
+                    'message' => 'ID loại phòng không hợp lệ.'
+                ], 400);
+            }
+            
+            if (!is_numeric($bookingId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID booking không hợp lệ.'
+                ], 400);
+            }
+            
+            if (!$this->roomTypeReviewService->canReviewBooking((int)$bookingId, (int)$roomTypeId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn không thể đánh giá booking này hoặc đã đánh giá rồi.'
                 ], 400);
             }
             
             $validatedData = $this->roomTypeReviewService->validateReviewData($request->all());
+            Log::info('Validated data:', $validatedData);
+            
             $this->roomTypeReviewService->createReviewForUser($validatedData, (int)$roomTypeId);
             
             return response()->json([
                 'success' => true,
                 'message' => 'Đánh giá đã được gửi thành công!'
             ]);
-            
         } catch (\Exception $e) {
+            Log::error('StoreAjax error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -214,16 +254,45 @@ class RoomTypeReviewController extends Controller
     public function getReviewsAjax($roomTypeId)
     {
         try {
-            $roomType = RoomType::findOrFail($roomTypeId);
+            $roomType = $this->roomTypeService->findById($roomTypeId);
+            
+            if (!$roomType) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy loại phòng.'
+                ], 404);
+            }
+            
             $reviews = $this->roomTypeReviewService->getRoomTypeReviews($roomTypeId, 10);
             
-            return view('client.partials.room-type-reviews-list', compact('reviews', 'roomType'))->render();
+            return view('client.reviews.list', compact('reviews', 'roomType'))->render();
             
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Không thể tải danh sách đánh giá.'
             ], 500);
+        }
+    }
+
+    /**
+     * Trả về form đánh giá cho popup/modal
+     */
+    public function reviewForm($roomTypeId, Request $request)
+    {
+        try {
+            Log::info('Review form requested for room type: ' . $roomTypeId);
+            $roomType = \App\Models\RoomType::findOrFail($roomTypeId);
+            $booking = null;
+            $bookingId = $request->get('booking_id');
+            if ($bookingId) {
+                $booking = \App\Models\Booking::find($bookingId);
+            }
+            Log::info('Room type found: ' . $roomType->name);
+            return view('client.reviews.form', compact('roomType', 'booking'));
+        } catch (\Exception $e) {
+            Log::error('Review form error: ' . $e->getMessage());
+            return response()->json(['error' => 'Không thể tải form đánh giá: ' . $e->getMessage()], 500);
         }
     }
 } 

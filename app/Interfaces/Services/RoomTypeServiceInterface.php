@@ -8,5 +8,7 @@ interface RoomTypeServiceInterface
 {
     public function getAllRoomTypes(): Collection;
 
+    public function findById(int $id);
+
     public function searchRoomTypes(array $filters);
 }

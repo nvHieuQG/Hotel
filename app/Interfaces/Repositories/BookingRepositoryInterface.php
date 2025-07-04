@@ -82,4 +82,13 @@ interface BookingRepositoryInterface
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
     public function getByUserIdPaginate(int $userId, $perPage = 10);
+
+    /**
+     * Kiểm tra xem user đã có booking hoàn thành cho loại phòng này chưa
+     *
+     * @param int $userId
+     * @param int $roomTypeId
+     * @return bool
+     */
+    public function hasUserCompletedBookingForRoomType(int $userId, int $roomTypeId): bool;
 }

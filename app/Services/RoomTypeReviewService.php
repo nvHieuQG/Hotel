@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use App\Interfaces\Repositories\RoomTypeReviewRepositoryInterface;
+use App\Interfaces\Services\RoomTypeReviewServiceInterface;
 use App\Models\RoomTypeReview;
 use App\Models\RoomType;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class RoomTypeReviewService
+class RoomTypeReviewService implements RoomTypeReviewServiceInterface
 {
     protected $roomTypeReviewRepository;
 
@@ -44,26 +45,37 @@ class RoomTypeReviewService
      */
     public function createReviewForUser(array $data, int $roomTypeId): RoomTypeReview
     {
-        // Kiểm tra xem user đã đánh giá loại phòng này chưa
-        if ($this->roomTypeReviewRepository->hasUserReviewedRoomType(Auth::id(), $roomTypeId)) {
-            throw new \Exception('Bạn đã đánh giá loại phòng này rồi.');
+        $bookingId = $data['booking_id'] ?? null;
+        
+        if (!$bookingId) {
+            throw new \Exception('Thiếu thông tin booking.');
         }
 
-        // Kiểm tra xem user đã có booking hoàn thành cho loại phòng này chưa
-        $hasCompletedBooking = \App\Models\Booking::where('user_id', Auth::id())
+        // Kiểm tra xem booking có tồn tại và thuộc về user hiện tại không
+        $booking = \App\Models\Booking::with('room.roomType')
+            ->where('id', $bookingId)
+            ->where('user_id', Auth::id())
             ->where('status', 'completed')
-            ->whereHas('room', function($query) use ($roomTypeId) {
-                $query->where('room_type_id', $roomTypeId);
-            })
-            ->exists();
+            ->first();
 
-        if (!$hasCompletedBooking) {
-            throw new \Exception('Bạn chưa có booking hoàn thành cho loại phòng này.');
+        if (!$booking) {
+            throw new \Exception('Booking không tồn tại hoặc không hợp lệ.');
+        }
+
+        // Kiểm tra xem booking có thuộc loại phòng đang đánh giá không
+        if ($booking->room->room_type_id != $roomTypeId) {
+            throw new \Exception('Booking không thuộc loại phòng này.');
+        }
+
+        // Kiểm tra xem booking đã được đánh giá chưa
+        if ($this->roomTypeReviewRepository->hasUserReviewedBooking(Auth::id(), $bookingId)) {
+            throw new \Exception('Bạn đã đánh giá booking này rồi.');
         }
 
         $reviewData = [
             'user_id' => Auth::id(),
             'room_type_id' => $roomTypeId,
+            'booking_id' => $bookingId,
             'rating' => $data['rating'],
             'comment' => $data['comment'] ?? null,
             'cleanliness_rating' => $data['cleanliness_rating'] ?? null,
@@ -71,8 +83,8 @@ class RoomTypeReviewService
             'location_rating' => $data['location_rating'] ?? null,
             'facilities_rating' => $data['facilities_rating'] ?? null,
             'value_rating' => $data['value_rating'] ?? null,
-            'is_anonymous' => isset($data['is_anonymous']) && $data['is_anonymous'] == '1',
-            'status' => 'approved',
+            'is_anonymous' => isset($data['is_anonymous']) && ($data['is_anonymous'] == '1' || $data['is_anonymous'] === true),
+            'status' => 'pending',
         ];
 
         return $this->roomTypeReviewRepository->createReview($reviewData);
@@ -262,8 +274,8 @@ class RoomTypeReviewService
     public function validateReviewData(array $data): array
     {
         $rules = [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
             'room_type_id' => ['required', 'integer', 'exists:room_types,id'],
+            'booking_id' => ['required', 'integer', 'exists:bookings,id'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:1000'],
             'cleanliness_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
@@ -272,20 +284,27 @@ class RoomTypeReviewService
             'facilities_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'value_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'is_anonymous' => ['boolean'],
-            'status' => ['required', 'in:pending,approved,rejected'],
         ];
 
         $messages = [
-            'user_id.required' => 'Vui lòng chọn người đánh giá.',
-            'user_id.exists' => 'Người dùng không tồn tại.',
             'room_type_id.required' => 'Vui lòng chọn loại phòng.',
             'room_type_id.exists' => 'Loại phòng không tồn tại.',
-            'rating.required' => 'Vui lòng chọn điểm đánh giá.',
+            'booking_id.required' => 'Thiếu thông tin booking.',
+            'booking_id.exists' => 'Booking không tồn tại.',
+            'rating.required' => 'Vui lòng chọn điểm đánh giá tổng thể.',
             'rating.min' => 'Điểm đánh giá phải từ 1-5.',
             'rating.max' => 'Điểm đánh giá phải từ 1-5.',
             'comment.max' => 'Bình luận không được quá 1000 ký tự.',
-            'status.required' => 'Vui lòng chọn trạng thái.',
-            'status.in' => 'Trạng thái không hợp lệ.',
+            'cleanliness_rating.min' => 'Điểm đánh giá vệ sinh phải từ 1-5.',
+            'cleanliness_rating.max' => 'Điểm đánh giá vệ sinh phải từ 1-5.',
+            'comfort_rating.min' => 'Điểm đánh giá tiện nghi phải từ 1-5.',
+            'comfort_rating.max' => 'Điểm đánh giá tiện nghi phải từ 1-5.',
+            'location_rating.min' => 'Điểm đánh giá vị trí phải từ 1-5.',
+            'location_rating.max' => 'Điểm đánh giá vị trí phải từ 1-5.',
+            'facilities_rating.min' => 'Điểm đánh giá cơ sở vật chất phải từ 1-5.',
+            'facilities_rating.max' => 'Điểm đánh giá cơ sở vật chất phải từ 1-5.',
+            'value_rating.min' => 'Điểm đánh giá giá trị phải từ 1-5.',
+            'value_rating.max' => 'Điểm đánh giá giá trị phải từ 1-5.',
         ];
 
         $validator = \Illuminate\Support\Facades\Validator::make($data, $rules, $messages);
@@ -295,5 +314,17 @@ class RoomTypeReviewService
         }
 
         return $validator->validated();
+    }
+
+    public function canReviewBooking(int $bookingId, int $roomTypeId): bool
+    {
+        if (!\Auth::check()) return false;
+        $booking = \App\Models\Booking::with('room')->where('id', $bookingId)
+            ->where('user_id', \Auth::id())
+            ->where('status', 'completed')
+            ->first();
+        if (!$booking) return false;
+        if ($booking->room->room_type_id != $roomTypeId) return false;
+        return !$this->roomTypeReviewRepository->hasUserReviewedBooking(\Auth::id(), $bookingId);
     }
 } 

@@ -63,12 +63,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Room Type Review Service Binding
         $this->app->bind(
-            \App\Services\RoomTypeReviewService::class,
-            function ($app) {
-                return new \App\Services\RoomTypeReviewService(
-                    $app->make(\App\Interfaces\Repositories\RoomTypeReviewRepositoryInterface::class)
-                );
-            }
+            \App\Interfaces\Services\RoomTypeReviewServiceInterface::class,
+            \App\Services\RoomTypeReviewService::class
         );
 
         // Admin Service Bindings
@@ -83,9 +79,6 @@ class AppServiceProvider extends ServiceProvider
         );
 
         // Password Reset Bindings
-        $this->app->bind(UserRepositoryInterface::class, function ($app) {
-            return new UserRepository($app->make('App\Models\User'));
-        });
 
         // Profile Service Binding
         $this->app->bind(
@@ -107,6 +100,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \App\Interfaces\Services\RoomServiceInterface::class,
             \App\Services\RoomService::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Services\UserServiceInterface::class,
+            \App\Services\UserService::class
         );
 
         $this->app->bind(

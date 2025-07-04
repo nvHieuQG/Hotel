@@ -1,6 +1,6 @@
 @extends('client.layouts.master')
 
-@section('title', $room->roomType->name)
+@section('title', $roomType->name)
 
 @section('content')
     <div class="hero-wrap" style="background-image: url('/client/images/bg_1.jpg');">
@@ -11,10 +11,10 @@
                     <div class="text">
                         <p class="breadcrumbs mb-2">
                             <span class="mr-2"><a href="{{ route('index') }}">Trang chủ</a></span>
-                            <span class="mr-2"><a href="{{ route('rooms') }}">Phòng</a></span>
-                            <span>Chi tiết phòng</span>
+                            <span class="mr-2"><a href="{{ route('rooms') }}">Loại phòng</a></span>
+                            <span>Chi tiết loại phòng</span>
                         </p>
-                        <h1 class="mb-4 bread">{{ $room->roomType->name }}</h1>
+                        <h1 class="mb-4 bread">{{ $roomType->name }}</h1>
                     </div>
                 </div>
             </div>
@@ -27,7 +27,7 @@
                 <div class="col-lg-8">
                     <div class="row">
                         <div class="col-md-12 ftco-animate">
-                            <h2 class="mb-4">{{ $room->roomType->name }}</h2>
+                            <h2 class="mb-4">{{ $roomType->name }}</h2>
                             <div class="single-slider owl-carousel">
                                 <div class="item">
                                     <div class="room-img" style="background-image: url('/client/images/room-1.jpg');"></div>
@@ -42,24 +42,22 @@
                         </div>
                         <div class="col-md-12 room-single mt-4 mb-5 ftco-animate">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h4>Thông tin phòng</h4>
-                                <p><span class="price mr-2">{{ number_format($room->price) }}đ</span> <span
+                                <h4>Thông tin loại phòng</h4>
+                                <p><span class="price mr-2">{{ number_format($roomType->price) }}đ</span> <span
                                         class="per">mỗi đêm</span></p>
                             </div>
-                            <p class="mb-4">{{ $room->roomType->description }}</p>
+                            <p class="mb-4">{{ $roomType->description }}</p>
                             <div class="d-md-flex mt-5 mb-5">
                                 <ul class="list">
-                                    <li><span>Sức chứa tối đa:</span> {{ $room->capacity }} người</li>
+                                    <li><span>Sức chứa tối đa:</span> {{ $roomType->capacity }} người</li>
                                 </ul>
                                 <ul class="list ml-md-5">
-                                    <li><span>Loại phòng:</span> {{ $room->roomType->name }}</li>
+                                    <li><span>Số phòng hiện có:</span> {{ $rooms->count() }} phòng</li>
                                 </ul>
                             </div>
-                            @if ($room->status == 'available')
-                                <div class="text-center">
-                                    <a href="{{ route('booking') }}" class="btn btn-primary py-3 px-5">Đặt phòng ngay</a>
-                                </div>
-                            @endif
+                            <div class="text-center">
+                                <a href="{{ route('booking') }}?room_type_id={{ $roomType->id }}" class="btn btn-primary py-3 px-5">Đặt phòng ngay</a>
+                            </div>
                         </div>
 
                         <!-- Phần đánh giá và bình luận -->
@@ -93,9 +91,9 @@
                                 <div class="col-md-6 text-right">
                                     @auth
                                         @if(isset($canReview) && $canReview)
-                                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#reviewModal">
+                                            {{-- <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#reviewModal">
                                                 <i class="icon-pencil"></i> Viết đánh giá
-                                            </button>
+                                            </button> --}}
                                         @else
                                             <span class="text-muted">
                                                 <i class="icon-info"></i> Cần đặt phòng và hoàn thành để đánh giá
@@ -111,13 +109,29 @@
 
                             <!-- Form đánh giá (chỉ hiển thị khi đã đăng nhập và có booking hoàn thành) -->
                             @auth
-                                @if(isset($canReview) && $canReview)
+                                @if($completedBookings->isNotEmpty())
                                     <div class="review-form mb-4">
                                         <div class="card">
                                             <div class="card-body">
                                                 <h5 class="card-title">Viết đánh giá của bạn</h5>
-                                                <form id="reviewForm" data-room-type-id="{{ $room->roomType->id }}">
+                                                
+                                                <!-- Chọn booking để đánh giá -->
+                                                <div class="form-group mb-3">
+                                                    <label for="booking_select">Chọn booking để đánh giá:</label>
+                                                    <select id="booking_select" class="form-control" required>
+                                                        <option value="">Chọn booking...</option>
+                                                        @foreach($completedBookings as $booking)
+                                                            <option value="{{ $booking->id }}" data-booking-id="{{ $booking->id }}">
+                                                                Booking #{{ $booking->booking_id }} - {{ $booking->room->name }} 
+                                                                ({{ $booking->check_in_date->format('d/m/Y') }} - {{ $booking->check_out_date->format('d/m/Y') }})
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                
+                                                <form id="reviewForm" data-room-type-id="{{ $roomType->id }}">
                                                     @csrf
+                                                    <input type="hidden" name="booking_id" id="selected_booking_id">
                                                     <div class="form-group">
                                                         <label>Điểm đánh giá tổng thể:</label>
                                                         <div class="rating-input">
@@ -132,23 +146,23 @@
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <div class="form-group">
-                                                                <label>Vệ sinh:</label>
+                                                                <label>Vệ sinh: <small class="text-muted">(không bắt buộc)</small></label>
                                                                 <div class="rating-input">
-                                                                    @for ($i = 5; $i >= 1; $i--)
-                                                                        <input type="radio" name="cleanliness_rating" value="{{ $i }}" id="cleanliness{{ $i }}" class="rating-radio" required>
-                                                                        <label for="cleanliness{{ $i }}" class="rating-star">☆</label>
-                                                                    @endfor
+                                                                                                                                @for ($i = 5; $i >= 1; $i--)
+                                                                <input type="radio" name="cleanliness_rating" value="{{ $i }}" id="cleanliness{{ $i }}" class="rating-radio">
+                                                                <label for="cleanliness{{ $i }}" class="rating-star">☆</label>
+                                                            @endfor
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <div class="form-group">
-                                                                <label>Tiện nghi:</label>
+                                                                <label>Tiện nghi: <small class="text-muted">(không bắt buộc)</small></label>
                                                                 <div class="rating-input">
-                                                                    @for ($i = 5; $i >= 1; $i--)
-                                                                        <input type="radio" name="comfort_rating" value="{{ $i }}" id="comfort{{ $i }}" class="rating-radio" required>
-                                                                        <label for="comfort{{ $i }}" class="rating-star">☆</label>
-                                                                    @endfor
+                                                                                                                                @for ($i = 5; $i >= 1; $i--)
+                                                                <input type="radio" name="comfort_rating" value="{{ $i }}" id="comfort{{ $i }}" class="rating-radio">
+                                                                <label for="comfort{{ $i }}" class="rating-star">☆</label>
+                                                            @endfor
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -157,33 +171,33 @@
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <div class="form-group">
-                                                                <label>Vị trí:</label>
+                                                                <label>Vị trí: <small class="text-muted">(không bắt buộc)</small></label>
                                                                 <div class="rating-input">
-                                                                    @for ($i = 5; $i >= 1; $i--)
-                                                                        <input type="radio" name="location_rating" value="{{ $i }}" id="location{{ $i }}" class="rating-radio" required>
-                                                                        <label for="location{{ $i }}" class="rating-star">☆</label>
-                                                                    @endfor
+                                                                                                                                @for ($i = 5; $i >= 1; $i--)
+                                                                <input type="radio" name="location_rating" value="{{ $i }}" id="location{{ $i }}" class="rating-radio">
+                                                                <label for="location{{ $i }}" class="rating-star">☆</label>
+                                                            @endfor
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <div class="form-group">
-                                                                <label>Cơ sở vật chất:</label>
+                                                                <label>Cơ sở vật chất: <small class="text-muted">(không bắt buộc)</small></label>
                                                                 <div class="rating-input">
-                                                                    @for ($i = 5; $i >= 1; $i--)
-                                                                        <input type="radio" name="facilities_rating" value="{{ $i }}" id="facilities{{ $i }}" class="rating-radio" required>
-                                                                        <label for="facilities{{ $i }}" class="rating-star">☆</label>
-                                                                    @endfor
+                                                                                                                                @for ($i = 5; $i >= 1; $i--)
+                                                                <input type="radio" name="facilities_rating" value="{{ $i }}" id="facilities{{ $i }}" class="rating-radio">
+                                                                <label for="facilities{{ $i }}" class="rating-star">☆</label>
+                                                            @endfor
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="form-group">
-                                                        <label>Giá trị:</label>
+                                                        <label>Giá trị: <small class="text-muted">(không bắt buộc)</small></label>
                                                         <div class="rating-input">
                                                             @for ($i = 5; $i >= 1; $i--)
-                                                                <input type="radio" name="value_rating" value="{{ $i }}" id="value{{ $i }}" class="rating-radio" required>
+                                                                <input type="radio" name="value_rating" value="{{ $i }}" id="value{{ $i }}" class="rating-radio">
                                                                 <label for="value{{ $i }}" class="rating-star">☆</label>
                                                             @endfor
                                                         </div>
@@ -191,7 +205,7 @@
                                                     
                                                     <div class="form-group">
                                                         <label for="comment">Bình luận:</label>
-                                                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                                                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn... (không bắt buộc)"></textarea>
                                                     </div>
                                                     <div class="form-group">
                                                         <div class="custom-control custom-checkbox">
@@ -300,12 +314,12 @@
                         </div>
 
                         <div class="col-md-12 room-single ftco-animate mb-5 mt-5">
-                            <h4 class="mb-4">Các phòng khác cùng loại</h4>
+                            <h4 class="mb-4">Các loại phòng khác</h4>
                             <div class="row">
-                                @foreach ($relatedRooms as $relRoom)
+                                @foreach ($roomTypes->where('id', '!=', $roomType->id)->take(3) as $otherType)
                                     <div class="col-sm col-md-6 ftco-animate">
                                         <div class="room">
-                                            <a href="{{ route('rooms-single', $relRoom->id) }}"
+                                            <a href="{{ route('rooms-single', $otherType->id) }}"
                                                 class="img img-2 d-flex justify-content-center align-items-center"
                                                 style="background-image: url('/client/images/room-{{ $loop->iteration + 3 }}.jpg');">
                                                 <div class="icon d-flex justify-content-center align-items-center">
@@ -314,11 +328,11 @@
                                             </a>
                                             <div class="text p-3 text-center">
                                                 <h3 class="mb-3"><a
-                                                        href="{{ route('rooms-single', $relRoom->id) }}">{{ $relRoom->roomType->name }}</a></h3>
-                                                <p><span class="price mr-2">{{ number_format($relRoom->price) }}đ</span>
+                                                        href="{{ route('rooms-single', $otherType->id) }}">{{ $otherType->name }}</a></h3>
+                                                <p><span class="price mr-2">{{ number_format($otherType->price) }}đ</span>
                                                     <span class="per">mỗi đêm</span></p>
                                                 <hr>
-                                                <p class="pt-1"><a href="{{ route('rooms-single', $relRoom->id) }}"
+                                                <p class="pt-1"><a href="{{ route('rooms-single', $otherType->id) }}"
                                                         class="btn-custom">Xem chi tiết <span
                                                             class="icon-long-arrow-right"></span></a></p>
                                             </div>
@@ -346,7 +360,7 @@
                             <h3>Loại phòng</h3>
                             @foreach ($roomTypes as $type)
                                 <li>
-                                    <a href="{{ route('rooms.search', ['type' => $type->id]) }}">
+                                    <a href="{{ route('rooms-single', ['id' => $type->id]) }}">
                                         {{ $type->name }}
                                     </a>
                                 </li>
@@ -358,7 +372,7 @@
                     <div class="sidebar-box ftco-animate">
                         <h3>Đặt phòng nhanh</h3>
                         <form action="{{ route('booking') }}" method="GET" class="p-3 bg-light">
-                            <input type="hidden" name="room_id" value="{{ $room->id }}">
+                            <input type="hidden" name="room_type_id" value="{{ $roomType->id }}">
                             <div class="form-group">
                                 <label for="checkin_date">Ngày nhận phòng</label>
                                 <input type="date" name="check_in" class="form-control" required
@@ -372,7 +386,7 @@
                             <div class="form-group">
                                 <label for="guests">Số khách</label>
                                 <select name="guests" class="form-control">
-                                    @for ($i = 1; $i <= $room->capacity; $i++)
+                                    @for ($i = 1; $i <= $roomType->capacity; $i++)
                                         <option value="{{ $i }}">{{ $i }} người</option>
                                     @endfor
                                 </select>
@@ -482,14 +496,36 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
+    // Xử lý chọn booking
+    $('#booking_select').on('change', function() {
+        const selectedBookingId = $(this).val();
+        $('#selected_booking_id').val(selectedBookingId);
+        
+        // Enable/disable form dựa trên việc chọn booking
+        if (selectedBookingId) {
+            $('#reviewForm .form-control, #reviewForm .rating-radio').prop('disabled', false);
+            $('#reviewForm button[type="submit"]').prop('disabled', false);
+        } else {
+            $('#reviewForm .form-control, #reviewForm .rating-radio').prop('disabled', true);
+            $('#reviewForm button[type="submit"]').prop('disabled', true);
+        }
+    });
+    
     // Xử lý form đánh giá
     $('#reviewForm').on('submit', function(e) {
         e.preventDefault();
         
         const form = $(this);
         const roomTypeId = form.data('room-type-id');
+        const bookingId = $('#selected_booking_id').val();
         const submitBtn = form.find('button[type="submit"]');
         const originalText = submitBtn.html();
+        
+        // Kiểm tra xem đã chọn booking chưa
+        if (!bookingId) {
+            showAlert('Vui lòng chọn booking để đánh giá!', 'danger');
+            return;
+        }
         
         // Disable button và hiển thị loading
         submitBtn.prop('disabled', true).html('<i class="icon-spinner"></i> Đang gửi...');
@@ -497,6 +533,7 @@ $(document).ready(function() {
         // Lấy dữ liệu form
         const formData = new FormData(this);
         formData.append('room_type_id', roomTypeId);
+        formData.append('booking_id', bookingId);
         
         // Gửi request AJAX
         fetch('/room-type-reviews/store-ajax', {
@@ -515,10 +552,18 @@ $(document).ready(function() {
                 
                 // Reset form
                 form[0].reset();
+                $('#booking_select').val('');
+                $('#selected_booking_id').val('');
                 $('.rating-star').removeClass('text-warning').addClass('text-muted');
                 
-                // Reload danh sách đánh giá
-                loadReviews(roomTypeId);
+                // Disable form
+                $('#reviewForm .form-control, #reviewForm .rating-radio').prop('disabled', true);
+                $('#reviewForm button[type="submit"]').prop('disabled', true);
+                
+                // Reload trang để cập nhật danh sách booking
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
             } else {
                 showAlert(data.message || 'Có lỗi xảy ra khi gửi đánh giá!', 'danger');
             }

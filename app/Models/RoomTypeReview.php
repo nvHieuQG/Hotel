@@ -17,6 +17,7 @@ class RoomTypeReview extends Model
     protected $fillable = [
         'user_id',
         'room_type_id',
+        'booking_id',
         'rating',
         'comment',
         'cleanliness_rating',
@@ -57,6 +58,14 @@ class RoomTypeReview extends Model
     public function roomType()
     {
         return $this->belongsTo(RoomType::class);
+    }
+
+    /**
+     * Get the booking that was reviewed.
+     */
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class);
     }
 
     /**

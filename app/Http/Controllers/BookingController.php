@@ -22,7 +22,7 @@ class BookingController extends Controller
     {
         try {
             $data = $this->bookingService->getBookingPageData();
-            return view('client.booking', $data);
+            return view('client.booking.index', $data);
         } catch (\Exception $e) {
             return redirect()->route('verification.notice')
                 ->with('warning', $e->getMessage());
@@ -50,7 +50,7 @@ class BookingController extends Controller
     {
         $bookings = $this->bookingService->getCurrentUserBookings();
 
-        return view('client.my-bookings', compact('bookings'));
+        return view('client.profile.bookings.index', compact('bookings'));
     }
 
     /**
@@ -77,6 +77,6 @@ class BookingController extends Controller
         if ($booking->user_id !== Auth::id()) {
             abort(403, 'Bạn không có quyền xem đặt phòng này.');
         }
-        return view('client.booking-detail', compact('booking'));
+        return view('client.booking.detail', compact('booking'));
     }
 }

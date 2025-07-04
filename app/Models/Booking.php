@@ -50,6 +50,14 @@ class Booking extends Model
         return $this->belongsTo(Room::class);
     }
 
+    /**
+     * Get the review for this booking.
+     */
+    public function review()
+    {
+        return $this->hasOne(RoomTypeReview::class);
+    }
+
 
     
     /**

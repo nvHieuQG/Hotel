@@ -94,9 +94,21 @@
                                 @endfor
                                 <span class="ml-2">{{ $review->rating }}/5</span>
                             </div>
-                            <span class="badge badge-{{ $review->status == 'approved' ? 'success' : ($review->status == 'rejected' ? 'danger' : 'warning') }}">
-                                {{ $review->status_text }}
-                            </span>
+                            <div class="d-flex align-items-center">
+                                <span class="badge badge-{{ $review->status == 'approved' ? 'success' : ($review->status == 'rejected' ? 'danger' : 'warning') }} mr-2">
+                                    {{ $review->status_text }}
+                                </span>
+                                @if ($review->status === 'pending')
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary edit-review-btn" data-review-id="{{ $review->id }}" title="Chỉnh sửa đánh giá">
+                                            <i class="fas fa-edit"></i> Sửa
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger delete-review-btn" data-review-id="{{ $review->id }}" title="Xóa đánh giá">
+                                            <i class="fas fa-trash"></i> Xóa
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                         @if($review->comment)
                             <p class="mb-0">{{ $review->comment }}</p>
@@ -129,5 +141,8 @@
                 @endif
             </div>
         </div>
+        {{-- @if ($booking->status == 'completed' && !$hasReviewed)
+            <button class="btn btn-sm btn-success create-review-btn" data-room-type-id="{{ $roomType->id }}">Đánh giá</button>
+        @endif --}}
     @endif
 </div> 

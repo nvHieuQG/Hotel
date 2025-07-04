@@ -68,6 +68,11 @@ interface RoomTypeReviewRepositoryInterface
     public function hasUserReviewedRoomType(int $userId, int $roomTypeId): bool;
 
     /**
+     * Kiểm tra xem user đã đánh giá booking này chưa
+     */
+    public function hasUserReviewedBooking(int $userId, int $bookingId): bool;
+
+    /**
      * Lấy rating trung bình của loại phòng
      */
     public function getAverageRatingByRoomType(int $roomTypeId): float;
