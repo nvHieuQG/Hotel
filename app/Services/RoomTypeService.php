@@ -22,6 +22,11 @@ class RoomTypeService implements RoomTypeServiceInterface
         return $this->roomTypeRepository->getAllRoomTypes();
     }
 
+    public function findById(int $id)
+    {
+        return $this->roomTypeRepository->findById($id);
+    }
+
     public function validateFilters(array $filters)
     {
         $validator = Validator::make($filters, [

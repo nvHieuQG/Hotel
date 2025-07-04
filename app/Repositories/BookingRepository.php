@@ -119,4 +119,36 @@ class BookingRepository implements BookingRepositoryInterface
     {
         return Booking::with('room.roomType')->findOrFail($id);
     }
+
+    /**
+     * Lấy tất cả đặt phòng của người dùng (có phân trang)
+     *
+     * @param int $userId
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getByUserIdPaginate(int $userId, $perPage = 10)
+    {
+        return $this->model->where('user_id', $userId)
+            ->with('room.roomType')
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    /**
+     * Kiểm tra xem user đã có booking hoàn thành cho loại phòng này chưa
+     *
+     * @param int $userId
+     * @param int $roomTypeId
+     * @return bool
+     */
+    public function hasUserCompletedBookingForRoomType(int $userId, int $roomTypeId): bool
+    {
+        return $this->model->where('user_id', $userId)
+            ->where('status', 'completed')
+            ->whereHas('room', function($query) use ($roomTypeId) {
+                $query->where('room_type_id', $roomTypeId);
+            })
+            ->exists();
+    }
 }

@@ -55,8 +55,10 @@ class Booking extends Model
      */
     public function review()
     {
-        return $this->hasOne(Review::class);
+        return $this->hasOne(RoomTypeReview::class);
     }
+
+
     
     /**
      * Accessor for check_in
@@ -100,21 +102,7 @@ class Booking extends Model
                ($this->check_out_date && $this->check_out_date->isPast());
     }
 
-    /**
-     * Kiểm tra xem booking có thể đánh giá không
-     */
-    public function canBeReviewed()
-    {
-        return $this->isCompleted() && !$this->review;
-    }
 
-    /**
-     * Kiểm tra xem booking đã được đánh giá chưa
-     */
-    public function hasReview()
-    {
-        return $this->review()->exists();
-    }
 
     /**
      * Lấy trạng thái hiển thị

@@ -145,4 +145,94 @@
     /* Giữ nguyên animation của theme */
     opacity: 1;
     visibility: visible;
+}
+
+/* CSS cho phần đánh giá và bình luận */
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.rating-input input {
+    display: none;
+}
+
+.rating-star {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.rating-star:hover,
+.rating-star:hover ~ .rating-star,
+.rating-input input:checked ~ .rating-star {
+    color: #ffc107;
+}
+
+.review-form {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.review-item {
+    transition: background-color 0.2s;
+}
+
+.review-item:hover {
+    background-color: #f8f9fa;
+}
+
+.stars {
+    display: inline-flex;
+    align-items: center;
+}
+
+.stars .icon-star {
+    color: #ffc107;
+    margin-right: 2px;
+}
+
+.stars .icon-star-o {
+    color: #ddd;
+    margin-right: 2px;
+}
+
+.reviews-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 30px;
+}
+
+.review-content {
+    padding: 10px 0;
+}
+
+.review-content p {
+    margin-bottom: 5px;
+}
+
+.review-content strong {
+    color: #333;
+}
+
+.review-content em {
+    color: #6c757d;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+    .rating-star {
+        font-size: 1.5rem;
+    }
+    
+    .reviews-section {
+        padding: 15px;
+    }
+    
+    .review-item {
+        padding: 10px;
+    }
 } 

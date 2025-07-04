@@ -10,10 +10,14 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Admin\AdminRoomController;
 use App\Http\Controllers\Auth\EmailVerificationController;
-use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\RoomTypeReviewController;
 use App\Http\Controllers\Admin\AdminBookingController;
-use App\Http\Controllers\Admin\AdminReviewController;
+use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\Admin\AdminUserController;
+
+use Illuminate\Support\Facades\Auth;
 
 // Route::get('/', function () {
 //     return view('client.index');
@@ -31,7 +35,7 @@ Route::get('/about', [HotelController::class, 'about'])->name('about');
 
 Route::get('/contact', [HotelController::class, 'contact'])->name('contact');
 
-Route::get('/rooms-single/{id?}', [HotelController::class, 'roomsSingle'])->name('rooms-single');
+Route::get('/rooms-single/{id}', [HotelController::class, 'roomsSingle'])->name('rooms-single');
 
 Route::get('/blog-single', [HotelController::class, 'blogSingle'])->name('blog-single');
 
@@ -68,43 +72,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Booking - Đặt phòng
     Route::get('/booking', [BookingController::class, 'booking'])->name('booking');
     Route::post('/booking', [BookingController::class, 'storeBooking']);
-    Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('my-bookings');
     Route::post('/booking/cancel/{id}', [BookingController::class, 'cancelBooking'])->name('booking.cancel');
-
-    // Reviews - Đánh giá
-    Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
-    Route::get('/reviews/create/{bookingId}', [ReviewController::class, 'create'])->name('reviews.create');
-    Route::get('/reviews/create-room/{roomId}', [ReviewController::class, 'createFromRoom'])->name('reviews.create-room');
-    Route::post('/reviews/{bookingId}', [ReviewController::class, 'store'])->name('reviews.store');
-    Route::get('/reviews/{id}/edit', [ReviewController::class, 'edit'])->name('reviews.edit');
-    Route::put('/reviews/{id}', [ReviewController::class, 'update'])->name('reviews.update');
-    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
-    Route::get('/my-reviews', [ReviewController::class, 'myReviews'])->name('reviews.my-reviews');
+    Route::get('/booking/{id}/detail', [BookingController::class, 'showDetail'])->name('booking.detail');
+    
+    // AJAX Room Type Reviews - Đặt trước để tránh xung đột
+    Route::post('/room-type-reviews/store-ajax', [RoomTypeReviewController::class, 'storeAjax'])->name('room-type-reviews.store-ajax');
+    
+    // Room Type Reviews - Chỉ trong profile
+    Route::post('/room-type-reviews/{roomTypeId}', [UserProfileController::class, 'createReview'])->name('room-type-reviews.store');
+    Route::put('/room-type-reviews/{id}', [UserProfileController::class, 'updateReview'])->name('room-type-reviews.update');
+    Route::delete('/room-type-reviews/{id}', [UserProfileController::class, 'deleteReview'])->name('room-type-reviews.destroy');
+    
+    // Form đánh giá
+    Route::get('/room-type-reviews/{roomTypeId}/form', [RoomTypeReviewController::class, 'reviewForm'])->name('room-type-reviews.form');
 });
 
-// Routes công khai cho reviews
-Route::get('/rooms/{roomId}/reviews', [ReviewController::class, 'roomReviews'])->name('reviews.room-reviews');
-
-// Test route để kiểm tra admin access
-Route::get('/test-admin', function () {
-    if (\Illuminate\Support\Facades\Auth::check()) {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        return response()->json([
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'role_id' => $user->role_id,
-            'role_name' => $user->role ? $user->role->name : 'No role',
-            'is_admin' => $user->role && in_array($user->role->name, ['admin', 'super_admin', 'staff'])
-        ]);
-    }
-    return response()->json(['error' => 'Not authenticated']);
-})->middleware('auth');
+// Routes công khai cho room type reviews (chỉ hiển thị)
+Route::get('/rooms/{id}/reviews-ajax', [HotelController::class, 'getRoomReviewsAjax'])->name('rooms.reviews-ajax');
 
 // Admin Routes
 Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     // Dashboard
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-
+    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard.page');
+    
     // Quản lý đặt phòng
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
     Route::patch('bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
@@ -116,17 +107,23 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     // Routes cho quản lý ảnh phòng
     Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete');
     Route::post('rooms/{room}/images/{image}/primary', [AdminRoomController::class, 'setPrimaryImage'])->name('rooms.images.primary');
-
-    // Quản lý đánh giá
-    Route::get('reviews/statistics', [AdminReviewController::class, 'statistics'])->name('reviews.statistics');
-    Route::patch('reviews/{id}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');
-    Route::patch('reviews/{id}/reject', [AdminReviewController::class, 'reject'])->name('reviews.reject');
-    Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
-    Route::get('reviews/create', [AdminReviewController::class, 'create'])->name('reviews.create');
-    Route::post('reviews', [AdminReviewController::class, 'store'])->name('reviews.store');
-    Route::get('reviews/{review}', [AdminReviewController::class, 'show'])->name('reviews.show');
-    Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
+    
+    // Quản lý đánh giá loại phòng
+    Route::get('room-type-reviews/statistics', [AdminRoomTypeReviewController::class, 'statistics'])->name('room-type-reviews.statistics');
+    Route::patch('room-type-reviews/{id}/approve', [AdminRoomTypeReviewController::class, 'approve'])->name('room-type-reviews.approve');
+    Route::patch('room-type-reviews/{id}/reject', [AdminRoomTypeReviewController::class, 'reject'])->name('room-type-reviews.reject');
+    Route::get('room-type-reviews', [AdminRoomTypeReviewController::class, 'index'])->name('room-type-reviews.index');
+    Route::get('room-type-reviews/create', [AdminRoomTypeReviewController::class, 'create'])->name('room-type-reviews.create');
+    Route::post('room-type-reviews', [AdminRoomTypeReviewController::class, 'store'])->name('room-type-reviews.store');
+    Route::get('room-type-reviews/{review}', [AdminRoomTypeReviewController::class, 'show'])->name('room-type-reviews.show');
+    Route::delete('room-type-reviews/{review}', [AdminRoomTypeReviewController::class, 'destroy'])->name('room-type-reviews.destroy');
+    
+    // Quản lý người dùng
+    Route::resource('users', AdminUserController::class)->except(['create', 'store']);
 });
+
+// Route công khai cho room type reviews (chỉ hiển thị) - đặt sau admin routes để tránh xung đột
+Route::get('/room-type-reviews/{roomTypeId}/ajax', [RoomTypeReviewController::class, 'getReviewsAjax'])->name('room-type-reviews.ajax');
 
 // Password reset routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
@@ -149,9 +146,27 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])
     ->name('password.update');
 
 // Search Rooms
-Route::get('/rooms', [HotelController::class, 'rooms'])->name('rooms');
 Route::get('/search-rooms', [RoomController::class, 'search'])->name('rooms.search');
 
 // Payment
 Route::get('/confirm-info-payment/{booking}', [PaymentController::class, 'confirmInfo'])->name('confirm-info-payment');
 Route::get('/payment-method/{booking}', [PaymentController::class, 'paymentMethod'])->name('payment-method');
+
+// User Profile Routes (chỉ cần đăng nhập, không cần xác minh email)
+Route::middleware('auth')->group(function () {
+    Route::get('/user/profile', [UserProfileController::class, 'showUserProfile'])->name('user.profile');
+    Route::post('/user/profile/update', [UserProfileController::class, 'updateUserProfile'])->name('user.profile.update');
+    Route::post('/user/profile/change-password', [UserProfileController::class, 'changeUserPassword'])->name('user.profile.change_password');
+    Route::get('/user/bookings', [UserProfileController::class, 'showUserBookings'])->name('user.bookings');
+    Route::get('/user/reviews', [UserProfileController::class, 'showUserReviews'])->name('user.reviews');
+    
+    // API routes cho AJAX loading
+    Route::get('/user/bookings/partial', [UserProfileController::class, 'getBookingsPartial'])->name('user.bookings.partial');
+    Route::get('/user/reviews/partial', [UserProfileController::class, 'getReviewsPartial'])->name('user.reviews.partial');
+    
+    // API routes cho chi tiết booking và review
+    Route::get('/user/bookings/{id}/detail', [UserProfileController::class, 'getBookingDetail'])->name('user.bookings.detail');
+    Route::get('/user/reviews/{id}/detail', [UserProfileController::class, 'getReviewDetail'])->name('user.reviews.detail');
+    Route::get('/user/reviews/{id}/data', [UserProfileController::class, 'getReviewData'])->name('user.reviews.data');
+});
+

@@ -33,10 +33,12 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\RoomRepository::class
         );
 
-        // Review Repository Binding
+
+
+        // Room Type Review Repository Binding
         $this->app->bind(
-            \App\Interfaces\Repositories\ReviewRepositoryInterface::class,
-            \App\Repositories\ReviewRepository::class
+            \App\Interfaces\Repositories\RoomTypeReviewRepositoryInterface::class,
+            \App\Repositories\RoomTypeReviewRepository::class
         );
 
         // Admin Repository Bindings
@@ -57,14 +59,12 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\BookingService::class
         );
 
-        // Review Service Binding
+
+
+        // Room Type Review Service Binding
         $this->app->bind(
-            \App\Services\ReviewService::class,
-            function ($app) {
-                return new \App\Services\ReviewService(
-                    $app->make(\App\Interfaces\Repositories\ReviewRepositoryInterface::class)
-                );
-            }
+            \App\Interfaces\Services\RoomTypeReviewServiceInterface::class,
+            \App\Services\RoomTypeReviewService::class
         );
 
         // Admin Service Bindings
@@ -79,9 +79,16 @@ class AppServiceProvider extends ServiceProvider
         );
 
         // Password Reset Bindings
-        $this->app->bind(UserRepositoryInterface::class, function ($app) {
-            return new UserRepository($app->make('App\Models\User'));
-        });
+
+        // Profile Service Binding
+        $this->app->bind(
+            \App\Interfaces\Services\ProfileServiceInterface::class,
+            function ($app) {
+                return new \App\Services\ProfileService(
+                    $app->make(\App\Interfaces\Repositories\UserRepositoryInterface::class)
+                );
+            }
+        );
 
         $this->app->bind(PasswordResetServiceInterface::class, function ($app) {
             return new PasswordResetService(
@@ -93,6 +100,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \App\Interfaces\Services\RoomServiceInterface::class,
             \App\Services\RoomService::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Services\UserServiceInterface::class,
+            \App\Services\UserService::class
         );
 
         $this->app->bind(
@@ -123,7 +135,6 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Services\RoomTypeServiceInterface::class,
             \App\Services\RoomTypeService::class
         );
-        
     }
 
     /**

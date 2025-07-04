@@ -39,21 +39,7 @@ class Room extends Model
         return $this->hasMany(Booking::class);
     }
 
-    /**
-     * Lấy tất cả reviews của phòng
-     */
-    public function reviews()
-    {
-        return $this->hasMany(Review::class);
-    }
 
-    /**
-     * Lấy reviews đã được duyệt của phòng
-     */
-    public function approvedReviews()
-    {
-        return $this->reviews()->approved();
-    }
     
     /**
      * Lấy hình ảnh của phòng
@@ -161,20 +147,19 @@ class Room extends Model
     }
 
     /**
-     * Lấy rating trung bình của phòng
+     * Lấy rating trung bình của phòng (từ loại phòng)
      */
     public function getAverageRatingAttribute()
     {
-        $rating = $this->approvedReviews()->avg('rating');
-        return $rating ? round($rating, 1) : 0;
+        return $this->roomType->average_rating;
     }
 
     /**
-     * Lấy số lượng reviews của phòng
+     * Lấy số lượng reviews của phòng (từ loại phòng)
      */
     public function getReviewsCountAttribute()
     {
-        return $this->approvedReviews()->count();
+        return $this->roomType->reviews_count;
     }
 
     /**
