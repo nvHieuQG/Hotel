@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\ReviewService;
 use Illuminate\Support\Facades\Auth;
 use App\Services\RoomTypeReviewService;
 use App\Interfaces\Services\RoomTypeServiceInterface;
@@ -14,6 +15,7 @@ class HotelController extends Controller
 {
     protected $roomRepository;
     protected $roomService;
+    protected $reviewService;
     protected $roomTypeReviewService;
     protected $roomTypeService;
     protected $bookingRepository;
@@ -42,9 +44,10 @@ class HotelController extends Controller
 
     public function rooms()
     {
-        // Lấy tất cả loại phòng để hiển thị ở trang danh sách loại phòng
+        // Lấy tất cả phòng để hiển thị ở trang danh sách phòng
+        $rooms = $this->roomRepository->getAll();
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
-        return view('client.rooms.index', compact('roomTypes'));
+        return view('client.rooms', compact('rooms', 'roomTypes'));
     }
 
     public function restaurant()
