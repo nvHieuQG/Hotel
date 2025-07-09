@@ -74,14 +74,26 @@
             
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <label for="status" class="form-label">Trạng thái</label>
+                    <label for="status" class="form-label">Trạng thái đặt phòng</label>
                     <select name="status" id="status" class="form-select @error('status') is-invalid @enderror" required>
                         <option value="pending" {{ (old('status', $booking->status) == 'pending') ? 'selected' : '' }}>Chờ xác nhận</option>
                         <option value="confirmed" {{ (old('status', $booking->status) == 'confirmed') ? 'selected' : '' }}>Đã xác nhận</option>
+                        <option value="checked_in" {{ (old('status', $booking->status) == 'checked_in') ? 'selected' : '' }}>Đã nhận phòng</option>
+                        <option value="checked_out" {{ (old('status', $booking->status) == 'checked_out') ? 'selected' : '' }}>Đã trả phòng</option>
                         <option value="completed" {{ (old('status', $booking->status) == 'completed') ? 'selected' : '' }}>Hoàn thành</option>
                         <option value="cancelled" {{ (old('status', $booking->status) == 'cancelled') ? 'selected' : '' }}>Đã hủy</option>
-                        <option value="no-show" {{ (old('status', $booking->status) == 'no-show') ? 'selected' : '' }}>Không đến</option>
+                        <option value="no_show" {{ (old('status', $booking->status) == 'no_show') ? 'selected' : '' }}>Khách không đến</option>
                     </select>
+                    <div class="form-text">
+                        <strong>Hướng dẫn:</strong><br>
+                        • <strong>Chờ xác nhận:</strong> Khách đã đặt phòng, chờ admin xác nhận<br>
+                        • <strong>Đã xác nhận:</strong> Admin đã xác nhận đặt phòng<br>
+                        • <strong>Đã nhận phòng:</strong> Khách đã check-in và đang ở trong phòng<br>
+                        • <strong>Đã trả phòng:</strong> Khách đã check-out, phòng đã được dọn dẹp<br>
+                        • <strong>Hoàn thành:</strong> Quá trình đặt phòng đã hoàn tất<br>
+                        • <strong>Đã hủy:</strong> Đặt phòng bị hủy bởi khách hoặc admin<br>
+                        • <strong>Khách không đến:</strong> Khách không đến nhận phòng theo lịch
+                    </div>
                     @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -94,6 +106,19 @@
                 </div>
             </div>
             
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label for="admin_notes" class="form-label">Ghi chú quản lý</label>
+                    <textarea name="admin_notes" id="admin_notes" class="form-control @error('admin_notes') is-invalid @enderror" rows="3" placeholder="Ghi chú nội bộ cho quản lý (khách hàng không thấy)">{{ old('admin_notes', $booking->admin_notes) }}</textarea>
+                    <div class="form-text">
+                        Ghi chú nội bộ để theo dõi tình trạng đặt phòng, lý do thay đổi trạng thái, hoặc thông tin liên hệ với khách hàng.
+                    </div>
+                    @error('admin_notes')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+            
             <div class="mt-4">
                 <button type="submit" class="btn btn-primary">Cập nhật</button>
                 <a href="{{ route('admin.bookings.index') }}" class="btn btn-secondary">Hủy</a>
@@ -101,6 +126,9 @@
         </form>
     </div>
 </div>
+
+<!-- Ghi chú đặt phòng -->
+@include('admin.bookings.partials.notes')
 @endsection
 
 @section('scripts')

@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\BookingNoteController;
 
 use Illuminate\Support\Facades\Auth;
 
@@ -85,6 +86,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Form đánh giá
     Route::get('/room-type-reviews/{roomTypeId}/form', [RoomTypeReviewController::class, 'reviewForm'])->name('room-type-reviews.form');
+    
+    // Booking Notes - Ghi chú đặt phòng
+    Route::middleware('booking.access')->group(function () {
+        Route::get('/booking-notes/{bookingId}', [BookingNoteController::class, 'index'])->name('booking-notes.index');
+        Route::post('/booking-notes', [BookingNoteController::class, 'store'])->name('booking-notes.store');
+        Route::post('/booking-notes/ajax', [BookingNoteController::class, 'storeAjax'])->name('booking-notes.store-ajax');
+    });
+    Route::put('/booking-notes/{id}', [BookingNoteController::class, 'update'])->name('booking-notes.update');
+    Route::delete('/booking-notes/{id}', [BookingNoteController::class, 'destroy'])->name('booking-notes.destroy');
 });
 
 // Routes công khai cho room type reviews (chỉ hiển thị)
@@ -120,6 +130,8 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     
     // Quản lý người dùng
     Route::resource('users', AdminUserController::class)->except(['create', 'store']);
+    
+    
 });
 
 // Route công khai cho room type reviews (chỉ hiển thị) - đặt sau admin routes để tránh xung đột
@@ -169,4 +181,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/user/reviews/{id}/detail', [UserProfileController::class, 'getReviewDetail'])->name('user.reviews.detail');
     Route::get('/user/reviews/{id}/data', [UserProfileController::class, 'getReviewData'])->name('user.reviews.data');
 });
+
+
 

@@ -20,6 +20,12 @@
                                 @if($review->roomType)
                                     <br>
                                     <small class="text-muted">Loại phòng: {{ $review->roomType->name }}</small>
+                                    @if($review->booking)
+                                        <br>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-view-booking" data-booking-id="{{ $review->booking->id }}" title="Xem chi tiết đặt phòng">
+                                            <i class="fas fa-calendar-check"></i> Xem đặt phòng
+                                        </button>
+                                    @endif
                                 @endif
                             </div>
                         </td>

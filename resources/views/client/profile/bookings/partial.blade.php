@@ -25,7 +25,7 @@
                     @endphp
                     <tr>
                         <td>{{ $booking->booking_id }}</td>
-                        <td>{{ $booking->room->name }}</td>
+                        <td>{{ $booking->room->roomType->name }}</td>
                         <td>{{ $booking->check_in_date->format('d/m/Y') }}</td>
                         <td>{{ $booking->check_out_date->format('d/m/Y') }}</td>
                         <td>{{ number_format($booking->price) }}đ</td>

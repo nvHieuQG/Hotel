@@ -24,7 +24,6 @@ class RoomTypeReviewRepository implements RoomTypeReviewRepositoryInterface
     public function getReviewsByRoomType(int $roomTypeId, int $perPage = 10): LengthAwarePaginator
     {
         return RoomTypeReview::where('room_type_id', $roomTypeId)
-            ->where('status', 'approved')
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
@@ -221,7 +220,6 @@ class RoomTypeReviewRepository implements RoomTypeReviewRepositoryInterface
     public function getAverageRatingByRoomType(int $roomTypeId): float
     {
         $rating = RoomTypeReview::where('room_type_id', $roomTypeId)
-            ->where('status', 'approved')
             ->avg('rating');
         
         return $rating ? round($rating, 1) : 0;
@@ -233,7 +231,6 @@ class RoomTypeReviewRepository implements RoomTypeReviewRepositoryInterface
     public function getReviewsCountByRoomType(int $roomTypeId): int
     {
         return RoomTypeReview::where('room_type_id', $roomTypeId)
-            ->where('status', 'approved')
             ->count();
     }
 

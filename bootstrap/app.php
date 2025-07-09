@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\CheckBookingAccess;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Đăng ký middleware admin
         $middleware->alias([
             'admin' => AdminMiddleware::class,
+            'booking.access' => CheckBookingAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

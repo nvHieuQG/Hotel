@@ -21,7 +21,8 @@ class Booking extends Model
         'check_in_date',
         'check_out_date',
         'status',
-        'price'
+        'price',
+        'admin_notes'
     ];
 
     /**
@@ -58,6 +59,29 @@ class Booking extends Model
         return $this->hasOne(RoomTypeReview::class);
     }
 
+    /**
+     * Get the notes for this booking.
+     */
+    public function notes()
+    {
+        return $this->hasMany(BookingNote::class);
+    }
+
+    /**
+     * Get the public notes for this booking.
+     */
+    public function publicNotes()
+    {
+        return $this->hasMany(BookingNote::class)->public();
+    }
+
+    /**
+     * Get the internal notes for this booking.
+     */
+    public function internalNotes()
+    {
+        return $this->hasMany(BookingNote::class)->internal();
+    }
 
     
     /**
@@ -112,9 +136,11 @@ class Booking extends Model
         return match($this->status) {
             'pending' => 'Chờ xác nhận',
             'confirmed' => 'Đã xác nhận',
-            'checked_in' => 'Đã check-in',
+            'checked_in' => 'Đã nhận phòng',
+            'checked_out' => 'Đã trả phòng',
             'completed' => 'Đã hoàn thành',
             'cancelled' => 'Đã hủy',
+            'no_show' => 'Khách không đến',
             default => 'Không xác định'
         };
     }

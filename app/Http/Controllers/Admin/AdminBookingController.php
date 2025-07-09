@@ -62,7 +62,8 @@ class AdminBookingController extends Controller
             'room_id' => 'required|exists:rooms,id',
             'check_in_date' => 'required|date|after_or_equal:today',
             'check_out_date' => 'required|date|after:check_in_date',
-            'status' => 'required|in:pending,confirmed,completed,cancelled,no-show',
+            'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show',
+            'admin_notes' => 'nullable|string|max:1000',
         ]);
         
         $this->bookingService->createBooking($validatedData);
@@ -95,7 +96,8 @@ class AdminBookingController extends Controller
             'room_id' => 'required|exists:rooms,id',
             'check_in_date' => 'required|date',
             'check_out_date' => 'required|date|after:check_in_date',
-            'status' => 'required|in:pending,confirmed,completed,cancelled,no-show',
+            'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show',
+            'admin_notes' => 'nullable|string|max:1000',
         ]);
         
         $booking = $this->bookingService->updateBooking($id, $validatedData);
@@ -110,7 +112,7 @@ class AdminBookingController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,confirmed,completed,cancelled,no-show'
+            'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show'
         ]);
         
         $this->bookingService->updateBookingStatus($id, $request->status);

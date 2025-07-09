@@ -38,9 +38,8 @@
                     <p><strong>Tổng tiền:</strong> {{ number_format($booking->price) }}đ</p>
                     <hr>
                     <h5>Thông tin phòng</h5>
-                    <p><strong>Tên phòng:</strong> {{ $booking->room->name ?? 'N/A' }}</p>
                     <p><strong>Loại phòng:</strong> {{ $booking->room->roomType->name ?? 'N/A' }}</p>
-                    <p><strong>Sức chứa:</strong> {{ $booking->room->capacity ?? 'N/A' }} người</p>
+                    <p><strong>Sức chứa:</strong> {{ $booking->room->roomType->capacity ?? 'N/A' }} người</p>
                     <p><strong>Ghi chú:</strong> {{ $booking->notes ?? 'Không có' }}</p>
                 </div>
             </div>

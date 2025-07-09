@@ -7,11 +7,7 @@
                     <td><strong>Mã đặt phòng:</strong></td>
                     <td>{{ $booking->booking_id }}</td>
                 </tr>
-                <tr>
-                    <td><strong>Phòng:</strong></td>
-                    <td>{{ $booking->room->name }}</td>
-                </tr>
-                <tr>
+                                <tr>
                     <td><strong>Loại phòng:</strong></td>
                     <td>{{ $booking->room->roomType->name }}</td>
                 </tr>
@@ -145,4 +141,7 @@
             <button class="btn btn-sm btn-success create-review-btn" data-room-type-id="{{ $roomType->id }}">Đánh giá</button>
         @endif --}}
     @endif
+
+    <!-- Ghi chú đặt phòng -->
+    @include('client.profile.bookings.partials.notes')
 </div> 
