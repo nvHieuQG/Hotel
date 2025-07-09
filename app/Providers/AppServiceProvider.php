@@ -111,7 +111,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Repositories\Admin\AdminRoomRepositoryInterface::class,
             \App\Repositories\Admin\AdminRoomRepository::class
         );
-        
+
         $this->app->bind(
             \App\Interfaces\Services\Admin\AdminRoomServiceInterface::class,
             \App\Services\Admin\AdminRoomService::class
@@ -126,7 +126,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Services\Admin\AdminRoomTypeServiceInterface::class,
             \App\Services\Admin\AdminRoomTypeService::class
         );
-        
+
         $this->app->bind(
             \App\Interfaces\Repositories\RoomTypeRepositoryInterface::class,
             \App\Repositories\RoomTypeRepository::class
@@ -134,6 +134,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \App\Interfaces\Services\RoomTypeServiceInterface::class,
             \App\Services\RoomTypeService::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Services\SupportServiceInterface::class,
+            \App\Services\SupportService::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Repositories\SupportTicketRepositoryInterface::class,
+            \App\Repositories\SupportTicketRepository::class
         );
     }
 
