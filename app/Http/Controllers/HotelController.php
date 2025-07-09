@@ -47,7 +47,7 @@ class HotelController extends Controller
         // Lấy tất cả phòng để hiển thị ở trang danh sách phòng
         $rooms = $this->roomRepository->getAll();
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
-        return view('client.rooms', compact('rooms', 'roomTypes'));
+        return view('client.rooms.index', compact('rooms', 'roomTypes'));
     }
 
     public function restaurant()
