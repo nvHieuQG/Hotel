@@ -10,12 +10,29 @@ class ServiceRepository implements ServiceRepositoryInterface
 {
     public function all(): Collection
     {
-        return Service::all();
+        return Service::with('category')->get();
+    }
+
+    public function getAllWithFilter(?int $categoryId = null, ?int $roomTypeId = null): Collection
+    {
+        $query = Service::with(['category', 'roomTypes']);
+        
+        if ($categoryId) {
+            $query->where('service_category_id', $categoryId);
+        }
+        
+        if ($roomTypeId) {
+            $query->whereHas('roomTypes', function($q) use ($roomTypeId) {
+                $q->where('room_type_id', $roomTypeId);
+            });
+        }
+        
+        return $query->get();
     }
 
     public function find(int $id)
     {
-        return Service::find($id);
+        return Service::with('category')->find($id);
     }
 
     public function create(array $data)

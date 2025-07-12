@@ -5,26 +5,38 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Interfaces\Services\ServiceServiceInterface;
 use App\Interfaces\Services\ServiceCategoryServiceInterface;
+use App\Interfaces\Services\RoomTypeServiceInterface;
 use Illuminate\Http\Request;
 
 class AdminServiceController extends Controller
 {
     protected $serviceService;
     protected $serviceCategoryService;
+    protected $roomTypeService;
 
-    public function __construct(ServiceServiceInterface $serviceService, ServiceCategoryServiceInterface $serviceCategoryService)
-    {
+    public function __construct(
+        ServiceServiceInterface $serviceService, 
+        ServiceCategoryServiceInterface $serviceCategoryService,
+        RoomTypeServiceInterface $roomTypeService
+    ) {
         $this->serviceService = $serviceService;
         $this->serviceCategoryService = $serviceCategoryService;
+        $this->roomTypeService = $roomTypeService;
     }
 
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $services = $this->serviceService->getAll();
-        return view('admin.services.index', compact('services'));
+        $categoryId = $request->get('category_id');
+        $roomTypeId = $request->get('room_type_id');
+        
+        $services = $this->serviceService->getAllWithFilter($categoryId, $roomTypeId);
+        $categories = $this->serviceCategoryService->getAll();
+        $roomTypes = $this->roomTypeService->getAllRoomTypes();
+        
+        return view('admin.services.index', compact('services', 'categories', 'roomTypes', 'categoryId', 'roomTypeId'));
     }
 
     /**
@@ -33,7 +45,8 @@ class AdminServiceController extends Controller
     public function create()
     {
         $categories = $this->serviceCategoryService->getAll();
-        return view('admin.services.create', compact('categories'));
+        $roomTypes = $this->roomTypeService->getAllRoomTypes();
+        return view('admin.services.create', compact('categories', 'roomTypes'));
     }
 
     /**
@@ -46,8 +59,22 @@ class AdminServiceController extends Controller
             'service_category_id' => 'required|exists:service_categories,id',
             'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
+            'room_type_ids' => 'nullable|array',
+            'room_type_ids.*' => 'exists:room_types,id',
         ]);
-        $this->serviceService->create($validated);
+
+        // Tách room_type_ids ra khỏi validated data
+        $roomTypeIds = $validated['room_type_ids'] ?? [];
+        unset($validated['room_type_ids']);
+
+        // Tạo dịch vụ
+        $service = $this->serviceService->create($validated);
+
+        // Gán dịch vụ cho các loại phòng được chọn
+        if (!empty($roomTypeIds)) {
+            $service->roomTypes()->attach($roomTypeIds);
+        }
+
         return redirect()->route('admin.services.index')->with('success', 'Tạo dịch vụ thành công!');
     }
 
@@ -58,7 +85,10 @@ class AdminServiceController extends Controller
     {
         $service = $this->serviceService->getById($id);
         $categories = $this->serviceCategoryService->getAll();
-        return view('admin.services.edit', compact('service', 'categories'));
+        $roomTypes = $this->roomTypeService->getAllRoomTypes();
+        $assignedRoomTypeIds = $service->roomTypes->pluck('id')->toArray();
+        
+        return view('admin.services.edit', compact('service', 'categories', 'roomTypes', 'assignedRoomTypeIds'));
     }
 
     /**
@@ -71,8 +101,20 @@ class AdminServiceController extends Controller
             'service_category_id' => 'required|exists:service_categories,id',
             'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
+            'room_type_ids' => 'nullable|array',
+            'room_type_ids.*' => 'exists:room_types,id',
         ]);
-        $this->serviceService->update($id, $validated);
+
+        // Tách room_type_ids ra khỏi validated data
+        $roomTypeIds = $validated['room_type_ids'] ?? [];
+        unset($validated['room_type_ids']);
+
+        // Cập nhật dịch vụ
+        $service = $this->serviceService->update($id, $validated);
+
+        // Cập nhật loại phòng được gán
+        $service->roomTypes()->sync($roomTypeIds);
+
         return redirect()->route('admin.services.index')->with('success', 'Cập nhật dịch vụ thành công!');
     }
 

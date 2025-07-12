@@ -20,6 +20,11 @@ class ServiceService implements ServiceServiceInterface
         return $this->serviceRepository->all();
     }
 
+    public function getAllWithFilter(?int $categoryId = null, ?int $roomTypeId = null): Collection
+    {
+        return $this->serviceRepository->getAllWithFilter($categoryId, $roomTypeId);
+    }
+
     public function getById(int $id)
     {
         return $this->serviceRepository->find($id);

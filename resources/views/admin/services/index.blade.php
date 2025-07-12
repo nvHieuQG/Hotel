@@ -19,6 +19,40 @@
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
 
+            <!-- Form lọc -->
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <form method="GET" action="{{ route('admin.services.index') }}" class="d-flex gap-2">
+                        <select name="category_id" class="form-select">
+                            <option value="">Tất cả danh mục</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ $categoryId == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        
+                        <select name="room_type_id" class="form-select">
+                            <option value="">Tất cả loại phòng</option>
+                            @foreach($roomTypes as $roomType)
+                                <option value="{{ $roomType->id }}" {{ $roomTypeId == $roomType->id ? 'selected' : '' }}>
+                                    {{ $roomType->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Lọc
+                        </button>
+                        @if($categoryId || $roomTypeId)
+                            <a href="{{ route('admin.services.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Xóa lọc
+                            </a>
+                        @endif
+                    </form>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle mb-0">
                     <thead class="table-light">
@@ -28,6 +62,7 @@
                             <th>Danh mục</th>
                             <th>Giá</th>
                             <th>Mô tả</th>
+                            <th>Loại phòng</th>
                             <th style="width: 160px;">Hành động</th>
                         </tr>
                     </thead>
@@ -39,6 +74,15 @@
                                 <td>{{ optional($service->category)->name }}</td>
                                 <td>{{ number_format($service->price, 0, ',', '.') }} đ</td>
                                 <td>{{ $service->description }}</td>
+                                <td>
+                                    @if($service->roomTypes->count() > 0)
+                                        @foreach($service->roomTypes as $roomType)
+                                            <span class="badge bg-info me-1">{{ $roomType->name }}</span>
+                                        @endforeach
+                                    @else
+                                        <span class="text-muted">Chưa gán</span>
+                                    @endif
+                                </td>
                                 <td class="text-center">
                                     <a href="{{ route('admin.services.edit', $service->id) }}" class="btn btn-warning btn-sm me-1">
                                         <i class="fas fa-edit"></i> Sửa
@@ -54,7 +98,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">Không có dịch vụ nào.</td>
+                                <td colspan="7" class="text-center text-muted">Không có dịch vụ nào.</td>
                             </tr>
                         @endforelse
                     </tbody>

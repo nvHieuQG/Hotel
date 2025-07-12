@@ -12,4 +12,9 @@ class Service extends Model
     {
         return $this->belongsTo(ServiceCategory::class, 'service_category_id');
     }
+
+    public function roomTypes()
+    {
+        return $this->belongsToMany(RoomType::class, 'room_type_services');
+    }
 }

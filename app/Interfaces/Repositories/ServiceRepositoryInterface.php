@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 interface ServiceRepositoryInterface
 {
     public function all(): Collection;
+    public function getAllWithFilter(?int $categoryId = null, ?int $roomTypeId = null): Collection;
     public function find(int $id);
     public function create(array $data);
     public function update(int $id, array $data);
