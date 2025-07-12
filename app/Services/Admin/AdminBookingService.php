@@ -77,7 +77,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             'room_id' => 'required|exists:rooms,id',
             'check_in_date' => 'required|date|after_or_equal:today',
             'check_out_date' => 'required|date|after:check_in_date',
-            'status' => 'required|in:pending,confirmed,completed,cancelled,no-show',
+            'status' => 'required|in:pending,confirmed',
         ]);
         
         if ($validator->fails()) {
@@ -124,7 +124,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             'room_id' => 'required|exists:rooms,id',
             'check_in_date' => 'required|date',
             'check_out_date' => 'required|date|after:check_in_date',
-            'status' => 'required|in:pending,confirmed,completed,cancelled,no-show',
+            'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show',
         ]);
         
         if ($validator->fails()) {
@@ -177,6 +177,41 @@ class AdminBookingService implements AdminBookingServiceInterface
      */
     public function updateBookingStatus(int $id, string $status): bool
     {
+        // Danh sách trạng thái theo thứ tự một chiều
+        $statusOrder = [
+            'pending',
+            'confirmed',
+            'checked_in',
+            'checked_out',
+            'completed',
+            'cancelled',
+            'no_show',
+        ];
+
+        $booking = $this->adminBookingRepository->findById($id);
+        if (!$booking) {
+            throw new \Exception('Không tìm thấy đặt phòng');
+        }
+
+        $currentIndex = array_search($booking->status, $statusOrder);
+        $newIndex = array_search($status, $statusOrder);
+
+        // Chỉ cho phép chuyển tiếp một chiều (tăng index hoặc chuyển sang cancelled/no_show)
+        if ($newIndex === false || $currentIndex === false) {
+            throw new \Exception('Trạng thái không hợp lệ.');
+        }
+        // Cho phép chuyển sang cancelled/no_show ở bất kỳ trạng thái nào
+        if (in_array($status, ['cancelled', 'no_show'])) {
+            return $this->adminBookingRepository->updateStatus($id, $status);
+        }
+        // Chỉ cho phép chuyển tiếp (không lùi lại)
+        if ($newIndex <= $currentIndex) {
+            throw new \Exception('Không được chuyển trạng thái lùi lại hoặc lặp lại.');
+        }
+        // Chỉ cho phép nhảy tới trạng thái tiếp theo (không bỏ qua bước)
+        if ($newIndex - $currentIndex > 1) {
+            throw new \Exception('Chỉ được chuyển sang trạng thái tiếp theo.');
+        }
         return $this->adminBookingRepository->updateStatus($id, $status);
     }
     
@@ -295,5 +330,58 @@ class AdminBookingService implements AdminBookingServiceInterface
             'rooms' => $rooms,
             'users' => $users
         ];
+    }
+
+    /**
+     * Lấy danh sách trạng thái hợp lệ tiếp theo cho booking
+     *
+     * @param int $id
+     * @return array
+     */
+    public function getValidNextStatuses(int $id): array
+    {
+        $booking = $this->adminBookingRepository->findById($id);
+        if (!$booking) {
+            return [];
+        }
+
+        // Danh sách trạng thái theo thứ tự một chiều
+        $statusOrder = [
+            'pending',
+            'confirmed',
+            'checked_in',
+            'checked_out',
+            'completed',
+            'cancelled',
+            'no_show',
+        ];
+
+        $currentIndex = array_search($booking->status, $statusOrder);
+        if ($currentIndex === false) {
+            return [];
+        }
+
+        $validStatuses = [];
+
+        // Luôn cho phép chuyển sang cancelled và no_show
+        $validStatuses['cancelled'] = 'Đã hủy';
+        $validStatuses['no_show'] = 'Khách không đến';
+
+        // Chỉ cho phép chuyển sang trạng thái tiếp theo
+        if ($currentIndex < count($statusOrder) - 1) {
+            $nextStatus = $statusOrder[$currentIndex + 1];
+            if (!in_array($nextStatus, ['cancelled', 'no_show'])) {
+                $validStatuses[$nextStatus] = match($nextStatus) {
+                    'pending' => 'Chờ xác nhận',
+                    'confirmed' => 'Đã xác nhận',
+                    'checked_in' => 'Đã nhận phòng',
+                    'checked_out' => 'Đã trả phòng',
+                    'completed' => 'Hoàn thành',
+                    default => 'Không xác định'
+                };
+            }
+        }
+
+        return $validStatuses;
     }
 } 

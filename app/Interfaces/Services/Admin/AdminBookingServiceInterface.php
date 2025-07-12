@@ -88,4 +88,12 @@ interface AdminBookingServiceInterface
      * @return array
      */
     public function getEditFormData(int $id): array;
+
+    /**
+     * Lấy danh sách trạng thái hợp lệ tiếp theo cho booking
+     *
+     * @param int $id
+     * @return array
+     */
+    public function getValidNextStatuses(int $id): array;
 } 

@@ -49,7 +49,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
-    
+
     /**
      * Get the role associated with the user.
      */
@@ -57,7 +57,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsTo(Role::class);
     }
-    
+
     /**
      * Kiểm tra người dùng có vai trò cụ thể không
      *
@@ -68,7 +68,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->role && $this->role->name === $roleName;
     }
-    
+
     /**
      * Get the bookings for the user.
      */
@@ -83,5 +83,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function roomTypeReviews()
     {
         return $this->hasMany(RoomTypeReview::class);
+    }
+
+    public function supportTickets()
+    {
+        return $this->hasMany(\App\Models\SupportTicket::class, 'user_id');
     }
 }

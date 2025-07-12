@@ -92,6 +92,8 @@
             color: #ffc107;
         }
     </style>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
 
@@ -142,7 +144,8 @@
     <script src="{{ asset('client/js/jquery.min.js') }}"></script>
     <script src="{{ asset('client/js/jquery-migrate-3.0.1.min.js') }}"></script>
     <script src="{{ asset('client/js/popper.min.js') }}"></script>
-    <script src="{{ asset('client/js/bootstrap.min.js') }}"></script>
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('client/js/jquery.easing.1.3.js') }}"></script>
     <script src="{{ asset('client/js/jquery.waypoints.min.js') }}"></script>
     <script src="{{ asset('client/js/jquery.stellar.min.js') }}"></script>
@@ -193,9 +196,7 @@
                     <h5 class="modal-title" id="reviewModalLabel">
                         <i class="fas fa-star mr-2"></i>Đánh giá loại phòng
                     </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="reviewForm" class="review-form-modern">
                     <div class="modal-body">
@@ -344,7 +345,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fas fa-paper-plane mr-2"></i>
                             <span class="btn-text">Gửi đánh giá</span>

@@ -35,8 +35,9 @@ class AdminBookingController extends Controller
     public function show($id)
     {
         $booking = $this->bookingService->getBookingDetails($id);
+        $validNextStatuses = $this->bookingService->getValidNextStatuses($id);
         
-        return view('admin.bookings.show', compact('booking'));
+        return view('admin.bookings.show', compact('booking', 'validNextStatuses'));
     }
 
     /**
@@ -62,8 +63,7 @@ class AdminBookingController extends Controller
             'room_id' => 'required|exists:rooms,id',
             'check_in_date' => 'required|date|after_or_equal:today',
             'check_out_date' => 'required|date|after:check_in_date',
-            'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show',
-            'admin_notes' => 'nullable|string|max:1000',
+            'status' => 'required|in:pending,confirmed',
         ]);
         
         $this->bookingService->createBooking($validatedData);
@@ -78,11 +78,13 @@ class AdminBookingController extends Controller
     public function edit($id)
     {
         $formData = $this->bookingService->getEditFormData($id);
+        $validNextStatuses = $this->bookingService->getValidNextStatuses($id);
         
         return view('admin.bookings.edit', [
             'booking' => $formData['booking'],
             'rooms' => $formData['rooms'],
-            'users' => $formData['users']
+            'users' => $formData['users'],
+            'validNextStatuses' => $validNextStatuses
         ]);
     }
 
@@ -97,7 +99,6 @@ class AdminBookingController extends Controller
             'check_in_date' => 'required|date',
             'check_out_date' => 'required|date|after:check_in_date',
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show',
-            'admin_notes' => 'nullable|string|max:1000',
         ]);
         
         $booking = $this->bookingService->updateBooking($id, $validatedData);
@@ -115,11 +116,15 @@ class AdminBookingController extends Controller
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show'
         ]);
         
-        $this->bookingService->updateBookingStatus($id, $request->status);
-        
-        return redirect()->back()
-            ->with('success', 'Đã cập nhật trạng thái đặt phòng thành công.');
+        try {
+            $this->bookingService->updateBookingStatus($id, $request->status);
+            return redirect()->back()->with('success', 'Đã cập nhật trạng thái đặt phòng thành công.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
+
+
 
     /**
      * Xóa đặt phòng
@@ -152,5 +157,14 @@ class AdminBookingController extends Controller
             return redirect()->route('admin.bookings.index')
                 ->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Trả về partial chi tiết booking cho AJAX/modal (admin)
+     */
+    public function detailPartial($id)
+    {
+        $booking = $this->bookingService->getBookingDetails($id);
+        return view('admin.bookings.detail', compact('booking'));
     }
 } 

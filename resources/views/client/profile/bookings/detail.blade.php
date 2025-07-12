@@ -54,7 +54,7 @@
                 </tr>
                 <tr>
                     <td><strong>Ghi chú:</strong></td>
-                    <td>{{ $booking->notes ?? 'Không có' }}</td>
+                    <td>{{ $booking->special_requests ?? 'Không có' }}</td>
                 </tr>
                 <tr>
                     <td><strong>Ngày đặt:</strong></td>
@@ -143,5 +143,7 @@
     @endif
 
     <!-- Ghi chú đặt phòng -->
-    @include('client.profile.bookings.partials.notes')
+    <div class="mt-4">
+        <x-booking-notes :booking="$booking" :showAddButton="true" :showSearch="true" />
+    </div>
 </div> 

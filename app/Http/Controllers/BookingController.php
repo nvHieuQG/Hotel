@@ -79,4 +79,25 @@ class BookingController extends Controller
         }
         return view('client.booking.detail', compact('booking'));
     }
+
+    /**
+     * Trả về partial danh sách đặt phòng cho AJAX
+     */
+    public function partial()
+    {
+        $bookings = $this->bookingService->getCurrentUserBookings();
+        return view('client.profile.bookings.partial', compact('bookings'));
+    }
+
+    /**
+     * Trả về partial chi tiết booking cho AJAX/modal (client)
+     */
+    public function detailPartial($id)
+    {
+        $booking = $this->bookingService->getBookingDetail($id);
+        if ($booking->user_id !== Auth::id()) {
+            abort(403, 'Bạn không có quyền xem đặt phòng này.');
+        }
+        return view('client.profile.bookings.detail', compact('booking'));
+    }
 }

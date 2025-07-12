@@ -76,23 +76,16 @@
                 <div class="col-md-6">
                     <label for="status" class="form-label">Trạng thái đặt phòng</label>
                     <select name="status" id="status" class="form-select @error('status') is-invalid @enderror" required>
-                        <option value="pending" {{ (old('status', $booking->status) == 'pending') ? 'selected' : '' }}>Chờ xác nhận</option>
-                        <option value="confirmed" {{ (old('status', $booking->status) == 'confirmed') ? 'selected' : '' }}>Đã xác nhận</option>
-                        <option value="checked_in" {{ (old('status', $booking->status) == 'checked_in') ? 'selected' : '' }}>Đã nhận phòng</option>
-                        <option value="checked_out" {{ (old('status', $booking->status) == 'checked_out') ? 'selected' : '' }}>Đã trả phòng</option>
-                        <option value="completed" {{ (old('status', $booking->status) == 'completed') ? 'selected' : '' }}>Hoàn thành</option>
-                        <option value="cancelled" {{ (old('status', $booking->status) == 'cancelled') ? 'selected' : '' }}>Đã hủy</option>
-                        <option value="no_show" {{ (old('status', $booking->status) == 'no_show') ? 'selected' : '' }}>Khách không đến</option>
+                        <option value="{{ $booking->status }}" selected>{{ $booking->status_text }} (Hiện tại)</option>
+                        @foreach($validNextStatuses as $status => $label)
+                            <option value="{{ $status }}" {{ (old('status') == $status) ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
                     </select>
                     <div class="form-text">
-                        <strong>Hướng dẫn:</strong><br>
-                        • <strong>Chờ xác nhận:</strong> Khách đã đặt phòng, chờ admin xác nhận<br>
-                        • <strong>Đã xác nhận:</strong> Admin đã xác nhận đặt phòng<br>
-                        • <strong>Đã nhận phòng:</strong> Khách đã check-in và đang ở trong phòng<br>
-                        • <strong>Đã trả phòng:</strong> Khách đã check-out, phòng đã được dọn dẹp<br>
-                        • <strong>Hoàn thành:</strong> Quá trình đặt phòng đã hoàn tất<br>
-                        • <strong>Đã hủy:</strong> Đặt phòng bị hủy bởi khách hoặc admin<br>
-                        • <strong>Khách không đến:</strong> Khách không đến nhận phòng theo lịch
+                        <strong>Hướng dẫn chuyển trạng thái:</strong><br>
+                        • <strong>Thứ tự bắt buộc:</strong> Chờ xác nhận → Đã xác nhận → Đã nhận phòng → Đã trả phòng → Hoàn thành<br>
+                        • <strong>Chuyển đặc biệt:</strong> Có thể chuyển sang "Đã hủy" hoặc "Khách không đến" ở bất kỳ trạng thái nào<br>
+                        • <strong>Không được lùi:</strong> Không thể chuyển về trạng thái trước đó hoặc bỏ qua bước
                     </div>
                     @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>

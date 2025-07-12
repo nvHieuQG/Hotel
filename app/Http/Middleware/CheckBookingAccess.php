@@ -51,15 +51,15 @@ class CheckBookingAccess
         $canAccess = false;
         
         // Admin có thể truy cập tất cả
-        if ($user->hasRole('admin')) {
+        if ($user->role && $user->role->name === 'admin') {
             $canAccess = true;
         }
         // Staff có thể truy cập tất cả
-        elseif ($user->hasRole('staff')) {
+        elseif ($user->role && $user->role->name === 'staff') {
             $canAccess = true;
         }
         // Customer chỉ có thể truy cập booking của mình
-        elseif ($user->hasRole('customer') && $booking->user_id === $user->id) {
+        elseif ($user->role && $user->role->name === 'customer' && $booking->user_id === $user->id) {
             $canAccess = true;
         }
 

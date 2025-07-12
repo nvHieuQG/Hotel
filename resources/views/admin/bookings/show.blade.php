@@ -105,39 +105,26 @@
                                         @method('PATCH')
                                         <div class="input-group mb-3">
                                             <select name="status" class="form-select">
-                                                <option value="pending" {{ $booking->status == 'pending' ? 'selected' : '' }}>Chờ xác nhận</option>
-                                                <option value="confirmed" {{ $booking->status == 'confirmed' ? 'selected' : '' }}>Đã xác nhận</option>
-                                                <option value="checked_in" {{ $booking->status == 'checked_in' ? 'selected' : '' }}>Đã nhận phòng</option>
-                                                <option value="checked_out" {{ $booking->status == 'checked_out' ? 'selected' : '' }}>Đã trả phòng</option>
-                                                <option value="completed" {{ $booking->status == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
-                                                <option value="cancelled" {{ $booking->status == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
-                                                <option value="no_show" {{ $booking->status == 'no_show' ? 'selected' : '' }}>Khách không đến</option>
+                                                <option value="{{ $booking->status }}" selected>{{ $booking->status_text }} (Hiện tại)</option>
+                                                @foreach($validNextStatuses as $status => $label)
+                                                    <option value="{{ $status }}">{{ $label }}</option>
+                                                @endforeach
                                             </select>
                                             <button class="btn btn-primary" type="submit">Cập nhật</button>
                                         </div>
                                     </form>
+                                    @if(empty($validNextStatuses))
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            Booking đã ở trạng thái cuối cùng. Chỉ có thể chuyển sang "Đã hủy" hoặc "Khách không đến".
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    @if($booking->admin_notes)
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <i class="fas fa-sticky-note me-1"></i>
-                                    Ghi chú quản lý
-                                </div>
-                                <div class="card-body">
-                                    <div class="bg-light p-3 rounded">
-                                        {{ $booking->admin_notes }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
+
 
                     <!-- Ghi chú đặt phòng -->
                     @include('admin.bookings.partials.notes')

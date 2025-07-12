@@ -9,6 +9,16 @@ use App\Interfaces\Repositories\UserRepositoryInterface;
 use App\Repositories\UserRepository;
 use App\Interfaces\Services\PasswordResetServiceInterface;
 use App\Services\PasswordResetService;
+use App\Models\Booking;
+use App\Observers\BookingObserver;
+use App\Interfaces\Repositories\BookingNoteRepositoryInterface;
+use App\Repositories\BookingNoteRepository;
+use App\Interfaces\Services\BookingNoteServiceInterface;
+use App\Services\BookingNoteService;
+use App\Models\BookingNote;
+use App\Observers\BookingNoteObserver;
+use App\Models\RoomTypeReview;
+use App\Observers\RoomTypeReviewObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -111,7 +121,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Repositories\Admin\AdminRoomRepositoryInterface::class,
             \App\Repositories\Admin\AdminRoomRepository::class
         );
-        
+
         $this->app->bind(
             \App\Interfaces\Services\Admin\AdminRoomServiceInterface::class,
             \App\Services\Admin\AdminRoomService::class
@@ -126,7 +136,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Services\Admin\AdminRoomTypeServiceInterface::class,
             \App\Services\Admin\AdminRoomTypeService::class
         );
-        
+
         $this->app->bind(
             \App\Interfaces\Repositories\RoomTypeRepositoryInterface::class,
             \App\Repositories\RoomTypeRepository::class
@@ -134,6 +144,27 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \App\Interfaces\Services\RoomTypeServiceInterface::class,
             \App\Services\RoomTypeService::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Services\SupportServiceInterface::class,
+            \App\Services\SupportService::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Repositories\SupportTicketRepositoryInterface::class,
+            \App\Repositories\SupportTicketRepository::class
+        );
+
+        // Booking Note Repository và Service Bindings
+        $this->app->bind(
+            BookingNoteRepositoryInterface::class,
+            BookingNoteRepository::class
+        );
+
+        $this->app->bind(
+            BookingNoteServiceInterface::class,
+            BookingNoteService::class
         );
     }
 
@@ -143,5 +174,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+        
+        // Đăng ký Observer
+        Booking::observe(BookingObserver::class);
+        BookingNote::observe(BookingNoteObserver::class);
+        RoomTypeReview::observe(RoomTypeReviewObserver::class);
     }
 }

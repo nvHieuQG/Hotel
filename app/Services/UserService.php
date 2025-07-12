@@ -35,4 +35,36 @@ class UserService implements UserServiceInterface
     {
         return $this->userRepository->findById($id);
     }
+
+    /**
+     * Cập nhật thông tin người dùng
+     *
+     * @param int $id
+     * @param array $data
+     * @return bool
+     */
+    public function updateUser(int $id, array $data): bool
+    {
+        $user = $this->userRepository->findById($id);
+        if (!$user) {
+            return false;
+        }
+        return $this->userRepository->update($user, $data);
+    }
+
+    /**
+     * Xóa người dùng
+     *
+     * @param int $id
+     * @return bool
+     */
+    public function deleteUser(int $id): bool
+    {
+        $user = $this->userRepository->findById($id);
+        if (!$user) {
+            return false;
+        }
+        $user->delete();
+        return true;
+    }
 } 

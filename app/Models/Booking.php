@@ -21,8 +21,7 @@ class Booking extends Model
         'check_in_date',
         'check_out_date',
         'status',
-        'price',
-        'admin_notes'
+        'price'
     ];
 
     /**

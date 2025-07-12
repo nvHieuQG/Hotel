@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Đăng ký middleware admin
         $middleware->alias([
             'admin' => AdminMiddleware::class,
-            'booking.access' => CheckBookingAccess::class,
+            'check.booking.access' => CheckBookingAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -3,10 +3,11 @@
 namespace App\Repositories;
 
 use App\Models\BookingNote;
+use App\Interfaces\Repositories\BookingNoteRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class BookingNoteRepository
+class BookingNoteRepository implements BookingNoteRepositoryInterface
 {
     protected $model;
 
@@ -98,6 +99,7 @@ class BookingNoteRepository
                        ->where('user_id', $userId);
               });
         })->where('is_internal', false)
+          ->where('visibility', '!=', 'internal') // Customer không xem được ghi chú internal
           ->orderBy('created_at', 'desc')
           ->get();
     }
@@ -248,5 +250,99 @@ class BookingNoteRepository
         }
 
         return false;
+    }
+
+    /**
+     * Lấy ghi chú theo loại
+     *
+     * @param int $bookingId
+     * @param string $type
+     * @return Collection
+     */
+    public function getByType(int $bookingId, string $type): Collection
+    {
+        return $this->model->where('booking_id', $bookingId)
+            ->where('type', $type)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Lấy ghi chú theo visibility
+     *
+     * @param int $bookingId
+     * @param string $visibility
+     * @return Collection
+     */
+    public function getByVisibility(int $bookingId, string $visibility): Collection
+    {
+        return $this->model->where('booking_id', $bookingId)
+            ->where('visibility', $visibility)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Lấy ghi chú có phân trang
+     *
+     * @param int $bookingId
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function getPaginated(int $bookingId, int $perPage = 10): LengthAwarePaginator
+    {
+        return $this->model->where('booking_id', $bookingId)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Tìm kiếm ghi chú theo từ khóa
+     *
+     * @param int $bookingId
+     * @param string $keyword
+     * @return Collection
+     */
+    public function search(int $bookingId, string $keyword): Collection
+    {
+        return $this->model->where('booking_id', $bookingId)
+            ->where('content', 'like', '%' . $keyword . '%')
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Lấy thống kê ghi chú của booking
+     *
+     * @param int $bookingId
+     * @return array
+     */
+    public function getStatistics(int $bookingId): array
+    {
+        $totalNotes = $this->model->where('booking_id', $bookingId)->count();
+        $customerNotes = $this->model->where('booking_id', $bookingId)->where('type', 'customer')->count();
+        $staffNotes = $this->model->where('booking_id', $bookingId)->where('type', 'staff')->count();
+        $adminNotes = $this->model->where('booking_id', $bookingId)->where('type', 'admin')->count();
+        $internalNotes = $this->model->where('booking_id', $bookingId)->where('is_internal', true)->count();
+        $publicNotes = $this->model->where('booking_id', $bookingId)->where('visibility', 'public')->count();
+        $privateNotes = $this->model->where('booking_id', $bookingId)->where('visibility', 'private')->count();
+
+        return [
+            'total' => $totalNotes,
+            'by_type' => [
+                'customer' => $customerNotes,
+                'staff' => $staffNotes,
+                'admin' => $adminNotes
+            ],
+            'by_visibility' => [
+                'public' => $publicNotes,
+                'private' => $privateNotes,
+                'internal' => $internalNotes
+            ]
+        ];
     }
 } 

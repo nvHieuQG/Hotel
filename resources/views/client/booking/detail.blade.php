@@ -46,6 +46,9 @@
             <div class="mt-3">
                 <a href="{{ url()->previous() }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Quay lại</a>
             </div>
+            <div class="mt-4">
+                <x-booking-notes :booking="$booking" :showAddButton="true" :showSearch="true" />
+            </div>
         </div>
     </div>
 </div>
