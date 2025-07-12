@@ -151,4 +151,17 @@ class BookingRepository implements BookingRepositoryInterface
             })
             ->exists();
     }
+
+    /**
+     * Hàm kiểm tra phòng còn trống theo datetime
+     */
+    public function isRoomAvailable($roomId, $checkInDateTime, $checkOutDateTime)
+    {
+        return !$this->model->where('room_id', $roomId)
+            ->where(function($query) use ($checkInDateTime, $checkOutDateTime) {
+                $query->where('check_in_date', '<', $checkOutDateTime)
+                      ->where('check_out_date', '>', $checkInDateTime);
+            })
+            ->exists();
+    }
 }

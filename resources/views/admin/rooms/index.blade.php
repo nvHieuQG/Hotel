@@ -18,7 +18,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="room_type" class="form-label">Loại phòng</label>
                         <select name="room_type" id="room_type" class="form-select">
                             <option value="">Tất cả</option>
@@ -30,18 +30,25 @@
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <input type="text" name="search" id="search" class="form-control" placeholder="Số phòng" value="{{ $filters['search'] ?? '' }}">
+                    </div>
+                    <div class="col-md-2">
                         <label for="status" class="form-label">Trạng thái</label>
                         <select name="status" id="status" class="form-select">
                             <option value="">Tất cả</option>
                             <option value="available" {{ ($filters['status'] ?? '') == 'available' ? 'selected' : '' }}>Trống</option>
                             <option value="booked" {{ ($filters['status'] ?? '') == 'booked' ? 'selected' : '' }}>Đã đặt</option>
                             <option value="repair" {{ ($filters['status'] ?? '') == 'repair' ? 'selected' : '' }}>Bảo trì</option>
+                            
+                            
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label for="search" class="form-label">Tìm kiếm</label>
-                        <input type="text" name="search" id="search" class="form-control" placeholder="Số phòng, tầng..." value="{{ $filters['search'] ?? '' }}">
+                    <div class="col-md-2">
+                        <label for="date" class="form-label">Ngày kiểm tra</label>
+                        <input type="date" name="date" id="date" class="form-control" value="{{ $filters['date'] ?? '' }}">
                     </div>
+                    
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">Lọc</button>
                     </div>
@@ -64,13 +71,21 @@
             @php
                 $statusClass = [
                     'available' => 'border-success',
+                    'pending'   => 'border-warning',
                     'booked'    => 'border-secondary',
                     'repair'    => 'border-danger',
                 ];
                 $statusText = [
                     'available' => 'Trống',
+                    'pending'   => 'Chờ xác nhận',
                     'booked'    => 'Đã đặt',
                     'repair'    => 'Bảo trì',
+                ];
+                $statusBgClass = [
+                    'available' => 'bg-success bg-opacity-50',   // xanh đậm
+                    'pending'   => 'bg-warning bg-opacity-50',   // vàng đậm
+                    'booked'    => 'bg-danger bg-opacity-50',    // đỏ đậm
+                    'repair'    => 'bg-secondary bg-opacity-50', // xám đậm
                 ];
             @endphp
 
@@ -85,8 +100,11 @@
                 <h5 class="mt-4 border-bottom pb-2 mb-3">Tầng {{ $floor }}</h5>
                 <div class="row g-2">
                     @foreach($floorRooms as $room)
+                        @php
+                            $status = !empty($filters['date']) ? $room->getStatusForDate($filters['date']) : $room->status_for_display;
+                        @endphp
                         <div class="col-auto">
-                            <div class="card m-1 p-0 shadow-sm {{ $statusClass[$room->status] }}"
+                            <div class="card m-1 p-0 shadow-sm {{ $statusClass[$status] ?? '' }} {{ $statusBgClass[$status] ?? '' }}"
                                  style="width: 150px; min-height: 260px; border-width: 2px; display: flex; flex-direction: column;">
                                 @if($room->primaryImage)
                                     <img src="{{ Illuminate\Support\Facades\Storage::url($room->primaryImage->image_url) }}" class="card-img-top" alt="Ảnh phòng" style="height: 80px; object-fit: cover;">
@@ -100,15 +118,8 @@
                                         <div class="fw-bold text-truncate" style="font-size: 1.1em;" title="{{ $room->room_number }}">{{ $room->room_number }}</div>
                                         <div class="small text-muted text-wrap" style="white-space: normal;" title="{{ $room->roomType->name }}">{{ $room->roomType->name }}</div>
                                         <div class="mt-1">
-                                            @php
-                                                $statusColors = [
-                                                    'available' => 'text-success',
-                                                    'booked'    => 'text-warning',
-                                                    'repair'    => 'text-danger',
-                                                ];
-                                            @endphp
-                                            <span class="fw-semibold small {{ $statusColors[$room->status] ?? 'text-secondary' }}">
-                                                {{ $statusText[$room->status] ?? 'Không rõ' }}
+                                            <span class="fw-semibold small">
+                                                {{ $statusText[$status] ?? 'Không rõ' }}
                                             </span>
                                         </div>
                                     </div>

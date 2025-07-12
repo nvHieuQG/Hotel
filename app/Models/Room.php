@@ -177,4 +177,62 @@ class Room extends Model
     {
         return ($this->average_rating / 5) * 100;
     }
+    public function getStatusForDisplayAttribute()
+{
+    $latestBooking = $this->bookings()
+        ->whereIn('status', ['pending', 'confirmed'])
+        ->orderByDesc('created_at')
+        ->first();
+
+    if ($latestBooking) {
+        if ($latestBooking->status === 'pending') {
+            // Nếu quá 30 phút thì bỏ qua
+            if (now()->diffInMinutes($latestBooking->created_at) > 30) {
+                return 'available';
+            }
+            return 'pending';
+        }
+        if ($latestBooking->status === 'confirmed') {
+            return 'booked';
+        }
+    }
+    return $this->status; // fallback
+}
+
+public function getStatusForDate($date)
+{
+    $date = \Carbon\Carbon::parse($date);
+
+    // 1. Ưu tiên booking đã xác nhận (confirmed) trùng ngày
+    $confirmed = $this->bookings
+        ->where('status', 'confirmed')
+        ->filter(function($booking) use ($date) {
+            return $booking->check_in_date <= $date && $booking->check_out_date > $date;
+        })
+        ->first();
+
+    if ($confirmed) {
+        return 'booked';
+    }
+
+    // 2. Nếu không có, kiểm tra booking chờ xác nhận (pending) trùng ngày
+    $pending = $this->bookings
+        ->where('status', 'pending')
+        ->filter(function($booking) use ($date) {
+            return $booking->check_in_date <= $date && $booking->check_out_date > $date;
+        })
+        ->sortByDesc('created_at')
+        ->first();
+
+    if ($pending) {
+        if ($pending->created_at->diffInMinutes(now()) > 30) {
+            return 'available';
+        }
+        return 'pending';
+    }
+
+    // 3. Nếu không có booking nào, trả về trạng thái gốc
+    return $this->status;
+}
+
 } 
