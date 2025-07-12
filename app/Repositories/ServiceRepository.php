@@ -52,4 +52,18 @@ class ServiceRepository implements ServiceRepositoryInterface
         $service = Service::findOrFail($id);
         return $service->delete();
     }
+
+    public function paginateWithFilter(?int $categoryId = null, ?int $roomTypeId = null, int $perPage = 10)
+    {
+        $query = Service::with(['category', 'roomTypes']);
+        if ($categoryId) {
+            $query->where('service_category_id', $categoryId);
+        }
+        if ($roomTypeId) {
+            $query->whereHas('roomTypes', function($q) use ($roomTypeId) {
+                $q->where('room_type_id', $roomTypeId);
+            });
+        }
+        return $query->paginate($perPage);
+    }
 } 

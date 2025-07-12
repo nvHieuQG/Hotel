@@ -44,4 +44,9 @@ class ServiceService implements ServiceServiceInterface
     {
         return $this->serviceRepository->delete($id);
     }
+
+    public function paginateWithFilter(?int $categoryId = null, ?int $roomTypeId = null, int $perPage = 10)
+    {
+        return $this->serviceRepository->paginateWithFilter($categoryId, $roomTypeId, $perPage);
+    }
 } 

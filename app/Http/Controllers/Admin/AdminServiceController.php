@@ -31,11 +31,10 @@ class AdminServiceController extends Controller
     {
         $categoryId = $request->get('category_id');
         $roomTypeId = $request->get('room_type_id');
-        
-        $services = $this->serviceService->getAllWithFilter($categoryId, $roomTypeId);
+        $perPage = 10;
+        $services = $this->serviceService->paginateWithFilter($categoryId, $roomTypeId, $perPage);
         $categories = $this->serviceCategoryService->getAll();
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
-        
         return view('admin.services.index', compact('services', 'categories', 'roomTypes', 'categoryId', 'roomTypeId'));
     }
 
@@ -123,6 +122,12 @@ class AdminServiceController extends Controller
      */
     public function destroy($id)
     {
+        $service = $this->serviceService->getById($id);
+        // Xóa liên kết với các loại phòng trước khi xóa service
+        if ($service) {
+            $service->roomTypes()->detach();
+            $service->rooms()->detach(); // Xóa liên kết với các phòng (bảng room_services)
+        }
         $this->serviceService->delete($id);
         return redirect()->route('admin.services.index')->with('success', 'Xóa dịch vụ thành công!');
     }

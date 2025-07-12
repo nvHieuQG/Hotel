@@ -12,4 +12,5 @@ interface ServiceServiceInterface
     public function create(array $data);
     public function update(int $id, array $data);
     public function delete(int $id);
+    public function paginateWithFilter(?int $categoryId = null, ?int $roomTypeId = null, int $perPage = 10);
 } 
