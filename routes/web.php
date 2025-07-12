@@ -137,6 +137,13 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
     // Quản lý người dùng
     Route::resource('users', AdminUserController::class)->except(['create', 'store']);
+
+    // Quản lý danh mục dịch vụ
+    Route::resource('service-categories', \App\Http\Controllers\Admin\AdminServiceCategoryController::class);
+    // Quản lý dịch vụ
+    Route::resource('services', \App\Http\Controllers\Admin\AdminServiceController::class);
+    // Gán dịch vụ cho loại phòng
+    Route::resource('room-type-services', \App\Http\Controllers\Admin\AdminRoomTypeServiceController::class)->only(['index', 'edit', 'update']);
 });
 
 // Route công khai cho room type reviews (chỉ hiển thị) - đặt sau admin routes để tránh xung đột

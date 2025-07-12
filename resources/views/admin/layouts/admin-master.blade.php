@@ -663,11 +663,39 @@
                                 <i class="fas fa-calendar-check"></i> Đặt phòng
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.rooms.*') ? 'active' : '' }}" href="{{ route('admin.rooms.index')}}">
-                                <i class="fas fa-bed"></i> Phòng
-                            </a>
-                        </li>
+<li class="nav-item">
+    <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? '' : 'collapsed' }}"
+       data-bs-toggle="collapse" href="#submenuRoom" role="button"
+       aria-expanded="{{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'true' : 'false' }}"
+       aria-controls="submenuRoom">
+        <span><i class="fas fa-bed"></i> Phòng</span>
+        <i class="fas fa-chevron-down small {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'rotate-180' : '' }}"></i>
+    </a>
+
+    <!-- Submenu -->
+    <div class="collapse {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'show' : '' }}" id="submenuRoom">
+        <ul class="nav flex-column ms-3">
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.rooms.index') ? 'active' : '' }}"
+                   href="{{ route('admin.rooms.index') }}">
+                    Danh sách phòng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.service-categories.index') ? 'active' : '' }}"
+                   href="{{ route('admin.service-categories.index') }}">
+                    Danh mục dịch vụ
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.room-type-services.index') ? 'active' : '' }}"
+                   href="{{ route('admin.room-type-services.index') }}">
+                    Dịch vụ loại phòng
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
                                 <i class="fas fa-users"></i> Người dùng
