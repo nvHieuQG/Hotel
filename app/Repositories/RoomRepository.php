@@ -36,18 +36,14 @@ class RoomRepository implements RoomRepositoryInterface
         return $this->model->newQuery()->get();
     }
     
-    public function findAvailableRoomByType(int $roomTypeId, string $checkIn, string $checkOut): ?Room
+    public function findAvailableRoomByType(int $roomTypeId, string $checkInDateTime, string $checkOutDateTime): ?Room
     {
         return $this->model
             ->where('room_type_id', $roomTypeId)
-            ->whereDoesntHave('bookings', function ($query) use ($checkIn, $checkOut) {
-                $query->where(function ($q) use ($checkIn, $checkOut) {
-                    $q->whereBetween('check_in_date', [$checkIn, $checkOut])
-                        ->orWhereBetween('check_out_date', [$checkIn, $checkOut])
-                        ->orWhere(function ($q2) use ($checkIn, $checkOut) {
-                            $q2->where('check_in_date', '<=', $checkIn)
-                                ->where('check_out_date', '>=', $checkOut);
-                        });
+            ->whereDoesntHave('bookings', function ($query) use ($checkInDateTime, $checkOutDateTime) {
+                $query->where(function ($q) use ($checkInDateTime, $checkOutDateTime) {
+                    $q->where('check_in_date', '<', $checkOutDateTime)
+                      ->where('check_out_date', '>', $checkInDateTime);
                 })->where('status', '!=', 'cancelled');
             })
             ->first();

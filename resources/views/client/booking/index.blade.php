@@ -45,7 +45,7 @@
                             @csrf
 
                             <div class="form-group">
-                                <label for="room_id">Chọn Phòng</label>
+                                <label for="room_type_id">Chọn Phòng</label>
                                 <select name="room_type_id" id="room_type_id" class="form-control" required>
                                     <option value="">-- Chọn loại phòng --</option>
                                     @foreach ($roomTypes as $type)
@@ -59,16 +59,20 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="check_in">Ngày Nhận Phòng</label>
-                                        <input type="date" name="check_in" id="check_in" class="form-control" required
-                                            min="{{ date('Y-m-d') }}" value="{{ old('check_in') }}">
+                                        <label for="check_in_date">Ngày Nhận Phòng (12:00)</label>
+                                        <input type="date" name="check_in_date" id="check_in_date" 
+                                               class="form-control" required
+                                               min="{{ date('Y-m-d') }}" 
+                                               value="{{ old('check_in_date', date('Y-m-d')) }}">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="check_out">Ngày Trả Phòng</label>
-                                        <input type="date" name="check_out" id="check_out" class="form-control" required
-                                            min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ old('check_out') }}">
+                                        <label for="check_out_date">Ngày Trả Phòng (14:00)</label>
+                                        <input type="date" name="check_out_date" id="check_out_date" 
+                                               class="form-control" required
+                                               min="{{ date('Y-m-d', strtotime('+1 day')) }}" 
+                                               value="{{ old('check_out_date', date('Y-m-d', strtotime('+1 day'))) }}">
                                     </div>
                                 </div>
                             </div>
@@ -132,9 +136,9 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const roomSelect = document.getElementById('room_id');
-            const checkInInput = document.getElementById('check_in');
-            const checkOutInput = document.getElementById('check_out');
+            const roomSelect = document.getElementById('room_type_id');
+            const checkInDateInput = document.getElementById('check_in_date');
+            const checkOutDateInput = document.getElementById('check_out_date');
             const priceCalculation = document.querySelector('.price-calculation');
             const roomPriceElement = document.getElementById('room-price');
             const nightsCountElement = document.getElementById('nights-count');
@@ -142,10 +146,10 @@
 
             function updatePriceCalculation() {
                 const selectedOption = roomSelect.options[roomSelect.selectedIndex];
-                const checkInDate = new Date(checkInInput.value);
-                const checkOutDate = new Date(checkOutInput.value);
+                const checkInDate = new Date(checkInDateInput.value);
+                const checkOutDate = new Date(checkOutDateInput.value);
 
-                if (roomSelect.value && checkInInput.value && checkOutInput.value) {
+                if (roomSelect.value && checkInDateInput.value && checkOutDateInput.value) {
                     const roomPrice = parseFloat(selectedOption.dataset.price);
                     const timeDiff = checkOutDate - checkInDate;
                     const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
@@ -174,22 +178,24 @@
             }
 
             roomSelect.addEventListener('change', updatePriceCalculation);
-            checkInInput.addEventListener('change', function() {
+            
+            checkInDateInput.addEventListener('change', function() {
                 // Cập nhật ngày trả phòng tối thiểu
                 const checkInDate = new Date(this.value);
                 const nextDay = new Date(checkInDate);
                 nextDay.setDate(nextDay.getDate() + 1);
 
-                checkOutInput.min = nextDay.toISOString().split('T')[0];
+                checkOutDateInput.min = nextDay.toISOString().split('T')[0];
 
                 // Nếu ngày trả phòng nhỏ hơn ngày nhận phòng + 1, thì đặt lại
-                if (new Date(checkOutInput.value) < nextDay) {
-                    checkOutInput.value = nextDay.toISOString().split('T')[0];
+                if (new Date(checkOutDateInput.value) < nextDay) {
+                    checkOutDateInput.value = nextDay.toISOString().split('T')[0];
                 }
 
                 updatePriceCalculation();
             });
-            checkOutInput.addEventListener('change', updatePriceCalculation);
+            
+            checkOutDateInput.addEventListener('change', updatePriceCalculation);
 
             // Khởi tạo khi trang load
             updatePriceCalculation();
