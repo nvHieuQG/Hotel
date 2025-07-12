@@ -24,13 +24,30 @@ class AdminRoomController extends Controller
             'floor' => $request->get('floor'),
             'room_type' => $request->get('room_type'),
             'status' => $request->get('status'),
-            'search' => $request->get('search')
+            'search' => $request->get('search'),
+            'date' => $request->get('date'),
         ];
         
-        // 1. Lấy tất cả phòng đã lọc (dưới dạng Collection)
         $allRooms = $this->roomService->getAllRoomsWithFilters($filters);
 
-        // 2. Nhóm các phòng theo tầng
+        $allRooms = $allRooms->filter(function($room) use ($filters) {
+            $match = true;
+            if (!empty($filters['status'])) {
+                if (!empty($filters['date'])) {
+                    $match = $match && ($room->getStatusForDate($filters['date']) === $filters['status']);
+                } else {
+                    $match = $match && ($room->status_for_display === $filters['status']);
+                }
+            }
+            if (!empty($filters['floor'])) {
+                $match = $match && ($room->floor == $filters['floor']);
+            }
+            if (!empty($filters['room_type'])) {
+                $match = $match && ($room->room_type_id == $filters['room_type']);
+            }
+            return $match;
+        })->values();
+
         $roomsByFloor = $allRooms->groupBy('floor');
 
         // 3. Tự tạo phân trang cho các tầng
