@@ -53,7 +53,7 @@ class ServiceRepository implements ServiceRepositoryInterface
         return $service->delete();
     }
 
-    public function paginateWithFilter(?int $categoryId = null, ?int $roomTypeId = null, int $perPage = 10)
+    public function paginateWithFilter(?int $categoryId = null, ?int $roomTypeId = null, int $perPage = 10, ?string $keyword = null)
     {
         $query = Service::with(['category', 'roomTypes']);
         if ($categoryId) {
@@ -62,6 +62,12 @@ class ServiceRepository implements ServiceRepositoryInterface
         if ($roomTypeId) {
             $query->whereHas('roomTypes', function($q) use ($roomTypeId) {
                 $q->where('room_type_id', $roomTypeId);
+            });
+        }
+        if ($keyword) {
+            $query->where(function($q) use ($keyword) {
+                $q->where('name', 'like', "%$keyword%")
+                  ->orWhere('description', 'like', "%$keyword%") ;
             });
         }
         return $query->paginate($perPage);

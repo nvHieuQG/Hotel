@@ -31,11 +31,12 @@ class AdminServiceController extends Controller
     {
         $categoryId = $request->get('category_id');
         $roomTypeId = $request->get('room_type_id');
+        $keyword = $request->get('keyword');
         $perPage = 10;
-        $services = $this->serviceService->paginateWithFilter($categoryId, $roomTypeId, $perPage);
+        $services = $this->serviceService->paginateWithFilter($categoryId, $roomTypeId, $perPage, $keyword);
         $categories = $this->serviceCategoryService->getAll();
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
-        return view('admin.services.index', compact('services', 'categories', 'roomTypes', 'categoryId', 'roomTypeId'));
+        return view('admin.services.index', compact('services', 'categories', 'roomTypes', 'categoryId', 'roomTypeId', 'keyword'));
     }
 
     /**

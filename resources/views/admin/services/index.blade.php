@@ -22,7 +22,8 @@
             <!-- Form lọc -->
             <div class="row mb-3">
                 <div class="col-md-8">
-                    <form method="GET" action="{{ route('admin.services.index') }}" class="d-flex gap-2">
+                    <form method="GET" action="{{ route('admin.services.index') }}" class="d-flex gap-2 align-items-center">
+                        <input type="text" name="keyword" class="form-control" placeholder="Tìm kiếm dịch vụ..." value="{{ $keyword ?? '' }}" style="max-width: 220px;">
                         <select name="category_id" class="form-select">
                             <option value="">Tất cả danh mục</option>
                             @foreach($categories as $category)
@@ -31,7 +32,6 @@
                                 </option>
                             @endforeach
                         </select>
-                        
                         <select name="room_type_id" class="form-select">
                             <option value="">Tất cả loại phòng</option>
                             @foreach($roomTypes as $roomType)
@@ -40,11 +40,10 @@
                                 </option>
                             @endforeach
                         </select>
-                        
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-filter"></i> Lọc
                         </button>
-                        @if($categoryId || $roomTypeId)
+                        @if($categoryId || $roomTypeId || $keyword)
                             <a href="{{ route('admin.services.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Xóa lọc
                             </a>
