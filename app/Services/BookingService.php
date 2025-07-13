@@ -62,28 +62,29 @@ class BookingService implements BookingServiceInterface
      */
     public function createBooking(array $data): Booking
     {
-        // Xác thực dữ liệu
+        // 1. Validation
         $validator = Validator::make($data, [
             'room_type_id' => 'required|exists:room_types,id',
-            'check_in' => 'required|date|after_or_equal:today',
-            'check_out' => 'required|date|after:check_in',
+            'check_in_date' => 'required|date|after_or_equal:today',
+            'check_out_date' => 'required|date|after:check_in_date',
             'guests' => 'required|integer|min:1',
             'phone' => 'nullable|string|max:20',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
 
-        $checkIn = new \DateTime($data['check_in']);
-        $checkOut = new \DateTime($data['check_out']);
+        // 2. Ghép giờ mặc định
+        $checkInDateTime = $data['check_in_date'] . ' 12:00:00';
+        $checkOutDateTime = $data['check_out_date'] . ' 14:00:00';
 
-        // Lấy phòng còn trống thuộc loại đã chọn
+        // 3. Kiểm tra phòng trống, tạo booking như cũ nhưng dùng $checkInDateTime, $checkOutDateTime
         $availableRoom = $this->roomRepository->findAvailableRoomByType(
             $data['room_type_id'],
-            $data['check_in'],
-            $data['check_out']
+            $checkInDateTime,
+            $checkOutDateTime
         );
 
         if (!$availableRoom) {
@@ -92,19 +93,21 @@ class BookingService implements BookingServiceInterface
             ]);
         }
 
-        // Tính tiền
+        // 4. Tính tiền
+        $checkIn = new \DateTime($checkInDateTime);
+        $checkOut = new \DateTime($checkOutDateTime);
         $nights = $checkIn->diff($checkOut)->days;
         $totalPrice = $availableRoom->roomType->price * $nights;
 
-        // Tạo booking ID
+        // 5. Tạo booking ID
         $bookingId = 'BK' . date('ymd') . strtoupper(Str::random(5));
 
         $bookingData = [
             'user_id' => Auth::id(),
             'booking_id' => $bookingId,
             'room_id' => $availableRoom->id,
-            'check_in_date' => $data['check_in'],
-            'check_out_date' => $data['check_out'],
+            'check_in_date' => $checkInDateTime,  // Lưu vào DB dạng datetime
+            'check_out_date' => $checkOutDateTime,
             'price' => $totalPrice,
             'status' => 'pending',
             'phone' => $data['phone'] ?? null,
@@ -113,7 +116,6 @@ class BookingService implements BookingServiceInterface
 
         return $this->bookingRepository->create($bookingData);
     }
-
 
     /**
      * Lấy danh sách đặt phòng của người dùng hiện tại (có phân trang)

@@ -28,6 +28,26 @@
                     <div class="mb-2"><strong >Loại phòng:</strong> {{ $room->roomType->name }}</div>
                     <div class="mb-2"><strong>Sức chứa:</strong> {{ $room->capacity }} người</div>
                     <div class="mb-2"><strong>Mô tả:</strong> {!! nl2br(e($room->description)) !!}</div>
+                    @php
+                        $statusText = [
+                            'available' => 'Trống',
+                            'pending'   => 'Chờ xác nhận',
+                            'booked'    => 'Đã đặt',
+                            'repair'    => 'Bảo trì',
+                        ];
+                        $statusBgClass = [
+                            'available' => 'bg-success bg-opacity-50',
+                            'pending'   => 'bg-warning bg-opacity-50',
+                            'booked'    => 'bg-danger bg-opacity-50',
+                            'repair'    => 'bg-secondary bg-opacity-50',
+                        ];
+                    @endphp
+                    <div class="mb-2">
+                        <strong>Trạng thái:</strong>
+                        <span class="badge {{ $statusBgClass[$room->status_for_display] ?? '' }}">
+                            {{ $statusText[$room->status_for_display] ?? 'Không rõ' }}
+                        </span>
+                    </div>
                 </div>
             </div>
 
