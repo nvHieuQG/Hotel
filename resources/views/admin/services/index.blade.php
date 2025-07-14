@@ -12,6 +12,10 @@
                 <a href="{{ route('admin.services.create') }}" class="btn btn-light btn-sm">
                     <i class="fas fa-plus"></i> Thêm dịch vụ
                 </a>
+                <a class="btn btn-light btn-sm {{ request()->routeIs('admin.service-categories.index') ? 'active' : '' }}"
+                   href="{{ route('admin.service-categories.index') }}">
+                   <i class="fas fa-plus"></i> Danh mục dịch vụ
+                </a>
             </div>
         </div>
         <div class="card-body">
@@ -67,7 +71,7 @@
                     </thead>
                     <tbody>
                         @forelse($services as $service)
-                            <tr>
+                            <tr onclick="window.location='{{ route('admin.services.edit', $service->id) }}'">
                                 <td class="text-center">{{ $service->id }}</td>
                                 <td>{{ $service->name }}</td>
                                 <td>{{ optional($service->category)->name }}</td>
@@ -83,9 +87,6 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <a href="{{ route('admin.services.edit', $service->id) }}" class="btn btn-warning btn-sm me-1">
-                                        <i class="fas fa-edit"></i> Sửa
-                                    </a>
                                     <form action="{{ route('admin.services.destroy', $service->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc muốn xóa?')">
                                         @csrf
                                         @method('DELETE')
