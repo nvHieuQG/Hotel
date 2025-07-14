@@ -126,7 +126,21 @@ class AdminBookingController extends Controller
         
         try {
             $this->bookingService->updateBookingStatus($id, $request->status);
-            return redirect()->back()->with('success', 'Đã cập nhật trạng thái đặt phòng thành công.');
+            
+            // Lấy thông tin booking để hiển thị trong thông báo
+            $booking = $this->bookingService->getBookingDetails($id);
+            $statusText = match($request->status) {
+                'pending' => 'Chờ xác nhận',
+                'confirmed' => 'Đã xác nhận',
+                'checked_in' => 'Đã nhận phòng',
+                'checked_out' => 'Đã trả phòng',
+                'completed' => 'Hoàn thành',
+                'cancelled' => 'Đã hủy',
+                'no_show' => 'Khách không đến',
+                default => 'Không xác định'
+            };
+            
+            return redirect()->back()->with('success', "Đã cập nhật trạng thái đặt phòng #{$booking->booking_id} thành '{$statusText}'. Ghi chú và thông báo đã được tạo tự động.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -184,19 +198,36 @@ class AdminBookingController extends Controller
         $type = $request->get('type');
         $priority = $request->get('priority');
         $isRead = $request->get('is_read');
+        $search = $request->get('search');
 
         $query = \App\Models\AdminNotification::query();
 
-        if ($type) {
-            $query->ofType($type);
+        // Tìm kiếm theo từ khóa
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('message', 'like', "%{$search}%")
+                  ->orWhere('type', 'like', "%{$search}%");
+            });
         }
 
-        if ($priority) {
+        // Lọc theo loại
+        if ($type && $type !== 'all') {
+            if ($type === 'unread') {
+                $query->unread();
+            } else {
+                $query->ofType($type);
+            }
+        }
+
+        // Lọc theo độ ưu tiên
+        if ($priority && $priority !== 'all') {
             $query->ofPriority($priority);
         }
 
-        if ($isRead !== null) {
-            if ($isRead) {
+        // Lọc theo trạng thái đọc
+        if ($isRead !== null && $isRead !== '') {
+            if ($isRead == '1') {
                 $query->read();
             } else {
                 $query->unread();
@@ -211,7 +242,7 @@ class AdminBookingController extends Controller
             'by_priority' => $this->bookingService->getUnreadCountByPriority(),
         ];
 
-        return view('admin.notifications.index', compact('notifications', 'stats', 'type', 'priority', 'isRead'));
+        return view('admin.notifications.index', compact('notifications', 'stats', 'type', 'priority', 'isRead', 'search'));
     }
 
     /**
@@ -437,9 +468,19 @@ class AdminBookingController extends Controller
         $type = $request->get('type');
         $priority = $request->get('priority');
         $isRead = $request->get('is_read');
+        $search = $request->get('search');
         $page = $request->get('page', 1);
 
         $query = \App\Models\AdminNotification::query();
+
+        // Tìm kiếm theo từ khóa
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('message', 'like', "%{$search}%")
+                  ->orWhere('type', 'like', "%{$search}%");
+            });
+        }
 
         if ($type && $type !== 'all') {
             if ($type === 'unread') {
@@ -449,12 +490,12 @@ class AdminBookingController extends Controller
             }
         }
 
-        if ($priority) {
+        if ($priority && $priority !== 'all') {
             $query->ofPriority($priority);
         }
 
         if ($isRead !== null && $isRead !== '') {
-            if ($isRead) {
+            if ($isRead == '1') {
                 $query->read();
             } else {
                 $query->unread();
@@ -497,6 +538,7 @@ class AdminBookingController extends Controller
                 'type' => $type,
                 'priority' => $priority,
                 'is_read' => $isRead,
+                'search' => $search,
             ]
         ]);
     }

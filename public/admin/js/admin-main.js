@@ -7,63 +7,98 @@ $.ajaxSetup({
     }
 });
 
-// Hệ thống thông báo thời gian thực
+// Hệ thống thông báo thời gian thực - Phiên bản đơn giản
 class NotificationManager {
     constructor() {
+        console.log('NotificationManager: Initializing...');
         this.badge = $('#notificationBadge');
         this.list = $('#notificationsList');
         this.markAllBtn = $('#markAllReadBtn');
         this.sidebarBadge = $('#sidebarNotificationBadge');
+        
+        console.log('NotificationManager: Elements found:', {
+            badge: this.badge.length,
+            list: this.list.length,
+            markAllBtn: this.markAllBtn.length,
+            sidebarBadge: this.sidebarBadge.length
+        });
+        
+        if (this.badge.length === 0) {
+            console.error('NotificationManager: Badge element not found!');
+            return;
+        }
+        
         this.init();
     }
 
     init() {
+        console.log('NotificationManager: Starting init...');
         this.loadNotifications();
         this.bindEvents();
         this.startPolling();
-        this.hideSidebarBadge();
+        console.log('NotificationManager: Init completed');
     }
 
     bindEvents() {
-        this.markAllBtn.on('click', (e) => {
-            e.preventDefault();
-            this.markAllAsRead();
-        });
+        console.log('NotificationManager: Binding events...');
+        
+        if (this.markAllBtn.length > 0) {
+            this.markAllBtn.on('click', (e) => {
+                e.preventDefault();
+                this.markAllAsRead();
+            });
+        }
 
         // Đánh dấu đã đọc khi click vào thông báo
-        this.list.on('click', '.notification-item', (e) => {
-            const notificationId = $(e.currentTarget).data('id');
-            this.markAsRead(notificationId);
-        });
+        if (this.list.length > 0) {
+            this.list.on('click', '.notification-item', (e) => {
+                const notificationId = $(e.currentTarget).data('id');
+                this.markAsRead(notificationId);
+            });
+        }
     }
 
     loadNotifications() {
-        $.get('/admin/api/notifications/unread')
-            .done((response) => {
+        console.log('NotificationManager: Loading notifications...');
+        
+        $.ajax({
+            url: '/admin/api/notifications/unread',
+            method: 'GET',
+            dataType: 'json',
+            success: (response) => {
+                console.log('NotificationManager: API response:', response);
                 if (response.success) {
                     this.updateBadge(response.count);
                     this.renderNotifications(response.notifications);
                 }
-            })
-            .fail(() => {
+            },
+            error: (xhr, status, error) => {
+                console.error('NotificationManager: API failed:', {xhr, status, error});
                 this.renderError();
-            });
+            }
+        });
     }
 
     updateBadge(count) {
+        console.log('NotificationManager: Updating badge with count:', count);
         this.badge.text(count);
         this.badge.toggle(count > 0);
         
         // Cập nhật badge trong sidebar
-        this.sidebarBadge.text(count);
-        this.sidebarBadge.toggle(count > 0);
-    }
-
-    hideSidebarBadge() {
-        this.sidebarBadge.hide();
+        if (this.sidebarBadge.length > 0) {
+            this.sidebarBadge.text(count);
+            this.sidebarBadge.toggle(count > 0);
+        }
     }
 
     renderNotifications(notifications) {
+        console.log('NotificationManager: Rendering notifications:', notifications);
+        
+        if (!this.list.length) {
+            console.error('NotificationManager: List element not found!');
+            return;
+        }
+        
         if (notifications.length === 0) {
             this.list.html(`
                 <div class="dropdown-item text-center small text-gray-500 py-3">
@@ -104,6 +139,8 @@ class NotificationManager {
     }
 
     renderError() {
+        if (!this.list.length) return;
+        
         this.list.html(`
             <div class="dropdown-item text-center small text-gray-500 py-3">
                 <i class="fas fa-exclamation-triangle text-warning me-2"></i> Lỗi tải thông báo
@@ -293,17 +330,25 @@ function initDropdownClose() {
 
 // Khởi tạo tất cả các chức năng khi trang đã load
 $(document).ready(function() {
+    console.log('Document ready: Starting initialization...');
+    
     // Khởi tạo hệ thống thông báo
-    new NotificationManager();
+    try {
+        console.log('Document ready: Initializing NotificationManager...');
+        window.notificationManager = new NotificationManager();
+        console.log('Document ready: NotificationManager initialized successfully');
+    } catch (error) {
+        console.error('Document ready: Error initializing NotificationManager:', error);
+    }
     
     // Khởi tạo các animation và effects
-    initCardAnimations();
-    initButtonEffects();
-    initSidebarToggle();
-    initSidebarClose();
-    initWindowResize();
-    initDropdownPositioning();
-    initDropdownClose();
+    if (typeof initCardAnimations === 'function') initCardAnimations();
+    if (typeof initButtonEffects === 'function') initButtonEffects();
+    if (typeof initSidebarToggle === 'function') initSidebarToggle();
+    if (typeof initSidebarClose === 'function') initSidebarClose();
+    if (typeof initWindowResize === 'function') initWindowResize();
+    if (typeof initDropdownPositioning === 'function') initDropdownPositioning();
+    if (typeof initDropdownClose === 'function') initDropdownClose();
     
     // Auto-hide alerts sau 5 giây
     setTimeout(function() {

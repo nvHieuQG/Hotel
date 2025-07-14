@@ -238,7 +238,7 @@ class BookingService implements BookingServiceInterface
         $validator = Validator::make($data, [
             'booking_id' => 'required|exists:bookings,id',
             'content' => 'required|string|max:1000',
-            'type' => 'required|in:customer,staff,admin',
+            'type' => 'required|in:customer,staff,admin,system',
             'visibility' => 'required|in:public,private,internal',
             'is_internal' => 'boolean'
         ]);
@@ -381,7 +381,7 @@ class BookingService implements BookingServiceInterface
     /**
      * Tạo ghi chú hệ thống tự động
      */
-    public function createSystemNote(int $bookingId, string $content, string $type = 'admin'): BookingNote
+    public function createSystemNote(int $bookingId, string $content, string $type = 'system'): BookingNote
     {
         $noteData = [
             'booking_id' => $bookingId,
@@ -460,7 +460,7 @@ class BookingService implements BookingServiceInterface
             'is_internal' => false
         ];
 
-        return $this->bookingRepository->create($noteData);
+        return $this->bookingRepository->createNote($noteData);
     }
 
     /**
@@ -512,6 +512,14 @@ class BookingService implements BookingServiceInterface
     private function validateNoteCreationPermission($user, array $data): void
     {
         $userRoles = $this->getUserRoles($user);
+        
+        // System type chỉ được tạo bởi hệ thống (user_id = 1)
+        if ($data['type'] === 'system') {
+            if ($user->id !== 1) {
+                throw new \Exception('Chỉ hệ thống mới có thể tạo ghi chú hệ thống.');
+            }
+            return;
+        }
         
         // Admin có thể tạo mọi loại ghi chú
         if (in_array('admin', $userRoles)) {

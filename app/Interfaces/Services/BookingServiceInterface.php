@@ -197,10 +197,10 @@ interface BookingServiceInterface
      *
      * @param int $bookingId
      * @param string $content
-     * @param string $type
+     * @param string $type (admin, system)
      * @return BookingNote
      */
-    public function createSystemNote(int $bookingId, string $content, string $type = 'admin'): BookingNote;
+    public function createSystemNote(int $bookingId, string $content, string $type = 'system'): BookingNote;
 
     /**
      * Tạo ghi chú thông báo cho khách hàng

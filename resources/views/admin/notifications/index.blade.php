@@ -134,7 +134,11 @@
             <div class="collapse show" id="filterCollapse">
                 <div class="card-body py-2">
                     <form id="filterForm" class="row g-2">
-                        <div class="col-xl-3 col-lg-4 col-md-6">
+                        <div class="col-xl-2 col-lg-3 col-md-6">
+                            <input type="text" name="search" id="search" class="form-control form-control-sm" 
+                                   placeholder="Tìm kiếm..." value="{{ $search ?? '' }}">
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-6">
                             <select name="type" id="type" class="form-select form-select-sm">
                                 <option value="">Tất cả loại</option>
                                 <optgroup label="Đặt phòng">
@@ -173,7 +177,7 @@
                                 <option value="1" {{ $isRead === '1' ? 'selected' : '' }}>Đã đọc</option>
                             </select>
                         </div>
-                        <div class="col-xl-5 col-lg-2 col-md-6">
+                        <div class="col-xl-4 col-lg-12">
                             <div class="d-flex gap-2 flex-wrap">
                                 <button type="submit" class="btn btn-primary btn-sm">
                                     <i class="fas fa-search"></i> <span class="d-none d-md-inline">Lọc</span>

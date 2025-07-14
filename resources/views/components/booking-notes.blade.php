@@ -13,6 +13,7 @@
             'customer' => 'Khách hàng',
             'staff' => 'Nhân viên', 
             'admin' => 'Quản lý',
+            'system' => 'Hệ thống',
             default => 'Không xác định'
         };
         $note->visibility_text = match($note->visibility) {
@@ -74,7 +75,7 @@
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
                                     <strong>{{ $note->user->name }}</strong>
-                                    <span class="badge bg-{{ $note->type === 'admin' ? 'danger' : ($note->type === 'staff' ? 'warning' : 'info') }} ms-2">
+                                    <span class="badge bg-{{ $note->type === 'admin' ? 'danger' : ($note->type === 'staff' ? 'warning' : ($note->type === 'system' ? 'secondary' : 'info')) }} ms-2">
                                         {{ $note->type_text }}
                                     </span>
                                     <span class="badge bg-{{ $note->visibility === 'public' ? 'success' : ($note->visibility === 'private' ? 'secondary' : 'warning') }} ms-1">

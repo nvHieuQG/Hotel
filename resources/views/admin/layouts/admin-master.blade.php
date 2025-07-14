@@ -237,6 +237,30 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Admin Main JavaScript -->
     <script src="{{ asset('admin/js/admin-main.js') }}"></script>
+    
+    <!-- Debug script -->
+    <script>
+        console.log('Layout loaded');
+        $(document).ready(function() {
+            console.log('Document ready in layout');
+            console.log('Notification elements:', {
+                badge: $('#notificationBadge').length,
+                list: $('#notificationsList').length,
+                markAllBtn: $('#markAllReadBtn').length,
+                sidebarBadge: $('#sidebarNotificationBadge').length
+            });
+            
+            // Test API call
+            $.get('/admin/api/notifications/unread')
+                .done(function(response) {
+                    console.log('API test successful:', response);
+                })
+                .fail(function(xhr, status, error) {
+                    console.error('API test failed:', {xhr, status, error});
+                });
+        });
+    </script>
+    
     @yield('scripts')
 </body>
 </html>

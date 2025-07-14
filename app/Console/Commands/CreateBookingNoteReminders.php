@@ -56,7 +56,7 @@ class CreateBookingNoteReminders extends Command
                 $this->bookingNoteService->createSystemNote(
                     $booking->id,
                     "Nhắc nhở: Khách hàng check-in hôm nay ({$today->format('d/m/Y')}). Vui lòng chuẩn bị phòng và đón tiếp khách.",
-                    'staff'
+                    'system'
                 );
                 $this->line("✓ Đã tạo ghi chú nhắc nhở check-in cho booking #{$booking->id}");
             } catch (\Exception $e) {
@@ -76,7 +76,7 @@ class CreateBookingNoteReminders extends Command
                 $this->bookingNoteService->createSystemNote(
                     $booking->id,
                     "Nhắc nhở: Khách hàng check-in ngày mai ({$tomorrow->format('d/m/Y')}). Vui lòng chuẩn bị phòng.",
-                    'staff'
+                    'system'
                 );
                 $this->line("✓ Đã tạo ghi chú nhắc nhở check-in ngày mai cho booking #{$booking->id}");
             } catch (\Exception $e) {
@@ -86,7 +86,7 @@ class CreateBookingNoteReminders extends Command
 
         // Tìm các booking check-out hôm nay
         $checkOutBookings = Booking::where('check_out_date', $today)
-            ->where('status', 'confirmed')
+            ->whereIn('status', ['confirmed', 'checked_in'])
             ->get();
 
         $this->info("Tìm thấy {$checkOutBookings->count()} booking check-out hôm nay");
@@ -96,7 +96,7 @@ class CreateBookingNoteReminders extends Command
                 $this->bookingNoteService->createSystemNote(
                     $booking->id,
                     "Nhắc nhở: Khách hàng check-out hôm nay ({$today->format('d/m/Y')}). Vui lòng kiểm tra phòng và thanh toán.",
-                    'staff'
+                    'system'
                 );
                 $this->line("✓ Đã tạo ghi chú nhắc nhở check-out cho booking #{$booking->id}");
             } catch (\Exception $e) {
@@ -106,7 +106,7 @@ class CreateBookingNoteReminders extends Command
 
         // Tìm các booking check-out ngày mai
         $tomorrowCheckOutBookings = Booking::where('check_out_date', $tomorrow)
-            ->where('status', 'confirmed')
+            ->whereIn('status', ['confirmed', 'checked_in'])
             ->get();
 
         $this->info("Tìm thấy {$tomorrowCheckOutBookings->count()} booking check-out ngày mai");
@@ -116,7 +116,7 @@ class CreateBookingNoteReminders extends Command
                 $this->bookingNoteService->createSystemNote(
                     $booking->id,
                     "Nhắc nhở: Khách hàng check-out ngày mai ({$tomorrow->format('d/m/Y')}). Vui lòng chuẩn bị hóa đơn.",
-                    'staff'
+                    'system'
                 );
                 $this->line("✓ Đã tạo ghi chú nhắc nhở check-out ngày mai cho booking #{$booking->id}");
             } catch (\Exception $e) {

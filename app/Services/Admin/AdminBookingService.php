@@ -198,7 +198,8 @@ class AdminBookingService implements AdminBookingServiceInterface
             throw new \Exception('Không tìm thấy đặt phòng');
         }
 
-        $currentIndex = array_search($booking->status, $statusOrder);
+        $oldStatus = $booking->status;
+        $currentIndex = array_search($oldStatus, $statusOrder);
         $newIndex = array_search($status, $statusOrder);
 
         // Kiểm tra trạng thái hợp lệ
@@ -208,7 +209,11 @@ class AdminBookingService implements AdminBookingServiceInterface
 
         // Cho phép chuyển sang cancelled/no_show ở bất kỳ trạng thái nào
         if (in_array($status, ['cancelled', 'no_show'])) {
-            return $this->adminBookingRepository->updateStatus($id, $status);
+            $success = $this->adminBookingRepository->updateStatus($id, $status);
+            if ($success) {
+                $this->handleStatusChange($booking, $oldStatus, $status);
+            }
+            return $success;
         }
 
         // Chỉ cho phép chuyển tiếp (không lùi lại)
@@ -222,7 +227,11 @@ class AdminBookingService implements AdminBookingServiceInterface
             throw new \Exception('Trạng thái không được phép chuyển đổi.');
         }
 
-        return $this->adminBookingRepository->updateStatus($id, $status);
+        $success = $this->adminBookingRepository->updateStatus($id, $status);
+        if ($success) {
+            $this->handleStatusChange($booking, $oldStatus, $status);
+        }
+        return $success;
     }
     
     /**
@@ -716,5 +725,62 @@ class AdminBookingService implements AdminBookingServiceInterface
             'fas fa-times-circle',
             'danger'
         );
+    }
+
+    /**
+     * Xử lý thay đổi trạng thái booking
+     */
+    private function handleStatusChange(Booking $booking, string $oldStatus, string $newStatus): void
+    {
+        // Tạo ghi chú hệ thống
+        $statusText = match($newStatus) {
+            'pending' => 'Chờ xác nhận',
+            'confirmed' => 'Đã xác nhận',
+            'checked_in' => 'Đã nhận phòng',
+            'checked_out' => 'Đã trả phòng',
+            'completed' => 'Hoàn thành',
+            'cancelled' => 'Đã hủy',
+            'no_show' => 'Khách không đến',
+            default => 'Không xác định'
+        };
+
+        $oldStatusText = match($oldStatus) {
+            'pending' => 'Chờ xác nhận',
+            'confirmed' => 'Đã xác nhận',
+            'checked_in' => 'Đã nhận phòng',
+            'checked_out' => 'Đã trả phòng',
+            'completed' => 'Hoàn thành',
+            'cancelled' => 'Đã hủy',
+            'no_show' => 'Khách không đến',
+            default => 'Không xác định'
+        };
+
+        $noteContent = "Thay đổi trạng thái từ '{$oldStatusText}' sang '{$statusText}'";
+        $this->createSystemNote($booking->id, $noteContent, 'system');
+
+        // Tạo thông báo admin
+        $this->createStatusChangeNotification($booking->toArray(), $oldStatus, $newStatus);
+
+        // Gọi các event handler tương ứng
+        switch ($newStatus) {
+            case 'confirmed':
+                $this->onBookingConfirmed($booking);
+                break;
+            case 'checked_in':
+                $this->onBookingCheckedIn($booking);
+                break;
+            case 'checked_out':
+                $this->onBookingCheckedOut($booking);
+                break;
+            case 'completed':
+                $this->onBookingCompleted($booking);
+                break;
+            case 'cancelled':
+                $this->onBookingCancelled($booking, 'Đã hủy bởi admin');
+                break;
+            case 'no_show':
+                $this->onBookingNoShow($booking);
+                break;
+        }
     }
 } 
