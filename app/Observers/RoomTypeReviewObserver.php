@@ -3,42 +3,42 @@
 namespace App\Observers;
 
 use App\Models\RoomTypeReview;
-use App\Services\AdminNotificationService;
+use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
 
 class RoomTypeReviewObserver
 {
-    protected $adminNotificationService;
+    protected $adminBookingService;
 
-    public function __construct(AdminNotificationService $adminNotificationService)
+    public function __construct(AdminBookingServiceInterface $adminBookingService)
     {
-        $this->adminNotificationService = $adminNotificationService;
+        $this->adminBookingService = $adminBookingService;
     }
 
     /**
      * Handle the RoomTypeReview "created" event.
      */
-    public function created(RoomTypeReview $roomTypeReview): void
+    public function created(RoomTypeReview $roomTypeReview)
     {
         // Tạo thông báo admin khi có đánh giá mới
-        $this->adminNotificationService->notifyRoomTypeReviewCreated($roomTypeReview);
+        // $this->adminBookingService->notifyRoomTypeReviewCreated($roomTypeReview);
     }
 
     /**
      * Handle the RoomTypeReview "updated" event.
      */
-    public function updated(RoomTypeReview $roomTypeReview): void
+    public function updated(RoomTypeReview $roomTypeReview)
     {
         // Tạo thông báo admin khi đánh giá được cập nhật
-        $this->adminNotificationService->notifyRoomTypeReviewUpdated($roomTypeReview);
+        // $this->adminBookingService->notifyRoomTypeReviewUpdated($roomTypeReview);
     }
 
     /**
      * Handle the RoomTypeReview "deleted" event.
      */
-    public function deleted(RoomTypeReview $roomTypeReview): void
+    public function deleted(RoomTypeReview $roomTypeReview)
     {
         // Tạo thông báo admin khi đánh giá bị xóa
-        $this->adminNotificationService->notifyRoomTypeReviewDeleted($roomTypeReview);
+        // $this->adminBookingService->notifyRoomTypeReviewDeleted($roomTypeReview);
     }
 
     /**

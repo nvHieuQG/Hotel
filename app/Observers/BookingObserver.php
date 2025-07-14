@@ -3,20 +3,17 @@
 namespace App\Observers;
 
 use App\Models\Booking;
-use App\Services\BookingNoteEventService;
-use App\Services\AdminNotificationService;
+use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
+use Illuminate\Support\Facades\Log;
 
 class BookingObserver
 {
-    protected $bookingNoteEventService;
-    protected $adminNotificationService;
+    protected $adminBookingService;
 
     public function __construct(
-        BookingNoteEventService $bookingNoteEventService,
-        AdminNotificationService $adminNotificationService
+        AdminBookingServiceInterface $adminBookingService
     ) {
-        $this->bookingNoteEventService = $bookingNoteEventService;
-        $this->adminNotificationService = $adminNotificationService;
+        $this->adminBookingService = $adminBookingService;
     }
 
     /**
@@ -25,10 +22,10 @@ class BookingObserver
     public function created(Booking $booking): void
     {
         // Tạo ghi chú khi booking được tạo
-        $this->bookingNoteEventService->onBookingCreated($booking);
+        $this->adminBookingService->onBookingCreated($booking);
         
         // Tạo thông báo admin
-        $this->adminNotificationService->notifyBookingCreated($booking);
+        $this->adminBookingService->notifyBookingCreated($booking);
     }
 
     /**
@@ -48,12 +45,12 @@ class BookingObserver
                 
                 // Tạo thông báo admin cho thay đổi trạng thái
                 $originalStatus = $booking->getOriginal('status');
-                $this->adminNotificationService->notifyBookingStatusChanged($booking, $originalStatus, $changes['status']);
+                $this->adminBookingService->notifyBookingStatusChanged($booking, $originalStatus, $changes['status']);
             }
 
             // Tạo ghi chú cho các thay đổi khác
             if (count($importantChanges) > 1 || !isset($changes['status'])) {
-                $this->bookingNoteEventService->onBookingUpdated($booking, $importantChanges);
+                $this->adminBookingService->onBookingUpdated($booking, $importantChanges);
             }
         }
     }
@@ -64,10 +61,10 @@ class BookingObserver
     public function deleted(Booking $booking): void
     {
         // Tạo ghi chú khi booking bị xóa
-        $this->bookingNoteEventService->onBookingCancelled($booking, 'Đã xóa bởi admin');
+        $this->adminBookingService->onBookingCancelled($booking, 'Đã xóa bởi admin');
         
         // Tạo thông báo admin
-        $this->adminNotificationService->notifyBookingCancelled($booking, 'Đã xóa bởi admin');
+        $this->adminBookingService->notifyBookingCancelled($booking, 'Đã xóa bởi admin');
     }
 
     /**
@@ -76,7 +73,7 @@ class BookingObserver
     public function restored(Booking $booking): void
     {
         // Tạo ghi chú khi booking được khôi phục
-        $this->bookingNoteEventService->onBookingConfirmed($booking);
+        $this->adminBookingService->onBookingConfirmed($booking);
     }
 
     /**
@@ -85,10 +82,10 @@ class BookingObserver
     public function forceDeleted(Booking $booking): void
     {
         // Tạo ghi chú khi booking bị xóa vĩnh viễn
-        $this->bookingNoteEventService->onBookingCancelled($booking, 'Đã xóa vĩnh viễn');
+        $this->adminBookingService->onBookingCancelled($booking, 'Đã xóa vĩnh viễn');
         
         // Tạo thông báo admin
-        $this->adminNotificationService->notifyBookingCancelled($booking, 'Đã xóa vĩnh viễn');
+        $this->adminBookingService->notifyBookingCancelled($booking, 'Đã xóa vĩnh viễn');
     }
 
     /**
@@ -98,22 +95,22 @@ class BookingObserver
     {
         switch ($newStatus) {
             case 'confirmed':
-                $this->bookingNoteEventService->onBookingConfirmed($booking);
+                $this->adminBookingService->onBookingConfirmed($booking);
                 break;
             case 'checked_in':
-                $this->bookingNoteEventService->onBookingCheckedIn($booking);
+                $this->adminBookingService->onBookingCheckedIn($booking);
                 break;
             case 'checked_out':
-                $this->bookingNoteEventService->onBookingCheckedOut($booking);
+                $this->adminBookingService->onBookingCheckedOut($booking);
                 break;
             case 'completed':
-                $this->bookingNoteEventService->onBookingCompleted($booking);
+                $this->adminBookingService->onBookingCompleted($booking);
                 break;
             case 'cancelled':
-                $this->bookingNoteEventService->onBookingCancelled($booking);
+                $this->adminBookingService->onBookingCancelled($booking);
                 break;
             case 'no_show':
-                $this->bookingNoteEventService->onBookingNoShow($booking);
+                $this->adminBookingService->onBookingNoShow($booking);
                 break;
         }
     }

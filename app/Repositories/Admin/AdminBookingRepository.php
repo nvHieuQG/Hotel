@@ -10,12 +10,14 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class AdminBookingRepository implements AdminBookingRepositoryInterface
 {
-    protected $model;
+    protected $bookingModel;
 
-    public function __construct(Booking $model)
+    public function __construct(Booking $bookingModel)
     {
-        $this->model = $model;
+        $this->bookingModel = $bookingModel;
     }
+
+    // ==================== BOOKING METHODS ====================
 
     /**
      * Lấy tất cả đặt phòng có phân trang
@@ -26,7 +28,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function getAllWithPagination(array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        $query = $this->model->with(['user', 'room']);
+        $query = $this->bookingModel->with(['user', 'room']);
         
         // Áp dụng bộ lọc
         if (isset($filters['status']) && $filters['status']) {
@@ -44,7 +46,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function findById(int $id): ?Booking
     {
-        return $this->model->with(['user', 'room'])->find($id);
+        return $this->bookingModel->with(['user', 'room'])->find($id);
     }
     
     /**
@@ -55,7 +57,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function create(array $data): Booking
     {
-        return $this->model->create($data);
+        return $this->bookingModel->create($data);
     }
     
     /**
@@ -78,7 +80,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function delete(int $id): bool
     {
-        return $this->model->destroy($id) > 0;
+        return $this->bookingModel->destroy($id) > 0;
     }
     
     /**
@@ -90,7 +92,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function updateStatus(int $id, string $status): bool
     {
-        $booking = $this->model->find($id);
+        $booking = $this->bookingModel->find($id);
         if ($booking) {
             $booking->status = $status;
             return $booking->save();
@@ -106,7 +108,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function getRecent(int $limit = 5): Collection
     {
-        return $this->model->with(['user', 'room'])
+        return $this->bookingModel->with(['user', 'room'])
                            ->latest()
                            ->limit($limit)
                            ->get();
@@ -120,7 +122,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function countByStatus(string $status): int
     {
-        return $this->model->where('status', $status)->count();
+        return $this->bookingModel->where('status', $status)->count();
     }
     
     /**
@@ -130,7 +132,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function countToday(): int
     {
-        return $this->model->whereDate('created_at', Carbon::today())->count();
+        return $this->bookingModel->whereDate('created_at', Carbon::today())->count();
     }
     
     /**
@@ -140,7 +142,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function calculateMonthlyRevenue(): float
     {
-        return $this->model->whereMonth('created_at', Carbon::now()->month)
+        return $this->bookingModel->whereMonth('created_at', Carbon::now()->month)
                            ->whereYear('created_at', Carbon::now()->year)
                            ->where('status', '!=', 'cancelled')
                            ->sum('price');
@@ -154,7 +156,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function getBookingsForReport(array $filters = []): Collection
     {
-        $query = $this->model->with(['user', 'room']);
+        $query = $this->bookingModel->with(['user', 'room']);
         
         // Lọc theo ngày
         if (isset($filters['from_date']) && $filters['from_date']) {

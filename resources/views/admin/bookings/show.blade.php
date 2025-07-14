@@ -114,9 +114,24 @@
                                         </div>
                                     </form>
                                     @if(empty($validNextStatuses))
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Lưu ý:</strong> Booking đã ở trạng thái cuối cùng. Chỉ có thể chuyển sang "Đã hủy" hoặc "Khách không đến".
+                                        </div>
+                                    @else
                                         <div class="alert alert-info">
                                             <i class="fas fa-info-circle"></i>
-                                            Booking đã ở trạng thái cuối cùng. Chỉ có thể chuyển sang "Đã hủy" hoặc "Khách không đến".
+                                            <strong>Hướng dẫn:</strong> Có thể chuyển sang bất kỳ trạng thái nào phía trước hoặc chuyển đặc biệt sang "Đã hủy"/"Khách không đến". 
+                                            <br><small class="text-muted">Trạng thái hiện tại: <strong>{{ $booking->status_text }}</strong></small>
+                                        </div>
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle"></i>
+                                            <strong>Thông tin:</strong> Có <strong>{{ count($validNextStatuses) }}</strong> trạng thái có thể chuyển đổi từ trạng thái hiện tại.
+                                            <br><small class="text-muted">Các trạng thái có thể chuyển: 
+                                                @foreach($validNextStatuses as $status => $label)
+                                                    <span class="badge bg-light text-dark me-1">{{ $label }}</span>
+                                                @endforeach
+                                            </small>
                                         </div>
                                     @endif
                                 </div>

@@ -83,13 +83,31 @@
                     </select>
                     <div class="form-text">
                         <strong>Hướng dẫn chuyển trạng thái:</strong><br>
-                        • <strong>Thứ tự bắt buộc:</strong> Chờ xác nhận → Đã xác nhận → Đã nhận phòng → Đã trả phòng → Hoàn thành<br>
+                        • <strong>Thứ tự đề xuất:</strong> Chờ xác nhận → Đã xác nhận → Đã nhận phòng → Đã trả phòng → Hoàn thành<br>
+                        • <strong>Chuyển linh hoạt:</strong> Có thể chuyển sang bất kỳ trạng thái nào phía trước<br>
                         • <strong>Chuyển đặc biệt:</strong> Có thể chuyển sang "Đã hủy" hoặc "Khách không đến" ở bất kỳ trạng thái nào<br>
-                        • <strong>Không được lùi:</strong> Không thể chuyển về trạng thái trước đó hoặc bỏ qua bước
+                        • <strong>Không được lùi:</strong> Không thể chuyển về trạng thái trước đó
+                        <br><small class="text-muted">Trạng thái hiện tại: <strong>{{ $booking->status_text }}</strong></small>
                     </div>
                     @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    @if(empty($validNextStatuses))
+                        <div class="alert alert-warning mt-2">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Lưu ý:</strong> Booking đã ở trạng thái cuối cùng. Chỉ có thể chuyển sang "Đã hủy" hoặc "Khách không đến".
+                        </div>
+                    @else
+                        <div class="alert alert-success mt-2">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>Thông tin:</strong> Có <strong>{{ count($validNextStatuses) }}</strong> trạng thái có thể chuyển đổi từ trạng thái hiện tại.
+                            <br><small class="text-muted">Các trạng thái có thể chuyển: 
+                                @foreach($validNextStatuses as $status => $label)
+                                    <span class="badge bg-light text-dark me-1">{{ $label }}</span>
+                                @endforeach
+                            </small>
+                        </div>
+                    @endif
                 </div>
                 
                 <div class="col-md-6">

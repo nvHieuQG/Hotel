@@ -8,12 +8,15 @@ use App\Interfaces\Repositories\UserRepositoryInterface;
 use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
 use App\Models\Booking;
 use App\Models\Room;
+use App\Models\AdminNotification;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Collection;
+use Carbon\Carbon;
 
 class AdminBookingService implements AdminBookingServiceInterface
 {
@@ -30,6 +33,8 @@ class AdminBookingService implements AdminBookingServiceInterface
         $this->roomRepository = $roomRepository;
         $this->userRepository = $userRepository;
     }
+
+    // ==================== BOOKING METHODS ====================
 
     /**
      * Lấy danh sách đặt phòng có phân trang
@@ -196,22 +201,27 @@ class AdminBookingService implements AdminBookingServiceInterface
         $currentIndex = array_search($booking->status, $statusOrder);
         $newIndex = array_search($status, $statusOrder);
 
-        // Chỉ cho phép chuyển tiếp một chiều (tăng index hoặc chuyển sang cancelled/no_show)
+        // Kiểm tra trạng thái hợp lệ
         if ($newIndex === false || $currentIndex === false) {
             throw new \Exception('Trạng thái không hợp lệ.');
         }
+
         // Cho phép chuyển sang cancelled/no_show ở bất kỳ trạng thái nào
         if (in_array($status, ['cancelled', 'no_show'])) {
             return $this->adminBookingRepository->updateStatus($id, $status);
         }
+
         // Chỉ cho phép chuyển tiếp (không lùi lại)
         if ($newIndex <= $currentIndex) {
             throw new \Exception('Không được chuyển trạng thái lùi lại hoặc lặp lại.');
         }
-        // Chỉ cho phép nhảy tới trạng thái tiếp theo (không bỏ qua bước)
-        if ($newIndex - $currentIndex > 1) {
-            throw new \Exception('Chỉ được chuyển sang trạng thái tiếp theo.');
+
+        // Kiểm tra xem trạng thái mới có trong danh sách hợp lệ không
+        $validNextStatuses = $this->getValidNextStatuses($id);
+        if (!array_key_exists($status, $validNextStatuses)) {
+            throw new \Exception('Trạng thái không được phép chuyển đổi.');
         }
+
         return $this->adminBookingRepository->updateStatus($id, $status);
     }
     
@@ -345,7 +355,6 @@ class AdminBookingService implements AdminBookingServiceInterface
             return [];
         }
 
-        // Danh sách trạng thái theo thứ tự một chiều
         $statusOrder = [
             'pending',
             'confirmed',
@@ -363,13 +372,15 @@ class AdminBookingService implements AdminBookingServiceInterface
 
         $validStatuses = [];
 
-        // Luôn cho phép chuyển sang cancelled và no_show
-        $validStatuses['cancelled'] = 'Đã hủy';
-        $validStatuses['no_show'] = 'Khách không đến';
+        // Nếu trạng thái hiện tại KHÔNG phải là completed thì luôn cho phép chuyển sang cancelled và no_show
+        if ($booking->status !== 'completed') {
+            $validStatuses['cancelled'] = 'Đã hủy';
+            $validStatuses['no_show'] = 'Khách không đến';
+        }
 
-        // Chỉ cho phép chuyển sang trạng thái tiếp theo
-        if ($currentIndex < count($statusOrder) - 1) {
-            $nextStatus = $statusOrder[$currentIndex + 1];
+        // Cho phép chuyển sang tất cả các trạng thái phía trước (sau trạng thái hiện tại)
+        for ($i = $currentIndex + 1; $i < count($statusOrder); $i++) {
+            $nextStatus = $statusOrder[$i];
             if (!in_array($nextStatus, ['cancelled', 'no_show'])) {
                 $validStatuses[$nextStatus] = match($nextStatus) {
                     'pending' => 'Chờ xác nhận',
@@ -383,5 +394,327 @@ class AdminBookingService implements AdminBookingServiceInterface
         }
 
         return $validStatuses;
+    }
+
+    // ==================== NOTIFICATION METHODS ====================
+
+    /**
+     * Lấy số lượng thông báo chưa đọc
+     */
+    public function getUnreadCount(): int
+    {
+        return AdminNotification::unread()->count();
+    }
+
+    /**
+     * Lấy số lượng thông báo chưa đọc theo mức độ ưu tiên
+     */
+    public function getUnreadCountByPriority(): array
+    {
+        return [
+            'urgent' => AdminNotification::unread()->ofPriority('urgent')->count(),
+            'high' => AdminNotification::unread()->ofPriority('high')->count(),
+            'normal' => AdminNotification::unread()->ofPriority('normal')->count(),
+            'low' => AdminNotification::unread()->ofPriority('low')->count(),
+        ];
+    }
+
+    /**
+     * Lấy danh sách thông báo chưa đọc
+     */
+    public function getUnreadNotifications(int $limit = 10): Collection
+    {
+        return AdminNotification::unread()
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'title' => $notification->title,
+                    'message' => $notification->message,
+                    'type' => $notification->type,
+                    'priority' => $notification->priority,
+                    'time_ago' => $notification->time_ago,
+                    'color' => $notification->color,
+                    'display_icon' => $notification->display_icon,
+                    'badge_color' => $notification->badge_color,
+                ];
+            });
+    }
+
+    /**
+     * Đánh dấu thông báo đã đọc
+     */
+    public function markAsRead(int $notificationId): bool
+    {
+        $notification = AdminNotification::find($notificationId);
+        if ($notification) {
+            $notification->markAsRead();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Đánh dấu tất cả thông báo đã đọc
+     */
+    public function markAllAsRead(): int
+    {
+        return AdminNotification::unread()->update(['is_read' => true]);
+    }
+
+    /**
+     * Xóa thông báo cũ (quá 30 ngày)
+     */
+    public function deleteOldNotifications(): int
+    {
+        $cutoffDate = Carbon::now()->subDays(30);
+        return AdminNotification::where('created_at', '<', $cutoffDate)->delete();
+    }
+
+    /**
+     * Tạo thông báo mới
+     */
+    public function createNotification(
+        string $type,
+        string $title,
+        string $message,
+        array $data = [],
+        string $priority = 'normal',
+        string $icon = null,
+        string $color = null
+    ): AdminNotification {
+        return AdminNotification::create([
+            'type' => $type,
+            'title' => $title,
+            'message' => $message,
+            'data' => $data,
+            'priority' => $priority,
+            'icon' => $icon,
+            'color' => $color,
+            'is_read' => false,
+        ]);
+    }
+
+    /**
+     * Tạo thông báo cho ghi chú mới
+     */
+    public function createNoteNotification(array $noteData): AdminNotification
+    {
+        $booking = \App\Models\Booking::find($noteData['booking_id']);
+        $user = \App\Models\User::find($noteData['user_id']);
+
+        $title = 'Ghi chú mới';
+        $message = "Ghi chú mới từ {$user->name} cho đặt phòng #{$booking->booking_id}";
+
+        return $this->createNotification(
+            'booking_note_created',
+            $title,
+            $message,
+            $noteData,
+            'normal',
+            'fas fa-sticky-note',
+            'info'
+        );
+    }
+
+    /**
+     * Tạo thông báo cho đánh giá mới
+     */
+    public function createReviewNotification(array $reviewData): AdminNotification
+    {
+        $user = \App\Models\User::find($reviewData['user_id']);
+        $roomType = \App\Models\RoomType::find($reviewData['room_type_id']);
+
+        $title = 'Đánh giá phòng mới';
+        $message = "Đánh giá {$reviewData['rating']}/5 sao cho {$roomType->name} từ {$user->name}";
+
+        return $this->createNotification(
+            'room_type_review_created',
+            $title,
+            $message,
+            $reviewData,
+            'normal',
+            'fas fa-star',
+            'info'
+        );
+    }
+
+    /**
+     * Tạo thông báo cho đặt phòng mới
+     */
+    public function createBookingNotification(array $bookingData): AdminNotification
+    {
+        $user = \App\Models\User::find($bookingData['user_id']);
+        $room = \App\Models\Room::find($bookingData['room_id']);
+
+        $title = 'Đặt phòng mới';
+        $message = "Đặt phòng mới từ {$user->name} cho {$room->roomType->name}";
+
+        return $this->createNotification(
+            'booking_created',
+            $title,
+            $message,
+            $bookingData,
+            'normal',
+            'fas fa-calendar-check',
+            'success'
+        );
+    }
+
+    /**
+     * Tạo thông báo cho thay đổi trạng thái đặt phòng
+     */
+    public function createStatusChangeNotification(array $bookingData, string $oldStatus, string $newStatus): AdminNotification
+    {
+        $user = \App\Models\User::find($bookingData['user_id']);
+        $room = \App\Models\Room::find($bookingData['room_id']);
+
+        $statusText = match($newStatus) {
+            'pending' => 'Chờ xác nhận',
+            'confirmed' => 'Đã xác nhận',
+            'checked_in' => 'Đã nhận phòng',
+            'checked_out' => 'Đã trả phòng',
+            'completed' => 'Hoàn thành',
+            'cancelled' => 'Đã hủy',
+            'no_show' => 'Khách không đến',
+            default => 'Không xác định'
+        };
+
+        $title = 'Thay đổi trạng thái đặt phòng';
+        $message = "Đặt phòng #{$bookingData['booking_id']} đã chuyển sang trạng thái: {$statusText}";
+
+        return $this->createNotification(
+            'booking_status_changed',
+            $title,
+            $message,
+            array_merge($bookingData, ['old_status' => $oldStatus, 'new_status' => $newStatus]),
+            'normal',
+            'fas fa-exchange-alt',
+            'warning'
+        );
+    }
+
+    // ==================== EVENT HANDLER METHODS ====================
+
+    /**
+     * Xử lý sự kiện booking được tạo
+     */
+    public function onBookingCreated(Booking $booking): void
+    {
+        // Tạo ghi chú hệ thống
+        $this->createSystemNote($booking->id, 'Đặt phòng mới được tạo', 'system');
+        
+        // Tạo thông báo admin
+        $this->createBookingNotification($booking->toArray());
+    }
+
+    /**
+     * Xử lý sự kiện booking được cập nhật
+     */
+    public function onBookingUpdated(Booking $booking, array $changes): void
+    {
+        $changeText = [];
+        foreach ($changes as $field => $value) {
+            $changeText[] = ucfirst($field) . ': ' . $value;
+        }
+        
+        $this->createSystemNote($booking->id, 'Cập nhật thông tin: ' . implode(', ', $changeText), 'system');
+    }
+
+    /**
+     * Xử lý sự kiện booking bị hủy
+     */
+    public function onBookingCancelled(Booking $booking, string $reason = 'Đã hủy'): void
+    {
+        $this->createSystemNote($booking->id, $reason, 'system');
+    }
+
+    /**
+     * Xử lý sự kiện booking được xác nhận
+     */
+    public function onBookingConfirmed(Booking $booking): void
+    {
+        $this->createSystemNote($booking->id, 'Đặt phòng đã được xác nhận', 'system');
+    }
+
+    /**
+     * Xử lý sự kiện booking check-in
+     */
+    public function onBookingCheckedIn(Booking $booking): void
+    {
+        $this->createSystemNote($booking->id, 'Khách đã nhận phòng', 'system');
+    }
+
+    /**
+     * Xử lý sự kiện booking check-out
+     */
+    public function onBookingCheckedOut(Booking $booking): void
+    {
+        $this->createSystemNote($booking->id, 'Khách đã trả phòng', 'system');
+    }
+
+    /**
+     * Xử lý sự kiện booking hoàn thành
+     */
+    public function onBookingCompleted(Booking $booking): void
+    {
+        $this->createSystemNote($booking->id, 'Đặt phòng đã hoàn thành', 'system');
+    }
+
+    /**
+     * Xử lý sự kiện booking no-show
+     */
+    public function onBookingNoShow(Booking $booking): void
+    {
+        $this->createSystemNote($booking->id, 'Khách không đến (No-show)', 'system');
+    }
+
+    /**
+     * Tạo ghi chú hệ thống
+     */
+    private function createSystemNote(int $bookingId, string $content, string $type = 'system'): void
+    {
+        \App\Models\BookingNote::create([
+            'booking_id' => $bookingId,
+            'user_id' => 1, // Admin user ID 1
+            'content' => $content,
+            'type' => $type,
+            'visibility' => 'internal',
+            'is_internal' => true,
+        ]);
+    }
+
+    /**
+     * Tạo thông báo admin cho booking được tạo
+     */
+    public function notifyBookingCreated(Booking $booking): void
+    {
+        $this->createBookingNotification($booking->toArray());
+    }
+
+    /**
+     * Tạo thông báo admin cho thay đổi trạng thái booking
+     */
+    public function notifyBookingStatusChanged(Booking $booking, string $oldStatus, string $newStatus): void
+    {
+        $this->createStatusChangeNotification($booking->toArray(), $oldStatus, $newStatus);
+    }
+
+    /**
+     * Tạo thông báo admin cho booking bị hủy
+     */
+    public function notifyBookingCancelled(Booking $booking, string $reason): void
+    {
+        $this->createNotification(
+            'booking_cancelled',
+            'Đặt phòng bị hủy',
+            "Đặt phòng #{$booking->booking_id} đã bị hủy: {$reason}",
+            $booking->toArray(),
+            'high',
+            'fas fa-times-circle',
+            'danger'
+        );
     }
 } 

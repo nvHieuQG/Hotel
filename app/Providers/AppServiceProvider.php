@@ -11,10 +11,8 @@ use App\Interfaces\Services\PasswordResetServiceInterface;
 use App\Services\PasswordResetService;
 use App\Models\Booking;
 use App\Observers\BookingObserver;
-use App\Interfaces\Repositories\BookingNoteRepositoryInterface;
-use App\Repositories\BookingNoteRepository;
-use App\Interfaces\Services\BookingNoteServiceInterface;
-use App\Services\BookingNoteService;
+
+
 use App\Models\BookingNote;
 use App\Observers\BookingNoteObserver;
 use App\Models\RoomTypeReview;
@@ -156,16 +154,7 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\SupportTicketRepository::class
         );
 
-        // Booking Note Repository và Service Bindings
-        $this->app->bind(
-            BookingNoteRepositoryInterface::class,
-            BookingNoteRepository::class
-        );
 
-        $this->app->bind(
-            BookingNoteServiceInterface::class,
-            BookingNoteService::class
-        );
     }
 
     /**

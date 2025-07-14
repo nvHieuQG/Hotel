@@ -38,7 +38,7 @@
                                 <div class="item">
                                     <div class="room-img" style="background-image: url('/client/images/room-3.jpg');"></div>
                                 </div>
-                            </div>
+                            </div>  
                         </div>
                         <div class="col-md-12 room-single mt-4 mb-5 ftco-animate">
                             <div class="d-flex justify-content-between align-items-center mb-3">

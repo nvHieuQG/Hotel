@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Booking;
-use App\Interfaces\Services\BookingNoteServiceInterface;
+use App\Interfaces\Services\BookingServiceInterface;
 use Carbon\Carbon;
 
 class CreateBookingNoteReminders extends Command
@@ -28,10 +28,10 @@ class CreateBookingNoteReminders extends Command
     /**
      * Create a new command instance.
      */
-    public function __construct(BookingNoteServiceInterface $bookingNoteService)
+    public function __construct(BookingServiceInterface $bookingService)
     {
         parent::__construct();
-        $this->bookingNoteService = $bookingNoteService;
+        $this->bookingNoteService = $bookingService;
     }
 
     /**

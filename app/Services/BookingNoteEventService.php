@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Interfaces\Services\BookingNoteServiceInterface;
+use App\Interfaces\Services\BookingServiceInterface;
 use App\Models\Booking;
 use Illuminate\Support\Facades\Auth;
 
@@ -10,9 +10,9 @@ class BookingNoteEventService
 {
     protected $bookingNoteService;
 
-    public function __construct(BookingNoteServiceInterface $bookingNoteService)
+    public function __construct(BookingServiceInterface $bookingService)
     {
-        $this->bookingNoteService = $bookingNoteService;
+        $this->bookingNoteService = $bookingService;
     }
 
     /**

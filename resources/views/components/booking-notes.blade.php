@@ -2,7 +2,7 @@
 
 @php
     // Lấy ghi chú từ service với phân trang
-    $bookingNoteService = app(\App\Interfaces\Services\BookingNoteServiceInterface::class);
+    $bookingNoteService = app(\App\Interfaces\Services\BookingServiceInterface::class);
     $notes = $bookingNoteService->getPaginatedNotes($booking->id, 10);
     
     // Thêm thông tin quyền cho mỗi ghi chú

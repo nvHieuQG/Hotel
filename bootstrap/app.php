@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'check.booking.access' => CheckBookingAccess::class,
         ]);
     })
+    ->withCommands([
+        \App\Console\Commands\CreateBookingNoteReminders::class,
+    ])
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
