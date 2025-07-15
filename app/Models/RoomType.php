@@ -60,4 +60,12 @@ class RoomType extends Model
     {
         return $this->approvedReviews()->count();
     }
+
+    /**
+     * Get the services for the room type.
+     */
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'room_type_services');
+    }
 } 

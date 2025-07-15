@@ -19,4 +19,11 @@ interface RoomTypeRepositoryInterface
      * @return Collection
      */
     public function getAllRoomTypes(): Collection;
+
+    /**
+     * Lấy tất cả loại phòng với relationship services
+     *
+     * @return Collection
+     */
+    public function getAllRoomTypesWithServices(): Collection;
 }
