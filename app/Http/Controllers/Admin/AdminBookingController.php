@@ -7,6 +7,7 @@ use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
 use App\Services\NotificationDataFormatterService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class AdminBookingController extends Controller
 {
@@ -43,8 +44,11 @@ class AdminBookingController extends Controller
     public function show($id)
     {
         $booking = $this->bookingService->getBookingDetails($id);
-        $validNextStatuses = $this->bookingService->getValidNextStatuses($id);
-        
+        if (is_numeric($id)) {
+            $validNextStatuses = $this->bookingService->getValidNextStatuses((int)$id);
+        } else {
+            $validNextStatuses = $this->bookingService->getValidNextStatusesByCode($id);
+        }
         return view('admin.bookings.show', compact('booking', 'validNextStatuses'));
     }
 
@@ -151,10 +155,11 @@ class AdminBookingController extends Controller
      */
     public function destroy($id)
     {
-        $this->bookingService->deleteBooking($id);
-        
-        return redirect()->route('admin.bookings.index')
-            ->with('success', 'Đã xóa đặt phòng thành công.');
+        // Xử lý xóa notification
+        $notification = \App\Models\AdminNotification::findOrFail($id);
+        $notification->delete();
+        return redirect()->route('admin.notifications.index')
+            ->with('success', 'Đã xóa thông báo thành công.');
     }
     
     /**
@@ -195,10 +200,10 @@ class AdminBookingController extends Controller
      */
     public function notificationsIndex(Request $request)
     {
-        $type = $request->get('type');
-        $priority = $request->get('priority');
-        $isRead = $request->get('is_read');
-        $search = $request->get('search');
+        $type = $request->get('type', null);
+        $priority = $request->get('priority', null);
+        $isRead = $request->get('is_read', null);
+        $search = $request->get('search', null);
 
         $query = \App\Models\AdminNotification::query();
 
@@ -207,12 +212,17 @@ class AdminBookingController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhere('message', 'like', "%{$search}%")
-                  ->orWhere('type', 'like', "%{$search}%");
+                  ->orWhere('type', 'like', "%{$search}%")
+                  ->orWhere('priority', 'like', "%{$search}%")
+                  ->orWhere('id', $search)
+                  ->orWhere('is_read', $search)
+                  ->orWhereDate('created_at', $search)
+                  ->orWhereDate('updated_at', $search);
             });
         }
 
         // Lọc theo loại
-        if ($type && $type !== 'all') {
+        if ($type) {
             if ($type === 'unread') {
                 $query->unread();
             } else {
@@ -221,7 +231,7 @@ class AdminBookingController extends Controller
         }
 
         // Lọc theo độ ưu tiên
-        if ($priority && $priority !== 'all') {
+        if ($priority) {
             $query->ofPriority($priority);
         }
 
@@ -229,20 +239,14 @@ class AdminBookingController extends Controller
         if ($isRead !== null && $isRead !== '') {
             if ($isRead == '1') {
                 $query->read();
-            } else {
+            } else if ($isRead == '0') {
                 $query->unread();
             }
         }
 
         $notifications = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        $stats = [
-            'total' => \App\Models\AdminNotification::count(),
-            'unread' => $this->bookingService->getUnreadCount(),
-            'by_priority' => $this->bookingService->getUnreadCountByPriority(),
-        ];
-
-        return view('admin.notifications.index', compact('notifications', 'stats', 'type', 'priority', 'isRead', 'search'));
+        return view('admin.notifications.index', compact('notifications', 'type', 'priority', 'isRead', 'search'));
     }
 
     /**
@@ -250,15 +254,26 @@ class AdminBookingController extends Controller
      */
     public function getUnreadNotifications(): JsonResponse
     {
-        $notifications = $this->bookingService->getUnreadNotifications(10);
-        $count = $this->bookingService->getUnreadCount();
+        try {
+            $notifications = $this->bookingService->getUnreadNotifications(10);
+            $count = $this->bookingService->getUnreadCount();
 
-        return response()->json([
-            'success' => true,
-            'notifications' => $notifications,
-            'count' => $count,
-            'by_priority' => $this->bookingService->getUnreadCountByPriority()
-        ]);
+            return response()->json([
+                'success' => true,
+                'notifications' => $notifications,
+                'count' => $count,
+                'by_priority' => $this->bookingService->getUnreadCountByPriority()
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error getting unread notifications: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi tải thông báo',
+                'notifications' => [],
+                'count' => 0,
+                'by_priority' => []
+            ], 500);
+        }
     }
 
     /**
@@ -266,11 +281,21 @@ class AdminBookingController extends Controller
      */
     public function getUnreadCount(): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'count' => $this->bookingService->getUnreadCount(),
-            'by_priority' => $this->bookingService->getUnreadCountByPriority()
-        ]);
+        try {
+            return response()->json([
+                'success' => true,
+                'count' => $this->bookingService->getUnreadCount(),
+                'by_priority' => $this->bookingService->getUnreadCountByPriority()
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error getting unread count: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi tải số lượng thông báo',
+                'count' => 0,
+                'by_priority' => []
+            ], 500);
+        }
     }
 
     /**
@@ -278,24 +303,32 @@ class AdminBookingController extends Controller
      */
     public function markAsRead(Request $request): JsonResponse
     {
-        $request->validate([
-            'notification_id' => 'required|integer|exists:admin_notifications,id'
-        ]);
-
-        $success = $this->bookingService->markAsRead($request->notification_id);
-
-        if ($success) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Đã đánh dấu thông báo đã đọc',
-                'count' => $this->bookingService->getUnreadCount()
+        try {
+            $request->validate([
+                'notification_id' => 'required|integer|exists:admin_notifications,id'
             ]);
-        }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Không tìm thấy thông báo'
-        ], 404);
+            $success = $this->bookingService->markAsRead($request->notification_id);
+
+            if ($success) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã đánh dấu thông báo đã đọc',
+                    'count' => $this->bookingService->getUnreadCount()
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy thông báo'
+            ], 404);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error marking notification as read: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi đánh dấu thông báo'
+            ], 500);
+        }
     }
 
     /**
@@ -303,13 +336,21 @@ class AdminBookingController extends Controller
      */
     public function markAllAsRead(): JsonResponse
     {
-        $count = $this->bookingService->markAllAsRead();
+        try {
+            $count = $this->bookingService->markAllAsRead();
 
-        return response()->json([
-            'success' => true,
-            'message' => "Đã đánh dấu {$count} thông báo đã đọc",
-            'count' => 0
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => "Đã đánh dấu {$count} thông báo đã đọc",
+                'count' => 0
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error marking all notifications as read: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi đánh dấu tất cả thông báo'
+            ], 500);
+        }
     }
 
     /**
@@ -540,6 +581,31 @@ class AdminBookingController extends Controller
                 'is_read' => $isRead,
                 'search' => $search,
             ]
+        ]);
+    }
+
+    /**
+     * API: Xóa hàng loạt thông báo (chuẩn Laravel, redirect về lại trang)
+     */
+    public function deleteNotifications(Request $request)
+    {
+        $ids = (array) $request->input('notification_id');
+        $count = $this->bookingService->deleteNotifications($ids);
+        return redirect()->route('admin.notifications.index')
+            ->with('success', "Đã xóa $count thông báo");
+    }
+
+    /**
+     * API: Đánh dấu đã đọc hàng loạt thông báo
+     */
+    public function markNotificationsAsRead(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $ids = (array) $request->input('notification_id');
+        $count = $this->bookingService->markNotificationsAsRead($ids);
+        return response()->json([
+            'success' => $count > 0,
+            'message' => "Đã đánh dấu $count thông báo đã đọc",
+            'count' => $this->bookingService->getUnreadCount()
         ]);
     }
 } 

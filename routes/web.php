@@ -131,6 +131,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     // Quản lý thông báo
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
     Route::get('notifications/{id}', [AdminBookingController::class, 'notificationShow'])->name('notifications.show');
+    Route::delete('notifications/{id}', [AdminBookingController::class, 'destroy'])->name('notifications.destroy');
     
     // API thông báo
     Route::prefix('api/notifications')->name('notifications.')->group(function () {
@@ -145,6 +146,8 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
         Route::post('test', [AdminBookingController::class, 'createTestNotification'])->name('test');
         Route::post('test-note', [AdminBookingController::class, 'createTestNoteNotification'])->name('test-note');
         Route::post('test-review', [AdminBookingController::class, 'createTestReviewNotification'])->name('test-review');
+        Route::post('delete-multi', [AdminBookingController::class, 'deleteNotifications'])->name('delete-multi');
+        Route::post('mark-read-multi', [AdminBookingController::class, 'markNotificationsAsRead'])->name('mark-read-multi');
     });
 
     // Quản lý phòng
@@ -216,8 +219,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/user/notes/partial', [BookingController::class, 'notesPartial'])->name('user.notes.partial');
     Route::get('/user/reviews', [UserProfileController::class, 'showUserReviews'])->name('user.reviews');
     Route::get('/user/reviews/partial', [UserProfileController::class, 'partialReviews'])->name('user.reviews.partial');
-
-
+    Route::get('/user/reviews/{id}/detail', [UserProfileController::class, 'reviewDetail'])->name('user.reviews.detail');
 });
 
 

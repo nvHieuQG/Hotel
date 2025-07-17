@@ -17,6 +17,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Collection;
 use Carbon\Carbon;
+use App\Repositories\Admin\AdminBookingRepository;
 
 class AdminBookingService implements AdminBookingServiceInterface
 {
@@ -54,10 +55,10 @@ class AdminBookingService implements AdminBookingServiceInterface
     /**
      * Lấy chi tiết đặt phòng
      *
-     * @param int $id
+     * @param string $id
      * @return Booking
      */
-    public function getBookingDetails(int $id): Booking
+    public function getBookingDetails($id): Booking
     {
         $booking = $this->adminBookingRepository->findById($id);
         
@@ -405,6 +406,33 @@ class AdminBookingService implements AdminBookingServiceInterface
         return $validStatuses;
     }
 
+    /**
+     * Lấy danh sách trạng thái hợp lệ tiếp theo cho booking theo mã code
+     *
+     * @param string $bookingCode
+     * @return array
+     */
+    public function getValidNextStatusesByCode(string $bookingCode): array
+    {
+        $booking = $this->adminBookingRepository->findByBookingCode($bookingCode);
+        if (!$booking) {
+            return [];
+        }
+        $statusOrder = [
+            'pending',
+            'confirmed',
+            'checked_in',
+            'checked_out',
+            'cancelled',
+        ];
+        $currentStatus = $booking->status;
+        $currentIndex = array_search($currentStatus, $statusOrder);
+        if ($currentIndex === false) {
+            return [];
+        }
+        return array_slice($statusOrder, $currentIndex + 1);
+    }
+
     // ==================== NOTIFICATION METHODS ====================
 
     /**
@@ -480,6 +508,28 @@ class AdminBookingService implements AdminBookingServiceInterface
     {
         $cutoffDate = Carbon::now()->subDays(30);
         return AdminNotification::where('created_at', '<', $cutoffDate)->delete();
+    }
+
+    /**
+     * Xóa hàng loạt thông báo
+     *
+     * @param array $ids
+     * @return int
+     */
+    public function deleteNotifications(array $ids): int
+    {
+        return \App\Models\AdminNotification::whereIn('id', $ids)->delete();
+    }
+
+    /**
+     * Đánh dấu đã đọc hàng loạt thông báo
+     *
+     * @param array $ids
+     * @return int
+     */
+    public function markNotificationsAsRead(array $ids): int
+    {
+        return \App\Models\AdminNotification::whereIn('id', $ids)->where('is_read', false)->update(['is_read' => true]);
     }
 
     /**

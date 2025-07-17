@@ -118,6 +118,21 @@ class UserProfileController extends Controller
         return view('client.profile.reviews.partial', compact('reviews'));
     }
 
+    /**
+     * Trả về chi tiết đánh giá cho modal
+     */
+    public function reviewDetail($id)
+    {
+        $review = $this->userRoomTypeReviewRepository->getReviewById($id);
+        
+        // Kiểm tra quyền truy cập: chỉ cho phép user xem review của chính mình
+        if (!$review || $review->user_id !== auth()->id()) {
+            abort(403, 'Không tìm thấy review hoặc không có quyền truy cập.');
+        }
+
+        return view('client.profile.reviews.detail', compact('review'));
+    }
+
 
     // Tạo đánh giá mới
     public function createReview(Request $request, $roomTypeId)

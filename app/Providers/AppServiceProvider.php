@@ -5,6 +5,7 @@ namespace App\Providers;
 
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 use App\Interfaces\Repositories\UserRepositoryInterface;
 use App\Repositories\UserRepository;
 use App\Interfaces\Services\PasswordResetServiceInterface;
@@ -154,6 +155,12 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\SupportTicketRepository::class
         );
 
+        // View Composer cho dropdown notification
+        \Illuminate\Support\Facades\View::composer('admin.layouts.admin-master', function ($view) {
+            $unreadNotifications = \App\Models\AdminNotification::unread()->orderBy('created_at', 'desc')->limit(5)->get();
+            $unreadCount = \App\Models\AdminNotification::unread()->count();
+            $view->with(compact('unreadNotifications', 'unreadCount'));
+        });
 
     }
 

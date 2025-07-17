@@ -39,14 +39,20 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     }
     
     /**
-     * Lấy đặt phòng theo ID
+     * Lấy đặt phòng theo booking_id (mã code)
      *
-     * @param int $id
+     * @param string $id
      * @return Booking|null
      */
-    public function findById(int $id): ?Booking
+    public function findById($id): ?Booking
     {
-        return $this->bookingModel->with(['user', 'room'])->find($id);
+        // Nếu là số, thử tìm theo id số trước
+        if (is_numeric($id)) {
+            $booking = $this->bookingModel->with(['user', 'room'])->find($id);
+            if ($booking) return $booking;
+        }
+        // Nếu không thấy hoặc là chuỗi, tìm theo booking_id (mã code)
+        return $this->bookingModel->with(['user', 'room'])->where('booking_id', $id)->first();
     }
     
     /**
@@ -173,5 +179,10 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
         }
         
         return $query->get();
+    }
+
+    public function findByBookingCode(string $code): ?Booking
+    {
+        return $this->bookingModel->with(['user', 'room'])->where('booking_id', $code)->first();
     }
 } 

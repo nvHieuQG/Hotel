@@ -202,6 +202,22 @@ interface AdminBookingServiceInterface
      */
     public function createStatusChangeNotification(array $bookingData, string $oldStatus, string $newStatus): AdminNotification;
 
+    /**
+     * Xóa hàng loạt thông báo
+     *
+     * @param array $ids
+     * @return int
+     */
+    public function deleteNotifications(array $ids): int;
+
+    /**
+     * Đánh dấu đã đọc hàng loạt thông báo
+     *
+     * @param array $ids
+     * @return int
+     */
+    public function markNotificationsAsRead(array $ids): int;
+
     // ==================== EVENT HANDLER METHODS ====================
 
     /**

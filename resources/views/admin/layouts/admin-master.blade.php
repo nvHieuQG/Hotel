@@ -18,6 +18,13 @@
     <!-- Admin Components CSS -->
     <link rel="stylesheet" href="{{ asset('admin/css/admin-components.css') }}">
     @yield('styles')
+    <style>
+        .page-header h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin-bottom: 0.1rem;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar Toggle Button -->
@@ -40,21 +47,43 @@
             <div class="topbar-item dropdown">
                 <a class="topbar-icon" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-bell"></i>
-                    <span class="topbar-badge" id="notificationBadge">0</span>
+                    <span class="topbar-badge" id="notificationBadge">{{ $unreadCount > 0 ? $unreadCount : 0 }}</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end animate slideIn" aria-labelledby="notificationsDropdown">
                     <div class="dropdown-header d-flex justify-content-between align-items-center py-2">
                         <h6 class="m-0">
                             <i class="fas fa-bell me-2"></i>Thông báo
                         </h6>
-                        <button class="btn btn-sm btn-outline-secondary" id="markAllReadBtn">
-                            <i class="fas fa-check-double"></i>
-                        </button>
                     </div>
                     <div id="notificationsList">
-                        <div class="dropdown-item text-center small text-gray-500 py-3">
-                            <i class="fas fa-spinner fa-spin"></i> Đang tải...
-                        </div>
+                        @if($unreadCount > 0)
+                            @foreach($unreadNotifications as $notification)
+                                <div class="dropdown-item notification-item d-flex align-items-start justify-content-between gap-2">
+                                    <a href="{{ route('admin.notifications.show', $notification->id) }}" class="flex-grow-1 text-decoration-none text-dark">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="icon-circle bg-{{ $notification->color }}">
+                                                <i class="{{ $notification->display_icon }} text-white"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold small text-truncate" title="{{ $notification->title }}">{{ $notification->title }}</div>
+                                                <div class="small text-muted text-truncate mb-1" title="{{ $notification->message }}">{{ $notification->message }}</div>
+                                                <div class="small text-gray-500"><i class="fas fa-clock me-1"></i>{{ $notification->time_ago }}</div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <form method="POST" action="{{ route('admin.notifications.delete') }}" style="margin:0;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="notification_id" value="{{ $notification->id }}">
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 ms-2" title="Xóa" style="font-size:1rem;"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="dropdown-item text-center small text-gray-500 py-3">
+                                <i class="fas fa-check-circle text-success me-2"></i> Không có thông báo mới
+                            </div>
+                        @endif
                     </div>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item text-center small text-gray-500 py-2" href="{{ route('admin.notifications.index') }}">
@@ -247,17 +276,33 @@
                 badge: $('#notificationBadge').length,
                 list: $('#notificationsList').length,
                 markAllBtn: $('#markAllReadBtn').length,
-                sidebarBadge: $('#sidebarNotificationBadge').length
+                sidebarBadge: $('#sidebarNotificationBadge').length,
             });
             
             // Test API call
-            $.get('/admin/api/notifications/unread')
-                .done(function(response) {
+            $.ajax({
+                url: '/admin/api/notifications/unread',
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
                     console.log('API test successful:', response);
-                })
-                .fail(function(xhr, status, error) {
+                    if (response.success) {
+                        console.log('Found', response.count, 'unread notifications');
+                    }
+                },
+                error: function(xhr, status, error) {
                     console.error('API test failed:', {xhr, status, error});
-                });
+                }
+            });
+            
+            // Test notification manager
+            setTimeout(function() {
+                if (window.notificationManager) {
+                    console.log('NotificationManager is available');
+                } else {
+                    console.error('NotificationManager not found!');
+                }
+            }, 1000);
         });
     </script>
     
