@@ -59,7 +59,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="check_in_date">Ngày Nhận Phòng (12:00)</label>
+                                        <label for="check_in_date">Ngày Nhận Phòng (Check-in 14:00PM)</label>
                                         <input type="date" name="check_in_date" id="check_in_date" 
                                                class="form-control" required
                                                min="{{ date('Y-m-d') }}" 
@@ -68,7 +68,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="check_out_date">Ngày Trả Phòng (14:00)</label>
+                                        <label for="check_out_date">Ngày Trả Phòng (Check-out 12:00PM)</label>
                                         <input type="date" name="check_out_date" id="check_out_date" 
                                                class="form-control" required
                                                min="{{ date('Y-m-d', strtotime('+1 day')) }}" 
