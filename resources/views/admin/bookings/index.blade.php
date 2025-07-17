@@ -51,9 +51,7 @@
                             <th>Khách hàng</th>
                             <th>Phòng</th>
                             <th>Ngày check-in</th>
-                            <th>Giờ check-in</th>
-                            <th>Ngày check-out</th>
-                            <th>Giờ check-out</th>
+                            <th>Ngày check-out</th>>
                             <th>Giá</th>
                             <th>Trạng thái</th>
                             <th>Thao tác</th>
@@ -66,10 +64,10 @@
                             <td>{{ $booking->booking_id }}</td>
                             <td>{{ $booking->user->name }}</td>
                             <td>{{ $booking->room->name }}</td>
-                            <td>{{ date('d/m/Y', strtotime($booking->check_in_date)) }}</td>    
-                            <td>{{ $booking->check_in_time }}</td>
-                            <td>{{ date('d/m/Y', strtotime($booking->check_out_date)) }}</td>
-                            <td>{{ $booking->check_out_time }}</td>
+                            <td>{{ $booking->check_in_date }}</td>    
+                            
+                            <td>{{ $booking->check_out_date }}</td>
+                           
                             <td>{{ number_format($booking->price) }} VND</td>
                             <td>
                                 <span class="badge bg-{{ 
