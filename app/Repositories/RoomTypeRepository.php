@@ -37,6 +37,16 @@ class RoomTypeRepository implements RoomTypeRepositoryInterface
     }
 
     /**
+     * Lấy tất cả loại phòng với relationship services
+     *
+     * @return Collection
+     */
+    public function getAllRoomTypesWithServices(): Collection
+    {
+        return $this->model->with('services')->get();
+    }
+
+    /**
      * Tìm loại phòng theo ID
      *
      * @param int $id

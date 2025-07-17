@@ -1,25 +1,27 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminSupportController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\HotelController;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Admin\AdminRoomController;
-use App\Http\Controllers\Auth\EmailVerificationController;
-use App\Http\Controllers\RoomTypeReviewController;
 use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminRoomController;
 use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\UserProfileController;
-use App\Http\Controllers\SupportController;
+use App\Http\Controllers\Admin\AdminRoomTypeServiceController;
+use App\Http\Controllers\Admin\AdminServiceCategoryController;
+use App\Http\Controllers\Admin\AdminServiceController;
+use App\Http\Controllers\Admin\AdminSupportController;
 use App\Http\Controllers\Admin\AdminUserController;
-
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\HotelController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\RoomTypeReviewController;
+use App\Http\Controllers\SupportController;
+use App\Http\Controllers\UserProfileController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 // Route::get('/', function () {
 //     return view('client.index');
@@ -48,7 +50,6 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
 
-
     // Đăng ký
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
@@ -62,11 +63,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/email/verify', [EmailVerificationController::class, 'notice'])
         ->name('verification.notice');
 
-
     Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
-
 
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
@@ -157,7 +156,6 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('/support/ticket/{id}', [AdminSupportController::class, 'showTicket'])->name('support.showTicket');
     Route::post('/support/ticket/{id}/message', [AdminSupportController::class, 'sendMessage'])->name('support.sendMessage');
 
-
     // Routes cho quản lý ảnh phòng
     Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete');
     Route::post('rooms/{room}/images/{image}/primary', [AdminRoomController::class, 'setPrimaryImage'])->name('rooms.images.primary');
@@ -174,8 +172,27 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
     // Quản lý người dùng
     Route::resource('users', AdminUserController::class)->except(['create', 'store']);
-    
-    
+
+    // Quản lý danh mục dịch vụ (Service Categories)
+    Route::get('service-categories', [AdminServiceCategoryController::class, 'index'])->name('service-categories.index');
+    Route::get('service-categories/create', [AdminServiceCategoryController::class, 'create'])->name('service-categories.create');
+    Route::post('service-categories', [AdminServiceCategoryController::class, 'store'])->name('service-categories.store');
+    Route::get('service-categories/{service_category}/edit', [AdminServiceCategoryController::class, 'edit'])->name('service-categories.edit');
+    Route::put('service-categories/{service_category}', [AdminServiceCategoryController::class, 'update'])->name('service-categories.update');
+    Route::delete('service-categories/{service_category}', [AdminServiceCategoryController::class, 'destroy'])->name('service-categories.destroy');
+
+    // Quản lý dịch vụ (Services)
+    Route::get('services', [AdminServiceController::class, 'index'])->name('services.index');
+    Route::get('services/create', [AdminServiceController::class, 'create'])->name('services.create');
+    Route::post('services', [AdminServiceController::class, 'store'])->name('services.store');
+    Route::get('services/{service}/edit', [AdminServiceController::class, 'edit'])->name('services.edit');
+    Route::put('services/{service}', [AdminServiceController::class, 'update'])->name('services.update');
+    Route::delete('services/{service}', [AdminServiceController::class, 'destroy'])->name('services.destroy');
+
+    // Gán dịch vụ cho loại phòng (Room Type Services)
+    Route::get('room-type-services', [AdminRoomTypeServiceController::class, 'index'])->name('room-type-services.index');
+    Route::get('room-type-services/{room_type}/edit', [AdminRoomTypeServiceController::class, 'edit'])->name('room-type-services.edit');
+    Route::put('room-type-services/{room_type}', [AdminRoomTypeServiceController::class, 'update'])->name('room-type-services.update');
 });
 
 // Route công khai cho room type reviews (chỉ hiển thị) - đặt sau admin routes để tránh xung đột

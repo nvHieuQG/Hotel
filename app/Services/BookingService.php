@@ -16,6 +16,7 @@ use App\Interfaces\Repositories\RoomRepositoryInterface;
 use App\Interfaces\Repositories\BookingRepositoryInterface;
 
 use App\Interfaces\Repositories\RoomTypeRepositoryInterface;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class BookingService implements BookingServiceInterface
@@ -82,9 +83,12 @@ class BookingService implements BookingServiceInterface
             throw new ValidationException($validator);
         }
 
-        // 2. Ghép giờ mặc định
-        $checkInDateTime = $data['check_in_date'] . ' 12:00:00';
-        $checkOutDateTime = $data['check_out_date'] . ' 14:00:00';
+        // Ép kiểu về string
+        $checkInDate = is_object($data['check_in_date']) ? $data['check_in_date']->format('Y-m-d') : $data['check_in_date'];
+        $checkOutDate = is_object($data['check_out_date']) ? $data['check_out_date']->format('Y-m-d') : $data['check_out_date'];
+
+        $checkInDateTime = $checkInDate . ' 14:00:00';
+        $checkOutDateTime = $checkOutDate . ' 12:00:00';
 
         // 3. Kiểm tra phòng trống, tạo booking như cũ nhưng dùng $checkInDateTime, $checkOutDateTime
         $availableRoom = $this->roomRepository->findAvailableRoomByType(
@@ -100,9 +104,10 @@ class BookingService implements BookingServiceInterface
         }
 
         // 4. Tính tiền
-        $checkIn = new \DateTime($checkInDateTime);
-        $checkOut = new \DateTime($checkOutDateTime);
-        $nights = $checkIn->diff($checkOut)->days;
+        $checkInDate = (new \DateTime($checkInDateTime))->format('Y-m-d');
+        $checkOutDate = (new \DateTime($checkOutDateTime))->format('Y-m-d');
+        $nights = (new \DateTime($checkInDate))->diff(new \DateTime($checkOutDate))->days;
+        if ($nights < 1) $nights = 1;
         $totalPrice = $availableRoom->roomType->price * $nights;
 
         // 5. Tạo booking ID
@@ -120,6 +125,13 @@ class BookingService implements BookingServiceInterface
             'notes' => $data['notes'] ?? null,
         ];
 
+        Log::info([
+            'check_in' => $checkInDateTime,
+            'check_out' => $checkOutDateTime,
+            'nights' => $nights,
+            'room_price' => $availableRoom->roomType->price,
+            'total_price' => $totalPrice,
+        ]);
         return $this->bookingRepository->create($bookingData);
     }
 

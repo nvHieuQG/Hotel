@@ -19,7 +19,7 @@ class RoomTypeService implements RoomTypeServiceInterface
 
     public function getAllRoomTypes(): Collection
     {
-        return $this->roomTypeRepository->getAllRoomTypes();
+        return $this->roomTypeRepository->getAllRoomTypesWithServices();
     }
 
     public function findById(int $id)
