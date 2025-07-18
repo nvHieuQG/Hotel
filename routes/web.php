@@ -98,6 +98,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/room-type-reviews/{roomTypeId}/form', [RoomTypeReviewController::class, 'reviewForm'])->name('room-type-reviews.form');
 });
 
+// Booking notes: KHÔNG lồng group auth bên ngoài nữa
+Route::middleware(['auth', 'check.booking.access'])->group(function () {
+    Route::get('/booking-notes/{bookingId}', [BookingController::class, 'notesIndex'])->name('booking-notes.index');
+    Route::get('/booking-notes/{bookingId}/search', [BookingController::class, 'notesSearch'])->name('booking-notes.search');
+    Route::get('/booking-notes/{bookingId}/create', [BookingController::class, 'notesCreate'])->name('booking-notes.create');
+    Route::post('/booking-notes/{bookingId}', [BookingController::class, 'notesStore'])->name('booking-notes.store');
+    Route::get('/booking-notes/{bookingId}/{id}/edit', [BookingController::class, 'notesEdit'])->name('booking-notes.edit');
+    Route::put('/booking-notes/{bookingId}/{id}', [BookingController::class, 'notesUpdate'])->name('booking-notes.update');
+    Route::delete('/booking-notes/{bookingId}/{id}', [BookingController::class, 'notesDestroy'])->name('booking-notes.destroy');
+    Route::get('/booking-notes/{bookingId}/{id}', [BookingController::class, 'notesShow'])->name('booking-notes.show');
+    Route::post('/booking-notes/{bookingId}/request', [BookingController::class, 'notesStoreRequest'])->name('booking-notes.store-request');
+    Route::post('/booking-notes/{bookingId}/response', [BookingController::class, 'notesStoreResponse'])->name('booking-notes.store-response');
+
+});
+
 // Routes công khai cho room type reviews (chỉ hiển thị)
 Route::get('/rooms/{id}/reviews-ajax', [HotelController::class, 'getRoomReviewsAjax'])->name('rooms.reviews-ajax');
 
@@ -111,6 +126,28 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
     Route::patch('bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
     Route::resource('bookings', AdminBookingController::class);
+
+    // Quản lý thông báo
+    Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
+    Route::get('notifications/{id}', [AdminBookingController::class, 'notificationShow'])->name('notifications.show');
+    Route::delete('notifications/{id}', [AdminBookingController::class, 'destroy'])->name('notifications.destroy');
+    
+    // API thông báo
+    Route::prefix('api/notifications')->name('notifications.')->group(function () {
+        Route::get('unread', [AdminBookingController::class, 'getUnreadNotifications'])->name('unread');
+        Route::get('count', [AdminBookingController::class, 'getUnreadCount'])->name('count');
+        Route::get('list', [AdminBookingController::class, 'getNotifications'])->name('list');
+        Route::post('mark-read', [AdminBookingController::class, 'markAsRead'])->name('mark-read');
+        Route::post('mark-all-read', [AdminBookingController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::delete('delete', [AdminBookingController::class, 'deleteNotification'])->name('delete');
+        Route::delete('delete-read', [AdminBookingController::class, 'deleteReadNotifications'])->name('delete-read');
+        Route::delete('delete-old', [AdminBookingController::class, 'deleteOldNotifications'])->name('delete-old');
+        Route::post('test', [AdminBookingController::class, 'createTestNotification'])->name('test');
+        Route::post('test-note', [AdminBookingController::class, 'createTestNoteNotification'])->name('test-note');
+        Route::post('test-review', [AdminBookingController::class, 'createTestReviewNotification'])->name('test-review');
+        Route::post('delete-multi', [AdminBookingController::class, 'deleteNotifications'])->name('delete-multi');
+        Route::post('mark-read-multi', [AdminBookingController::class, 'markNotificationsAsRead'])->name('mark-read-multi');
+    });
 
     // Quản lý phòng
     Route::resource('rooms', AdminRoomController::class);
@@ -194,14 +231,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/user/profile/update', [UserProfileController::class, 'updateUserProfile'])->name('user.profile.update');
     Route::post('/user/profile/change-password', [UserProfileController::class, 'changeUserPassword'])->name('user.profile.change_password');
     Route::get('/user/bookings', [UserProfileController::class, 'showUserBookings'])->name('user.bookings');
+    Route::get('/user/bookings/partial', [BookingController::class, 'partial'])->name('user.bookings.partial');
+    Route::get('/user/bookings/{id}/detail', [BookingController::class, 'detailPartial'])->name('user.bookings.detail.partial');
+    Route::get('/user/notes/partial', [BookingController::class, 'notesPartial'])->name('user.notes.partial');
     Route::get('/user/reviews', [UserProfileController::class, 'showUserReviews'])->name('user.reviews');
-
-    // API routes cho AJAX loading
-    Route::get('/user/bookings/partial', [UserProfileController::class, 'getBookingsPartial'])->name('user.bookings.partial');
-    Route::get('/user/reviews/partial', [UserProfileController::class, 'getReviewsPartial'])->name('user.reviews.partial');
-
-    // API routes cho chi tiết booking và review
-    Route::get('/user/bookings/{id}/detail', [UserProfileController::class, 'getBookingDetail'])->name('user.bookings.detail');
-    Route::get('/user/reviews/{id}/detail', [UserProfileController::class, 'getReviewDetail'])->name('user.reviews.detail');
-    Route::get('/user/reviews/{id}/data', [UserProfileController::class, 'getReviewData'])->name('user.reviews.data');
+    Route::get('/user/reviews/partial', [UserProfileController::class, 'partialReviews'])->name('user.reviews.partial');
+    Route::get('/user/reviews/{id}/detail', [UserProfileController::class, 'reviewDetail'])->name('user.reviews.detail');
 });
+
+
+

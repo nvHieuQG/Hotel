@@ -84,7 +84,7 @@ class RoomTypeReviewService implements RoomTypeReviewServiceInterface
             'facilities_rating' => $data['facilities_rating'] ?? null,
             'value_rating' => $data['value_rating'] ?? null,
             'is_anonymous' => isset($data['is_anonymous']) && ($data['is_anonymous'] == '1' || $data['is_anonymous'] === true),
-            'status' => 'pending',
+            'status' => 'approved',
         ];
 
         return $this->roomTypeReviewRepository->createReview($reviewData);

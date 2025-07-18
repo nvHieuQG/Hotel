@@ -6,9 +6,22 @@ use App\Models\Room;
 use App\Models\RoomType;
 use App\Interfaces\Repositories\Admin\AdminRoomRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class AdminRoomRepository implements AdminRoomRepositoryInterface
 {
+    protected $roomModel;
+
+    public function __construct(Room $roomModel)
+    {
+        $this->roomModel = $roomModel;
+    }
+
+    // ==================== ROOM METHODS ====================
+
+    /**
+     * Lấy tất cả phòng
+     */
     public function getAll($status = null)
     {
         $query = Room::with(['roomType', 'bookings']);
@@ -28,6 +41,9 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
         return $query->paginate(10);
     }
 
+    /**
+     * Lấy tất cả phòng với bộ lọc
+     */
     public function getAllRoomsWithFilters($filters = [])
     {
         $query = Room::with(['roomType', 'bookings', 'primaryImage']);
@@ -62,6 +78,9 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
                     ->get(); 
     }
 
+    /**
+     * Lấy phòng theo tầng
+     */
     public function getRoomsByFloor($floor)
     {
         return Room::with(['roomType', 'bookings'])
@@ -70,11 +89,17 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
                 ->get();
     }
 
+    /**
+     * Lấy danh sách tầng có sẵn
+     */
     public function getAvailableFloors()
     {
         return Room::distinct()->pluck('floor')->sort()->values();
     }
 
+    /**
+     * Lấy tổng quan tầng
+     */
     public function getFloorOverview()
     {
         $floors = range(1, 30); // Giả sử 30 tầng
@@ -94,6 +119,9 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
         return $floorData;
     }
 
+    /**
+     * Tạo hàng loạt phòng
+     */
     public function bulkCreateRooms($data)
     {
         $floor = $data['floor'];
@@ -131,16 +159,25 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
         return count($rooms);
     }
 
+    /**
+     * Tìm phòng theo ID
+     */
     public function find($id)
     {
         return Room::with(['roomType', 'images'])->findOrFail($id);
     }
 
+    /**
+     * Tạo phòng mới
+     */
     public function create(array $data)
     {
         return Room::create($data);
     }
 
+    /**
+     * Cập nhật phòng
+     */
     public function update($id, array $data)
     {
         $room = Room::findOrFail($id);
@@ -148,18 +185,20 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
         return $room;
     }
 
+    /**
+     * Xóa phòng
+     */
     public function delete($id)
     {
-        
         $room = Room::with('bookings')->findOrFail($id);
 
         // Kiểm tra xem phòng có booking đang pending hoặc confirmed không
-            if ($room->bookings()->whereIn('status', ['pending', 'confirmed'])->count() > 0) {
-                return [
-                    'success' => false,
-                    'message' => 'Không thể xóa phòng vì đang có đơn đặt phòng đang xử lý!'
-                ];
-            }
+        if ($room->bookings()->whereIn('status', ['pending', 'confirmed'])->count() > 0) {
+            return [
+                'success' => false,
+                'message' => 'Không thể xóa phòng vì đang có đơn đặt phòng đang xử lý!'
+            ];
+        }
 
         $room->delete();
 

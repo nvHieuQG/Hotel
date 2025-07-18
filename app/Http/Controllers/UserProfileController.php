@@ -109,87 +109,30 @@ class UserProfileController extends Controller
         }
     }
 
-    // API method để trả về partial view cho bookings
-    public function getBookingsPartial()
+    /**
+     * Trả về partial danh sách đánh giá cho AJAX
+     */
+    public function partialReviews()
     {
-        try {
-            $bookings = $this->userBookingService->getCurrentUserBookings(10);
-            $count = $bookings->total();
-            Log::info('Bookings partial', ['count' => $count, 'user_id' => Auth::id()]);
-            return view('client.profile.bookings.partial', compact('bookings'));
-        } catch (\Exception $e) {
-            Log::error('User Bookings Partial error: ' . $e->getMessage());
-            return response()->json(['error' => 'Có lỗi xảy ra khi tải dữ liệu đặt phòng', 'exception' => $e->getMessage()], 500);
-        }
+        $reviews = $this->userRoomTypeReviewRepository->getReviewsByUser(auth()->id());
+        return view('client.profile.reviews.partial', compact('reviews'));
     }
 
-    // API method để trả về partial view cho reviews
-    public function getReviewsPartial()
+    /**
+     * Trả về chi tiết đánh giá cho modal
+     */
+    public function reviewDetail($id)
     {
-        try {
-            $reviews = $this->userRoomTypeReviewRepository->getReviewsByUser(Auth::id(), 10);
-            $count = $reviews->total();
-            Log::info('Reviews partial', ['count' => $count, 'user_id' => Auth::id()]);
-            return view('client.profile.reviews.partial', compact('reviews'));
-        } catch (\Exception $e) {
-            Log::error('User Reviews Partial error: ' . $e->getMessage());
-            return response()->json(['error' => 'Có lỗi xảy ra khi tải dữ liệu đánh giá', 'exception' => $e->getMessage()], 500);
+        $review = $this->userRoomTypeReviewRepository->getReviewById($id);
+        
+        // Kiểm tra quyền truy cập: chỉ cho phép user xem review của chính mình
+        if (!$review || $review->user_id !== auth()->id()) {
+            abort(403, 'Không tìm thấy review hoặc không có quyền truy cập.');
         }
+
+        return view('client.profile.reviews.detail', compact('review'));
     }
 
-    // API method để trả về chi tiết booking
-    public function getBookingDetail($id)
-    {
-        try {
-            $booking = $this->userBookingService->getBookingDetail($id);
-            
-            // Kiểm tra quyền truy cập
-            if (!$booking || $booking->user_id != Auth::id()) {
-                return response()->json(['error' => 'Không tìm thấy đặt phòng hoặc không có quyền truy cập'], 404);
-            }
-            
-            return view('client.profile.bookings.detail', compact('booking'));
-        } catch (\Exception $e) {
-            Log::error('User Booking Detail error: ' . $e->getMessage());
-            return response()->json(['error' => 'Có lỗi xảy ra khi tải chi tiết đặt phòng', 'exception' => $e->getMessage()], 500);
-        }
-    }
-
-    // API method để trả về chi tiết review (HTML view)
-    public function getReviewDetail($id)
-    {
-        try {
-            $review = $this->userRoomTypeReviewRepository->getReviewById($id);
-            
-            // Kiểm tra quyền truy cập
-            if (!$review || $review->user_id != Auth::id()) {
-                return response()->json(['error' => 'Không tìm thấy đánh giá hoặc không có quyền truy cập'], 404);
-            }
-            
-            return view('client.profile.reviews.detail', compact('review'));
-        } catch (\Exception $e) {
-            Log::error('User Review Detail error: ' . $e->getMessage());
-            return response()->json(['error' => 'Có lỗi xảy ra khi tải chi tiết đánh giá', 'exception' => $e->getMessage()], 500);
-        }
-    }
-
-    // API method để lấy dữ liệu review cho form chỉnh sửa (JSON)
-    public function getReviewData($id)
-    {
-        try {
-            $review = $this->userRoomTypeReviewRepository->getReviewById($id);
-            
-            // Kiểm tra quyền truy cập
-            if (!$review || $review->user_id != Auth::id()) {
-                return response()->json(['error' => 'Không tìm thấy đánh giá hoặc không có quyền truy cập'], 404);
-            }
-            
-            return response()->json(['review' => $review]);
-        } catch (\Exception $e) {
-            Log::error('User Review Data error: ' . $e->getMessage());
-            return response()->json(['error' => 'Có lỗi xảy ra khi tải dữ liệu đánh giá', 'exception' => $e->getMessage()], 500);
-        }
-    }
 
     // Tạo đánh giá mới
     public function createReview(Request $request, $roomTypeId)

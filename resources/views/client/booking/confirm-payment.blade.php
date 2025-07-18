@@ -57,7 +57,7 @@
                                 <li class="mb-2"><strong>Mã đặt phòng:</strong>
                                     <span class="badge bg-primary text-white">{{ $booking->booking_id }}</span>
                                 </li>
-                                <li class="mb-2"><strong>Phòng:</strong>
+                                <li class="mb-2"><strong>Loại phòng:</strong>
                                     {{ $booking->room->roomType->name }}</li>
                                 <li class="mb-2"><strong>Ngày đến:</strong>
                                     {{ \Carbon\Carbon::parse($booking->check_in_date)->format('d/m/Y') }}</li>

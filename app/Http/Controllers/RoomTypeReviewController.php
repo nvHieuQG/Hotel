@@ -200,12 +200,14 @@ class RoomTypeReviewController extends Controller
             $roomTypeId = $request->input('room_type_id');
             $bookingId = $request->input('booking_id');
             
-            // Debug log
-            Log::info('StoreAjax request data:', [
-                'room_type_id' => $roomTypeId,
-                'booking_id' => $bookingId,
-                'all_data' => $request->all()
-            ]);
+
+            
+            if (!Auth::check()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn cần đăng nhập để đánh giá.'
+                ], 401);
+            }
             
             if (!is_numeric($roomTypeId)) {
                 return response()->json([
@@ -221,6 +223,31 @@ class RoomTypeReviewController extends Controller
                 ], 400);
             }
             
+            // Kiểm tra booking có tồn tại không
+            $booking = \App\Models\Booking::find($bookingId);
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking không tồn tại.'
+                ], 400);
+            }
+            
+            // Kiểm tra booking có thuộc về user hiện tại không
+            if ($booking->user_id != Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking không thuộc về bạn.'
+                ], 400);
+            }
+            
+            // Kiểm tra booking có status completed không
+            if ($booking->status != 'completed') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Chỉ có thể đánh giá booking đã hoàn thành.'
+                ], 400);
+            }
+            
             if (!$this->roomTypeReviewService->canReviewBooking((int)$bookingId, (int)$roomTypeId)) {
                 return response()->json([
                     'success' => false,
@@ -229,18 +256,14 @@ class RoomTypeReviewController extends Controller
             }
             
             $validatedData = $this->roomTypeReviewService->validateReviewData($request->all());
-            Log::info('Validated data:', $validatedData);
             
             $this->roomTypeReviewService->createReviewForUser($validatedData, (int)$roomTypeId);
             
             return response()->json([
                 'success' => true,
-                'message' => 'Đánh giá đã được gửi thành công!'
+                'message' => 'Đánh giá đã được gửi thành công và hiển thị ngay!'
             ]);
         } catch (\Exception $e) {
-            Log::error('StoreAjax error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()

@@ -38,7 +38,7 @@
                                 <div class="item">
                                     <div class="room-img" style="background-image: url('/client/images/room-3.jpg');"></div>
                                 </div>
-                            </div>
+                            </div>  
                         </div>
                         <div class="col-md-12 room-single mt-4 mb-5 ftco-animate">
                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -52,7 +52,7 @@
                                     <li><span>Sức chứa tối đa:</span> {{ $roomType->capacity }} người</li>
                                 </ul>
                                 <ul class="list ml-md-5">
-                                    <li><span>Số phòng hiện có:</span> {{ $rooms->count() }} phòng</li>
+                                    <li><span>Mô tả:</span> {{ Str::limit($roomType->description, 100) }}</li>
                                 </ul>
                             </div>
                             <div class="text-center">
@@ -111,111 +111,198 @@
                             @auth
                                 @if($completedBookings->isNotEmpty())
                                     <div class="review-form mb-4">
-                                        <div class="card">
+                                        <div class="card border-0 shadow-sm {{ $completedBookings->count() > 1 ? 'border-warning' : '' }}">
+                                            <div class="card-header {{ $completedBookings->count() > 1 ? 'bg-warning text-dark' : 'bg-primary text-white' }}">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="fas fa-star mr-2"></i>Viết đánh giá của bạn
+                                                    @if($completedBookings->count() > 1)
+                                                        <span class="badge badge-primary ml-2">{{ $completedBookings->count() }} booking chưa đánh giá</span>
+                                                    @endif
+                                                </h5>
+                                            </div>
                                             <div class="card-body">
-                                                <h5 class="card-title">Viết đánh giá của bạn</h5>
+                                                <!-- Chọn booking để đánh giá (chỉ hiển thị khi có từ 2 booking trở lên) -->
+                                                @if($completedBookings->count() > 1)
+                                                    <div class="form-group mb-4">
+                                                        <label for="booking_select" class="font-weight-bold text-dark">
+                                                            <i class="fas fa-calendar-check text-primary mr-2"></i>Chọn booking để đánh giá:
+                                                        </label>
+                                                        <select id="booking_select" class="form-control border-0 bg-light" required>
+                                                            <option value="">Chọn booking...</option>
+                                                            @foreach($completedBookings as $booking)
+                                                                <option value="{{ $booking->id }}" data-booking-id="{{ $booking->id }}">
+                                                                    Booking #{{ $booking->booking_id }} - {{ $booking->room->roomType->name }} 
+                                                                    ({{ $booking->check_in_date->format('d/m/Y') }} - {{ $booking->check_out_date->format('d/m/Y') }})
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                @else
+                                                    <!-- Tự động chọn booking nếu chỉ có 1 -->
+                                                    <input type="hidden" id="booking_select" value="{{ $completedBookings->first()->id }}">
+                                                    <input type="hidden" id="selected_booking_id" value="{{ $completedBookings->first()->id }}">
+                                                    <div class="alert alert-info mb-4">
+                                                        <i class="fas fa-info-circle mr-2"></i>
+                                                        <strong>Đánh giá cho:</strong> Booking #{{ $completedBookings->first()->booking_id }} - {{ $completedBookings->first()->room->roomType->name }}
+                                                        ({{ $completedBookings->first()->check_in_date->format('d/m/Y') }} - {{ $completedBookings->first()->check_out_date->format('d/m/Y') }})
+                                                    </div>
+                                                @endif
                                                 
-                                                <!-- Chọn booking để đánh giá -->
-                                                <div class="form-group mb-3">
-                                                    <label for="booking_select">Chọn booking để đánh giá:</label>
-                                                    <select id="booking_select" class="form-control" required>
-                                                        <option value="">Chọn booking...</option>
-                                                        @foreach($completedBookings as $booking)
-                                                            <option value="{{ $booking->id }}" data-booking-id="{{ $booking->id }}">
-                                                                Booking #{{ $booking->booking_id }} - {{ $booking->room->name }} 
-                                                                ({{ $booking->check_in_date->format('d/m/Y') }} - {{ $booking->check_out_date->format('d/m/Y') }})
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                
-                                                <form id="reviewForm" data-room-type-id="{{ $roomType->id }}">
+                                                <form id="reviewForm" data-room-type-id="{{ $roomType->id }}" class="review-form-modern">
                                                     @csrf
                                                     <input type="hidden" name="booking_id" id="selected_booking_id">
-                                                    <div class="form-group">
-                                                        <label>Điểm đánh giá tổng thể:</label>
-                                                        <div class="rating-input">
-                                                            @for ($i = 5; $i >= 1; $i--)
-                                                                <input type="radio" name="rating" value="{{ $i }}" id="star{{ $i }}" class="rating-radio" required>
-                                                                <label for="star{{ $i }}" class="rating-star">☆</label>
-                                                            @endfor
+                                                    
+                                                    <!-- Rating tổng thể -->
+                                                    <div class="form-group mb-4">
+                                                        <label class="form-label font-weight-bold text-dark mb-3">
+                                                            <i class="fas fa-star text-warning mr-2"></i>Đánh giá tổng thể
+                                                            <span class="text-danger">*</span>
+                                                        </label>
+                                                        <div class="rating-container">
+                                                            <div class="rating-stars" data-rating="0">
+                                                                @for ($i = 5; $i >= 1; $i--)
+                                                                    <input type="radio" name="rating" value="{{ $i }}" id="overall_star{{ $i }}" class="rating-input" required>
+                                                                    <label for="overall_star{{ $i }}" class="rating-star" data-value="{{ $i }}">
+                                                                        <i class="fas fa-star"></i>
+                                                                    </label>
+                                                                @endfor
+                                                            </div>
+                                                            <div class="rating-text mt-2">
+                                                                <span class="text-muted">Chọn số sao để đánh giá</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <!-- Đánh giá chi tiết -->
-                                                    <div class="row">
-                                                        <div class="col-md-6">
-                                                            <div class="form-group">
-                                                                <label>Vệ sinh: <small class="text-muted">(không bắt buộc)</small></label>
-                                                                <div class="rating-input">
-                                                                                                                                @for ($i = 5; $i >= 1; $i--)
-                                                                <input type="radio" name="cleanliness_rating" value="{{ $i }}" id="cleanliness{{ $i }}" class="rating-radio">
-                                                                <label for="cleanliness{{ $i }}" class="rating-star">☆</label>
-                                                            @endfor
+                                                    <div class="detailed-ratings mb-4">
+                                                        <h6 class="font-weight-bold text-dark mb-3">
+                                                            <i class="fas fa-chart-bar text-primary mr-2"></i>Đánh giá chi tiết
+                                                            <small class="text-muted font-weight-normal">(không bắt buộc)</small>
+                                                        </h6>
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="rating-item mb-3">
+                                                                    <label class="rating-label">
+                                                                        <i class="fas fa-broom text-success mr-2"></i>Vệ sinh
+                                                                    </label>
+                                                                    <div class="rating-stars-sm" data-rating="0">
+                                                                        @for ($i = 5; $i >= 1; $i--)
+                                                                            <input type="radio" name="cleanliness_rating" value="{{ $i }}" id="cleanliness_star{{ $i }}" class="rating-input-sm">
+                                                                            <label for="cleanliness_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
+                                                                                <i class="fas fa-star"></i>
+                                                                            </label>
+                                                                        @endfor
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="col-md-6">
+                                                                <div class="rating-item mb-3">
+                                                                    <label class="rating-label">
+                                                                        <i class="fas fa-couch text-info mr-2"></i>Thoải mái
+                                                                    </label>
+                                                                    <div class="rating-stars-sm" data-rating="0">
+                                                                        @for ($i = 5; $i >= 1; $i--)
+                                                                            <input type="radio" name="comfort_rating" value="{{ $i }}" id="comfort_star{{ $i }}" class="rating-input-sm">
+                                                                            <label for="comfort_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
+                                                                                <i class="fas fa-star"></i>
+                                                                            </label>
+                                                                        @endfor
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="col-md-6">
+                                                                <div class="rating-item mb-3">
+                                                                    <label class="rating-label">
+                                                                        <i class="fas fa-map-marker-alt text-warning mr-2"></i>Vị trí
+                                                                    </label>
+                                                                    <div class="rating-stars-sm" data-rating="0">
+                                                                        @for ($i = 5; $i >= 1; $i--)
+                                                                            <input type="radio" name="location_rating" value="{{ $i }}" id="location_star{{ $i }}" class="rating-input-sm">
+                                                                            <label for="location_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
+                                                                                <i class="fas fa-star"></i>
+                                                                            </label>
+                                                                        @endfor
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="col-md-6">
+                                                                <div class="rating-item mb-3">
+                                                                    <label class="rating-label">
+                                                                        <i class="fas fa-wifi text-primary mr-2"></i>Tiện nghi
+                                                                    </label>
+                                                                    <div class="rating-stars-sm" data-rating="0">
+                                                                        @for ($i = 5; $i >= 1; $i--)
+                                                                            <input type="radio" name="facilities_rating" value="{{ $i }}" id="facilities_star{{ $i }}" class="rating-input-sm">
+                                                                            <label for="facilities_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
+                                                                                <i class="fas fa-star"></i>
+                                                                            </label>
+                                                                        @endfor
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="col-md-6">
+                                                                <div class="rating-item mb-3">
+                                                                    <label class="rating-label">
+                                                                        <i class="fas fa-dollar-sign text-success mr-2"></i>Giá trị
+                                                                    </label>
+                                                                    <div class="rating-stars-sm" data-rating="0">
+                                                                        @for ($i = 5; $i >= 1; $i--)
+                                                                            <input type="radio" name="value_rating" value="{{ $i }}" id="value_star{{ $i }}" class="rating-input-sm">
+                                                                            <label for="value_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
+                                                                                <i class="fas fa-star"></i>
+                                                                            </label>
+                                                                        @endfor
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-group">
-                                                                <label>Tiện nghi: <small class="text-muted">(không bắt buộc)</small></label>
-                                                                <div class="rating-input">
-                                                                                                                                @for ($i = 5; $i >= 1; $i--)
-                                                                <input type="radio" name="comfort_rating" value="{{ $i }}" id="comfort{{ $i }}" class="rating-radio">
-                                                                <label for="comfort{{ $i }}" class="rating-star">☆</label>
-                                                            @endfor
-                                                                </div>
-                                                            </div>
+                                                    </div>
+
+                                                    <!-- Bình luận -->
+                                                    <div class="form-group mb-4">
+                                                        <label for="comment" class="form-label font-weight-bold text-dark mb-2">
+                                                            <i class="fas fa-comment text-primary mr-2"></i>Bình luận của bạn
+                                                            <span class="text-danger">*</span>
+                                                        </label>
+                                                        <textarea name="comment" id="comment" class="form-control border-0 bg-light" rows="4" 
+                                                                  placeholder="Chia sẻ trải nghiệm của bạn về phòng này... (tối thiểu 10 ký tự)" required></textarea>
+                                                        <div class="form-text">
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-info-circle mr-1"></i>
+                                                                Bình luận sẽ giúp khách hàng khác hiểu rõ hơn về chất lượng phòng
+                                                            </small>
                                                         </div>
                                                     </div>
-                                                    
-                                                    <div class="row">
-                                                        <div class="col-md-6">
-                                                            <div class="form-group">
-                                                                <label>Vị trí: <small class="text-muted">(không bắt buộc)</small></label>
-                                                                <div class="rating-input">
-                                                                                                                                @for ($i = 5; $i >= 1; $i--)
-                                                                <input type="radio" name="location_rating" value="{{ $i }}" id="location{{ $i }}" class="rating-radio">
-                                                                <label for="location{{ $i }}" class="rating-star">☆</label>
-                                                            @endfor
-                                                                </div>
-                                                            </div>
+
+                                                    <!-- Tùy chọn ẩn danh -->
+                                                    <div class="form-group mb-4">
+                                                        <div class="custom-control custom-switch">
+                                                            <input type="checkbox" class="custom-control-input" id="is_anonymous" name="is_anonymous" value="1">
+                                                            <label class="custom-control-label" for="is_anonymous">
+                                                                <i class="fas fa-user-secret text-muted mr-2"></i>
+                                                                Đánh giá ẩn danh
+                                                            </label>
                                                         </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-group">
-                                                                <label>Cơ sở vật chất: <small class="text-muted">(không bắt buộc)</small></label>
-                                                                <div class="rating-input">
-                                                                                                                                @for ($i = 5; $i >= 1; $i--)
-                                                                <input type="radio" name="facilities_rating" value="{{ $i }}" id="facilities{{ $i }}" class="rating-radio">
-                                                                <label for="facilities{{ $i }}" class="rating-star">☆</label>
-                                                            @endfor
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                        <small class="form-text text-muted">
+                                                            Khi bật, tên của bạn sẽ không hiển thị trong đánh giá
+                                                        </small>
                                                     </div>
-                                                    
-                                                    <div class="form-group">
-                                                        <label>Giá trị: <small class="text-muted">(không bắt buộc)</small></label>
-                                                        <div class="rating-input">
-                                                            @for ($i = 5; $i >= 1; $i--)
-                                                                <input type="radio" name="value_rating" value="{{ $i }}" id="value{{ $i }}" class="rating-radio">
-                                                                <label for="value{{ $i }}" class="rating-star">☆</label>
-                                                            @endfor
-                                                        </div>
+
+                                                    <!-- Nút gửi -->
+                                                    <div class="form-actions">
+                                                        <button type="submit" class="btn btn-primary btn-lg btn-block shadow-sm" disabled>
+                                                            <i class="fas fa-paper-plane mr-2"></i>
+                                                            <span class="btn-text">Gửi đánh giá</span>
+                                                            <span class="btn-loading d-none">
+                                                                <i class="fas fa-spinner fa-spin mr-2"></i>Đang gửi...
+                                                            </span>
+                                                        </button>
                                                     </div>
-                                                    
-                                                    <div class="form-group">
-                                                        <label for="comment">Bình luận:</label>
-                                                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Chia sẻ trải nghiệm của bạn... (không bắt buộc)"></textarea>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <div class="custom-control custom-checkbox">
-                                                            <input type="checkbox" class="custom-control-input" id="is_anonymous" name="is_anonymous">
-                                                            <label class="custom-control-label" for="is_anonymous">Đánh giá ẩn danh</label>
-                                                        </div>
-                                                    </div>
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="icon-paper-plane"></i> Gửi đánh giá
-                                                    </button>
                                                 </form>
                                             </div>
                                         </div>
@@ -490,12 +577,134 @@
         margin-bottom: 0.25rem;
     }
 }
+
+/* Highlight form khi có nhiều booking */
+.review-form .card.border-warning {
+    border: 2px solid #ffc107 !important;
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.3) !important;
+}
+
+.review-form .card.border-warning .card-header {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
 </style>
 @endsection
 
 @section('scripts')
 <script>
 $(document).ready(function() {
+    // Rating stars chính
+    $('.rating-stars').each(function() {
+        const container = $(this);
+        const stars = container.find('.rating-star');
+        const text = container.siblings('.rating-text');
+        const ratingTexts = [
+            'Chọn số sao để đánh giá',
+            'Rất không hài lòng',
+            'Không hài lòng', 
+            'Bình thường',
+            'Hài lòng',
+            'Rất hài lòng'
+        ];
+        
+        stars.on('click', function() {
+            const value = $(this).data('value');
+            container.attr('data-rating', value);
+            text.text(ratingTexts[value]);
+            
+            // Reset tất cả stars
+            stars.find('i').removeClass('text-warning').addClass('text-muted');
+            
+            // Highlight stars đã chọn
+            stars.each(function() {
+                const starValue = $(this).data('value');
+                if (starValue <= value) {
+                    $(this).find('i').removeClass('text-muted').addClass('text-warning');
+                }
+            });
+        });
+        
+        // Hover effect
+        stars.on('mouseenter', function() {
+            const value = $(this).data('value');
+            stars.find('i').removeClass('text-warning').addClass('text-muted');
+            stars.each(function() {
+                const starValue = $(this).data('value');
+                if (starValue <= value) {
+                    $(this).find('i').removeClass('text-muted').addClass('text-warning');
+                }
+            });
+        });
+        
+        stars.on('mouseleave', function() {
+            const currentRating = container.attr('data-rating') || 0;
+            stars.find('i').removeClass('text-warning').addClass('text-muted');
+            stars.each(function() {
+                const starValue = $(this).data('value');
+                if (starValue <= currentRating) {
+                    $(this).find('i').removeClass('text-muted').addClass('text-warning');
+                }
+            });
+        });
+    });
+    
+    // Rating stars nhỏ
+    $('.rating-stars-sm').each(function() {
+        const container = $(this);
+        const stars = container.find('.rating-star-sm');
+        
+        stars.on('click', function() {
+            const value = $(this).data('value');
+            container.attr('data-rating', value);
+            
+            // Reset tất cả stars
+            stars.find('i').removeClass('text-warning').addClass('text-muted');
+            
+            // Highlight stars đã chọn
+            stars.each(function() {
+                const starValue = $(this).data('value');
+                if (starValue <= value) {
+                    $(this).find('i').removeClass('text-muted').addClass('text-warning');
+                }
+            });
+        });
+        
+        // Hover effect
+        stars.on('mouseenter', function() {
+            const value = $(this).data('value');
+            stars.find('i').removeClass('text-warning').addClass('text-muted');
+            stars.each(function() {
+                const starValue = $(this).data('value');
+                if (starValue <= value) {
+                    $(this).find('i').removeClass('text-muted').addClass('text-warning');
+                }
+            });
+        });
+        
+        stars.on('mouseleave', function() {
+            const currentRating = container.attr('data-rating') || 0;
+            stars.find('i').removeClass('text-warning').addClass('text-muted');
+            stars.each(function() {
+                const starValue = $(this).data('value');
+                if (starValue <= currentRating) {
+                    $(this).find('i').removeClass('text-muted').addClass('text-warning');
+                }
+            });
+        });
+    });
+    
     // Xử lý chọn booking
     $('#booking_select').on('change', function() {
         const selectedBookingId = $(this).val();
@@ -503,13 +712,19 @@ $(document).ready(function() {
         
         // Enable/disable form dựa trên việc chọn booking
         if (selectedBookingId) {
-            $('#reviewForm .form-control, #reviewForm .rating-radio').prop('disabled', false);
+            $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', false);
             $('#reviewForm button[type="submit"]').prop('disabled', false);
         } else {
-            $('#reviewForm .form-control, #reviewForm .rating-radio').prop('disabled', true);
+            $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', true);
             $('#reviewForm button[type="submit"]').prop('disabled', true);
         }
     });
+    
+    // Tự động enable form nếu chỉ có 1 booking (đã được chọn tự động)
+    if ($('#booking_select').length && $('#booking_select').val()) {
+        $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', false);
+        $('#reviewForm button[type="submit"]').prop('disabled', false);
+    }
     
     // Xử lý form đánh giá
     $('#reviewForm').on('submit', function(e) {
@@ -519,16 +734,33 @@ $(document).ready(function() {
         const roomTypeId = form.data('room-type-id');
         const bookingId = $('#selected_booking_id').val();
         const submitBtn = form.find('button[type="submit"]');
-        const originalText = submitBtn.html();
+        const btnText = submitBtn.find('.btn-text');
+        const btnLoading = submitBtn.find('.btn-loading');
         
         // Kiểm tra xem đã chọn booking chưa
         if (!bookingId) {
-            showAlert('Vui lòng chọn booking để đánh giá!', 'danger');
+            showToast('Vui lòng chọn booking để đánh giá!', 'warning');
+            return;
+        }
+        
+        // Kiểm tra rating tổng thể
+        const overallRating = form.find('.rating-stars').attr('data-rating');
+        if (!overallRating || overallRating == '0') {
+            showToast('Vui lòng chọn đánh giá tổng thể!', 'warning');
+            return;
+        }
+        
+        // Kiểm tra comment
+        const comment = form.find('#comment').val().trim();
+        if (comment.length < 10) {
+            showToast('Bình luận phải có ít nhất 10 ký tự!', 'warning');
             return;
         }
         
         // Disable button và hiển thị loading
-        submitBtn.prop('disabled', true).html('<i class="icon-spinner"></i> Đang gửi...');
+        submitBtn.prop('disabled', true);
+        btnText.addClass('d-none');
+        btnLoading.removeClass('d-none');
         
         // Lấy dữ liệu form
         const formData = new FormData(this);
@@ -536,144 +768,317 @@ $(document).ready(function() {
         formData.append('booking_id', bookingId);
         
         // Gửi request AJAX
-        fetch('/room-type-reviews/store-ajax', {
-            method: 'POST',
+        
+        $.ajax({
+            url: '/room-type-reviews/store-ajax',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Hiển thị thông báo thành công
-                showAlert('Đánh giá đã được gửi thành công!', 'success');
+            success: function(data) {
+                if (data.success) {
+                    // Hiển thị thông báo thành công
+                    showToast('Đánh giá đã được gửi thành công!', 'success');
+                    
+                    // Reset form
+                    form[0].reset();
+                    $('#booking_select').val('');
+                    $('#selected_booking_id').val('');
+                    $('.rating-stars').attr('data-rating', '0');
+                    $('.rating-stars-sm').attr('data-rating', '0');
+                    $('.rating-star i, .rating-star-sm i').removeClass('text-warning').addClass('text-muted');
+                    $('.rating-text').text('Chọn số sao để đánh giá');
+                    
+                    // Disable form
+                    $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', true);
+                    $('#reviewForm button[type="submit"]').prop('disabled', true);
+                    
+                    // Tự động load danh sách đánh giá mới
+                    loadReviews(roomTypeId);
+                    
+                    // Ẩn form đánh giá sau khi gửi thành công
+                    setTimeout(() => {
+                        $('.review-form').fadeOut();
+                    }, 1000);
+                } else {
+                    showToast(data.message || 'Có lỗi xảy ra khi gửi đánh giá!', 'danger');
+                }
+            },
+            error: function(xhr, status, error) {
                 
-                // Reset form
-                form[0].reset();
-                $('#booking_select').val('');
-                $('#selected_booking_id').val('');
-                $('.rating-star').removeClass('text-warning').addClass('text-muted');
+                let errorMessage = 'Có lỗi xảy ra khi gửi đánh giá!';
                 
-                // Disable form
-                $('#reviewForm .form-control, #reviewForm .rating-radio').prop('disabled', true);
-                $('#reviewForm button[type="submit"]').prop('disabled', true);
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.status === 419) {
+                    errorMessage = 'Lỗi CSRF token. Vui lòng refresh trang và thử lại.';
+                } else if (xhr.status === 401) {
+                    errorMessage = 'Bạn cần đăng nhập để đánh giá.';
+                } else if (xhr.status === 403) {
+                    errorMessage = 'Bạn không có quyền thực hiện hành động này.';
+                }
                 
-                // Reload trang để cập nhật danh sách booking
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
-            } else {
-                showAlert(data.message || 'Có lỗi xảy ra khi gửi đánh giá!', 'danger');
+                showToast(errorMessage, 'danger');
+            },
+            complete: function() {
+                // Enable button và khôi phục text
+                submitBtn.prop('disabled', false);
+                btnText.removeClass('d-none');
+                btnLoading.addClass('d-none');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Có lỗi xảy ra khi gửi đánh giá!', 'danger');
-        })
-        .finally(() => {
-            // Enable button và khôi phục text
-            submitBtn.prop('disabled', false).html(originalText);
         });
     });
     
-    // Xử lý hover rating stars cho tất cả các loại đánh giá
-    $('.rating-star').hover(
-        function() {
-            const forId = $(this).attr('for');
-            const rating = forId.replace(/^(star|cleanliness|comfort|location|facilities|value)/, '');
-            const type = forId.replace(rating, '');
-            highlightStarsByType(type, rating);
-        },
-        function() {
-            const forId = $(this).attr('for');
-            const type = forId.replace(/\d+$/, '');
-            const selectedRating = $(`input[name="${getInputName(type)}"]:checked`).val();
-            if (selectedRating) {
-                highlightStarsByType(type, selectedRating);
-            } else {
-                $(`.rating-star[for^="${type}"]`).removeClass('text-warning').addClass('text-muted');
-            }
+    // Character counter cho comment
+    $('#comment').on('input', function() {
+        const length = $(this).val().length;
+        const minLength = 10;
+        const maxLength = 1000;
+        
+        if (length < minLength) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+        } else if (length > maxLength) {
+            $(this).addClass('is-invalid').removeClass('is-valid');
+        } else {
+            $(this).removeClass('is-invalid').addClass('is-valid');
         }
-    );
-    
-    // Xử lý click rating stars
-    $('.rating-star').click(function() {
-        const forId = $(this).attr('for');
-        const rating = forId.replace(/^(star|cleanliness|comfort|location|facilities|value)/, '');
-        const type = forId.replace(rating, '');
-        const inputName = getInputName(type);
-        $(`input[name="${inputName}"]`).val([rating]);
-        highlightStarsByType(type, rating);
     });
-    
-    function getInputName(type) {
-        const mapping = {
-            'star': 'rating',
-            'cleanliness': 'cleanliness_rating',
-            'comfort': 'comfort_rating',
-            'location': 'location_rating',
-            'facilities': 'facilities_rating',
-            'value': 'value_rating'
-        };
-        return mapping[type] || 'rating';
-    }
-    
-    function highlightStarsByType(type, rating) {
-        $(`.rating-star[for^="${type}"]`).removeClass('text-warning').addClass('text-muted');
-        for (let i = 1; i <= rating; i++) {
-            $(`label[for="${type}${i}"]`).removeClass('text-muted').addClass('text-warning');
-        }
-    }
 });
 
-function highlightStars(rating) {
-    $('.rating-star[for^="star"]').removeClass('text-warning').addClass('text-muted');
-    for (let i = 1; i <= rating; i++) {
-        $(`label[for="star${i}"]`).removeClass('text-muted').addClass('text-warning');
-    }
-}
-
 function loadReviews(roomTypeId) {
-    fetch(`/room-type-reviews/${roomTypeId}/ajax`)
-        .then(response => response.text())
-        .then(html => {
+    $.ajax({
+        url: `/room-type-reviews/${roomTypeId}/ajax`,
+        type: 'GET',
+        success: function(html) {
             $('#reviewsList').html(html);
-        })
-        .catch(error => {
+        },
+        error: function(xhr, status, error) {
             console.error('Error loading reviews:', error);
-        });
+        }
+    });
 }
 
-function showAlert(message, type) {
-    const alertContainer = $('.alert-container');
-    if (alertContainer.length === 0) {
-        $('body').append('<div class="alert-container"></div>');
-    }
-    
-    const alert = $(`
-        <div class="custom-alert alert-${type}">
-            <button type="button" class="close-alert">&times;</button>
-            ${message}
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toast = $(`
+        <div class="toast-notification toast-notification-${type}" role="alert">
+            <div class="toast-header">
+                <i class="fas fa-${type === 'success' ? 'check-circle text-success' : type === 'warning' ? 'exclamation-triangle text-warning' : type === 'danger' ? 'times-circle text-danger' : 'info-circle text-info'} mr-2"></i>
+                <strong class="mr-auto">Thông báo</strong>
+                <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
         </div>
     `);
     
-    $('.alert-container').append(alert);
+    // Thêm toast vào container
+    if ($('#toast-container').length === 0) {
+        $('body').append('<div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>');
+    }
     
-    // Tự động ẩn sau 5 giây
-    setTimeout(() => {
-        alert.fadeOut(300, function() {
-            $(this).remove();
-        });
-    }, 5000);
+    $('#toast-container').append(toast);
+    toast.toast({ delay: 5000 }).toast('show');
     
-    // Xử lý nút đóng
-    alert.find('.close-alert').click(function() {
-        alert.fadeOut(300, function() {
-            $(this).remove();
-        });
+    // Tự động xóa sau khi ẩn
+    toast.on('hidden.bs.toast', function() {
+        $(this).remove();
     });
 }
 </script>
+
+<style>
+/* Review form styles */
+.review-form-modern {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.rating-container {
+    text-align: center;
+}
+
+.rating-stars {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 8px;
+}
+
+.rating-input, .rating-input-sm {
+    display: none;
+}
+
+.rating-star {
+    font-size: 2.5rem;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 4px;
+    border-radius: 50%;
+}
+
+.rating-star:hover,
+.rating-star:hover ~ .rating-star,
+.rating-input:checked ~ .rating-star {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+.rating-star i {
+    transition: all 0.2s ease;
+}
+
+.rating-text {
+    font-size: 0.9rem;
+    min-height: 20px;
+}
+
+/* Rating stars nhỏ cho đánh giá chi tiết */
+.rating-stars-sm {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 4px;
+}
+
+.rating-star-sm {
+    font-size: 1.2rem;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 2px;
+}
+
+.rating-star-sm:hover,
+.rating-star-sm:hover ~ .rating-star-sm,
+.rating-input-sm:checked ~ .rating-star-sm {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+.rating-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.rating-item:hover {
+    background: #ffffff;
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+}
+
+.rating-label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    background-color: #ffffff;
+}
+
+.custom-switch .custom-control-label::before {
+    border-radius: 20px;
+    height: 24px;
+    width: 44px;
+}
+
+.custom-switch .custom-control-label::after {
+    border-radius: 50%;
+    height: 18px;
+    width: 18px;
+    top: 3px;
+    left: 3px;
+}
+
+.custom-switch .custom-control-input:checked ~ .custom-control-label::after {
+    transform: translateX(20px);
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-lg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.btn-loading {
+    display: none;
+}
+
+.btn-loading.d-none {
+    display: none !important;
+}
+
+/* Toast styles */
+.toast-notification {
+    min-width: 300px;
+    margin-bottom: 10px;
+}
+
+.toast-notification-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.toast-notification-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+.toast-notification-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.toast-notification-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .rating-star {
+        font-size: 2rem;
+    }
+    
+    .rating-star-sm {
+        font-size: 1rem;
+    }
+    
+    .rating-item {
+        padding: 12px;
+    }
+    
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+}
+</style>
 @endsection

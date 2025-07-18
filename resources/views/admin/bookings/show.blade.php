@@ -4,6 +4,23 @@
 
 @section('content')
 <div class="container-fluid px-4">
+    <!-- Hiển thị thông báo -->
+    {{-- @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif --}}
+
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
         <li class="breadcrumb-item"><a href="{{ route('admin.bookings.index') }}">Quản lý đặt phòng</a></li>
@@ -91,15 +108,12 @@
                                         <span class="badge bg-{{ 
                                             $booking->status == 'pending' ? 'warning' : 
                                             ($booking->status == 'confirmed' ? 'primary' : 
+                                            ($booking->status == 'checked_in' ? 'info' :
+                                            ($booking->status == 'checked_out' ? 'secondary' :
                                             ($booking->status == 'completed' ? 'success' : 
-                                            ($booking->status == 'no-show' ? 'dark' : 'danger'))) 
+                                            ($booking->status == 'no_show' ? 'dark' : 'danger'))))) 
                                         }}">
-                                            {{ 
-                                                $booking->status == 'pending' ? 'Chờ xác nhận' : 
-                                                ($booking->status == 'confirmed' ? 'Đã xác nhận' : 
-                                                ($booking->status == 'completed' ? 'Hoàn thành' : 
-                                                ($booking->status == 'no-show' ? 'Không đến' : 'Đã hủy'))) 
-                                            }}
+                                            {{ $booking->status_text }}
                                         </span>
                                     </p>
                                     <p><strong>Cập nhật trạng thái:</strong></p>
@@ -108,28 +122,53 @@
                                         @method('PATCH')
                                         <div class="input-group mb-3">
                                             <select name="status" class="form-select">
-                                                <option value="pending" {{ $booking->status == 'pending' ? 'selected' : '' }}>Chờ xác nhận</option>
-                                                <option value="confirmed" {{ $booking->status == 'confirmed' ? 'selected' : '' }}>Đã xác nhận</option>
-                                                <option value="completed" {{ $booking->status == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
-                                                <option value="cancelled" {{ $booking->status == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
-                                                <option value="no-show" {{ $booking->status == 'no-show' ? 'selected' : '' }}>Không đến</option>
+                                                <option value="{{ $booking->status }}" selected>{{ $booking->status_text }} (Hiện tại)</option>
+                                                @foreach($validNextStatuses as $status => $label)
+                                                    <option value="{{ $status }}">{{ $label }}</option>
+                                                @endforeach
                                             </select>
                                             <button class="btn btn-primary" type="submit">Cập nhật</button>
                                         </div>
                                     </form>
+                                    @if(empty($validNextStatuses))
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Lưu ý:</strong> Booking đã ở trạng thái cuối cùng. Chỉ có thể chuyển sang "Đã hủy" hoặc "Khách không đến".
+                                        </div>
+                                    @else
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Hướng dẫn:</strong> Có thể chuyển sang bất kỳ trạng thái nào phía trước hoặc chuyển đặc biệt sang "Đã hủy"/"Khách không đến". 
+                                            <br><small class="text-muted">Trạng thái hiện tại: <strong>{{ $booking->status_text }}</strong></small>
+                                        </div>
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle"></i>
+                                            <strong>Thông tin:</strong> Có <strong>{{ count($validNextStatuses) }}</strong> trạng thái có thể chuyển đổi từ trạng thái hiện tại.
+                                            <br><small class="text-muted">Các trạng thái có thể chuyển: 
+                                                @foreach($validNextStatuses as $status => $label)
+                                                    <span class="badge bg-light text-dark me-1">{{ $label }}</span>
+                                                @endforeach
+                                            </small>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-4">
-                        <a href="{{ route('admin.bookings.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Quay lại danh sách
-                        </a>
-                    </div>
+
+
+                    <!-- Ghi chú đặt phòng -->
+                    @include('admin.bookings.partials.notes')
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ route('admin.bookings.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        </a>
     </div>
 </div>
 @endsection 

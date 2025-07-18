@@ -67,6 +67,31 @@ class Booking extends Model
     }
 
     /**
+     * Get the notes for this booking.
+     */
+    public function notes()
+    {
+        return $this->hasMany(BookingNote::class);
+    }
+
+    /**
+     * Get the public notes for this booking.
+     */
+    public function publicNotes()
+    {
+        return $this->hasMany(BookingNote::class)->public();
+    }
+
+    /**
+     * Get the internal notes for this booking.
+     */
+    public function internalNotes()
+    {
+        return $this->hasMany(BookingNote::class)->internal();
+    }
+
+    
+    /**
      * Accessor cho ngày check-out (chỉ lấy phần date)
      */
     public function getCheckOutDateOnlyAttribute()
@@ -124,9 +149,11 @@ class Booking extends Model
         return match($this->status) {
             'pending' => 'Chờ xác nhận',
             'confirmed' => 'Đã xác nhận',
-            'checked_in' => 'Đã check-in',
+            'checked_in' => 'Đã nhận phòng',
+            'checked_out' => 'Đã trả phòng',
             'completed' => 'Đã hoàn thành',
             'cancelled' => 'Đã hủy',
+            'no_show' => 'Khách không đến',
             default => 'Không xác định'
         };
     }

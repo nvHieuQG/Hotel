@@ -5,10 +5,19 @@ namespace App\Providers;
 
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 use App\Interfaces\Repositories\UserRepositoryInterface;
 use App\Repositories\UserRepository;
 use App\Interfaces\Services\PasswordResetServiceInterface;
 use App\Services\PasswordResetService;
+use App\Models\Booking;
+use App\Observers\BookingObserver;
+
+
+use App\Models\BookingNote;
+use App\Observers\BookingNoteObserver;
+use App\Models\RoomTypeReview;
+use App\Observers\RoomTypeReviewObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -176,6 +185,14 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\Services\RoomTypeServiceServiceInterface::class,
             \App\Services\RoomTypeServiceService::class
         );
+
+        // View Composer cho dropdown notification
+        \Illuminate\Support\Facades\View::composer('admin.layouts.admin-master', function ($view) {
+            $unreadNotifications = \App\Models\AdminNotification::unread()->orderBy('created_at', 'desc')->limit(5)->get();
+            $unreadCount = \App\Models\AdminNotification::unread()->count();
+            $view->with(compact('unreadNotifications', 'unreadCount'));
+        });
+
     }
 
     /**
@@ -184,5 +201,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+        
+        // Đăng ký Observer
+        Booking::observe(BookingObserver::class);
+        BookingNote::observe(BookingNoteObserver::class);
+        RoomTypeReview::observe(RoomTypeReviewObserver::class);
     }
 }
