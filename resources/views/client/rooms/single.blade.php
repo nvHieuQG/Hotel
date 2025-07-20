@@ -55,6 +55,11 @@
                                     <li><span>Mô tả:</span> {{ Str::limit($roomType->description, 100) }}</li>
                                 </ul>
                             </div>
+                            <div class="text-center mb-4">
+                                <button type="button" class="btn btn-primary py-3 px-5" data-bs-toggle="modal" data-bs-target="#roomServicesModal">
+                                    <i class="icon-list"></i> Xem dịch vụ loại phòng
+                                </button>
+                            </div>
                             <div class="text-center">
                                 <a href="{{ route('booking') }}?room_type_id={{ $roomType->id }}" class="btn btn-primary py-3 px-5">Đặt phòng ngay</a>
                             </div>
@@ -487,6 +492,8 @@
             </div>
         </div>
     </section>
+    {{-- Modal Dịch vụ loại phòng --}}
+    @include('client.rooms.room-services', ['roomType' => $roomType, 'serviceCategories' => $serviceCategories])
 @endsection
 
 @section('styles')
