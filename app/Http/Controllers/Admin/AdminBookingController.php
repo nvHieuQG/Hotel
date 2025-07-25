@@ -250,362 +250,80 @@ class AdminBookingController extends Controller
     }
 
     /**
-     * API: Lấy danh sách thông báo chưa đọc (cho AJAX)
+     * Hiển thị chi tiết thông báo
      */
-    public function getUnreadNotifications(): JsonResponse
+    public function notificationShow($id)
     {
-        try {
-            $notifications = $this->bookingService->getUnreadNotifications(10);
-            $count = $this->bookingService->getUnreadCount();
-
-            return response()->json([
-                'success' => true,
-                'notifications' => $notifications,
-                'count' => $count,
-                'by_priority' => $this->bookingService->getUnreadCountByPriority()
-            ]);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error getting unread notifications: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi khi tải thông báo',
-                'notifications' => [],
-                'count' => 0,
-                'by_priority' => []
-            ], 500);
-        }
+        // Đánh dấu đã đọc
+        $this->bookingService->markNotificationAsRead($id);
+        $notification = \App\Models\AdminNotification::findOrFail($id);
+        return view('admin.notifications.show', compact('notification'));
     }
 
     /**
      * API: Lấy số lượng thông báo chưa đọc (cho badge)
      */
-    public function getUnreadCount(): JsonResponse
+    public function getUnreadNotificationCount(): \Illuminate\Http\JsonResponse
     {
         try {
+            $count = $this->bookingService->getUnreadNotificationCount();
             return response()->json([
                 'success' => true,
-                'count' => $this->bookingService->getUnreadCount(),
-                'by_priority' => $this->bookingService->getUnreadCountByPriority()
+                'count' => $count
             ]);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error getting unread count: ' . $e->getMessage());
+            \Log::error('Error getting unread notification count: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi khi tải số lượng thông báo',
-                'count' => 0,
-                'by_priority' => []
-            ], 500);
-        }
-    }
-
-    /**
-     * API: Đánh dấu thông báo đã đọc
-     */
-    public function markAsRead(Request $request): JsonResponse
-    {
-        try {
-            $request->validate([
-                'notification_id' => 'required|integer|exists:admin_notifications,id'
-            ]);
-
-            $success = $this->bookingService->markAsRead($request->notification_id);
-
-            if ($success) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Đã đánh dấu thông báo đã đọc',
-                    'count' => $this->bookingService->getUnreadCount()
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy thông báo'
-            ], 404);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error marking notification as read: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi khi đánh dấu thông báo'
-            ], 500);
-        }
-    }
-
-    /**
-     * API: Đánh dấu tất cả thông báo đã đọc
-     */
-    public function markAllAsRead(): JsonResponse
-    {
-        try {
-            $count = $this->bookingService->markAllAsRead();
-
-            return response()->json([
-                'success' => true,
-                'message' => "Đã đánh dấu {$count} thông báo đã đọc",
                 'count' => 0
-            ]);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error marking all notifications as read: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi khi đánh dấu tất cả thông báo'
             ], 500);
         }
     }
 
     /**
-     * API: Xóa thông báo
+     * API: Lấy danh sách thông báo chưa đọc (cho dropdown khi bấm chuông)
      */
-    public function deleteNotification(Request $request): JsonResponse
+    public function getUnreadNotifications(Request $request): \Illuminate\Http\JsonResponse
     {
-        $request->validate([
-            'notification_id' => 'required|integer|exists:admin_notifications,id'
-        ]);
-
-        $notification = \App\Models\AdminNotification::find($request->notification_id);
-        $notification->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Đã xóa thông báo',
-            'count' => $this->bookingService->getUnreadCount()
-        ]);
-    }
-
-    /**
-     * API: Xóa tất cả thông báo đã đọc
-     */
-    public function deleteReadNotifications(): JsonResponse
-    {
-        $count = \App\Models\AdminNotification::read()->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => "Đã xóa {$count} thông báo đã đọc"
-        ]);
-    }
-
-    /**
-     * API: Xóa thông báo cũ (quá 30 ngày)
-     */
-    public function deleteOldNotifications(): JsonResponse
-    {
-        $count = $this->bookingService->deleteOldNotifications();
-
-        return response()->json([
-            'success' => true,
-            'message' => "Đã xóa {$count} thông báo cũ"
-        ]);
-    }
-
-    /**
-     * Hiển thị chi tiết thông báo
-     */
-    public function notificationShow($id)
-    {
-        $notification = \App\Models\AdminNotification::findOrFail($id);
-        
-        // Đánh dấu đã đọc khi xem chi tiết
-        if (!$notification->is_read) {
-            $notification->markAsRead();
+        try {
+            $limit = $request->get('limit', 10);
+            $notifications = $this->bookingService->getUnreadNotifications($limit);
+            return response()->json([
+                'success' => true,
+                'notifications' => $notifications
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error getting unread notifications: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'notifications' => []
+            ], 500);
         }
-
-        // Format dữ liệu bổ sung
-        $formattedData = $this->dataFormatterService->formatData($notification->data);
-
-        return view('admin.notifications.show', compact('notification', 'formattedData'));
     }
 
     /**
-     * Tạo thông báo test (cho mục đích demo)
+     * Xóa nhiều thông báo
      */
-    public function createTestNotification(Request $request): JsonResponse
+    public function deleteMulti(Request $request)
     {
-        $request->validate([
-            'type' => 'required|string',
-            'title' => 'required|string',
-            'message' => 'required|string',
-            'priority' => 'nullable|string|in:low,normal,high,urgent'
-        ]);
-
-        $notification = \App\Models\AdminNotification::createNotification(
-            $request->type,
-            $request->title,
-            $request->message,
-            $request->data ?? [],
-            $request->priority ?? 'normal'
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Đã tạo thông báo test',
-            'notification' => $notification
-        ]);
-    }
-
-    /**
-     * Tạo thông báo test cho ghi chú
-     */
-    public function createTestNoteNotification(Request $request): JsonResponse
-    {
-        $notification = \App\Models\AdminNotification::createNotification(
-            'booking_note_created',
-            'Ghi chú mới (Test)',
-            'Ghi chú mới từ Khách hàng cho đặt phòng #TEST001',
-            [
-                'note_id' => 1,
-                'booking_id' => 1,
-                'user_id' => 1,
-                'type' => 'customer',
-                'visibility' => 'public',
-                'is_internal' => false,
-                'booking_code' => 'TEST001'
-            ],
-            'normal',
-            'fas fa-sticky-note',
-            'info'
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Đã tạo thông báo test cho ghi chú',
-            'notification' => $notification
-        ]);
-    }
-
-    /**
-     * Tạo thông báo test cho đánh giá
-     */
-    public function createTestReviewNotification(Request $request): JsonResponse
-    {
-        $notification = \App\Models\AdminNotification::createNotification(
-            'room_type_review_created',
-            'Đánh giá phòng mới (Test)',
-            'Đánh giá 5/5 sao cho Phòng Deluxe từ Nguyễn Văn A',
-            [
-                'review_id' => 1,
-                'user_id' => 1,
-                'room_type_id' => 1,
-                'rating' => 5,
-                'room_type_name' => 'Phòng Deluxe'
-            ],
-            'normal',
-            'fas fa-star',
-            'info'
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Đã tạo thông báo test cho đánh giá',
-            'notification' => $notification
-        ]);
-    }
-
-    /**
-     * API: Lấy danh sách thông báo với filter (cho AJAX)
-     */
-    public function getNotifications(Request $request): JsonResponse
-    {
-        $type = $request->get('type');
-        $priority = $request->get('priority');
-        $isRead = $request->get('is_read');
-        $search = $request->get('search');
-        $page = $request->get('page', 1);
-
-        $query = \App\Models\AdminNotification::query();
-
-        // Tìm kiếm theo từ khóa
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('message', 'like', "%{$search}%")
-                  ->orWhere('type', 'like', "%{$search}%");
-            });
+        $ids = $request->input('notification_id', []);
+        if (!empty($ids)) {
+            \App\Models\AdminNotification::whereIn('id', $ids)->delete();
+            return redirect()->route('admin.notifications.index')->with('success', 'Đã xóa các thông báo đã chọn!');
         }
-
-        if ($type && $type !== 'all') {
-            if ($type === 'unread') {
-                $query->unread();
-            } else {
-                $query->ofType($type);
-            }
-        }
-
-        if ($priority && $priority !== 'all') {
-            $query->ofPriority($priority);
-        }
-
-        if ($isRead !== null && $isRead !== '') {
-            if ($isRead == '1') {
-                $query->read();
-            } else {
-                $query->unread();
-            }
-        }
-
-        $notifications = $query->orderBy('created_at', 'desc')->paginate(20, ['*'], 'page', $page);
-
-        // Format notifications for response
-        $formattedNotifications = $notifications->map(function ($notification) {
-            return [
-                'id' => $notification->id,
-                'title' => $notification->title,
-                'message' => $notification->message,
-                'type' => $notification->type,
-                'priority' => $notification->priority,
-                'is_read' => $notification->is_read,
-                'time_ago' => $notification->time_ago,
-                'color' => $notification->color,
-                'display_icon' => $notification->display_icon,
-                'badge_color' => $notification->badge_color,
-                'show_url' => route('admin.notifications.show', $notification->id),
-                'mark_read_url' => route('admin.notifications.mark-read', $notification->id),
-                'delete_url' => route('admin.notifications.delete', $notification->id),
-            ];
-        });
-
-        return response()->json([
-            'success' => true,
-            'notifications' => $formattedNotifications,
-            'pagination' => [
-                'current_page' => $notifications->currentPage(),
-                'last_page' => $notifications->lastPage(),
-                'per_page' => $notifications->perPage(),
-                'total' => $notifications->total(),
-                'from' => $notifications->firstItem(),
-                'to' => $notifications->lastItem(),
-            ],
-            'filters' => [
-                'type' => $type,
-                'priority' => $priority,
-                'is_read' => $isRead,
-                'search' => $search,
-            ]
-        ]);
+        return redirect()->route('admin.notifications.index')->with('warning', 'Bạn chưa chọn thông báo nào để xóa!');
     }
 
     /**
-     * API: Xóa hàng loạt thông báo (chuẩn Laravel, redirect về lại trang)
+     * Đánh dấu đã đọc nhiều thông báo
      */
-    public function deleteNotifications(Request $request)
+    public function markReadMulti(Request $request)
     {
-        $ids = (array) $request->input('notification_id');
-        $count = $this->bookingService->deleteNotifications($ids);
-        return redirect()->route('admin.notifications.index')
-            ->with('success', "Đã xóa $count thông báo");
-    }
-
-    /**
-     * API: Đánh dấu đã đọc hàng loạt thông báo
-     */
-    public function markNotificationsAsRead(Request $request): \Illuminate\Http\JsonResponse
-    {
-        $ids = (array) $request->input('notification_id');
-        $count = $this->bookingService->markNotificationsAsRead($ids);
-        return response()->json([
-            'success' => $count > 0,
-            'message' => "Đã đánh dấu $count thông báo đã đọc",
-            'count' => $this->bookingService->getUnreadCount()
-        ]);
+        $ids = $request->input('notification_id', []);
+        if (!empty($ids)) {
+            \App\Models\AdminNotification::whereIn('id', $ids)->update(['is_read' => true]);
+            return redirect()->route('admin.notifications.index')->with('success', 'Đã đánh dấu đã đọc các thông báo đã chọn!');
+        }
+        return redirect()->route('admin.notifications.index')->with('warning', 'Bạn chưa chọn thông báo nào để đánh dấu đã đọc!');
     }
 } 

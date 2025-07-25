@@ -131,23 +131,10 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
     Route::get('notifications/{id}', [AdminBookingController::class, 'notificationShow'])->name('notifications.show');
     Route::delete('notifications/{id}', [AdminBookingController::class, 'destroy'])->name('notifications.destroy');
-    
-    // API thông báo
-    Route::prefix('api/notifications')->name('notifications.')->group(function () {
-        Route::get('unread', [AdminBookingController::class, 'getUnreadNotifications'])->name('unread');
-        Route::get('count', [AdminBookingController::class, 'getUnreadCount'])->name('count');
-        Route::get('list', [AdminBookingController::class, 'getNotifications'])->name('list');
-        Route::post('mark-read', [AdminBookingController::class, 'markAsRead'])->name('mark-read');
-        Route::post('mark-all-read', [AdminBookingController::class, 'markAllAsRead'])->name('mark-all-read');
-        Route::delete('delete', [AdminBookingController::class, 'deleteNotification'])->name('delete');
-        Route::delete('delete-read', [AdminBookingController::class, 'deleteReadNotifications'])->name('delete-read');
-        Route::delete('delete-old', [AdminBookingController::class, 'deleteOldNotifications'])->name('delete-old');
-        Route::post('test', [AdminBookingController::class, 'createTestNotification'])->name('test');
-        Route::post('test-note', [AdminBookingController::class, 'createTestNoteNotification'])->name('test-note');
-        Route::post('test-review', [AdminBookingController::class, 'createTestReviewNotification'])->name('test-review');
-        Route::post('delete-multi', [AdminBookingController::class, 'deleteNotifications'])->name('delete-multi');
-        Route::post('mark-read-multi', [AdminBookingController::class, 'markNotificationsAsRead'])->name('mark-read-multi');
-    });
+
+    // Bulk action (POST)
+    Route::post('notifications/delete-multi', [AdminBookingController::class, 'deleteMulti'])->name('notifications.delete-multi');
+    Route::post('notifications/mark-read-multi', [AdminBookingController::class, 'markReadMulti'])->name('notifications.mark-read-multi');
 
     // Quản lý phòng
     Route::resource('rooms', AdminRoomController::class);

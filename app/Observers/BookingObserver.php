@@ -5,15 +5,15 @@ namespace App\Observers;
 use App\Models\Booking;
 use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
 use Illuminate\Support\Facades\Log;
+use App\Services\Admin\AdminBookingService;
 
 class BookingObserver
 {
     protected $adminBookingService;
 
-    public function __construct(
-        AdminBookingServiceInterface $adminBookingService
-    ) {
-        $this->adminBookingService = $adminBookingService;
+    public function __construct()
+    {
+        $this->adminBookingService = app(AdminBookingService::class);
     }
 
     /**

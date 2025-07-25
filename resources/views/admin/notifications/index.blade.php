@@ -238,7 +238,7 @@
 
 @section('scripts')
 <script>
-// Chỉ giữ lại JS cho hiệu ứng giao diện, bỏ toàn bộ JS xử lý logic AJAX, load bảng, xóa, đánh dấu đã đọc...
+// Chỉ giữ lại JS cho hiệu ứng giao diện (chọn checkbox, enable/disable nút bulk action)
 $(document).ready(function() {
     // Checkbox chọn tất cả
     $('#selectAllNotifications').on('change', function() {

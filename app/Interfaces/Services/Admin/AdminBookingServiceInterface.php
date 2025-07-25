@@ -100,44 +100,48 @@ interface AdminBookingServiceInterface
      */
     public function getValidNextStatuses(int $id): array;
 
+    /**
+     * Lấy danh sách trạng thái hợp lệ tiếp theo cho booking theo mã code
+     *
+     * @param string $bookingCode
+     * @return array
+     */
+    public function getValidNextStatusesByCode(string $bookingCode): array;
+
     // ==================== NOTIFICATION METHODS ====================
 
     /**
      * Lấy số lượng thông báo chưa đọc
-     *
      * @return int
      */
-    public function getUnreadCount(): int;
-
-    /**
-     * Lấy số lượng thông báo chưa đọc theo mức độ ưu tiên
-     *
-     * @return array
-     */
-    public function getUnreadCountByPriority(): array;
+    public function getUnreadNotificationCount(): int;
 
     /**
      * Lấy danh sách thông báo chưa đọc
-     *
      * @param int $limit
-     * @return Collection
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getUnreadNotifications(int $limit = 10): Collection;
 
     /**
+     * Lấy tất cả thông báo (có phân trang)
+     * @param int $perPage
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getAllNotifications(int $perPage = 20): LengthAwarePaginator;
+
+    /**
      * Đánh dấu thông báo đã đọc
-     *
-     * @param int $notificationId
+     * @param int $id
      * @return bool
      */
-    public function markAsRead(int $notificationId): bool;
+    public function markNotificationAsRead(int $id): bool;
 
     /**
      * Đánh dấu tất cả thông báo đã đọc
-     *
      * @return int
      */
-    public function markAllAsRead(): int;
+    public function markAllNotificationsAsRead(): int;
 
     /**
      * Xóa thông báo cũ (quá 30 ngày)

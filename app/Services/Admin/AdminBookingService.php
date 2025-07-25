@@ -434,50 +434,29 @@ class AdminBookingService implements AdminBookingServiceInterface
     }
 
     // ==================== NOTIFICATION METHODS ====================
-
-    /**
-     * Lấy số lượng thông báo chưa đọc
-     */
-    public function getUnreadCount(): int
+    public function getUnreadNotificationCount(): int
     {
-        return AdminNotification::unread()->count();
+        return $this->adminBookingRepository->getUnreadNotificationCount();
     }
 
-    /**
-     * Lấy số lượng thông báo chưa đọc theo mức độ ưu tiên
-     */
-    public function getUnreadCountByPriority(): array
-    {
-        return [
-            'urgent' => AdminNotification::unread()->ofPriority('urgent')->count(),
-            'high' => AdminNotification::unread()->ofPriority('high')->count(),
-            'normal' => AdminNotification::unread()->ofPriority('normal')->count(),
-            'low' => AdminNotification::unread()->ofPriority('low')->count(),
-        ];
-    }
-
-    /**
-     * Lấy danh sách thông báo chưa đọc
-     */
     public function getUnreadNotifications(int $limit = 10): Collection
     {
-        return AdminNotification::unread()
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get()
-            ->map(function ($notification) {
-                return [
-                    'id' => $notification->id,
-                    'title' => $notification->title,
-                    'message' => $notification->message,
-                    'type' => $notification->type,
-                    'priority' => $notification->priority,
-                    'time_ago' => $notification->time_ago,
-                    'color' => $notification->color,
-                    'display_icon' => $notification->display_icon,
-                    'badge_color' => $notification->badge_color,
-                ];
-            });
+        return $this->adminBookingRepository->getUnreadNotifications($limit);
+    }
+
+    public function getAllNotifications(int $perPage = 20): LengthAwarePaginator
+    {
+        return $this->adminBookingRepository->getAllNotifications($perPage);
+    }
+
+    public function markNotificationAsRead(int $id): bool
+    {
+        return $this->adminBookingRepository->markNotificationAsRead($id);
+    }
+
+    public function markAllNotificationsAsRead(): int
+    {
+        return $this->adminBookingRepository->markAllNotificationsAsRead();
     }
 
     /**

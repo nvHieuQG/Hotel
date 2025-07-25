@@ -74,10 +74,9 @@
                                             </div>
                                         </div>
                                     </a>
-                                    <form method="POST" action="{{ route('admin.notifications.delete') }}" style="margin:0;">
+                                    <form method="POST" action="{{ route('admin.notifications.destroy', $notification->id) }}" style="margin:0;">
                                         @csrf
                                         @method('DELETE')
-                                        <input type="hidden" name="notification_id" value="{{ $notification->id }}">
                                         <button type="submit" class="btn btn-link btn-sm text-danger p-0 ms-2" title="Xóa" style="font-size:1rem;"><i class="fas fa-trash"></i></button>
                                     </form>
                                 </div>
@@ -314,46 +313,47 @@
     <!-- Admin Main JavaScript -->
     <script src="{{ asset('admin/js/admin-main.js') }}"></script>
     
-    <!-- Debug script -->
+    @yield('scripts')
     <script>
-        console.log('Layout loaded');
         $(document).ready(function() {
-            console.log('Document ready in layout');
-            console.log('Notification elements:', {
-                badge: $('#notificationBadge').length,
-                list: $('#notificationsList').length,
-                markAllBtn: $('#markAllReadBtn').length,
-                sidebarBadge: $('#sidebarNotificationBadge').length,
-            });
-            
-            // Test API call
-            $.ajax({
-                url: '/admin/api/notifications/unread',
-                method: 'GET',
-                dataType: 'json',
-                success: function(response) {
-                    console.log('API test successful:', response);
-                    if (response.success) {
-                        console.log('Found', response.count, 'unread notifications');
+            // Khi bấm chuông, load danh sách thông báo chưa đọc
+            $('#notificationsDropdown').on('show.bs.dropdown', function () {
+                $.get('/admin/get-unread-notifications', function(res) {
+                    if (res.success) {
+                        let html = '';
+                        if (res.notifications.length > 0) {
+                            res.notifications.forEach(function(notification) {
+                                html += `<div class="dropdown-item notification-item d-flex align-items-start justify-content-between gap-2">
+                                    <a href="/admin/notifications/${notification.id}" class="flex-grow-1 text-decoration-none text-dark">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="icon-circle bg-${notification.color}">
+                                                <i class="${notification.display_icon} text-white"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold small text-truncate" title="${notification.title}">${notification.title}</div>
+                                                <div class="small text-muted text-truncate mb-1" title="${notification.message}">${notification.message}</div>
+                                                <div class="small text-gray-500"><i class="fas fa-clock me-1"></i>${notification.time_ago}</div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <form method="POST" action="/admin/notifications/${notification.id}" style="margin:0;">
+                                        <input type="hidden" name="_token" value="${$('meta[name=csrf-token]').attr('content')}">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 ms-2" title="Xóa" style="font-size:1rem;"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>`;
+                            });
+                        } else {
+                            html = `<div class="dropdown-item text-center small text-gray-500 py-3">
+                                <i class="fas fa-check-circle text-success me-2"></i> Không có thông báo mới
+                            </div>`;
+                        }
+                        $('#notificationsList').html(html);
                     }
-                },
-                error: function(xhr, status, error) {
-                    console.error('API test failed:', {xhr, status, error});
-                }
+                });
             });
-            
-            // Test notification manager
-            setTimeout(function() {
-                if (window.notificationManager) {
-                    console.log('NotificationManager is available');
-                } else {
-                    console.error('NotificationManager not found!');
-                }
-            }, 1000);
         });
     </script>
-    
-    @yield('scripts')
 </body>
 
 </html>
