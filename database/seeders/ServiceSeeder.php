@@ -2,131 +2,107 @@
 
 namespace Database\Seeders;
 
-use App\Models\Service;
-use App\Models\ServiceCategory;
 use Illuminate\Database\Seeder;
+use App\Models\ServiceCategory;
+use App\Models\Service;
+use App\Models\RoomType;
 
 class ServiceSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Tạo các danh mục dịch vụ
         $categories = [
             [
                 'name' => 'Thông tin phòng',
                 'services' => [
-                    ['name' => 'Diện tích 20m²', 'description' => 'Phòng diện tích 20 mét vuông', 'price' => 0],
-                    ['name' => 'Diện tích 25m²', 'description' => 'Phòng diện tích 25 mét vuông', 'price' => 0],
-                    ['name' => 'Diện tích 30–35m²', 'description' => 'Phòng diện tích từ 30 đến 35 mét vuông', 'price' => 0],
-                    ['name' => 'Diện tích 35–50m²', 'description' => 'Phòng diện tích từ 35 đến 50 mét vuông', 'price' => 0],
-                    ['name' => 'Diện tích 45–60m²', 'description' => 'Phòng diện tích từ 45 đến 60 mét vuông', 'price' => 0],
-                    ['name' => '1 người', 'description' => 'Sức chứa tối đa 1 người', 'price' => 0],
-                    ['name' => '2 người', 'description' => 'Sức chứa tối đa 2 người', 'price' => 0],
-                    ['name' => '3–5 người', 'description' => 'Sức chứa 3 đến 5 người (phù hợp cho gia đình)', 'price' => 0],
-                    ['name' => '1 giường đơn', 'description' => 'Phòng có 1 giường đơn', 'price' => 0],
-                    ['name' => '1 giường đôi', 'description' => 'Phòng có 1 giường đôi', 'price' => 0],
-                    ['name' => '2 giường đơn', 'description' => 'Phòng có 2 giường đơn', 'price' => 0],
-                    ['name' => '1 giường đôi lớn (King/Queen)', 'description' => 'Giường lớn cao cấp cho trải nghiệm tốt hơn', 'price' => 0],
-                    ['name' => '1 giường đôi + 1 giường đơn', 'description' => 'Phòng có 1 giường đôi và 1 giường đơn', 'price' => 0],
-                    ['name' => '2 giường đôi', 'description' => 'Phòng có 2 giường đôi rộng rãi', 'price' => 0],
+                    ['name' => 'Diện tích 20m²', 'description' => 'Phòng diện tích 20 mét vuông', 'price' => 0, 'quantity' => 1],
+                    ['name' => '1 người', 'description' => 'Sức chứa tối đa 1 người', 'price' => 0, 'quantity' => 1],
+                    ['name' => '2 người', 'description' => 'Sức chứa tối đa 2 người', 'price' => 0, 'quantity' => 1],
+                    ['name' => '3 người', 'description' => 'Sức chứa tối đa 3 người', 'price' => 0, 'quantity' => 1],
+                    ['name' => '4 người', 'description' => 'Sức chứa tối đa 4 người', 'price' => 0, 'quantity' => 1],
+                    ['name' => '6 người', 'description' => 'Sức chứa tối đa 6 người', 'price' => 0, 'quantity' => 1],
+                    ['name' => '1 giường đôi', 'description' => 'Phòng có 1 giường đôi', 'price' => 0, 'quantity' => 1],
+                    ['name' => '2 giường đôi', 'description' => 'Phòng có 2 giường đôi rộng rãi', 'price' => 0, 'quantity' => 2],
+                    ['name' => '1 giường đôi + 1 giường phụ', 'description' => 'Phòng có giường đôi và giường phụ', 'price' => 0, 'quantity' => 2],
+                    ['name' => '2 giường đôi + 2 giường đơn', 'description' => 'Phòng có 2 giường đôi và 2 giường đơn', 'price' => 0, 'quantity' => 4],
                 ]
             ],
             [
                 'name' => 'Tính năng nổi bật',
                 'services' => [
-                    ['name' => 'Ban công riêng', 'description' => 'Ban công riêng với view đẹp', 'price' => 0],
-                    ['name' => 'Máy sưởi', 'description' => 'Hệ thống sưởi ấm', 'price' => 0],
-                    ['name' => 'Điều hòa không khí', 'description' => 'Điều hòa nhiệt độ', 'price' => 0],
-                    ['name' => 'Cửa sổ thoáng mát', 'description' => 'Cửa sổ lớn đón ánh sáng tự nhiên', 'price' => 0],
-                    ['name' => 'Cách âm tốt', 'description' => 'Hệ thống cách âm cao cấp', 'price' => 0],
-                    ['name' => 'View đẹp', 'description' => 'View hướng thành phố, biển, vườn, hồ', 'price' => 0],
-                    ['name' => 'Hệ thống đèn trang trí cao cấp', 'description' => 'Đèn trang trí và chiếu sáng thông minh', 'price' => 0],
-                    ['name' => 'Thiết kế căn hộ mini', 'description' => 'Thiết kế dạng căn hộ mini với khu vực tiếp khách riêng', 'price' => 0],
-                    ['name' => 'Ban công lớn', 'description' => 'Ban công lớn với view toàn cảnh', 'price' => 0],
-                    ['name' => 'Hệ thống cách âm tuyệt đối', 'description' => 'Cách âm tuyệt đối', 'price' => 0],
-                    ['name' => 'Điều hòa trung tâm', 'description' => 'Hệ thống điều hòa trung tâm', 'price' => 0],
-                    ['name' => 'Nội thất cao cấp', 'description' => 'Nội thất cao cấp và sang trọng', 'price' => 0],
-                    ['name' => 'Không gian rộng rãi', 'description' => 'Không gian rộng rãi cho cả gia đình', 'price' => 0],
-                    ['name' => 'Khu vực ngồi chung', 'description' => 'Khu vực ngồi chung cho gia đình', 'price' => 0],
+                    ['name' => 'Ban công riêng', 'description' => 'Ban công riêng với view đẹp', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'View thành phố', 'description' => 'Tầm nhìn ra trung tâm thành phố', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'View biển', 'description' => 'Tầm nhìn hướng biển', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Có khu bếp riêng', 'description' => 'Có khu bếp nhỏ trong phòng', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Có bàn ăn', 'description' => 'Phòng có bàn ăn riêng', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Có thể kê giường phụ', 'description' => 'Có thể kê thêm giường phụ theo yêu cầu', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Có cũi cho trẻ em', 'description' => 'Cung cấp cũi miễn phí cho trẻ nhỏ', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Phòng khách riêng', 'description' => 'Phòng có không gian khách riêng biệt', 'price' => 0, 'quantity' => 1],
                 ]
             ],
             [
                 'name' => 'Tiện nghi trong phòng',
                 'services' => [
-                    ['name' => 'Giường ngủ thoải mái', 'description' => 'Giường ngủ chất lượng cao', 'price' => 0],
-                    ['name' => 'Tủ quần áo', 'description' => 'Tủ quần áo rộng rãi', 'price' => 0],
-                    ['name' => 'Tủ lạnh mini', 'description' => 'Tủ lạnh mini trong phòng', 'price' => 0],
-                    ['name' => 'Wifi miễn phí', 'description' => 'Kết nối wifi miễn phí tốc độ cao', 'price' => 0],
-                    ['name' => 'Nước uống miễn phí', 'description' => 'Nước uống miễn phí hàng ngày', 'price' => 0],
-                    ['name' => 'Ấm siêu tốc', 'description' => 'Ấm siêu tốc để pha trà, cà phê', 'price' => 0],
-                    ['name' => 'Đồ ăn nhẹ miễn phí', 'description' => 'Mì ly và đồ ăn nhẹ miễn phí', 'price' => 0],
-                    ['name' => 'Bàn làm việc', 'description' => 'Bàn làm việc tiện nghi', 'price' => 0],
-                    ['name' => 'Trà & cà phê', 'description' => 'Trà và cà phê miễn phí', 'price' => 0],
-                    ['name' => 'Tivi màn hình phẳng', 'description' => 'Tivi màn hình phẳng', 'price' => 0],
-                    ['name' => 'Sofa thư giãn', 'description' => 'Sofa thư giãn thoải mái', 'price' => 0],
-                    ['name' => 'Minibar', 'description' => 'Minibar đầy đủ', 'price' => 0],
-                    ['name' => 'Smart TV', 'description' => 'Smart TV với nhiều kênh', 'price' => 0],
-                    ['name' => 'Bàn làm việc lớn', 'description' => 'Bàn làm việc lớn và tiện nghi', 'price' => 0],
-                    ['name' => 'Két an toàn', 'description' => 'Két an toàn để cất giữ đồ quý', 'price' => 0],
-                    ['name' => 'Ly tách, cốc sứ', 'description' => 'Ly tách, cốc sứ cao cấp', 'price' => 0],
-                    ['name' => 'Khu vực tiếp khách', 'description' => 'Khu vực tiếp khách với sofa', 'price' => 0],
-                    ['name' => 'Tivi 2 khu vực', 'description' => 'Tivi ở 2 khu vực riêng biệt', 'price' => 0],
-                    ['name' => 'Bàn làm việc riêng', 'description' => 'Bàn làm việc riêng biệt', 'price' => 0],
-                    ['name' => 'Minibar đầy đủ', 'description' => 'Minibar với đầy đủ đồ uống', 'price' => 0],
-                    ['name' => 'Máy pha cà phê', 'description' => 'Máy pha cà phê tự động', 'price' => 0],
-                    ['name' => 'Điện thoại', 'description' => 'Điện thoại trong phòng', 'price' => 0],
-                    ['name' => 'Đèn ngủ', 'description' => 'Đèn ngủ tiện nghi', 'price' => 0],
-                    ['name' => 'Đèn đọc sách', 'description' => 'Đèn đọc sách chuyên dụng', 'price' => 0],
-                    ['name' => 'Hệ thống chiếu sáng thông minh', 'description' => 'Hệ thống chiếu sáng thông minh', 'price' => 0],
-                    ['name' => 'Bàn ăn nhỏ', 'description' => 'Bàn ăn nhỏ hoặc sofa', 'price' => 0],
-                    ['name' => 'Tivi màn hình lớn', 'description' => 'Tivi màn hình lớn cho gia đình', 'price' => 0],
-                    ['name' => 'Tủ quần áo lớn', 'description' => 'Tủ quần áo lớn cho gia đình', 'price' => 0],
+                    ['name' => 'Wifi miễn phí', 'description' => 'Internet tốc độ cao', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'TV màn hình phẳng', 'description' => 'Tivi LCD với truyền hình cáp', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Máy lạnh', 'description' => 'Điều hòa không khí hiện đại', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Tủ lạnh mini', 'description' => 'Tủ lạnh mini chứa đồ uống', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Nước uống miễn phí', 'description' => 'Nước đóng chai miễn phí mỗi ngày', 'price' => 0, 'quantity' => 4],
+                    ['name' => 'Trà & cà phê', 'description' => 'Trà và cà phê miễn phí', 'price' => 0, 'quantity' => 4],
+                    ['name' => 'Ấm siêu tốc', 'description' => 'Ấm đun nước điện', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Ly tách, cốc sứ', 'description' => 'Bộ ly tách cho trà & cà phê', 'price' => 0, 'quantity' => 4],
+                    ['name' => 'Bàn làm việc', 'description' => 'Bàn làm việc gọn gàng', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Sofa thư giãn', 'description' => 'Ghế sofa êm ái để nghỉ ngơi', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Tủ quần áo', 'description' => 'Tủ gỗ đựng đồ', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Két an toàn', 'description' => 'Két sắt bảo mật', 'price' => 0, 'quantity' => 1],
                 ]
             ],
             [
                 'name' => 'Tiện nghi phòng tắm',
                 'services' => [
-                    ['name' => 'Vòi sen và bồn tắm', 'description' => 'Vòi sen và bồn tắm tiện nghi', 'price' => 0],
-                    ['name' => 'Khăn tắm sạch', 'description' => 'Khăn tắm sạch sẽ', 'price' => 0],
-                    ['name' => 'Áo choàng tắm', 'description' => 'Áo choàng tắm cao cấp', 'price' => 0],
-                    ['name' => 'Máy sấy tóc', 'description' => 'Máy sấy tóc tiện nghi', 'price' => 0],
-                    ['name' => 'Hệ thống nước nóng lạnh', 'description' => 'Hệ thống nước nóng lạnh', 'price' => 0],
-                    ['name' => 'Bộ đồ vệ sinh cá nhân', 'description' => 'Bộ đồ vệ sinh cá nhân miễn phí (xà phòng, dầu gội, kem đánh răng)', 'price' => 0],
-                    ['name' => 'Vòi sen hoặc bồn tắm', 'description' => 'Vòi sen hoặc bồn tắm', 'price' => 0],
-                    ['name' => 'Bồn tắm đứng', 'description' => 'Bồn tắm đứng hoặc bồn tắm nằm', 'price' => 0],
-                    ['name' => 'Vòi sen đa chế độ', 'description' => 'Vòi sen đa chế độ', 'price' => 0],
-                    ['name' => 'Dép đi trong phòng', 'description' => 'Dép đi trong phòng', 'price' => 0],
-                    ['name' => 'Gương trang điểm', 'description' => 'Gương trang điểm', 'price' => 0],
-                    ['name' => 'Bộ đồ vệ sinh cao cấp', 'description' => 'Bộ đồ vệ sinh cá nhân cao cấp', 'price' => 0],
-                    ['name' => 'Phòng tắm riêng biệt', 'description' => 'Phòng tắm riêng biệt (vòi sen & bồn tắm riêng)', 'price' => 0],
-                    ['name' => 'Bồn tắm sục', 'description' => 'Bồn tắm sục (Jacuzzi)', 'price' => 0],
-                    ['name' => 'Khăn lông dày', 'description' => 'Khăn lông dày, áo choàng, dép đi trong nhà', 'price' => 0],
-                    ['name' => 'Máy sấy tóc công suất lớn', 'description' => 'Máy sấy tóc công suất lớn', 'price' => 0],
-                    ['name' => 'Bồn tắm lớn', 'description' => 'Bồn tắm lớn hoặc vòi sen', 'price' => 0],
-                    ['name' => 'Khăn tắm đầy đủ', 'description' => 'Khăn tắm đầy đủ cho cả gia đình', 'price' => 0],
+                    ['name' => 'Phòng tắm riêng', 'description' => 'Phòng tắm riêng tư', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Vòi sen', 'description' => 'Vòi sen hiện đại', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Bồn tắm', 'description' => 'Bồn tắm nằm', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Khăn tắm', 'description' => 'Khăn tắm mềm mịn', 'price' => 0, 'quantity' => 4],
+                    ['name' => 'Bàn chải đánh răng', 'description' => 'Bộ bàn chải + kem đánh răng', 'price' => 0, 'quantity' => 4],
+                    ['name' => 'Xà phòng, dầu gội', 'description' => 'Đầy đủ xà phòng và dầu gội', 'price' => 0, 'quantity' => 2],
+                    ['name' => 'Máy sấy tóc', 'description' => 'Máy sấy tóc mini', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Gương soi lớn', 'description' => 'Gương toàn thân trong phòng tắm', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Thảm chống trơn', 'description' => 'Thảm lót sàn chống trượt', 'price' => 0, 'quantity' => 1],
+                    ['name' => 'Áo choàng tắm', 'description' => 'Áo choàng cao cấp', 'price' => 0, 'quantity' => 2],
                 ]
             ]
         ];
 
-        // Tạo danh mục và dịch vụ
         foreach ($categories as $categoryData) {
-            $category = ServiceCategory::create([
-                'name' => $categoryData['name']
-            ]);
+            $category = ServiceCategory::create(['name' => $categoryData['name']]);
 
             foreach ($categoryData['services'] as $serviceData) {
                 Service::create([
                     'name' => $serviceData['name'],
                     'description' => $serviceData['description'],
                     'price' => $serviceData['price'],
+                    'quantity' => $serviceData['quantity'] ?? 1,
                     'service_category_id' => $category->id
                 ]);
             }
         }
 
-        $this->command->info('Đã tạo thành công ' . count($categories) . ' danh mục dịch vụ và các dịch vụ tương ứng!');
+        // Gán dịch vụ vào loại phòng
+        $roomServiceMap = [
+            'Phòng đơn tiêu chuẩn' => ['2 người', '1 giường đôi', 'Wifi miễn phí', 'TV màn hình phẳng', 'Máy lạnh', 'Tủ lạnh mini', 'Nước uống miễn phí', 'Trà & cà phê', 'Ấm siêu tốc', 'Tủ quần áo', 'Phòng tắm riêng', 'Khăn tắm', 'Bàn chải đánh răng', 'Xà phòng, dầu gội', 'Gương soi lớn'],
+            'Phòng đôi tiêu chuẩn' => ['4 người', '2 giường đôi', 'Wifi miễn phí', 'TV màn hình phẳng', 'Máy lạnh', 'Tủ lạnh mini', 'Nước uống miễn phí', 'Trà & cà phê', 'Tủ quần áo', 'Phòng tắm riêng', 'Vòi sen', 'Khăn tắm', 'Bàn chải đánh răng', 'Xà phòng, dầu gội', 'Máy sấy tóc'],
+            'Phòng Deluxe' => ['3 người', '1 giường đôi + 1 giường phụ', 'View thành phố', 'Ban công riêng', 'Wifi miễn phí', 'TV màn hình phẳng', 'Máy lạnh', 'Tủ lạnh mini', 'Nước uống miễn phí', 'Trà & cà phê', 'Ấm siêu tốc', 'Ly tách, cốc sứ', 'Bàn làm việc', 'Phòng tắm riêng', 'Bồn tắm', 'Máy sấy tóc', 'Khăn tắm', 'Gương soi lớn', 'Áo choàng tắm'],
+            'Phòng Suite' => ['4 người', '2 giường đôi', 'Ban công riêng', 'View biển', 'Có khu bếp riêng', 'Phòng khách riêng', 'Wifi miễn phí', 'Máy lạnh', 'TV màn hình phẳng', 'Sofa thư giãn', 'Bàn làm việc', 'Két an toàn', 'Tủ quần áo', 'Phòng tắm riêng', 'Bồn tắm', 'Áo choàng tắm'],
+            'Phòng Gia đình' => ['6 người', '2 giường đôi + 2 giường đơn', 'Có khu bếp riêng', 'Phòng khách riêng', 'Có cũi cho trẻ em', 'Wifi miễn phí', 'TV màn hình phẳng', 'Máy lạnh', 'Tủ lạnh mini', 'Trà & cà phê', 'Nước uống miễn phí', 'Ly tách, cốc sứ', 'Phòng tắm riêng', 'Máy sấy tóc', 'Bàn chải đánh răng', 'Khăn tắm', 'Thảm chống trơn', 'Gương soi lớn'],
+        ];
+
+        foreach ($roomServiceMap as $roomName => $serviceNames) {
+            $roomType = RoomType::where('name', $roomName)->first();
+            if ($roomType) {
+                $serviceIds = Service::whereIn('name', $serviceNames)->pluck('id');
+                $roomType->services()->syncWithoutDetaching($serviceIds);
+            }
+        }
     }
 }

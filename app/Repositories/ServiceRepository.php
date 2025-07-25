@@ -70,6 +70,7 @@ class ServiceRepository implements ServiceRepositoryInterface
                   ->orWhere('description', 'like', "%$keyword%") ;
             });
         }
+        $query->orderBy('created_at', 'desc');
         return $query->paginate($perPage);
     }
 } 

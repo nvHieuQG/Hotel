@@ -104,44 +104,40 @@
                             $status = !empty($filters['date']) ? $room->getStatusForDate($filters['date']) : $room->status_for_display;
                         @endphp
                         <div class="col-auto">
-                            <div class="card m-1 p-0 shadow-sm {{ $statusClass[$status] ?? '' }} {{ $statusBgClass[$status] ?? '' }}"
-                                 style="width: 150px; min-height: 260px; border-width: 2px; display: flex; flex-direction: column;">
-                                @if($room->primaryImage)
-                                    <img src="{{ Illuminate\Support\Facades\Storage::url($room->primaryImage->image_url) }}" class="card-img-top" alt="Ảnh phòng" style="height: 80px; object-fit: cover;">
-                                @else
-                                    <div class="d-flex justify-content-center align-items-center bg-light" style="height: 80px;">
-                                        <i class="fas fa-image fa-2x text-muted"></i>
-                                    </div>
-                                @endif
-                                <div class="card-body p-2 text-center d-flex flex-column justify-content-between" style="flex: 1 1 auto; min-height: 120px;">
-                                    <div>
-                                        <div class="fw-bold text-truncate" style="font-size: 1.1em;" title="{{ $room->room_number }}">{{ $room->room_number }}</div>
-                                        <div class="small text-muted text-wrap" style="white-space: normal;" title="{{ $room->roomType->name }}">{{ $room->roomType->name }}</div>
-                                        <div class="mt-1">
-                                            <span class="fw-semibold small">
-                                                {{ $statusText[$status] ?? 'Không rõ' }}
-                                            </span>
+                            <a href="{{ route('admin.rooms.show', $room->id) }}" style="text-decoration: none; color: inherit;">
+                                <div class="card m-1 p-0 shadow-sm {{ $statusClass[$status] ?? '' }} {{ $statusBgClass[$status] ?? '' }}"
+                                     style="width: 150px; min-height: 260px; border-width: 2px; display: flex; flex-direction: column;">
+                                    @if($room->primaryImage)
+                                        <img src="{{ Illuminate\Support\Facades\Storage::url($room->primaryImage->image_url) }}" class="card-img-top" alt="Ảnh phòng" style="height: 80px; object-fit: cover;">
+                                    @else
+                                        <div class="d-flex justify-content-center align-items-center bg-light" style="height: 80px;">
+                                            <i class="fas fa-image fa-2x text-muted"></i>
                                         </div>
-                                    </div>
-                                    <div class="mt-auto">
-                                        <div class="btn-group btn-group-sm w-100 gap-1" role="group">
-                                            <a href="{{ route('admin.rooms.show', $room->id) }}" class="btn btn-outline-success px-2 room-action-btn" title="Xem">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{{ route('admin.rooms.edit', $room->id) }}" class="btn btn-outline-warning px-2 room-action-btn" title="Sửa">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <form action="{{ route('admin.rooms.destroy', $room->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xoá phòng này?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-outline-danger px-2 room-action-btn" title="Xoá">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </form>
+                                    @endif
+                                    <div class="card-body p-2 text-center d-flex flex-column justify-content-between" style="flex: 1 1 auto; min-height: 120px;">
+                                        <div>
+                                            <div class="fw-bold text-truncate" style="font-size: 1.1em;" title="{{ $room->room_number }}">{{ $room->room_number }}</div>
+                                            <div class="small text-muted text-wrap" style="white-space: normal;" title="{{ $room->roomType->name }}">{{ $room->roomType->name }}</div>
+                                            <div class="mt-1">
+                                                <span class="fw-semibold small">
+                                                    {{ $statusText[$status] ?? 'Không rõ' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-auto">
+                                            <div class="d-flex justify-content-center align-items-center w-100">
+                                                <form action="{{ route('admin.rooms.destroy', $room->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xoá phòng này?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-md px-4 py-1 room-action-btn" style="font-size: 1em;">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     @endforeach
                 </div>
