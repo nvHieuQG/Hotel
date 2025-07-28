@@ -83,6 +83,11 @@ class AppServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(
+            \App\Interfaces\Services\Admin\AdminBookingServiceServiceInterface::class,
+            \App\Services\Admin\AdminBookingServiceService::class
+        );
+
+        $this->app->bind(
             \App\Interfaces\Services\Admin\AdminDashboardServiceInterface::class,
             \App\Services\Admin\AdminDashboardService::class
         );

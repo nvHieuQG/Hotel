@@ -93,7 +93,18 @@
                                     <p><strong>Check-in:</strong> {{ date('d/m/Y', strtotime($booking->check_in_date)) }}</p>
                                     <p><strong>Check-out:</strong> {{ date('d/m/Y', strtotime($booking->check_out_date)) }}</p>
                                     <p><strong>Số đêm:</strong> {{ date_diff(new DateTime($booking->check_in_date), new DateTime($booking->check_out_date))->days }}</p>
-                                    <p><strong>Tổng tiền:</strong> {{ number_format($booking->price) }} VND</p>
+                                    <hr>
+                                    <p><strong>Tiền phòng:</strong> {{ number_format($booking->price) }} VNĐ</p>
+                                    <p><strong>Tiền dịch vụ:</strong> 
+                                        <span class="text-{{ $booking->total_services_price > 0 ? 'success' : 'muted' }}">
+                                            {{ number_format($booking->total_services_price) }} VNĐ
+                                        </span>
+                                    </p>
+                                    <p class="mb-0"><strong>Tổng cộng:</strong> 
+                                        <span class="text-primary fw-bold">
+                                            {{ number_format($booking->price + $booking->total_services_price) }} VNĐ
+                                        </span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -156,7 +167,142 @@
                         </div>
                     </div>
 
+       <!-- Quản lý dịch vụ -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <!-- Tiêu đề -->
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fs-6">
+                    <i class="fas fa-concierge-bell text-primary me-2"></i>
+                    Dịch vụ Booking
+                    <span class="badge bg-primary ms-2">{{ $bookingServices->count() }}</span>
+                </h6>
+                @if($bookingServices->count())
+                    <div class="text-end">
+                        <small class="text-muted">Tổng tiền:</small><br>
+                        <span class="text-success fw-semibold">{{ number_format($booking->total_services_price) }} VNĐ</span>
+                    </div>
+                @endif
+            </div>
 
+            <div class="card-body row">
+                <!-- Bảng dịch vụ -->
+                <div class="col-lg-8">
+                    @if($bookingServices->count())
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Dịch vụ</th>
+                                        <th>Loại</th>
+                                        <th>Đơn giá</th>
+                                        <th>SL</th>
+                                        <th>Thành tiền</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($bookingServices as $service)
+                                        <tr>
+                                            <td>
+                                                <strong>{{ $service->service->name }}</strong><br>
+                                                @if($service->notes)
+                                                    <small class="text-muted">{{ $service->notes }}</small>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ $service->type === 'room_type' ? 'info' : ($service->type === 'additional' ? 'success' : 'warning') }}">
+                                                    {{ $service->type === 'room_type' ? 'Loại phòng' : ($service->type === 'additional' ? 'Bổ sung' : 'Tùy chỉnh') }}
+                                                </span>
+                                            </td>
+                                            <td>{{ $service->formatted_unit_price }}</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-light text-dark">{{ $service->quantity }}</span>
+                                            </td>
+                                            <td class="text-success fw-semibold">{{ $service->formatted_total_price }}</td>
+                                            <td class="text-end">
+                                                @if($service->type !== 'room_type')
+                                                    <form action="{{ route('admin.bookings.services.destroy', [$booking->id, $service->id]) }}" method="POST" onsubmit="return confirm('Xóa dịch vụ này?')" style="display:inline;">
+                                                        @csrf @method('DELETE')
+                                                        <button class="btn btn-sm btn-outline-danger" title="Xóa">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <small class="text-muted">Tự động</small>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot class="table-light small">
+                                    <tr>
+                                        <td colspan="4" class="text-end fw-semibold">Tổng cộng:</td>
+                                        <td class="text-success fw-bold">{{ number_format($bookingServices->sum('total_price')) }} VNĐ</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center text-muted py-4 small">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <div>Chưa có dịch vụ nào</div>
+                            <small>Sử dụng form bên phải để thêm</small>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Form thêm -->
+                <div class="col-lg-4">
+                    <div class="card bg-light border-0 h-100">
+                        <div class="card-header bg-success text-white py-2">
+                            <h6 class="mb-0 fs-6"><i class="fas fa-plus me-1"></i> Thêm dịch vụ</h6>
+                        </div>
+                        <div class="card-body small">
+                            <form action="{{ route('admin.bookings.services.add', $booking->id) }}" method="POST">
+                                @csrf
+                                <div class="mb-2">
+                                    <label class="form-label mb-1">Tên dịch vụ <span class="text-danger">*</span></label>
+                                    <input type="text" name="service_name" value="{{ old('service_name') }}"
+                                           class="form-control form-control-sm @error('service_name') is-invalid @enderror" required>
+                                    @error('service_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label mb-1">Giá (VNĐ) <span class="text-danger">*</span></label>
+                                    <input type="number" name="service_price" value="{{ old('service_price') }}"
+                                           class="form-control form-control-sm @error('service_price') is-invalid @enderror"
+                                           required min="0" step="1000">
+                                    @error('service_price')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label mb-1">Số lượng <span class="text-danger">*</span></label>
+                                    <input type="number" name="quantity" value="{{ old('quantity', 1) }}"
+                                           class="form-control form-control-sm @error('quantity') is-invalid @enderror"
+                                           required min="1">
+                                    @error('quantity')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label mb-1">Ghi chú</label>
+                                    <textarea name="notes" rows="2" class="form-control form-control-sm">{{ old('notes') }}</textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-sm btn-success w-100">
+                                    <i class="fas fa-plus me-1"></i> Thêm dịch vụ
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- End form -->
+            </div>
+        </div>
+    </div>
+</div>
 
                     <!-- Ghi chú đặt phòng -->
                     @include('admin.bookings.partials.notes')

@@ -149,6 +149,10 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
         Route::post('mark-read-multi', [AdminBookingController::class, 'markNotificationsAsRead'])->name('mark-read-multi');
     });
 
+    // Quản lý dịch vụ booking
+    Route::post('bookings/{id}/services/add', [AdminBookingController::class, 'addServiceToBooking'])->name('bookings.services.add');
+    Route::delete('bookings/{id}/services/{bookingServiceId}', [AdminBookingController::class, 'destroyServiceFromBooking'])->name('bookings.services.destroy');
+
     // Quản lý phòng
     Route::resource('rooms', AdminRoomController::class);
 
@@ -238,6 +242,3 @@ Route::middleware('auth')->group(function () {
     Route::get('/user/reviews/partial', [UserProfileController::class, 'partialReviews'])->name('user.reviews.partial');
     Route::get('/user/reviews/{id}/detail', [UserProfileController::class, 'reviewDetail'])->name('user.reviews.detail');
 });
-
-
-

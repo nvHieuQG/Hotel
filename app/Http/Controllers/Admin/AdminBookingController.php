@@ -4,25 +4,30 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
+use App\Interfaces\Services\Admin\AdminBookingServiceServiceInterface;
 use App\Services\NotificationDataFormatterService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class AdminBookingController extends Controller
 {
     protected $bookingService;
     protected $dataFormatterService;
+    protected $bookingServiceService;
 
     /**
      * Khởi tạo controller
      */
     public function __construct(
         AdminBookingServiceInterface $bookingService,
-        NotificationDataFormatterService $dataFormatterService
+        NotificationDataFormatterService $dataFormatterService,
+        AdminBookingServiceServiceInterface $bookingServiceService
     ) {
         $this->bookingService = $bookingService;
         $this->dataFormatterService = $dataFormatterService;
+        $this->bookingServiceService = $bookingServiceService;
     }
 
     // ==================== BOOKING METHODS ====================
@@ -49,7 +54,13 @@ class AdminBookingController extends Controller
         } else {
             $validNextStatuses = $this->bookingService->getValidNextStatusesByCode($id);
         }
-        return view('admin.bookings.show', compact('booking', 'validNextStatuses'));
+
+        // Lấy dữ liệu services cho phần quản lý dịch vụ
+        $bookingServices = $this->bookingServiceService->getBookingServices($booking->id);
+        $availableRoomTypeServices = $this->bookingServiceService->getAvailableRoomTypeServices($booking->id);
+        $availableServices = $this->bookingServiceService->getAvailableServices($booking->id);
+
+        return view('admin.bookings.show', compact('booking', 'validNextStatuses', 'bookingServices', 'availableRoomTypeServices', 'availableServices'));
     }
 
     /**
@@ -608,4 +619,55 @@ class AdminBookingController extends Controller
             'count' => $this->bookingService->getUnreadCount()
         ]);
     }
-} 
+    /**
+     * Thêm dịch vụ vào booking
+     */
+    public function addServiceToBooking(Request $request, $id)
+    {
+        try {
+            $booking = $this->bookingService->getBookingDetails($id);
+            if (!$booking) {
+                return redirect()->back()->with('error', 'Booking không tồn tại');
+            }
+
+            // Validate request
+            $request->validate([
+                'service_name' => 'required|string|max:255',
+                'service_price' => 'required|numeric|min:0',
+                'quantity' => 'required|integer|min:1',
+                'notes' => 'nullable|string|max:500'
+            ]);
+
+            // Add custom service to booking
+            $bookingService = $this->bookingServiceService->addCustomServiceToBooking(
+                $booking->id,
+                $request->service_name,
+                $request->service_price,
+                $request->quantity,
+                $request->notes
+            );
+
+            return redirect()->back()->with('success', 'Đã thêm dịch vụ "' . $request->service_name . '" thành công!');
+
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            Log::error('Error adding service to booking: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi thêm dịch vụ. Vui lòng thử lại.');
+        }
+    }
+
+    /**
+     * Xóa dịch vụ khỏi booking
+     */
+    public function destroyServiceFromBooking($bookingId, $bookingServiceId)
+    {
+        try {
+            $this->bookingServiceService->destroyServiceFromBooking($bookingServiceId);
+            return redirect()->back()->with('success', 'Đã xóa dịch vụ thành công!');
+        } catch (\Exception $e) {
+            Log::error('Error removing service from booking: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi xóa dịch vụ.');
+        }
+    }
+}
