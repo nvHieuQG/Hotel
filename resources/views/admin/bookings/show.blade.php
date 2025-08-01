@@ -100,6 +100,13 @@
                                             {{ number_format($booking->total_services_price) }} VNĐ
                                         </span>
                                     </p>
+                                    <p><strong>Tổng tiền:</strong> 
+                                        <span class="text-success font-weight-bold">
+                                            {{ number_format($booking->total_booking_price) }} VNĐ
+                                        </span>
+                                    </p>
+                                        </span>
+                                    </p>
                                     <p class="mb-0"><strong>Tổng cộng:</strong> 
                                         <span class="text-primary fw-bold">
                                             {{ number_format($booking->price + $booking->total_services_price) }} VNĐ
@@ -160,6 +167,137 @@
                                                     <span class="badge bg-light text-dark me-1">{{ $label }}</span>
                                                 @endforeach
                                             </small>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông tin thanh toán -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-credit-card me-1"></i>
+                                    Thông tin thanh toán
+                                </div>
+                                <div class="card-body">
+                                    @if($booking->payments->count() > 0)
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Phương thức</th>
+                                                        <th>Số tiền</th>
+                                                        <th>Trạng thái</th>
+                                                        <th>Thời gian</th>
+                                                        <th>Mã giao dịch</th>
+                                                        <th>Ghi chú</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($booking->payments->sortByDesc('created_at') as $payment)
+                                                        <tr>
+                                                            <td>
+                                                                <span class="badge bg-{{ 
+                                                                    $payment->payment_method == 'bank_transfer' ? 'primary' : 
+                                                                    ($payment->payment_method == 'cod' ? 'info' : 'secondary') 
+                                                                }}">
+                                                                    @if($payment->payment_method == 'bank_transfer')
+                                                                        <i class="fas fa-university"></i> Chuyển khoản
+                                                                    @elseif($payment->payment_method == 'cod')
+                                                                        <i class="fas fa-money-bill-wave"></i> Thanh toán tại khách sạn
+                                                                    @else
+                                                                        <i class="fas fa-money-bill"></i> {{ ucfirst($payment->payment_method) }}
+                                                                    @endif
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="text-success font-weight-bold">
+                                                                    {{ number_format($payment->amount) }} VNĐ
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge bg-{{ 
+                                                                    $payment->status == 'completed' ? 'success' : 
+                                                                    ($payment->status == 'processing' ? 'info' : 
+                                                                    ($payment->status == 'pending' ? 'warning' : 
+                                                                    ($payment->status == 'failed' ? 'danger' : 'secondary'))) 
+                                                                }}">
+                                                                    <i class="fas fa-{{ 
+                                                                        $payment->status == 'completed' ? 'check-circle' : 
+                                                                        ($payment->status == 'processing' ? 'clock' : 
+                                                                        ($payment->status == 'pending' ? 'hourglass-half' : 
+                                                                        ($payment->status == 'failed' ? 'times-circle' : 'minus-circle'))) 
+                                                                    }}"></i>
+                                                                    {{ $payment->status_text }}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                @if($payment->paid_at)
+                                                                    {{ $payment->paid_at->format('d/m/Y H:i:s') }}
+                                                                @else
+                                                                    {{ $payment->created_at->format('d/m/Y H:i:s') }}
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                <code>{{ $payment->transaction_id ?? 'N/A' }}</code>
+                                                            </td>
+                                                            <td>
+                                                                @if($payment->gateway_message)
+                                                                    <small class="text-muted">{{ $payment->gateway_message }}</small>
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
+                                        <!-- Tổng kết thanh toán -->
+                                        <div class="row mt-3">
+                                            <div class="col-md-4">
+                                                <div class="alert alert-info">
+                                                    <strong>Tổng số giao dịch:</strong> {{ $booking->payments->count() }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="alert alert-{{ $booking->hasSuccessfulPayment() ? 'success' : 'warning' }}">
+                                                    <strong>Trạng thái thanh toán:</strong> 
+                                                    @if($booking->hasSuccessfulPayment())
+                                                        <i class="fas fa-check-circle"></i> Đã thanh toán đầy đủ
+                                                    @else
+                                                        <i class="fas fa-exclamation-triangle"></i> Chưa thanh toán đầy đủ
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                @if($booking->payments->where('status', 'processing')->where('payment_method', 'bank_transfer')->count() > 0)
+                                                    <div class="alert alert-warning">
+                                                        <strong>Chuyển khoản đang chờ xác nhận:</strong>
+                                                        <br>
+                                                        <button type="button" class="btn btn-success btn-sm mt-2" onclick="confirmBankTransfer()">
+                                                            <i class="fas fa-check"></i> Xác nhận thanh toán
+                                                        </button>
+                                                    </div>
+                                                @elseif($booking->payments->where('status', 'processing')->count() > 0)
+                                                    <div class="alert alert-info">
+                                                        <strong>Thanh toán đang xử lý:</strong>
+                                                        <br>
+                                                        <small>Có {{ $booking->payments->where('status', 'processing')->count() }} giao dịch đang xử lý (không phải chuyển khoản)</small>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Chưa có giao dịch thanh toán nào.</strong>
+                                            <br>
+                                            <small class="text-muted">Khách hàng chưa thực hiện thanh toán cho đặt phòng này.</small>
                                         </div>
                                     @endif
                                 </div>
@@ -317,4 +455,106 @@
         </a>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        // Khởi tạo trang
+    });
+
+    function confirmBankTransfer() {
+        if (confirm('Bạn có chắc chắn muốn xác nhận thanh toán chuyển khoản cho đặt phòng này?')) {
+            // Disable button để tránh double click
+            const button = event.target;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+            
+            // Gửi request xác nhận thanh toán
+            fetch('{{ route("admin.bookings.confirm-payment", $booking->id) }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Đã xác nhận thanh toán thành công!');
+                    // Thay vì reload, cập nhật UI
+                    updatePaymentStatus();
+                } else {
+                    alert('Có lỗi xảy ra: ' + data.message);
+                    // Re-enable button
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-check"></i> Xác nhận thanh toán';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi xác nhận thanh toán!');
+                // Re-enable button
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-check"></i> Xác nhận thanh toán';
+            });
+        }
+    }
+
+    function updatePaymentStatus() {
+        // Cập nhật trạng thái payment trong bảng
+        const paymentRows = document.querySelectorAll('tbody tr');
+        paymentRows.forEach(row => {
+            const statusCell = row.querySelector('td:nth-child(3)');
+            if (statusCell) {
+                const badge = statusCell.querySelector('.badge');
+                if (badge && badge.textContent.includes('Đang xử lý')) {
+                    badge.className = 'badge bg-success';
+                    badge.innerHTML = '<i class="fas fa-check-circle"></i> Đã thanh toán';
+                }
+            }
+        });
+
+        // Ẩn nút xác nhận và cập nhật thông báo
+        const confirmButton = document.querySelector('.alert-warning button');
+        if (confirmButton) {
+            const alertDiv = confirmButton.closest('.alert-warning');
+            alertDiv.className = 'alert alert-success';
+            alertDiv.innerHTML = '<strong>Thanh toán đã được xác nhận:</strong><br><i class="fas fa-check-circle"></i> Đã xác nhận thành công';
+        }
+
+        // Cập nhật tổng kết thanh toán
+        const summaryAlert = document.querySelector('.alert-warning strong');
+        if (summaryAlert && summaryAlert.textContent.includes('Chưa thanh toán đầy đủ')) {
+            const parentAlert = summaryAlert.closest('.alert');
+            parentAlert.className = 'alert alert-success';
+            parentAlert.innerHTML = '<strong>Trạng thái thanh toán:</strong> <i class="fas fa-check-circle"></i> Đã thanh toán đầy đủ';
+        }
+
+        // Cập nhật trạng thái booking (nếu đang pending)
+        const bookingStatusBadge = document.querySelector('.card-body .badge');
+        if (bookingStatusBadge && bookingStatusBadge.textContent.includes('Chờ xác nhận')) {
+            bookingStatusBadge.className = 'badge bg-primary';
+            bookingStatusBadge.innerHTML = 'Đã xác nhận';
+        }
+
+        // Cập nhật dropdown trạng thái booking
+        const statusSelect = document.querySelector('select[name="status"]');
+        if (statusSelect) {
+            const currentOption = statusSelect.querySelector('option[selected]');
+            if (currentOption && currentOption.textContent.includes('Chờ xác nhận')) {
+                // Thay đổi option được chọn
+                currentOption.removeAttribute('selected');
+                const confirmedOption = statusSelect.querySelector('option[value="confirmed"]');
+                if (confirmedOption) {
+                    confirmedOption.setAttribute('selected', 'selected');
+                    confirmedOption.textContent = 'Đã xác nhận (Hiện tại)';
+                }
+            }
+        }
+
+        // Hiển thị thông báo thành công
+        AdminUtils.showToast('Đã xác nhận thanh toán và cập nhật trạng thái booking thành công!', 'success');
+    }
+</script>
 @endsection 

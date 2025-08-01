@@ -9,10 +9,14 @@ use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\AdminNotification;
+use App\Mail\BookingConfirmationMail;
+use App\Mail\PaymentConfirmationMail;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Collection;
@@ -46,12 +50,13 @@ class AdminBookingService implements AdminBookingServiceInterface
     public function getBookingsWithPagination(Request $request): LengthAwarePaginator
     {
         $filters = [
-            'status' => $request->get('status')
+            'status' => $request->get('status'),
+            'payment_status' => $request->get('payment_status')
         ];
-        
+
         return $this->adminBookingRepository->getAllWithPagination($filters);
     }
-    
+
     /**
      * Lấy chi tiết đặt phòng
      *
@@ -61,14 +66,14 @@ class AdminBookingService implements AdminBookingServiceInterface
     public function getBookingDetails($id): Booking
     {
         $booking = $this->adminBookingRepository->findById($id);
-        
+
         if (!$booking) {
             throw new \Exception('Không tìm thấy đặt phòng');
         }
-        
+
         return $booking;
     }
-    
+
     /**
      * Tạo đặt phòng mới
      *
@@ -85,21 +90,21 @@ class AdminBookingService implements AdminBookingServiceInterface
             'check_out_date' => 'required|date|after:check_in_date',
             'status' => 'required|in:pending,confirmed',
         ]);
-        
+
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
-        
+
         // Tính tổng tiền
         $room = $this->roomRepository->findById($data['room_id']);
         $checkIn = new \DateTime($data['check_in_date']);
         $checkOut = new \DateTime($data['check_out_date']);
         $nights = $checkIn->diff($checkOut)->days;
         $totalPrice = $room->price * $nights;
-        
+
         // Tạo booking ID duy nhất
         $bookingId = 'BK' . date('ymd') . strtoupper(Str::random(5));
-        
+
         // Chuẩn bị dữ liệu
         $bookingData = [
             'user_id' => $data['user_id'],
@@ -110,11 +115,11 @@ class AdminBookingService implements AdminBookingServiceInterface
             'price' => $totalPrice,
             'status' => $data['status']
         ];
-        
+
         // Tạo đặt phòng
         return $this->adminBookingRepository->create($bookingData);
     }
-    
+
     /**
      * Cập nhật đặt phòng
      *
@@ -132,37 +137,39 @@ class AdminBookingService implements AdminBookingServiceInterface
             'check_out_date' => 'required|date|after:check_in_date',
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show',
         ]);
-        
+
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
-        
+
         $booking = $this->adminBookingRepository->findById($id);
-        
+
         if (!$booking) {
             throw new \Exception('Không tìm thấy đặt phòng');
         }
-        
+
         // Tính lại tổng tiền nếu thay đổi phòng hoặc ngày
-        if ($booking->room_id != $data['room_id'] || 
-            $booking->check_in_date != $data['check_in_date'] || 
-            $booking->check_out_date != $data['check_out_date']) {
-            
+        if (
+            $booking->room_id != $data['room_id'] ||
+            $booking->check_in_date != $data['check_in_date'] ||
+            $booking->check_out_date != $data['check_out_date']
+        ) {
+
             $room = $this->roomRepository->findById($data['room_id']);
             $checkIn = new \DateTime($data['check_in_date']);
             $checkOut = new \DateTime($data['check_out_date']);
             $nights = $checkIn->diff($checkOut)->days;
             $totalPrice = $room->price * $nights;
-            
+
             $data['price'] = $totalPrice;
         }
-        
+
         // Cập nhật đặt phòng
         $this->adminBookingRepository->update($booking, $data);
-        
+
         return $this->adminBookingRepository->findById($id);
     }
-    
+
     /**
      * Xóa đặt phòng
      *
@@ -173,7 +180,7 @@ class AdminBookingService implements AdminBookingServiceInterface
     {
         return $this->adminBookingRepository->delete($id);
     }
-    
+
     /**
      * Cập nhật trạng thái đặt phòng
      *
@@ -234,7 +241,7 @@ class AdminBookingService implements AdminBookingServiceInterface
         }
         return $success;
     }
-    
+
     /**
      * Lấy dữ liệu cho dashboard
      *
@@ -244,16 +251,16 @@ class AdminBookingService implements AdminBookingServiceInterface
     {
         // Đếm số đặt phòng hôm nay
         $todayBookings = $this->adminBookingRepository->countToday();
-        
+
         // Tính doanh thu tháng hiện tại
         $monthlyRevenue = $this->adminBookingRepository->calculateMonthlyRevenue();
-        
+
         // Đếm số đặt phòng đang chờ xác nhận
         $pendingBookings = $this->adminBookingRepository->countByStatus('pending');
-        
+
         // Lấy danh sách đặt phòng gần đây
         $recentBookings = $this->adminBookingRepository->getRecent(5);
-        
+
         // Thống kê theo trạng thái
         $statusCounts = [
             'pending' => $this->adminBookingRepository->countByStatus('pending'),
@@ -261,7 +268,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             'cancelled' => $this->adminBookingRepository->countByStatus('cancelled'),
             'completed' => $this->adminBookingRepository->countByStatus('completed'),
         ];
-        
+
         return [
             'todayBookings' => $todayBookings,
             'monthlyRevenue' => $monthlyRevenue,
@@ -270,7 +277,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             'statusCounts' => $statusCounts
         ];
     }
-    
+
     /**
      * Lấy dữ liệu cho báo cáo
      *
@@ -283,18 +290,18 @@ class AdminBookingService implements AdminBookingServiceInterface
         if (Auth::user()->role?->name == 'staff') {
             throw new \Exception('Bạn không có quyền truy cập trang báo cáo.');
         }
-        
+
         $filters = [
             'from_date' => $request->get('from_date'),
             'to_date' => $request->get('to_date'),
             'status' => $request->get('status')
         ];
-        
+
         $bookings = $this->adminBookingRepository->getBookingsForReport($filters);
-        
+
         // Tính toán tổng doanh thu
         $totalRevenue = $bookings->sum('price');
-        
+
         // Thống kê theo trạng thái
         $statusStats = $bookings->groupBy('status')
             ->map(function ($items) {
@@ -303,7 +310,7 @@ class AdminBookingService implements AdminBookingServiceInterface
                     'revenue' => $items->sum('price')
                 ];
             });
-        
+
         return [
             'bookings' => $bookings,
             'totalRevenue' => $totalRevenue,
@@ -311,7 +318,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             'filters' => $filters
         ];
     }
-    
+
     /**
      * Lấy dữ liệu cho form tạo đặt phòng
      *
@@ -321,13 +328,13 @@ class AdminBookingService implements AdminBookingServiceInterface
     {
         $rooms = $this->roomRepository->getAll();
         $users = $this->userRepository->getAll();
-        
+
         return [
             'rooms' => $rooms,
             'users' => $users
         ];
     }
-    
+
     /**
      * Lấy dữ liệu cho form chỉnh sửa đặt phòng
      *
@@ -337,14 +344,14 @@ class AdminBookingService implements AdminBookingServiceInterface
     public function getEditFormData(int $id): array
     {
         $booking = $this->adminBookingRepository->findById($id);
-        
+
         if (!$booking) {
             throw new \Exception('Không tìm thấy đặt phòng');
         }
-        
+
         $rooms = $this->roomRepository->getAll();
         $users = $this->userRepository->getAll();
-        
+
         return [
             'booking' => $booking,
             'rooms' => $rooms,
@@ -392,7 +399,7 @@ class AdminBookingService implements AdminBookingServiceInterface
         for ($i = $currentIndex + 1; $i < count($statusOrder); $i++) {
             $nextStatus = $statusOrder[$i];
             if (!in_array($nextStatus, ['cancelled', 'no_show'])) {
-                $validStatuses[$nextStatus] = match($nextStatus) {
+                $validStatuses[$nextStatus] = match ($nextStatus) {
                     'pending' => 'Chờ xác nhận',
                     'confirmed' => 'Đã xác nhận',
                     'checked_in' => 'Đã nhận phòng',
@@ -630,7 +637,7 @@ class AdminBookingService implements AdminBookingServiceInterface
         $user = \App\Models\User::find($bookingData['user_id']);
         $room = \App\Models\Room::find($bookingData['room_id']);
 
-        $statusText = match($newStatus) {
+        $statusText = match ($newStatus) {
             'pending' => 'Chờ xác nhận',
             'confirmed' => 'Đã xác nhận',
             'checked_in' => 'Đã nhận phòng',
@@ -664,7 +671,7 @@ class AdminBookingService implements AdminBookingServiceInterface
     {
         // Tạo ghi chú hệ thống
         $this->createSystemNote($booking->id, 'Đặt phòng mới được tạo', 'system');
-        
+
         // Tạo thông báo admin
         $this->createBookingNotification($booking->toArray());
     }
@@ -678,7 +685,7 @@ class AdminBookingService implements AdminBookingServiceInterface
         foreach ($changes as $field => $value) {
             $changeText[] = ucfirst($field) . ': ' . $value;
         }
-        
+
         $this->createSystemNote($booking->id, 'Cập nhật thông tin: ' . implode(', ', $changeText), 'system');
     }
 
@@ -696,6 +703,14 @@ class AdminBookingService implements AdminBookingServiceInterface
     public function onBookingConfirmed(Booking $booking): void
     {
         $this->createSystemNote($booking->id, 'Đặt phòng đã được xác nhận', 'system');
+
+        // Gửi email xác nhận đặt phòng
+        try {
+            $latestPayment = $booking->payments->where('status', 'completed')->first();
+            Mail::to($booking->user->email)->send(new BookingConfirmationMail($booking, $latestPayment));
+        } catch (\Exception $e) {
+            Log::error('Failed to send booking confirmation email: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -783,7 +798,7 @@ class AdminBookingService implements AdminBookingServiceInterface
     private function handleStatusChange(Booking $booking, string $oldStatus, string $newStatus): void
     {
         // Tạo ghi chú hệ thống
-        $statusText = match($newStatus) {
+        $statusText = match ($newStatus) {
             'pending' => 'Chờ xác nhận',
             'confirmed' => 'Đã xác nhận',
             'checked_in' => 'Đã nhận phòng',
@@ -794,7 +809,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             default => 'Không xác định'
         };
 
-        $oldStatusText = match($oldStatus) {
+        $oldStatusText = match ($oldStatus) {
             'pending' => 'Chờ xác nhận',
             'confirmed' => 'Đã xác nhận',
             'checked_in' => 'Đã nhận phòng',
@@ -833,4 +848,4 @@ class AdminBookingService implements AdminBookingServiceInterface
                 break;
         }
     }
-} 
+}

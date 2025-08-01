@@ -154,9 +154,9 @@ $(document).ready(function() {
     if (typeof initDropdownPositioning === 'function') initDropdownPositioning();
     if (typeof initDropdownClose === 'function') initDropdownClose();
     
-    // Auto-hide alerts sau 5 giây
+    // Auto-hide alerts sau 5 giây (trừ alerts quan trọng)
     setTimeout(function() {
-        $('.alert').fadeOut();
+        $('.alert:not(.alert-warning):not(.alert-success)').fadeOut();
     }, 5000);
     
     // Smooth scroll cho anchor links

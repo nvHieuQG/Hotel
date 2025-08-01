@@ -119,7 +119,7 @@
                                             <div class="fw-bold text-truncate" style="font-size: 1.1em;" title="{{ $room->room_number }}">{{ $room->room_number }}</div>
                                             <div class="small text-muted text-wrap" style="white-space: normal;" title="{{ $room->roomType->name }}">{{ $room->roomType->name }}</div>
                                             <div class="mt-1">
-                                                <span class="fw-semibold small">
+                                                <span class="fw-semibold small text-white">
                                                     {{ $statusText[$status] ?? 'Không rõ' }}
                                                 </span>
                                             </div>

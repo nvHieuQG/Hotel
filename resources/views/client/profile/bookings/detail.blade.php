@@ -1,4 +1,32 @@
 <div class="booking-detail">
+    <!-- Ảnh phòng -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h6 class="text-info mb-3"><i class="fas fa-image mr-2"></i>Ảnh phòng</h6>
+            <div class="room-image-container">
+                @if($booking->room->primaryImage)
+                    <img src="{{ asset('storage/' . $booking->room->primaryImage->image_url) }}" 
+                         alt="Ảnh phòng {{ $booking->room->name }}" 
+                         class="img-fluid rounded shadow-sm" 
+                         style="max-height: 300px; width: 100%; object-fit: cover;">
+                @elseif($booking->room->firstImage)
+                    <img src="{{ asset('storage/' . $booking->room->firstImage->image_url) }}" 
+                         alt="Ảnh phòng {{ $booking->room->name }}" 
+                         class="img-fluid rounded shadow-sm" 
+                         style="max-height: 300px; width: 100%; object-fit: cover;">
+                @else
+                    <div class="bg-light rounded d-flex justify-content-center align-items-center" 
+                         style="height: 300px;">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-image fa-3x mb-3"></i>
+                            <p>Chưa có ảnh phòng</p>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+    
     <div class="row">
         <div class="col-md-6">
             <h6 class="text-info mb-3"><i class="fas fa-calendar-check mr-2"></i>Thông Tin Đặt Phòng</h6>
@@ -49,12 +77,30 @@
                     <td>{{ $booking->user->email }}</td>
                 </tr>
                 <tr>
+                    <td><strong>Sức chứa phòng:</strong></td>
+                    <td>{{ $booking->room->roomType->capacity ?? 'Chưa cung cấp' }} người</td>
+                </tr>
+                <tr>
                     <td><strong>Số điện thoại:</strong></td>
-                    <td>{{ $booking->phone ?? 'Chưa cung cấp' }}</td>
+                    <td>{{ $booking->user->phone ?? 'Chưa cung cấp' }}</td>
                 </tr>
                 <tr>
                     <td><strong>Ghi chú:</strong></td>
-                    <td>{{ $booking->special_requests ?? 'Không có' }}</td>
+                    <td>
+                        @php
+                            $customerNotes = $booking->notes()->where('type', 'customer')->get();
+                        @endphp
+                        @if($customerNotes->count() > 0)
+                            @foreach($customerNotes as $note)
+                                <div class="mb-1">
+                                    <small class="text-muted">{{ $note->created_at->format('d/m/Y H:i') }}:</small>
+                                    <div>{{ $note->content }}</div>
+                                </div>
+                            @endforeach
+                        @else
+                            Không có
+                        @endif
+                    </td>
                 </tr>
                 <tr>
                     <td><strong>Ngày đặt:</strong></td>
