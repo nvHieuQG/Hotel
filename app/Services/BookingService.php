@@ -136,6 +136,82 @@ class BookingService implements BookingServiceInterface
     }
 
     /**
+     * Tạo đặt phòng tạm thời (chờ thanh toán)
+     *
+     * @param array $data
+     * @return Booking
+     */
+    public function createPendingBooking(array $data): Booking
+    {
+        // 1. Validation
+        $validator = Validator::make($data, [
+            'room_type_id' => 'required|exists:room_types,id',
+            'check_in_date' => 'required|date|after_or_equal:today',
+            'check_out_date' => 'required|date|after:check_in_date',
+            'guests' => 'required|integer|min:1',
+            'phone' => 'nullable|string|max:20',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
+        }
+
+        // Ép kiểu về string
+        $checkInDate = is_object($data['check_in_date']) ? $data['check_in_date']->format('Y-m-d') : $data['check_in_date'];
+        $checkOutDate = is_object($data['check_out_date']) ? $data['check_out_date']->format('Y-m-d') : $data['check_out_date'];
+
+        $checkInDateTime = $checkInDate . ' 14:00:00';
+        $checkOutDateTime = $checkOutDate . ' 12:00:00';
+
+        // 3. Kiểm tra phòng trống
+        $availableRoom = $this->roomRepository->findAvailableRoomByType(
+            $data['room_type_id'],
+            $checkInDateTime,
+            $checkOutDateTime
+        );
+
+        if (!$availableRoom) {
+            throw ValidationException::withMessages([
+                'room' => ['Hiện không còn phòng trống cho loại phòng này trong thời gian đã chọn.'],
+            ]);
+        }
+
+        // 4. Tính tiền
+        $checkInDate = (new \DateTime($checkInDateTime))->format('Y-m-d');
+        $checkOutDate = (new \DateTime($checkOutDateTime))->format('Y-m-d');
+        $nights = (new \DateTime($checkInDate))->diff(new \DateTime($checkOutDate))->days;
+        if ($nights < 1) $nights = 1;
+        $totalPrice = $availableRoom->roomType->price * $nights;
+
+        // 5. Tạo booking ID
+        $bookingId = 'BK' . date('ymd') . strtoupper(Str::random(5));
+
+        $bookingData = [
+            'user_id' => Auth::id(),
+            'booking_id' => $bookingId,
+            'room_id' => $availableRoom->id,
+            'check_in_date' => $checkInDateTime,
+            'check_out_date' => $checkOutDateTime,
+            'price' => $totalPrice,
+            'status' => 'pending_payment', // Trạng thái chờ thanh toán
+            'phone' => $data['phone'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ];
+
+        Log::info('Creating pending booking', [
+            'check_in' => $checkInDateTime,
+            'check_out' => $checkOutDateTime,
+            'nights' => $nights,
+            'room_price' => $availableRoom->roomType->price,
+            'total_price' => $totalPrice,
+            'status' => 'pending_payment'
+        ]);
+
+        return $this->bookingRepository->create($bookingData);
+    }
+
+    /**
      * Lấy danh sách đặt phòng của người dùng hiện tại (có phân trang)
      *
      * @param int $perPage
@@ -524,7 +600,7 @@ class BookingService implements BookingServiceInterface
     private function validateNoteCreationPermission($user, array $data): void
     {
         $userRoles = $this->getUserRoles($user);
-        
+
         // System type chỉ được tạo bởi hệ thống (user_id = 1)
         if ($data['type'] === 'system') {
             if ($user->id !== 1) {
@@ -532,7 +608,7 @@ class BookingService implements BookingServiceInterface
             }
             return;
         }
-        
+
         // Admin có thể tạo mọi loại ghi chú
         if (in_array('admin', $userRoles)) {
             return;
@@ -568,15 +644,15 @@ class BookingService implements BookingServiceInterface
     private function getUserRoles($user): array
     {
         $roles = [];
-        
+
         if ($user->role && $user->role->name === 'admin') {
             $roles[] = 'admin';
         }
-        
+
         if ($user->role && $user->role->name === 'staff') {
             $roles[] = 'staff';
         }
-        
+
         if ($user->role && $user->role->name === 'customer') {
             $roles[] = 'customer';
         }

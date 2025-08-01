@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth'])->group(function () {
     // Booking - Đặt phòng
     Route::get('/booking', [BookingController::class, 'booking'])->name('booking');
+    Route::get('/booking/confirm', [BookingController::class, 'confirm'])->name('booking.confirm');
     Route::post('/booking', [BookingController::class, 'storeBooking']);
     Route::post('/booking/cancel/{id}', [BookingController::class, 'cancelBooking'])->name('booking.cancel');
 
@@ -110,7 +111,6 @@ Route::middleware(['auth', 'check.booking.access'])->group(function () {
     Route::get('/booking-notes/{bookingId}/{id}', [BookingController::class, 'notesShow'])->name('booking-notes.show');
     Route::post('/booking-notes/{bookingId}/request', [BookingController::class, 'notesStoreRequest'])->name('booking-notes.store-request');
     Route::post('/booking-notes/{bookingId}/response', [BookingController::class, 'notesStoreResponse'])->name('booking-notes.store-response');
-
 });
 
 // Routes công khai cho room type reviews (chỉ hiển thị)
@@ -119,8 +119,8 @@ Route::get('/rooms/{id}/reviews-ajax', [HotelController::class, 'getRoomReviewsA
 // Admin Routes
 Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     // Dashboard
-    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard.page');
+    // Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     // Quản lý đặt phòng
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
@@ -131,7 +131,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
     Route::get('notifications/{id}', [AdminBookingController::class, 'notificationShow'])->name('notifications.show');
     Route::delete('notifications/{id}', [AdminBookingController::class, 'destroy'])->name('notifications.destroy');
-    
+
     // API thông báo
     Route::prefix('api/notifications')->name('notifications.')->group(function () {
         Route::get('unread', [AdminBookingController::class, 'getUnreadNotifications'])->name('unread');
@@ -152,6 +152,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     // Quản lý dịch vụ booking
     Route::post('bookings/{id}/services/add', [AdminBookingController::class, 'addServiceToBooking'])->name('bookings.services.add');
     Route::delete('bookings/{id}/services/{bookingServiceId}', [AdminBookingController::class, 'destroyServiceFromBooking'])->name('bookings.services.destroy');
+    Route::post('bookings/{id}/confirm-payment', [AdminBookingController::class, 'confirmPayment'])->name('bookings.confirm-payment');
 
     // Quản lý phòng
     Route::resource('rooms', AdminRoomController::class);
@@ -227,7 +228,18 @@ Route::get('/search-rooms', [RoomController::class, 'search'])->name('rooms.sear
 
 // Payment
 Route::get('/confirm-info-payment/{booking}', [PaymentController::class, 'confirmInfo'])->name('confirm-info-payment');
-Route::get('/payment-method/{booking}', [PaymentController::class, 'paymentMethod'])->name('payment-method');
+Route::get('/payment-method/{booking?}', [PaymentController::class, 'paymentMethod'])->name('payment-method');
+Route::post('/ajax-booking', [BookingController::class, 'ajaxStoreBooking'])->name('ajax-booking');
+Route::get('/api/room-type/{id}/image', [BookingController::class, 'getRoomTypeImage'])->name('api.room-type.image');
+
+
+Route::get('/payment/bank-transfer/{booking}', [PaymentController::class, 'processBankTransfer'])->name('payment.bank-transfer');
+Route::post('/payment/bank-transfer/{booking}/confirm', [PaymentController::class, 'confirmBankTransfer'])->name('payment.bank-transfer.confirm');
+Route::get('/payment/credit-card/{booking}', [PaymentController::class, 'processCreditCard'])->name('payment.credit-card');
+Route::post('/payment/credit-card/{booking}/confirm', [PaymentController::class, 'confirmCreditCard'])->name('payment.credit-card.confirm');
+Route::get('/payment/success/{booking}', [PaymentController::class, 'success'])->name('payment.success');
+Route::get('/payment/failed', [PaymentController::class, 'failed'])->name('payment.failed');
+Route::get('/payment/history/{booking}', [PaymentController::class, 'history'])->name('payment.history');
 
 // User Profile Routes (chỉ cần đăng nhập, không cần xác minh email)
 Route::middleware('auth')->group(function () {

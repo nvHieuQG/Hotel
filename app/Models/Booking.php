@@ -128,6 +128,46 @@ class Booking extends Model
     }
 
     /**
+     * Get the payments for this booking.
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Get the latest payment for this booking.
+     */
+    public function latestPayment()
+    {
+        return $this->hasOne(Payment::class)->latest();
+    }
+
+    /**
+     * Check if booking has successful payment
+     */
+    public function hasSuccessfulPayment()
+    {
+        return $this->payments()->where('status', 'completed')->exists();
+    }
+
+    /**
+     * Get the total amount paid for this booking
+     */
+    public function getTotalPaidAttribute()
+    {
+        return $this->payments()->where('status', 'completed')->sum('amount');
+    }
+
+    /**
+     * Check if booking is fully paid
+     */
+    public function isFullyPaid()
+    {
+        return $this->total_paid >= $this->total_booking_price;
+    }
+
+    /**
      * Tính tổng giá tiền của các dịch vụ trong booking.
      */
     public function getTotalServicesPriceAttribute()
@@ -198,8 +238,9 @@ class Booking extends Model
      */
     public function getStatusTextAttribute()
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'Chờ xác nhận',
+            'pending_payment' => 'Chờ thanh toán',
             'confirmed' => 'Đã xác nhận',
             'checked_in' => 'Đã nhận phòng',
             'checked_out' => 'Đã trả phòng',

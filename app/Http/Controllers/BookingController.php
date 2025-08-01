@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Interfaces\Services\BookingServiceInterface;
-
-
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Models\RoomType;
 
 class BookingController extends Controller
 {
@@ -23,29 +23,171 @@ class BookingController extends Controller
     // ==================== BOOKING METHODS ====================
 
     /**
-     * Hiển thị trang đặt phòng
+     * Hiển thị trang xác nhận đặt phòng
      */
-    public function booking()
+    public function confirm(Request $request)
     {
         try {
             $data = $this->bookingService->getBookingPageData();
-            return view('client.booking.index', $data);
+
+            // Xử lý tham số từ URL để pre-fill form
+            $bookingData = [
+                'room_type_id' => $request->get('room_type_id'),
+                'check_in_date' => $request->get('check_in_date'),
+                'check_out_date' => $request->get('check_out_date'),
+                'guests' => $request->get('guests'),
+                'phone' => $request->get('phone'),
+                'notes' => $request->get('notes'),
+            ];
+
+            // Loại bỏ các giá trị null và validate dữ liệu
+            $bookingData = array_filter($bookingData, function ($value) {
+                return $value !== null && $value !== '';
+            });
+
+            // Validate room_type_id nếu có
+            if (isset($bookingData['room_type_id'])) {
+                $roomType = RoomType::find($bookingData['room_type_id']);
+                if (!$roomType) {
+                    unset($bookingData['room_type_id']);
+                }
+            }
+
+            // Validate dates nếu có
+            if (isset($bookingData['check_in_date'])) {
+                if (!strtotime($bookingData['check_in_date']) || strtotime($bookingData['check_in_date']) < strtotime('today')) {
+                    unset($bookingData['check_in_date']);
+                }
+            }
+
+            if (isset($bookingData['check_out_date'])) {
+                if (
+                    !strtotime($bookingData['check_out_date']) ||
+                    (isset($bookingData['check_in_date']) && strtotime($bookingData['check_out_date']) <= strtotime($bookingData['check_in_date']))
+                ) {
+                    unset($bookingData['check_out_date']);
+                }
+            }
+
+            // Validate guests nếu có
+            if (isset($bookingData['guests'])) {
+                $guests = (int) $bookingData['guests'];
+                if ($guests < 1 || $guests > 5) {
+                    unset($bookingData['guests']);
+                } else {
+                    $bookingData['guests'] = $guests;
+                }
+            }
+
+            // Thêm bookingData vào data để truyền đến view
+            $data['bookingData'] = $bookingData;
+
+            return view('client.booking.confirm', $data);
         } catch (\Exception $e) {
-            return redirect()->route('verification.notice')
-                ->with('warning', $e->getMessage());
+            Log::error('Booking confirm error: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['message' => 'Có lỗi xảy ra khi tải trang đặt phòng. Vui lòng thử lại.']);
         }
     }
 
     /**
-     * Lưu thông tin đặt phòng
+     * Hiển thị trang đặt phòng (chuyển hướng đến trang confirm)
+     */
+    public function booking(Request $request)
+    {
+        // Chuyển hướng đến trang confirm với các tham số từ URL
+        $params = $request->only(['room_type_id', 'check_in_date', 'check_out_date', 'guests', 'phone', 'notes']);
+
+        if (!empty($params)) {
+            return redirect()->route('booking.confirm', $params);
+        }
+
+        return redirect()->route('booking.confirm');
+    }
+
+    /**
+     * Lưu thông tin đặt phòng (không dùng nữa, chuyển sang ajaxStoreBooking)
      */
     public function storeBooking(Request $request)
     {
+        // Chuyển hướng đến trang confirm
+        return redirect()->route('booking.confirm');
+    }
+
+    public function ajaxStoreBooking(Request $request)
+    {
         try {
-            $booking = $this->bookingService->createBooking($request->all());
-            return redirect()->route('confirm-info-payment', ['booking' => $booking->id]);
+            $validated = $request->validate([
+                'room_type_id' => 'required|exists:room_types,id',
+                'check_in_date' => 'required|date|after_or_equal:today',
+                'check_out_date' => 'required|date|after:check_in_date',
+                'guests' => 'required|integer|min:1|max:5',
+                'phone' => 'required|string|max:20',
+                'notes' => 'nullable|string|max:1000',
+            ]);
+
+            // Tạo booking với trạng thái pending_payment (chờ thanh toán)
+            $booking = $this->bookingService->createPendingBooking($validated + ['user_id' => Auth::id()]);
+            $booking->load('user', 'room.roomType', 'room.primaryImage', 'room.firstImage');
+
+            // Lấy URL ảnh phòng
+            $roomImage = null;
+            if ($booking->room->primaryImage) {
+                $roomImage = asset('storage/' . $booking->room->primaryImage->image_url);
+            } elseif ($booking->room->firstImage) {
+                $roomImage = asset('storage/' . $booking->room->firstImage->image_url);
+            }
+
+            return response()->json([
+                'success' => true,
+                'booking' => $booking,
+                'user' => $booking->user,
+                'roomType' => $booking->room->roomType ?? null,
+                'roomImage' => $roomImage,
+            ]);
         } catch (\Exception $e) {
-            return back()->withErrors(['message' => $e->getMessage()])->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+
+
+    /**
+     * Lấy ảnh phòng cho loại phòng
+     */
+    public function getRoomTypeImage($id)
+    {
+        try {
+            $roomType = \App\Models\RoomType::findOrFail($id);
+
+            // Lấy phòng đầu tiên của loại phòng này
+            $representativeRoom = $roomType->rooms()->with(['primaryImage', 'firstImage'])->first();
+
+            $imageUrl = null;
+            if ($representativeRoom) {
+                if ($representativeRoom->primaryImage) {
+                    $imageUrl = asset('storage/' . $representativeRoom->primaryImage->image_url);
+                } elseif ($representativeRoom->firstImage) {
+                    $imageUrl = asset('storage/' . $representativeRoom->firstImage->image_url);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'image_url' => $imageUrl,
+                'room_type_name' => $roomType->name
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể tải ảnh phòng'
+            ], 404);
         }
     }
 
@@ -80,7 +222,12 @@ class BookingController extends Controller
         if ($booking->user_id !== Auth::id()) {
             abort(403, 'Bạn không có quyền xem đặt phòng này.');
         }
-        return view('client.booking.detail', compact('booking'));
+
+        // Lấy thông tin thanh toán
+        $paymentHistory = $booking->payments()->orderBy('created_at', 'desc')->get();
+        $canPay = in_array($booking->status, ['pending', 'confirmed']) && !$booking->hasSuccessfulPayment();
+
+        return view('client.booking.detail', compact('booking', 'paymentHistory', 'canPay'));
     }
 
     /**
@@ -113,7 +260,7 @@ class BookingController extends Controller
     {
         try {
             $notes = $this->bookingService->getVisibleNotes($bookingId);
-            
+
             $notesWithPermissions = $notes->map(function ($note) {
                 $note->can_edit = $this->bookingService->canEditNote($note->id);
                 $note->can_delete = $this->bookingService->canDeleteNote($note->id);
@@ -121,7 +268,7 @@ class BookingController extends Controller
                 $note->visibility_text = $this->getVisibilityText($note->visibility);
                 return $note;
             });
-            
+
             return view('booking-notes.index', compact('notesWithPermissions', 'bookingId'));
         } catch (\Exception $e) {
             return back()->with('error', 'Không thể tải danh sách ghi chú: ' . $e->getMessage());
@@ -152,7 +299,7 @@ class BookingController extends Controller
             ]);
 
             $note = $this->bookingService->createNote($validatedData);
-            
+
             $user = Auth::user();
             if ($user->role && $user->role->name === 'admin') {
                 return redirect()->route('admin.bookings.show', $request->booking_id)
@@ -218,15 +365,15 @@ class BookingController extends Controller
     {
         try {
             $note = $this->bookingService->getNoteById($id);
-            
+
             if (!$note) {
                 return back()->with('error', 'Không tìm thấy ghi chú');
             }
-            
+
             if (!$this->bookingService->canEditNote($id)) {
                 return back()->with('error', 'Bạn không có quyền chỉnh sửa ghi chú này');
             }
-            
+
             $booking = $note->booking;
             return view('booking-notes.edit', compact('note', 'booking'));
         } catch (\Exception $e) {
@@ -246,7 +393,7 @@ class BookingController extends Controller
             ]);
 
             $success = $this->bookingService->updateNote($id, $validatedData);
-            
+
             if ($success) {
                 $user = Auth::user();
                 $note = $this->bookingService->getNoteById($id);
@@ -271,18 +418,18 @@ class BookingController extends Controller
     {
         try {
             $note = $this->bookingService->getNoteById($id);
-            
+
             if (!$note) {
                 return back()->with('error', 'Không tìm thấy ghi chú');
             }
-            
+
             if (!$this->bookingService->canDeleteNote($id)) {
                 return back()->with('error', 'Bạn không có quyền xóa ghi chú này');
             }
-            
+
             $bookingId = $note->booking_id;
             $success = $this->bookingService->deleteNote($id);
-            
+
             if ($success) {
                 $user = Auth::user();
                 if ($user->role && $user->role->name === 'admin') {
@@ -306,15 +453,15 @@ class BookingController extends Controller
     {
         try {
             $note = $this->bookingService->getNoteById($id);
-            
+
             if (!$note) {
                 return back()->with('error', 'Không tìm thấy ghi chú');
             }
-            
+
             if (!$this->bookingService->canViewNote($id)) {
                 return back()->with('error', 'Bạn không có quyền xem ghi chú này');
             }
-            
+
             return view('booking-notes.show', compact('note'));
         } catch (\Exception $e) {
             return back()->with('error', 'Không thể tải ghi chú: ' . $e->getMessage());
@@ -333,7 +480,7 @@ class BookingController extends Controller
 
             $keyword = $request->input('keyword');
             $notes = $this->bookingService->searchNotes($bookingId, $keyword);
-            
+
             $notesWithPermissions = $notes->map(function ($note) {
                 $note->can_edit = $this->bookingService->canEditNote($note->id);
                 $note->can_delete = $this->bookingService->canDeleteNote($note->id);
@@ -341,7 +488,7 @@ class BookingController extends Controller
                 $note->visibility_text = $this->getVisibilityText($note->visibility);
                 return $note;
             });
-            
+
             return view('booking-notes.index', compact('notesWithPermissions', 'bookingId', 'keyword'));
         } catch (\Exception $e) {
             return back()->with('error', 'Không thể tìm kiếm ghi chú: ' . $e->getMessage());
@@ -356,13 +503,13 @@ class BookingController extends Controller
         // Lấy tất cả booking của user hiện tại
         $bookings = $this->bookingService->getCurrentUserBookings();
         $allNotes = collect();
-        
+
         // Lấy ghi chú từ tất cả booking
         foreach ($bookings as $booking) {
             $notes = $this->bookingService->getVisibleNotes($booking->id);
             $allNotes = $allNotes->merge($notes);
         }
-        
+
         return view('client.profile.notes.partial', compact('allNotes'));
     }
 
@@ -378,7 +525,7 @@ class BookingController extends Controller
             'staff' => 'Nhân viên',
             'admin' => 'Quản trị'
         ];
-        
+
         return $types[$type] ?? $type;
     }
 
@@ -392,7 +539,7 @@ class BookingController extends Controller
             'private' => 'Riêng tư',
             'internal' => 'Nội bộ'
         ];
-        
+
         return $visibilities[$visibility] ?? $visibility;
     }
 }

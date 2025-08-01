@@ -18,7 +18,7 @@ interface BookingServiceInterface
      * @return array
      */
     public function getBookingPageData(): array;
-    
+
     /**
      * Tạo đặt phòng mới
      *
@@ -26,7 +26,15 @@ interface BookingServiceInterface
      * @return Booking
      */
     public function createBooking(array $data): Booking;
-    
+
+    /**
+     * Tạo đặt phòng tạm thời (chờ thanh toán)
+     *
+     * @param array $data
+     * @return Booking
+     */
+    public function createPendingBooking(array $data): Booking;
+
     /**
      * Lấy danh sách đặt phòng của người dùng hiện tại (có phân trang)
      *
@@ -56,7 +64,7 @@ interface BookingServiceInterface
      * @return bool
      */
     public function canBeReviewed(int $bookingId): bool;
-    
+
     /**
      * Hủy đặt phòng
      *
@@ -267,4 +275,4 @@ interface BookingServiceInterface
      * @return Collection
      */
     public function getNotesByDateRange(int $bookingId, string $startDate, string $endDate): Collection;
-} 
+}

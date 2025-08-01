@@ -26,6 +26,20 @@
     {{-- Danh sách phòng & Tìm kiếm --}}
     <section class="ftco-section bg-light">
         <div class="container">
+            {{-- Thông báo tìm kiếm --}}
+            @if($searchMessage)
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-search"></i> {{ $searchMessage }}
+                            <a href="{{ route('rooms') }}" class="float-right text-decoration-none">
+                                <i class="fas fa-times"></i> Xóa bộ lọc
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="row">
                 {{-- Danh sách phòng được tìm thấy --}}
                 <div class="col-lg-9">
@@ -38,7 +52,20 @@
                                         {{-- Đường dẫn và hình ảnh loại phòng --}}
                                         <a href="{{ route('rooms-single', $type->id) }}"
                                             class="img d-flex justify-content-center align-items-center"
-                                            style="background-image: url(client/images/room-{{ ($loop->iteration % 6) + 1 }}.jpg);">
+                                            style="background-image: url(
+                                                @php
+                                                    $representativeRoom = $type->rooms()->first();
+                                                    $roomImage = null;
+                                                    if ($representativeRoom) {
+                                                        if ($representativeRoom->primaryImage) {
+                                                            $roomImage = asset('storage/' . $representativeRoom->primaryImage->image_url);
+                                                        } elseif ($representativeRoom->firstImage) {
+                                                            $roomImage = asset('storage/' . $representativeRoom->firstImage->image_url);
+                                                        }
+                                                    }
+                                                    echo $roomImage ?: 'client/images/room-' . (($loop->iteration % 6) + 1) . '.jpg';
+                                                @endphp
+                                            );">
                                             <div class="icon d-flex justify-content-center align-items-center">
                                                 <span class="icon-search2"></span>
                                             </div>
@@ -61,10 +88,17 @@
                                                 <a href="{{ route('rooms-single', $type->id) }}" class="btn-custom">
                                                     Chi tiết <span class="icon-long-arrow-right"></span>
                                                 </a>
-                                                <a href="{{ route('booking') }}?room_type_id={{ $type->id }}"
-                                                    class="btn-custom ml-2">
-                                                    Đặt ngay <span class="icon-long-arrow-right"></span>
-                                                </a>
+                                                @if($searchParams)
+                                                    <a href="{{ route('booking') }}?{{ http_build_query(array_merge($searchParams, ['room_type_id' => $type->id])) }}"
+                                                        class="btn-custom ml-2">
+                                                        Đặt ngay <span class="icon-long-arrow-right"></span>
+                                                    </a>
+                                                @else
+                                                    <a href="{{ route('booking') }}?room_type_id={{ $type->id }}"
+                                                        class="btn-custom ml-2">
+                                                        Đặt ngay <span class="icon-long-arrow-right"></span>
+                                                    </a>
+                                                @endif
                                             </p>
                                         </div>
                                     </div>

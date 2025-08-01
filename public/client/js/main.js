@@ -340,10 +340,11 @@
   });
 
 
-  $('.checkin_date, .checkout_date').datepicker({
-	  'format': 'm/d/yyyy',
-	  'autoclose': true
-	});
+  // Không áp dụng datepicker cho input HTML5 date
+  // $('.checkin_date, .checkout_date').datepicker({
+  //   'format': 'm/d/yyyy',
+  //   'autoclose': true
+  // });
 
 
 

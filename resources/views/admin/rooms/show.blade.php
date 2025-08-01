@@ -27,6 +27,32 @@
                     </div>
 
                     <div class="card-body">
+                        <!-- Ảnh phòng -->
+                        <div class="mb-4">
+                            <h6 class="text-primary mb-3"><i class="fas fa-image mr-2"></i>Ảnh phòng</h6>
+                            <div class="room-image-container">
+                                @if($room->primaryImage)
+                                    <img src="{{ asset('storage/' . $room->primaryImage->image_url) }}" 
+                                         alt="Ảnh phòng {{ $room->name }}" 
+                                         class="img-fluid rounded shadow-sm" 
+                                         style="max-height: 300px; width: 100%; object-fit: cover;">
+                                @elseif($room->firstImage)
+                                    <img src="{{ asset('storage/' . $room->firstImage->image_url) }}" 
+                                         alt="Ảnh phòng {{ $room->name }}" 
+                                         class="img-fluid rounded shadow-sm" 
+                                         style="max-height: 300px; width: 100%; object-fit: cover;">
+                                @else
+                                    <div class="bg-light rounded d-flex justify-content-center align-items-center" 
+                                         style="height: 300px;">
+                                        <div class="text-center text-muted">
+                                            <i class="fas fa-image fa-3x mb-3"></i>
+                                            <p>Chưa có ảnh phòng</p>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        
                         <div class="mb-2"><strong>Tên phòng:</strong> {{ $room->name }}</div>
                         <div class="mb-2"><strong>Giá:</strong> {{ number_format($room->price, 0, ',', '.') }} VND / đêm
                         </div>
@@ -49,7 +75,7 @@
                         @endphp
                         <div class="mb-2">
                             <strong>Trạng thái:</strong>
-                            <span class="badge {{ $statusBgClass[$room->status_for_display] ?? '' }}">
+                            <span class="badge {{ $statusBgClass[$room->status_for_display] ?? '' }} text-white">
                                 {{ $statusText[$room->status_for_display] ?? 'Không rõ' }}
                             </span>
                         </div>

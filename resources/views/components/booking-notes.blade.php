@@ -14,7 +14,7 @@
             'staff' => 'Nhân viên', 
             'admin' => 'Quản lý',
             'system' => 'Hệ thống',
-            default => 'Không xác định'
+            default => 'Nhân Viên'
         };
         $note->visibility_text = match($note->visibility) {
             'public' => 'Công khai',
@@ -78,11 +78,11 @@
                                     <span class="badge bg-{{ $note->type === 'admin' ? 'danger' : ($note->type === 'staff' ? 'warning' : ($note->type === 'system' ? 'secondary' : 'info')) }} ms-2">
                                         {{ $note->type_text }}
                                     </span>
-                                    <span class="badge bg-{{ $note->visibility === 'public' ? 'success' : ($note->visibility === 'private' ? 'secondary' : 'warning') }} ms-1">
+                                    <span class="badge text-white bg-{{ $note->visibility === 'public' ? 'success' : ($note->visibility === 'private' ? 'secondary' : 'warning') }} ms-1">
                                         {{ $note->visibility_text }}
                                     </span>
                                     @if($note->is_internal)
-                                        <span class="badge bg-danger ms-1">Nội bộ</span>
+                                        <span class="badge bg-danger ms-1 text-white">Nội bộ</span>
                                     @endif
                                 </div>
                                 

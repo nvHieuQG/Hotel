@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
 use App\Interfaces\Services\Admin\AdminBookingServiceServiceInterface;
 use App\Services\NotificationDataFormatterService;
+use App\Services\PaymentService;
+use App\Mail\BookingConfirmationMail;
+use App\Mail\PaymentConfirmationMail;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class AdminBookingController extends Controller
@@ -16,6 +20,7 @@ class AdminBookingController extends Controller
     protected $bookingService;
     protected $dataFormatterService;
     protected $bookingServiceService;
+    protected $paymentService;
 
     /**
      * Khởi tạo controller
@@ -23,11 +28,13 @@ class AdminBookingController extends Controller
     public function __construct(
         AdminBookingServiceInterface $bookingService,
         NotificationDataFormatterService $dataFormatterService,
-        AdminBookingServiceServiceInterface $bookingServiceService
+        AdminBookingServiceServiceInterface $bookingServiceService,
+        PaymentService $paymentService
     ) {
         $this->bookingService = $bookingService;
         $this->dataFormatterService = $dataFormatterService;
         $this->bookingServiceService = $bookingServiceService;
+        $this->paymentService = $paymentService;
     }
 
     // ==================== BOOKING METHODS ====================
@@ -38,9 +45,10 @@ class AdminBookingController extends Controller
     public function index(Request $request)
     {
         $status = $request->get('status');
+        $paymentStatus = $request->get('payment_status');
         $bookings = $this->bookingService->getBookingsWithPagination($request);
-        
-        return view('admin.bookings.index', compact('bookings', 'status'));
+
+        return view('admin.bookings.index', compact('bookings', 'status', 'paymentStatus'));
     }
 
     /**
@@ -69,7 +77,7 @@ class AdminBookingController extends Controller
     public function create()
     {
         $formData = $this->bookingService->getCreateFormData();
-        
+
         return view('admin.bookings.create', [
             'rooms' => $formData['rooms'],
             'users' => $formData['users']
@@ -88,9 +96,9 @@ class AdminBookingController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'status' => 'required|in:pending,confirmed',
         ]);
-        
+
         $this->bookingService->createBooking($validatedData);
-        
+
         return redirect()->route('admin.bookings.index')
             ->with('success', 'Đã tạo đặt phòng thành công.');
     }
@@ -102,7 +110,7 @@ class AdminBookingController extends Controller
     {
         $formData = $this->bookingService->getEditFormData($id);
         $validNextStatuses = $this->bookingService->getValidNextStatuses($id);
-        
+
         return view('admin.bookings.edit', [
             'booking' => $formData['booking'],
             'rooms' => $formData['rooms'],
@@ -123,9 +131,9 @@ class AdminBookingController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show',
         ]);
-        
+
         $booking = $this->bookingService->updateBooking($id, $validatedData);
-        
+
         return redirect()->route('admin.bookings.show', $booking->id)
             ->with('success', 'Đã cập nhật đặt phòng thành công.');
     }
@@ -138,13 +146,13 @@ class AdminBookingController extends Controller
         $request->validate([
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show'
         ]);
-        
+
         try {
             $this->bookingService->updateBookingStatus($id, $request->status);
-            
+
             // Lấy thông tin booking để hiển thị trong thông báo
             $booking = $this->bookingService->getBookingDetails($id);
-            $statusText = match($request->status) {
+            $statusText = match ($request->status) {
                 'pending' => 'Chờ xác nhận',
                 'confirmed' => 'Đã xác nhận',
                 'checked_in' => 'Đã nhận phòng',
@@ -154,7 +162,7 @@ class AdminBookingController extends Controller
                 'no_show' => 'Khách không đến',
                 default => 'Không xác định'
             };
-            
+
             return redirect()->back()->with('success', "Đã cập nhật trạng thái đặt phòng #{$booking->booking_id} thành '{$statusText}'. Ghi chú và thông báo đã được tạo tự động.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
@@ -172,7 +180,7 @@ class AdminBookingController extends Controller
         return redirect()->route('admin.notifications.index')
             ->with('success', 'Đã xóa thông báo thành công.');
     }
-    
+
     /**
      * Hiển thị báo cáo đặt phòng
      */
@@ -180,7 +188,7 @@ class AdminBookingController extends Controller
     {
         try {
             $reportData = $this->bookingService->getReportData($request);
-            
+
             return view('admin.bookings.report', [
                 'bookings' => $reportData['bookings'],
                 'fromDate' => $reportData['filters']['from_date'] ?? null,
@@ -220,15 +228,15 @@ class AdminBookingController extends Controller
 
         // Tìm kiếm theo từ khóa
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('message', 'like', "%{$search}%")
-                  ->orWhere('type', 'like', "%{$search}%")
-                  ->orWhere('priority', 'like', "%{$search}%")
-                  ->orWhere('id', $search)
-                  ->orWhere('is_read', $search)
-                  ->orWhereDate('created_at', $search)
-                  ->orWhereDate('updated_at', $search);
+                    ->orWhere('message', 'like', "%{$search}%")
+                    ->orWhere('type', 'like', "%{$search}%")
+                    ->orWhere('priority', 'like', "%{$search}%")
+                    ->orWhere('id', $search)
+                    ->orWhere('is_read', $search)
+                    ->orWhereDate('created_at', $search)
+                    ->orWhereDate('updated_at', $search);
             });
         }
 
@@ -415,7 +423,7 @@ class AdminBookingController extends Controller
     public function notificationShow($id)
     {
         $notification = \App\Models\AdminNotification::findOrFail($id);
-        
+
         // Đánh dấu đã đọc khi xem chi tiết
         if (!$notification->is_read) {
             $notification->markAsRead();
@@ -527,10 +535,10 @@ class AdminBookingController extends Controller
 
         // Tìm kiếm theo từ khóa
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('message', 'like', "%{$search}%")
-                  ->orWhere('type', 'like', "%{$search}%");
+                    ->orWhere('message', 'like', "%{$search}%")
+                    ->orWhere('type', 'like', "%{$search}%");
             });
         }
 
@@ -648,7 +656,6 @@ class AdminBookingController extends Controller
             );
 
             return redirect()->back()->with('success', 'Đã thêm dịch vụ "' . $request->service_name . '" thành công!');
-
         } catch (ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
@@ -668,6 +675,90 @@ class AdminBookingController extends Controller
         } catch (\Exception $e) {
             Log::error('Error removing service from booking: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Có lỗi xảy ra khi xóa dịch vụ.');
+        }
+    }
+
+    /**
+     * Xác nhận thanh toán chuyển khoản
+     */
+    public function confirmPayment(Request $request, $id)
+    {
+        try {
+            $booking = $this->bookingService->getBookingDetails($id);
+
+            // Tìm payment đang processing
+            $processingPayment = $booking->payments->where('status', 'processing')->first();
+
+            if (!$processingPayment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy giao dịch thanh toán đang chờ xác nhận'
+                ]);
+            }
+
+            // Cập nhật trạng thái payment thành completed
+            $processingPayment->update([
+                'status' => 'completed',
+                'gateway_message' => 'Đã xác nhận bởi admin',
+                'paid_at' => now()
+            ]);
+
+            // Cập nhật trạng thái booking thành confirmed (nếu đang pending)
+            $bookingWasPending = false;
+            if ($booking->status === 'pending') {
+                $booking->update(['status' => 'confirmed']);
+                $bookingWasPending = true;
+
+                // Tạo thông báo cho việc xác nhận booking
+                $this->bookingService->createNotification(
+                    'booking_confirmed',
+                    'Đặt phòng đã được xác nhận',
+                    "Đặt phòng #{$booking->booking_id} đã được xác nhận sau khi thanh toán thành công.",
+                    [
+                        'booking_id' => $booking->id,
+                        'old_status' => 'pending',
+                        'new_status' => 'confirmed'
+                    ],
+                    'high',
+                    'fas fa-check-circle',
+                    'success'
+                );
+
+                // Gửi email xác nhận đặt phòng
+                try {
+                    Mail::to($booking->user->email)->send(new BookingConfirmationMail($booking, $processingPayment));
+                } catch (\Exception $e) {
+                    Log::error('Failed to send booking confirmation email: ' . $e->getMessage());
+                }
+            }
+
+            // Tạo thông báo cho việc xác nhận thanh toán
+            $this->bookingService->createNotification(
+                'payment_confirmed',
+                'Thanh toán đã được xác nhận',
+                "Đặt phòng #{$booking->booking_id} đã được xác nhận thanh toán thành công.",
+                [
+                    'booking_id' => $booking->id,
+                    'payment_id' => $processingPayment->id,
+                    'amount' => $processingPayment->amount
+                ],
+                'high',
+                'fas fa-check-circle',
+                'success'
+            );
+
+            // Gửi email xác nhận thanh toán
+            $this->paymentService->sendPaymentConfirmationEmail($processingPayment);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã xác nhận thanh toán thành công'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ]);
         }
     }
 }
