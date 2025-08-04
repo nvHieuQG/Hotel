@@ -66,9 +66,10 @@
     
     @php
         $roomType = $booking->room->roomType;
-        $hasReviewed = \App\Models\RoomTypeReview::where('user_id', auth()->id())
-            ->where('room_type_id', $roomType->id)
-            ->exists();
+        $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+            ->where('booking_id', $booking->id)
+            ->first();
+        $hasReviewed = !!$review;
     @endphp
     
     @if($hasReviewed)
@@ -76,11 +77,6 @@
         <div class="row">
             <div class="col-12">
                 <h6 class="text-warning mb-3"><i class="fas fa-star mr-2"></i>Đánh Giá</h6>
-                @php 
-                    $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
-                        ->where('room_type_id', $roomType->id)
-                        ->first();
-                @endphp
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -125,7 +121,7 @@
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle mr-2"></i>
                         Bạn có thể đánh giá loại phòng này để giúp chúng tôi cải thiện dịch vụ.
-                        <button class="btn btn-sm btn-primary ml-2 create-review-btn" data-room-type-id="{{ $roomType->id }}">
+                        <button class="btn btn-sm btn-primary ml-2 create-review-btn" data-room-type-id="{{ $roomType->id }}" data-booking-id="{{ $booking->id }}">
                             <i class="fas fa-star"></i> Viết đánh giá
                         </button>
                     </div>

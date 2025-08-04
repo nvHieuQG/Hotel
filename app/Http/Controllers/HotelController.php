@@ -10,6 +10,7 @@ use App\Interfaces\Services\RoomTypeServiceInterface;
 use App\Interfaces\Services\RoomServiceInterface;
 use App\Interfaces\Repositories\RoomRepositoryInterface;
 use App\Interfaces\Repositories\BookingRepositoryInterface;
+use App\Interfaces\Services\ServiceCategoryServiceInterface;
 
 class HotelController extends Controller
 {
@@ -19,19 +20,22 @@ class HotelController extends Controller
     protected $roomTypeReviewService;
     protected $roomTypeService;
     protected $bookingRepository;
+    protected $serviceCategoryService;
 
     public function __construct(
         RoomRepositoryInterface $roomRepository,
         RoomServiceInterface $roomService,
         RoomTypeReviewService $roomTypeReviewService,
         RoomTypeServiceInterface $roomTypeService,
-        BookingRepositoryInterface $bookingRepository
+        BookingRepositoryInterface $bookingRepository,
+        ServiceCategoryServiceInterface $serviceCategoryService
     ) {
         $this->roomRepository = $roomRepository;
         $this->roomService = $roomService;
         $this->roomTypeReviewService = $roomTypeReviewService;
         $this->roomTypeService = $roomTypeService;
         $this->bookingRepository = $bookingRepository;
+        $this->serviceCategoryService = $serviceCategoryService;
     }
 
     public function index()
@@ -39,7 +43,15 @@ class HotelController extends Controller
         // Lấy tất cả loại phòng để hiển thị ở trang chủ
         $roomTypes = $this->roomTypeService->getAllRoomTypes()->take(6); // Lấy 6 loại phòng đầu tiên
 
-        return view('client.index', compact('roomTypes'));
+        // Lấy các đánh giá 5 sao ngẫu nhiên
+        $fiveStarReviews = \App\Models\RoomTypeReview::where('rating', 5)
+            ->where('status', 'approved')
+            ->with(['user', 'roomType'])
+            ->inRandomOrder()
+            ->limit(5)
+            ->get();
+
+        return view('client.index', compact('roomTypes', 'fiveStarReviews'));
     }
 
     public function rooms()
@@ -112,7 +124,8 @@ class HotelController extends Controller
         }
 
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
-        return view('client.rooms.single', compact('roomType', 'rooms', 'reviews', 'averageRating', 'reviewsCount', 'roomTypes', 'canReview', 'completedBookings'));
+        $serviceCategories = $this->serviceCategoryService->getAll();
+        return view('client.rooms.single', compact('roomType', 'rooms', 'reviews', 'averageRating', 'reviewsCount', 'roomTypes', 'canReview', 'completedBookings', 'serviceCategories'));
     }
 
     public function blogSingle()

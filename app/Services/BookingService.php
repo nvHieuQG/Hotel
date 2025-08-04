@@ -77,6 +77,24 @@ class BookingService implements BookingServiceInterface
             'guests' => 'required|integer|min:1',
             'phone' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
+            // Thông tin người đặt phòng
+            'booker_full_name' => 'required|string|max:255',
+            'booker_id_number' => 'required|string|max:20',
+            'booker_phone' => 'required|string|max:20',
+            'booker_email' => 'required|email|max:255',
+            // Thông tin khách lưu trú
+            'guest_full_name' => 'required|string|max:255',
+            'guest_id_number' => 'required|string|max:20',
+            'guest_birth_date' => 'required|date|before:today',
+            'guest_gender' => 'required|in:Nam,Nữ',
+            'guest_nationality' => 'required|string|max:100',
+            'guest_permanent_address' => 'required|string|max:500',
+            'guest_current_address' => 'nullable|string|max:500',
+            'guest_phone' => 'nullable|string|max:20',
+            'guest_email' => 'nullable|email|max:255',
+            'guest_purpose_of_stay' => 'nullable|string|max:100',
+            'guest_vehicle_number' => 'nullable|string|max:20',
+            'guest_notes' => 'nullable|string|max:1000',
         ]);
 
         if ($validator->fails()) {
@@ -123,6 +141,24 @@ class BookingService implements BookingServiceInterface
             'status' => 'pending',
             'phone' => $data['phone'] ?? null,
             'notes' => $data['notes'] ?? null,
+            // Thông tin người đặt phòng
+            'booker_full_name' => $data['booker_full_name'],
+            'booker_id_number' => $data['booker_id_number'],
+            'booker_phone' => $data['booker_phone'],
+            'booker_email' => $data['booker_email'],
+            // Thông tin khách lưu trú
+            'guest_full_name' => $data['guest_full_name'],
+            'guest_id_number' => $data['guest_id_number'],
+            'guest_birth_date' => $data['guest_birth_date'],
+            'guest_gender' => $data['guest_gender'],
+            'guest_nationality' => $data['guest_nationality'],
+            'guest_permanent_address' => $data['guest_permanent_address'],
+            'guest_current_address' => $data['guest_current_address'] ?? null,
+            'guest_phone' => $data['guest_phone'] ?? null,
+            'guest_email' => $data['guest_email'] ?? null,
+            'guest_purpose_of_stay' => $data['guest_purpose_of_stay'] ?? null,
+            'guest_vehicle_number' => $data['guest_vehicle_number'] ?? null,
+            'guest_notes' => $data['guest_notes'] ?? null,
         ];
 
         Log::info([

@@ -25,6 +25,39 @@
             font-weight: 700;
             margin-bottom: 0.1rem;
         }
+        
+        /* Xử lý thông báo */
+        .alert-container {
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .alert {
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .alert-success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-danger {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alert-warning {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .alert-info {
+            border-left: 4px solid #17a2b8;
+        }
+        
+        /* Đảm bảo chỉ hiển thị một thông báo */
+        .alert-container .alert:not(:first-child) {
+            display: none;
+        }
     </style>
 </head>
 
@@ -50,7 +83,7 @@
                 <a class="topbar-icon" href="#" id="notificationsDropdown" role="button"
                     data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-bell"></i>
-                    <span class="topbar-badge" id="notificationBadge">{{ $unreadCount > 0 ? $unreadCount : 0 }}</span>
+                    <span class="topbar-badge" id="notificationBadge">{{ isset($unreadCount) && $unreadCount > 0 ? $unreadCount : 0 }}</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end animate slideIn" aria-labelledby="notificationsDropdown">
                     <div class="dropdown-header d-flex justify-content-between align-items-center py-2">
@@ -59,7 +92,7 @@
                         </h6>
                     </div>
                     <div id="notificationsList">
-                        @if($unreadCount > 0)
+                        @if(isset($unreadCount) && $unreadCount > 0 && isset($unreadNotifications))
                             @foreach($unreadNotifications as $notification)
                                 <div class="dropdown-item notification-item d-flex align-items-start justify-content-between gap-2">
                                     <a href="{{ route('admin.notifications.show', $notification->id) }}" class="flex-grow-1 text-decoration-none text-dark">
@@ -243,7 +276,7 @@
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}" href="{{ route('admin.notifications.index') }}">
                         <i class="fas fa-bell"></i> Thông báo
-                        <span class="badge bg-danger ms-2" id="sidebarNotificationBadge">0</span>
+                        
                     </a>
                 </li>
                 <li class="nav-item mt-5">
@@ -264,7 +297,7 @@
                 <!-- Hiển thị thông báo -->
                 <div class="alert-container">
                     @if (session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
                             <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"
                                 aria-label="Close"></button>
@@ -272,7 +305,7 @@
                     @endif
 
                     @if (session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="error-alert">
                             <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"
                                 aria-label="Close"></button>
@@ -280,7 +313,7 @@
                     @endif
 
                     @if (session('warning'))
-                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert" id="warning-alert">
                             <i class="fas fa-exclamation-triangle me-2"></i> {{ session('warning') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"
                                 aria-label="Close"></button>
@@ -288,7 +321,7 @@
                     @endif
 
                     @if (session('info'))
-                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <div class="alert alert-info alert-dismissible fade show" role="alert" id="info-alert">
                             <i class="fas fa-info-circle me-2"></i> {{ session('info') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"
                                 aria-label="Close"></button>
@@ -316,6 +349,19 @@
     @yield('scripts')
     <script>
         $(document).ready(function() {
+            // Xử lý thông báo - đảm bảo chỉ hiển thị một thông báo
+            $('.alert').each(function() {
+                // Tự động ẩn thông báo sau 5 giây
+                setTimeout(() => {
+                    $(this).fadeOut();
+                }, 5000);
+                
+                // Xử lý nút đóng thông báo
+                $(this).find('.btn-close').on('click', function() {
+                    $(this).closest('.alert').fadeOut();
+                });
+            });
+            
             // Khi bấm chuông, load danh sách thông báo chưa đọc
             $('#notificationsDropdown').on('show.bs.dropdown', function () {
                 $.get('/admin/get-unread-notifications', function(res) {

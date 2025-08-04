@@ -21,7 +21,27 @@ class Booking extends Model
         'check_in_date',
         'check_out_date',
         'status',
-        'price'
+        'price',
+        'guest_full_name',
+        'guest_id_number',
+        'guest_birth_date',
+        'guest_gender',
+        'guest_nationality',
+        'guest_permanent_address',
+        'guest_current_address',
+        'guest_phone',
+        'guest_email',
+        'guest_purpose_of_stay',
+        'guest_vehicle_number',
+        'guest_notes',
+        'booker_full_name',
+        'booker_id_number',
+        'booker_phone',
+        'booker_email',
+        'booker_relationship',
+        'registration_status',
+        'registration_generated_at',
+        'registration_sent_at'
     ];
 
     /**
@@ -32,6 +52,9 @@ class Booking extends Model
     protected $casts = [
         'check_in_date' => 'datetime',
         'check_out_date' => 'datetime',
+        'guest_birth_date' => 'date',
+        'registration_generated_at' => 'datetime',
+        'registration_sent_at' => 'datetime',
     ];
 
     /**
@@ -156,5 +179,59 @@ class Booking extends Model
             'no_show' => 'Khách không đến',
             default => 'Không xác định'
         };
+    }
+
+    /**
+     * Lấy trạng thái hiển thị của giấy đăng ký
+     */
+    public function getRegistrationStatusTextAttribute()
+    {
+        return match($this->registration_status) {
+            'pending' => 'Chưa tạo',
+            'generated' => 'Đã tạo',
+            'sent' => 'Đã gửi',
+            default => 'Không xác định'
+        };
+    }
+
+    /**
+     * Kiểm tra xem có thể tạo giấy đăng ký tạm chú tạm vắng không
+     */
+    public function canGenerateRegistration(): bool
+    {
+        return $this->status === 'confirmed' && 
+               $this->guest_full_name && 
+               $this->guest_id_number;
+    }
+
+    /**
+     * Kiểm tra xem đã có đầy đủ thông tin căn cước chưa
+     */
+    public function hasCompleteIdentityInfo(): bool
+    {
+        return !empty($this->guest_full_name) && 
+               !empty($this->guest_id_number) && 
+               !empty($this->guest_birth_date) && 
+               !empty($this->guest_gender) && 
+               !empty($this->guest_nationality) && 
+               !empty($this->guest_permanent_address);
+    }
+
+    /**
+     * Lấy thông tin khách sạn (có thể cấu hình từ config)
+     */
+    public function getHotelInfo(): array
+    {
+        return [
+            'name' => config('hotel.name', 'Marron Hotel'),
+            'address' => config('hotel.address', '123 Đường ABC, Quận XYZ, TP.HCM'),
+            'phone' => config('hotel.phone', '028-1234-5678'),
+            'email' => config('hotel.email', 'info@marronhotel.com'),
+            'license_number' => config('hotel.license_number', 'GP123456789'),
+            'tax_code' => config('hotel.tax_code', '0123456789'),
+            'representative' => config('hotel.representative', 'Nguyễn Văn A'),
+            'representative_position' => config('hotel.representative_position', 'Giám đốc'),
+            'representative_id' => config('hotel.representative_id', '012345678901'),
+        ];
     }
 } 

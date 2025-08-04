@@ -23,10 +23,10 @@ interface AdminBookingServiceInterface
     /**
      * Lấy chi tiết đặt phòng
      *
-     * @param int $id
+     * @param mixed $id
      * @return Booking
      */
-    public function getBookingDetails(int $id): Booking;
+    public function getBookingDetails($id): Booking;
     
     /**
      * Tạo đặt phòng mới

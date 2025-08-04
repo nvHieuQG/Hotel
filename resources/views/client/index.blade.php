@@ -363,6 +363,28 @@
           	<div class="row ftco-animate">
 		          <div class="col-md-12">
 		            <div class="carousel-testimony owl-carousel ftco-owl">
+		              @forelse($fiveStarReviews as $review)
+		              <div class="item">
+		                <div class="testimony-wrap py-4 pb-5">
+		                  <div class="user-img mb-4" style="background-image: url(client/images/person_{{ $loop->index % 3 + 1 }}.jpg)">
+		                    <span class="quote d-flex align-items-center justify-content-center">
+		                      <i class="icon-quote-left"></i>
+		                    </span>
+		                  </div>
+		                  <div class="text text-center">
+		                    <p class="mb-4">{{ Str::limit($review->comment, 150) }}</p>
+		                    <p class="name">{{ $review->reviewer_name }}</p>
+		                    <span class="position">{{ $review->roomType->name ?? 'Khách hàng' }}</span>
+		                    <div class="stars mt-2">
+		                      @for($i = 1; $i <= 5; $i++)
+		                        <i class="icon-star{{ $i <= $review->rating ? '' : '-o' }} text-warning"></i>
+		                      @endfor
+		                    </div>
+		                  </div>
+		                </div>
+		              </div>
+		              @empty
+		              <!-- Fallback content if no reviews -->
 		              <div class="item">
 		                <div class="testimony-wrap py-4 pb-5">
 		                  <div class="user-img mb-4" style="background-image: url(client/images/person_1.jpg)">
@@ -371,68 +393,20 @@
 		                    </span>
 		                  </div>
 		                  <div class="text text-center">
-		                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
-		                    <p class="name">Nathan Smith</p>
-		                    <span class="position">Guests</span>
+		                    <p class="mb-4">Khách sạn tuyệt vời với dịch vụ chất lượng cao và phòng ốc sạch sẽ.</p>
+		                    <p class="name">Khách hàng</p>
+		                    <span class="position">Khách hàng</span>
+		                    <div class="stars mt-2">
+		                      <i class="icon-star text-warning"></i>
+		                      <i class="icon-star text-warning"></i>
+		                      <i class="icon-star text-warning"></i>
+		                      <i class="icon-star text-warning"></i>
+		                      <i class="icon-star text-warning"></i>
+		                    </div>
 		                  </div>
 		                </div>
 		              </div>
-		              <div class="item">
-		                <div class="testimony-wrap py-4 pb-5">
-		                  <div class="user-img mb-4" style="background-image: url(client/images/person_2.jpg)">
-		                    <span class="quote d-flex align-items-center justify-content-center">
-		                      <i class="icon-quote-left"></i>
-		                    </span>
-		                  </div>
-		                  <div class="text text-center">
-		                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
-		                    <p class="name">Nathan Smith</p>
-		                    <span class="position">Guests</span>
-		                  </div>
-		                </div>
-		              </div>
-		              <div class="item">
-		                <div class="testimony-wrap py-4 pb-5">
-		                  <div class="user-img mb-4" style="background-image: url(client/images/person_3.jpg)">
-		                    <span class="quote d-flex align-items-center justify-content-center">
-		                      <i class="icon-quote-left"></i>
-		                    </span>
-		                  </div>
-		                  <div class="text text-center">
-		                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
-		                    <p class="name">Nathan Smith</p>
-		                    <span class="position">Guests</span>
-		                  </div>
-		                </div>
-		              </div>
-		              <div class="item">
-		                <div class="testimony-wrap py-4 pb-5">
-		                  <div class="user-img mb-4" style="background-image: url(client/images/person_1.jpg)">
-		                    <span class="quote d-flex align-items-center justify-content-center">
-		                      <i class="icon-quote-left"></i>
-		                    </span>
-		                  </div>
-		                  <div class="text text-center">
-		                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
-		                    <p class="name">Nathan Smith</p>
-		                    <span class="position">Guests</span>
-		                  </div>
-		                </div>
-		              </div>
-		              <div class="item">
-		                <div class="testimony-wrap py-4 pb-5">
-		                  <div class="user-img mb-4" style="background-image: url(client/images/person_1.jpg)">
-		                    <span class="quote d-flex align-items-center justify-content-center">
-		                      <i class="icon-quote-left"></i>
-		                    </span>
-		                  </div>
-		                  <div class="text text-center">
-		                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
-		                    <p class="name">Nathan Smith</p>
-		                    <span class="position">Guests</span>
-		                  </div>
-		                </div>
-		              </div>
+		              @endforelse
 		            </div>
 		          </div>
 		        </div>

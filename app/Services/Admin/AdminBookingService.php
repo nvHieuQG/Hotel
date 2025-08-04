@@ -124,13 +124,28 @@ class AdminBookingService implements AdminBookingServiceInterface
      */
     public function updateBooking(int $id, array $data): Booking
     {
-        // Xác thực dữ liệu
+        // Xác thực dữ liệu cơ bản
         $validator = Validator::make($data, [
             'user_id' => 'required|exists:users,id',
             'room_id' => 'required|exists:rooms,id',
             'check_in_date' => 'required|date',
             'check_out_date' => 'required|date|after:check_in_date',
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,completed,cancelled,no_show',
+            'admin_notes' => 'nullable|string|max:1000',
+            
+            // Thông tin căn cước của khách
+            'guest_full_name' => 'nullable|string|max:255',
+            'guest_id_number' => 'nullable|string|max:20',
+            'guest_birth_date' => 'nullable|date|before_or_equal:today',
+            'guest_gender' => 'nullable|in:male,female,other',
+            'guest_nationality' => 'nullable|string|max:100',
+            'guest_permanent_address' => 'nullable|string|max:500',
+            'guest_current_address' => 'nullable|string|max:500',
+            'guest_phone' => 'nullable|string|max:20',
+            'guest_email' => 'nullable|email|max:255',
+            'guest_purpose_of_stay' => 'nullable|in:business,tourism,family,medical,study,other',
+            'guest_vehicle_number' => 'nullable|string|max:20',
+            'guest_notes' => 'nullable|string|max:1000',
         ]);
         
         if ($validator->fails()) {
@@ -157,10 +172,29 @@ class AdminBookingService implements AdminBookingServiceInterface
             $data['price'] = $totalPrice;
         }
         
+        // Lưu trạng thái cũ để so sánh
+        $oldStatus = $booking->status;
+        $oldIdentityInfo = $booking->hasCompleteIdentityInfo();
+        
         // Cập nhật đặt phòng
         $this->adminBookingRepository->update($booking, $data);
         
-        return $this->adminBookingRepository->findById($id);
+        // Lấy booking đã cập nhật
+        $updatedBooking = $this->adminBookingRepository->findById($id);
+        
+        // Kiểm tra thay đổi trạng thái
+        if ($oldStatus !== $updatedBooking->status) {
+            $this->handleStatusChange($updatedBooking, $oldStatus, $updatedBooking->status);
+        }
+        
+        // Kiểm tra thay đổi thông tin căn cước
+        $newIdentityInfo = $updatedBooking->hasCompleteIdentityInfo();
+        if (!$oldIdentityInfo && $newIdentityInfo) {
+            // Tạo ghi chú hệ thống khi thông tin căn cước được hoàn thiện
+            $this->createSystemNote($id, 'Thông tin căn cước của khách đã được cập nhật đầy đủ', 'system');
+        }
+        
+        return $updatedBooking;
     }
     
     /**

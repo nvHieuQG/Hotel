@@ -1,9 +1,9 @@
 @props(['booking', 'showAddButton' => true, 'showSearch' => true])
 
 @php
-    // Lấy ghi chú từ service với phân trang
+    // Lấy 3 ghi chú gần nhất từ service
     $bookingNoteService = app(\App\Interfaces\Services\BookingServiceInterface::class);
-    $notes = $bookingNoteService->getPaginatedNotes($booking->id, 10);
+    $notes = $bookingNoteService->getPaginatedNotes($booking->id, 3);
     
     // Thêm thông tin quyền cho mỗi ghi chú
     $notesWithPermissions = $notes->getCollection()->map(function ($note) use ($bookingNoteService) {
@@ -35,111 +35,97 @@
 @endphp
 
 <div class="booking-notes-section">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="fas fa-comments me-2"></i>
-                Ghi chú đặt phòng
-                <span class="badge bg-primary ms-2">{{ $notes->total() }}</span>
-            </h5>
-            
-            @if($showAddButton)
-                @if($isCustomer)
-                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#customerRequestModal">
-                        <i class="fas fa-plus me-1"></i>Gửi yêu cầu
+    <div class="card-body">
+        @if($showSearch)
+            <div class="mb-3">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="noteSearch" placeholder="Tìm kiếm ghi chú...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                        <i class="fas fa-search"></i>
                     </button>
-                @elseif($isAdmin || $isStaff)
-                    <a href="{{ route('booking-notes.create', $booking->id) }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus me-1"></i>Thêm ghi chú
-                    </a>
-                @endif
-            @endif
-        </div>
+                </div>
+            </div>
+        @endif
         
-        <div class="card-body">
-            @if($showSearch)
-                <div class="mb-3">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="noteSearch" placeholder="Tìm kiếm ghi chú...">
-                        <button class="btn btn-outline-secondary" type="button" id="searchBtn">
-                            <i class="fas fa-search"></i>
-                        </button>
+        <div id="notesContainer">
+            @if($notes->count() > 0)
+                @foreach($notes as $note)
+                    <div class="note-item border rounded p-3 mb-3 {{ $note->visibility === 'internal' ? 'bg-light' : '' }}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>{{ $note->user->name }}</strong>
+                                <span class="badge bg-{{ $note->type === 'admin' ? 'danger' : ($note->type === 'staff' ? 'warning' : ($note->type === 'system' ? 'secondary' : 'info')) }} ms-2">
+                                    {{ $note->type_text }}
+                                </span>
+                                <span class="badge bg-{{ $note->visibility === 'public' ? 'success' : ($note->visibility === 'private' ? 'secondary' : 'warning') }} ms-1">
+                                    {{ $note->visibility_text }}
+                                </span>
+                                @if($note->is_internal)
+                                    <span class="badge bg-danger ms-1">Nội bộ</span>
+                                @endif
+                            </div>
+                            
+                            @if($note->can_edit || $note->can_delete)
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        @if($note->can_edit)
+                                            <li><a class="dropdown-item" href="{{ route('booking-notes.edit', [$booking->id, $note->id]) }}">
+                                                <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                                            </a></li>
+                                        @endif
+                                        @if($note->can_delete)
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteNote({{ $note->id }})">
+                                                <i class="fas fa-trash me-2"></i>Xóa
+                                            </a></li>
+                                        @endif
+                                    </ul>
+                                </div>
+                            @endif
+                        </div>
+                        
+                        <div class="note-content">
+                            {!! nl2br(e($note->content)) !!}
+                        </div>
+                        
+                        <div class="note-meta mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ $note->created_at->format('d/m/Y H:i') }}
+                            </small>
+                        </div>
                     </div>
+                @endforeach
+                
+                <!-- Thông tin về số lượng ghi chú -->
+                @if($notes->total() > 3)
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Hiển thị 3 ghi chú gần nhất trong tổng số {{ $notes->total() }} ghi chú
+                        </small>
+                        {{-- <div class="mt-2">
+                            <a href="{{ route('booking-notes.index', $booking->id) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-list me-1"></i>Xem tất cả ghi chú
+                            </a>
+                        </div> --}}
+                    </div>
+                @endif
+                
+                <!-- Phân trang -->
+                @if($notes->hasPages())
+                    <div class="d-flex justify-content-center">
+                        {{ $notes->links() }}
+                    </div>
+                @endif
+            @else
+                <div class="text-center py-4">
+                    <i class="fas fa-comments fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">Chưa có ghi chú nào</p>
                 </div>
             @endif
-            
-            <div id="notesContainer">
-                @if($notes->count() > 0)
-                    @foreach($notes as $note)
-                        <div class="note-item border rounded p-3 mb-3 {{ $note->visibility === 'internal' ? 'bg-light' : '' }}">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <strong>{{ $note->user->name }}</strong>
-                                    <span class="badge bg-{{ $note->type === 'admin' ? 'danger' : ($note->type === 'staff' ? 'warning' : ($note->type === 'system' ? 'secondary' : 'info')) }} ms-2">
-                                        {{ $note->type_text }}
-                                    </span>
-                                    <span class="badge bg-{{ $note->visibility === 'public' ? 'success' : ($note->visibility === 'private' ? 'secondary' : 'warning') }} ms-1">
-                                        {{ $note->visibility_text }}
-                                    </span>
-                                    @if($note->is_internal)
-                                        <span class="badge bg-danger ms-1">Nội bộ</span>
-                                    @endif
-                                </div>
-                                
-                                @if($note->can_edit || $note->can_delete)
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            @if($note->can_edit)
-                                                <li><a class="dropdown-item" href="{{ route('booking-notes.edit', [$booking->id, $note->id]) }}">
-                                                    <i class="fas fa-edit me-2"></i>Chỉnh sửa
-                                                </a></li>
-                                            @endif
-                                            @if($note->can_delete)
-                                                <li>
-                                                    <form action="{{ route('booking-notes.destroy', [$booking->id, $note->id]) }}" method="POST" class="d-inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Bạn có chắc muốn xóa ghi chú này?')">
-                                                            <i class="fas fa-trash me-2"></i>Xóa
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                            @endif
-                                        </ul>
-                                    </div>
-                                @endif
-                            </div>
-                            
-                            <div class="note-content">
-                                {!! nl2br(e($note->content)) !!}
-                            </div>
-                            
-                            <div class="note-meta text-muted small mt-2">
-                                <i class="fas fa-clock me-1"></i>{{ $note->created_at->format('d/m/Y H:i') }}
-                                @if($note->updated_at != $note->created_at)
-                                    <span class="ms-2">
-                                        <i class="fas fa-edit me-1"></i>Cập nhật: {{ $note->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                    
-                    @if($notes->hasPages())
-                        <div class="d-flex justify-content-center">
-                            {{ $notes->links() }}
-                        </div>
-                    @endif
-                @else
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-comment-slash fa-2x mb-2"></i>
-                        <p>Chưa có ghi chú nào</p>
-                    </div>
-                @endif
-            </div>
         </div>
     </div>
 </div>

@@ -117,7 +117,7 @@
 @section('scripts')
 <script>
     $(document).ready(function() {
-        // Các mã JavaScript tùy chỉnh ở đây
+        
     });
 </script>
 @endsection 

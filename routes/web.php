@@ -124,8 +124,20 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
     // Quản lý đặt phòng
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
-    Route::patch('bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
+    Route::patch('bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
     Route::resource('bookings', AdminBookingController::class);
+    
+    // Giấy đăng ký tạm chú tạm vắng
+    Route::get('bookings/{booking}/registration/preview', [AdminBookingController::class, 'previewRegistration'])->name('bookings.registration.preview');
+
+    // Quản lý giấy đăng ký tạm chú tạm vắng
+    Route::post('bookings/{id}/generate-pdf', [AdminBookingController::class, 'generateRegistrationWord'])->name('bookings.generate-pdf');
+    Route::post('bookings/{id}/send-email', [AdminBookingController::class, 'sendRegistrationEmail'])->name('bookings.send-email');
+    Route::get('bookings/{id}/download-registration', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-registration');
+    
+    // Xem và download files
+    Route::get('bookings/{id}/view-word', [AdminBookingController::class, 'viewWord'])->name('bookings.view-word');
+    Route::get('bookings/{id}/download-word', [AdminBookingController::class, 'downloadWord'])->name('bookings.download-word');
 
     // Quản lý thông báo
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
