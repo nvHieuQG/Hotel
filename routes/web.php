@@ -82,9 +82,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Support
     Route::get('/support', [SupportController::class, 'index'])->name('support.index');
-    Route::post('/support/ticket', [SupportController::class, 'createTicket'])->name('support.createTicket');
-    Route::get('/support/ticket/{id}', [SupportController::class, 'showTicket'])->name('support.showTicket');
-    Route::post('/support/ticket/{id}/message', [SupportController::class, 'sendMessage'])->name('support.sendMessage');
+    Route::get('/support/conversation/{conversationId}', [SupportController::class, 'showConversation'])->name('support.showConversation');
+    Route::post('/support/conversation/{conversationId}/message', [SupportController::class, 'sendMessage'])->name('support.sendMessage');
+    Route::post('/support/message', [SupportController::class, 'sendMessage'])->name('support.createMessage');
+    Route::get('/support/conversation/{conversationId}/messages', [SupportController::class, 'getNewMessages'])->name('support.getNewMessages');
     Route::get('/booking/{id}/detail', [BookingController::class, 'showDetail'])->name('booking.detail');
 
     // AJAX Room Type Reviews - Đặt trước để tránh xung đột
@@ -158,8 +159,10 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::resource('rooms', AdminRoomController::class);
 
     Route::get('/support', [AdminSupportController::class, 'index'])->name('support.index');
-    Route::get('/support/ticket/{id}', [AdminSupportController::class, 'showTicket'])->name('support.showTicket');
-    Route::post('/support/ticket/{id}/message', [AdminSupportController::class, 'sendMessage'])->name('support.sendMessage');
+    Route::get('/support/conversation/{conversationId}', [AdminSupportController::class, 'showConversation'])->name('support.showConversation');
+    Route::post('/support/conversation/{conversationId}/message', [AdminSupportController::class, 'sendMessage'])->name('support.sendMessage');
+    Route::get('/support/conversation/{conversationId}/messages', [AdminSupportController::class, 'getNewMessages'])->name('support.getNewMessages');
+    Route::post('/support/conversations/updates', [AdminSupportController::class, 'getUpdates'])->name('support.getUpdates');
 
     // Routes cho quản lý ảnh phòng
     Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete');

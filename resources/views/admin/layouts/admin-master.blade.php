@@ -101,43 +101,71 @@
                     aria-expanded="false">
                     <i class="fas fa-envelope"></i>
                     <span class="topbar-badge">
-                        {{ \App\Models\SupportTicket::with('messages')->whereHas('messages')->count() }}
+                        {{ \App\Models\SupportMessage::where('sender_type', 'user')->where('is_read', false)->count() }}
                     </span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end animate slideIn" aria-labelledby="messagesDropdown">
-                    <h6 class="dropdown-header">Tin nhắn hỗ trợ</h6>
-                    @php
-                        $tickets = \App\Models\SupportTicket::with([
-                            'user',
-                            'messages' => function ($q) {
-                                $q->latest();
-                            },
-                        ])
-                            ->whereHas('messages')
-                            ->latest('updated_at')
-                            ->take(5)
-                            ->get();
-                    @endphp
-                    @forelse($tickets as $ticket)
-                        <a class="dropdown-item" href="{{ route('admin.support.showTicket', $ticket->id) }}">
-                            <div class="dropdown-item-message">
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($ticket->user->name ?? 'Khach') }}&background=random"
-                                    alt="{{ $ticket->user->name ?? 'Khách' }}">
-                                <div class="dropdown-item-message-content">
-                                    <div class="dropdown-item-message-title">{{ $ticket->user->name ?? 'Khách' }}</div>
-                                    <p class="dropdown-item-message-text">
-                                        {{ optional($ticket->messages->first())->message ?? '...' }}</p>
-                                    <div class="dropdown-item-message-time">
-                                        {{ optional($ticket->messages->first())->created_at ? optional($ticket->messages->first())->created_at->diffForHumans() : '' }}
-                                    </div>
+                    <div class="dropdown-header d-flex justify-content-between align-items-center py-2">
+                        <h6 class="m-0">
+                            <i class="fas fa-envelope me-2"></i>Tin nhắn hỗ trợ
+                        </h6>
+                    </div>
+                    <div id="messagesList">
+                        @php
+                            $conversations = \App\Models\SupportMessage::select('conversation_id', 'subject', 'sender_id', 'message', 'created_at')
+                                ->with('user')
+                                ->whereIn('id', function($query) {
+                                    $query->select(\DB::raw('MAX(id)'))
+                                        ->from('support_messages')
+                                        ->groupBy('conversation_id');
+                                })
+                                ->orderByDesc('created_at')
+                                ->take(3)
+                                ->get();
+                        @endphp
+                        @if($conversations->count() > 0)
+                            @foreach($conversations as $conversation)
+                                @php
+                                    $unreadCount = \App\Models\SupportMessage::where('conversation_id', $conversation->conversation_id)
+                                        ->where('sender_type', 'user')
+                                        ->where('is_read', false)
+                                        ->count();
+                                    $iconColor = $unreadCount > 0 ? 'bg-danger' : 'bg-primary';
+                                @endphp
+                                <div class="dropdown-item notification-item d-flex align-items-start justify-content-between gap-2">
+                                    <a href="{{ route('admin.support.showConversation', $conversation->conversation_id) }}" class="flex-grow-1 text-decoration-none text-dark">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="icon-circle {{ $iconColor }}">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold small text-truncate" title="{{ $conversation->user->name ?? 'Khách' }}">
+                                                    {{ $conversation->user->name ?? 'Khách' }}
+                                                    @if($unreadCount > 0)
+                                                        <span class="badge bg-danger ms-1" style="font-size: 0.6rem;">{{ $unreadCount }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="small text-muted text-truncate mb-1" title="{{ $conversation->message }}">
+                                                    {{ Str::limit($conversation->message, 30) }}
+                                                </div>
+                                                <div class="small text-gray-500">
+                                                    <i class="fas fa-clock me-1"></i>{{ \Carbon\Carbon::parse($conversation->created_at)->diffForHumans() }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
                                 </div>
+                            @endforeach
+                        @else
+                            <div class="dropdown-item text-center small text-gray-500 py-3">
+                                <i class="fas fa-check-circle text-success me-2"></i> Không có tin nhắn mới
                             </div>
-                        </a>
-                    @empty
-                        <div class="dropdown-item text-center small text-gray-500">Không có tin nhắn mới</div>
-                    @endforelse
-                    <a class="dropdown-item text-center small text-gray-500"
-                        href="{{ route('admin.support.index') }}">Xem tất cả tin nhắn</a>
+                        @endif
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item text-center small text-gray-500 py-2" href="{{ route('admin.support.index') }}">
+                        <i class="fas fa-list me-1"></i>Xem tất cả tin nhắn
+                    </a>
                 </div>
             </div>
 
@@ -247,6 +275,17 @@
                         <span class="badge bg-danger ms-2" id="sidebarNotificationBadge">0</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.support.*') ? 'active' : '' }}" href="{{ route('admin.support.index') }}">
+                        <i class="fas fa-headset"></i> Hỗ trợ
+                        @php
+                            $unreadCount = \App\Models\SupportMessage::where('sender_type', 'user')->where('is_read', false)->count();
+                        @endphp
+                        @if($unreadCount > 0)
+                            <span class="badge bg-danger ms-2">{{ $unreadCount }}</span>
+                        @endif
+                    </a>
+                </li>
                 <li class="nav-item mt-5">
                     <a class="nav-link" href="{{ route('index') }}" target="_blank">
                         <i class="fas fa-external-link-alt"></i> Xem trang chủ
@@ -313,7 +352,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Admin Main JavaScript -->
     <script src="{{ asset('admin/js/admin-main.js') }}"></script>
-    
+
     <!-- Debug script -->
     <script>
         console.log('Layout loaded');
@@ -325,7 +364,7 @@
                 markAllBtn: $('#markAllReadBtn').length,
                 sidebarBadge: $('#sidebarNotificationBadge').length,
             });
-            
+
             // Test API call
             $.ajax({
                 url: '/admin/api/notifications/unread',
@@ -341,7 +380,7 @@
                     console.error('API test failed:', {xhr, status, error});
                 }
             });
-            
+
             // Test notification manager
             setTimeout(function() {
                 if (window.notificationManager) {
@@ -352,7 +391,7 @@
             }, 1000);
         });
     </script>
-    
+
     @yield('scripts')
 </body>
 

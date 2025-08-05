@@ -85,8 +85,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(RoomTypeReview::class);
     }
 
-    public function supportTickets()
+    public function supportMessages()
     {
-        return $this->hasMany(\App\Models\SupportTicket::class, 'user_id');
+        return $this->hasMany(\App\Models\SupportMessage::class, 'sender_id');
     }
 }

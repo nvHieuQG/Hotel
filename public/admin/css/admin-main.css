@@ -30,7 +30,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 /* Layout Components */
 .sidebar {
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--secondary-color) 0%, #1a252f 100%);
+    background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
     color: #fff;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     position: fixed;
@@ -137,7 +137,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
     .sidebar-toggle {
         left: 280px;
     }
-    
+
     .sidebar.collapsed ~ .sidebar-toggle {
         left: 0;
     }
@@ -232,7 +232,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
         width: 100%;
         padding-top: 70px; /* Space for topbar */
     }
-    
+
     .main-content.expanded {
         margin-left: 0;
         width: 100%;
@@ -272,7 +272,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
         width: 100%;
         padding-left: 2rem;
     }
-    
+
     .topbar.expanded {
         left: 0;
         width: 100%;
@@ -618,13 +618,13 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 
 /* Animations */
 @keyframes fadeIn {
-    from { 
-        opacity: 0; 
-        transform: translateY(20px); 
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -718,4 +718,4 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
         color: #000 !important;
         box-shadow: none !important;
     }
-} 
+}
