@@ -108,7 +108,11 @@
                                         $booking->payment_status == 'paid' ? 'success' : 
                                         ($booking->payment_status == 'processing' ? 'info' :
                                         ($booking->payment_status == 'pending' ? 'warning' :
-                                        ($booking->payment_status == 'failed' ? 'danger' : 'secondary'))) }}">
+                                        ($booking->payment_status == 'failed' ? 'danger' :
+                                        ($booking->payment_status == 'cancelled' ? 'secondary' :
+                                        ($booking->payment_status == 'refunded' ? 'info' :
+                                        ($booking->payment_status == 'unpaid' ? 'secondary' : 'secondary')))))) }}">
+                                        <i class="{{ $booking->payment_status_icon }}"></i>
                                         {{ $booking->payment_status_text }}
                                     </span>
                                 </td>
@@ -182,7 +186,11 @@
                                 $booking->payment_status == 'paid' ? 'success' : 
                                 ($booking->payment_status == 'processing' ? 'info' :
                                 ($booking->payment_status == 'pending' ? 'warning' :
-                                ($booking->payment_status == 'failed' ? 'danger' : 'secondary'))) }}">
+                                ($booking->payment_status == 'failed' ? 'danger' :
+                                ($booking->payment_status == 'cancelled' ? 'secondary' :
+                                ($booking->payment_status == 'refunded' ? 'info' :
+                                ($booking->payment_status == 'unpaid' ? 'secondary' : 'secondary')))))) }}">
+                                <i class="{{ $booking->payment_status_icon }}"></i>
                                 {{ $booking->payment_status_text }}
                             </span>
                             

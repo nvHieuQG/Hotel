@@ -327,4 +327,87 @@ class Booking extends Model
             'representative_id' => config('hotel.representative_id', '012345678901'),
         ];
     }
+
+    /**
+     * Lấy trạng thái thanh toán tổng quát của booking
+     */
+    public function getPaymentStatusAttribute()
+    {
+        // Nếu không có payment nào
+        if ($this->payments()->count() === 0) {
+            return 'unpaid';
+        }
+
+        // Kiểm tra xem có payment thành công không
+        $hasSuccessfulPayment = $this->payments()->where('status', 'completed')->exists();
+        if ($hasSuccessfulPayment) {
+            return 'paid';
+        }
+
+        // Kiểm tra xem có payment đang xử lý không
+        $hasProcessingPayment = $this->payments()->where('status', 'processing')->exists();
+        if ($hasProcessingPayment) {
+            return 'processing';
+        }
+
+        // Kiểm tra xem có payment pending không
+        $hasPendingPayment = $this->payments()->where('status', 'pending')->exists();
+        if ($hasPendingPayment) {
+            return 'pending';
+        }
+
+        // Kiểm tra xem có payment failed không
+        $hasFailedPayment = $this->payments()->where('status', 'failed')->exists();
+        if ($hasFailedPayment) {
+            return 'failed';
+        }
+
+        // Kiểm tra xem có payment cancelled không
+        $hasCancelledPayment = $this->payments()->where('status', 'cancelled')->exists();
+        if ($hasCancelledPayment) {
+            return 'cancelled';
+        }
+
+        // Kiểm tra xem có payment refunded không
+        $hasRefundedPayment = $this->payments()->where('status', 'refunded')->exists();
+        if ($hasRefundedPayment) {
+            return 'refunded';
+        }
+
+        return 'unpaid';
+    }
+
+    /**
+     * Lấy text hiển thị trạng thái thanh toán
+     */
+    public function getPaymentStatusTextAttribute()
+    {
+        return match ($this->payment_status) {
+            'paid' => 'Đã thanh toán',
+            'processing' => 'Đang xử lý',
+            'pending' => 'Chờ thanh toán',
+            'failed' => 'Thanh toán thất bại',
+            'cancelled' => 'Đã hủy',
+            'refunded' => 'Đã hoàn tiền',
+            'unpaid' => 'Chưa thanh toán',
+            default => 'Không xác định'
+        };
+    }
+
+    /**
+     * Lấy icon cho trạng thái thanh toán
+     */
+    public function getPaymentStatusIconAttribute()
+    {
+        return match ($this->payment_status) {
+            'paid' => 'fas fa-check-circle',
+            'processing' => 'fas fa-clock',
+            'pending' => 'fas fa-hourglass-half',
+            'failed' => 'fas fa-times-circle',
+            'cancelled' => 'fas fa-ban',
+            'refunded' => 'fas fa-undo',
+            'unpaid' => 'fas fa-minus-circle',
+            default => 'fas fa-question-circle'
+        };
+    }
 } 
