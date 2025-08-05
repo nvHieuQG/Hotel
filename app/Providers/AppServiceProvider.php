@@ -150,14 +150,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\RoomTypeService::class
         );
 
+        // Support Service
         $this->app->bind(
             \App\Interfaces\Services\SupportServiceInterface::class,
             \App\Services\SupportService::class
-        );
-
-        $this->app->bind(
-            \App\Interfaces\Repositories\SupportTicketRepositoryInterface::class,
-            \App\Repositories\SupportTicketRepository::class
         );
 
         // Service Category Repository Binding
