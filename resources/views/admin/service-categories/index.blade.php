@@ -22,27 +22,26 @@
                 @endif
 
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover table-striped align-middle text-center mb-0">
+                    <table class="table table-bordered table-hover align-middle text-center mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 60px;">STT</th>
                                 <th>Tên danh mục</th>
-                                <th style="width: 160px;">Hành động</th>
+                                <th style="width: 100px;">Xóa</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($categories as $category)
-                                <tr onclick="window.location='{{ route('admin.service-categories.edit', $category->id) }}'"
-                                    style="cursor: pointer;">
-                                    <td class="text-center">{{ $category->id }}</td>
-                                    <td>{{ $category->name }}</td>
-                                    <td class="text-center">
+                            @forelse($categories as $index => $category)
+                                <tr style="cursor: pointer;" onclick="window.location='{{ route('admin.service-categories.edit', $category->id) }}'">
+                                    <td>{{ $index + 1 }}</td>
+                                    <td class="text-start">{{ $category->name }}</td>
+                                    <td>
                                         <form action="{{ route('admin.service-categories.destroy', $category->id) }}"
-                                            method="POST" style="display:inline-block;"
-                                            onsubmit="return confirm('Bạn có chắc muốn xóa?')" title="Xóa">
+                                              method="POST" class="d-inline"
+                                              onsubmit="return confirm('Bạn có chắc muốn xóa?')" title="Xóa">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="event.stopPropagation();">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </form>
@@ -54,7 +53,6 @@
                                 </tr>
                             @endforelse
                         </tbody>
-
                     </table>
                 </div>
             </div>

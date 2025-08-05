@@ -5,7 +5,7 @@
 @section('content')
     {{-- <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
         <div class="container">
-            <a class="navbar-brand" href="{{ route('index') }}">Deluxe</a>
+            <a class="navbar-brand" href="{{ route('index') }}">MARRON</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="oi oi-menu"></span> Menu
             </button>
@@ -30,7 +30,7 @@
                 <div class="row no-gutters slider-text align-items-center justify-content-center">
                     <div class="col-md-12 ftco-animate text-center">
                         <div class="text mb-5 pb-3">
-                            <h1 class="mb-3">Welcome To Deluxe</h1>
+                            <h1 class="mb-3">Welcome To MARRON</h1>
                             <h2>Hotels &amp; Resorts</h2>
                         </div>
                     </div>
@@ -57,67 +57,49 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <form action="#" class="booking-form">
+                    <form action="{{ route('rooms') }}" method="GET" class="booking-form" id="availabilityForm">
                         <div class="row">
                             <div class="col-md-3 d-flex">
                                 <div class="form-group p-4 align-self-stretch d-flex align-items-end">
                                     <div class="wrap">
-                                        <label for="#">Check-in Date</label>
-                                        <input type="text" class="form-control checkin_date" placeholder="Check-in date">
+                                        <label for="check_in_date">Check-in Date</label>
+                                        <input type="date" name="check_in_date" id="check_in_date" class="form-control checkin_date" 
+                                               placeholder="Check-in date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-3 d-flex">
                                 <div class="form-group p-4 align-self-stretch d-flex align-items-end">
                                     <div class="wrap">
-                                        <label for="#">Check-out Date</label>
-                                        <input type="text" class="form-control checkout_date" placeholder="Check-out date">
+                                        <label for="check_out_date">Check-out Date</label>
+                                        <input type="date" name="check_out_date" id="check_out_date" class="form-control checkout_date" 
+                                               placeholder="Check-out date" min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ date('Y-m-d', strtotime('+1 day')) }}">
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md d-flex">
+                            <div class="col-md-3 d-flex">
                                 <div class="form-group p-4 align-self-stretch d-flex align-items-end">
                                     <div class="wrap">
-                                        <label for="#">Room</label>
+                                        <label for="guests">Số khách</label>
                                         <div class="form-field">
                                             <div class="select-wrap">
                                                 <div class="icon"><span class="ion-ios-arrow-down"></span></div>
-                                                <select name="" id="" class="form-control">
-                                                    <option value="">Suite</option>
-                                                    <option value="">Family Room</option>
-                                                    <option value="">Deluxe Room</option>
-                                                    <option value="">Classic Room</option>
-                                                    <option value="">Superior Room</option>
-                                                    <option value="">Luxury Room</option>
+                                                <select name="guests" id="guests" class="form-control">
+                                                    <option value="1">1 Người</option>
+                                                    <option value="2" selected>2 Người</option>
+                                                    <option value="3">3 Người</option>
+                                                    <option value="4">4 Người</option>
+                                                    <option value="5">5 Người</option>
+                                                    <option value="6">6 Người</option>
                                                 </select>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md d-flex">
-                                <div class="form-group p-4 align-self-stretch d-flex align-items-end">
-                                    <div class="wrap">
-                                        <label for="#">Customer</label>
-                                        <div class="form-field">
-                                            <div class="select-wrap">
-                                                <div class="icon"><span class="ion-ios-arrow-down"></span></div>
-                                                <select name="" id="" class="form-control">
-                                                    <option value="">1 Adult</option>
-                                                    <option value="">2 Adult</option>
-                                                    <option value="">3 Adult</option>
-                                                    <option value="">4 Adult</option>
-                                                    <option value="">5 Adult</option>
-                                                    <option value="">6 Adult</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md d-flex">
+                            <div class="col-md-3 d-flex">
                                 <div class="form-group d-flex align-self-stretch">
-                                    <input type="submit" value="Check Availability" class="btn btn-primary py-3 px-4 align-self-stretch">
+                                    <button type="submit" class="btn btn-primary py-3 px-4 align-self-stretch">Tìm kiếm phòng</button>
                                 </div>
                             </div>
                         </div>
@@ -138,7 +120,7 @@
 					<div class="col-md-7 py-5 wrap-about pb-md-5 ftco-animate">
 	          <div class="heading-section heading-section-wo-line pt-md-5 pl-md-5 mb-5">
 	          	<div class="ml-md-0">
-		          	<span class="subheading">Welcome to Deluxe Hotel</span>
+		          	<span class="subheading">Welcome to MARRON Hotel</span>
 		            <h2 class="mb-4">Welcome To Our Hotel</h2>
 	            </div>
 	          </div>
@@ -315,8 +297,8 @@
         <div class="row justify-content-center mb-5 pb-3">
           <div class="col-md-7 heading-section text-center ftco-animate">
             <span class="subheading">Về Chúng Tôi</span>
-            <h2 class="mb-4">Chào mừng đến với Deluxe Hotel</h2>
-            <p>Deluxe Hotel là điểm đến lý tưởng cho kỳ nghỉ dưỡng và công tác của bạn. Chúng tôi cung cấp hệ thống phòng nghỉ hiện đại, dịch vụ chuyên nghiệp và không gian sang trọng, mang đến trải nghiệm tuyệt vời cho mọi khách hàng.</p>
+            <h2 class="mb-4">Chào mừng đến với MARRON Hotel</h2>
+            <p>MARRON Hotel là điểm đến lý tưởng cho kỳ nghỉ dưỡng và công tác của bạn. Chúng tôi cung cấp hệ thống phòng nghỉ hiện đại, dịch vụ chuyên nghiệp và không gian sang trọng, mang đến trải nghiệm tuyệt vời cho mọi khách hàng.</p>
             <a href="{{ route('about') }}" class="btn btn-primary mt-3">Xem thêm</a>
           </div>
         </div>
@@ -561,4 +543,87 @@
       chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') chatForm.dispatchEvent(new Event('submit')); });
     </script>
     @endauth
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Xử lý form Check Availability (tìm kiếm phòng)
+        const availabilityForm = document.getElementById('availabilityForm');
+        const checkInDate = document.getElementById('check_in_date');
+        const checkOutDate = document.getElementById('check_out_date');
+        const guestsSelect = document.getElementById('guests');
+
+        // Validation cho ngày check-in và check-out
+        function validateDates() {
+            const checkIn = new Date(checkInDate.value);
+            const checkOut = new Date(checkOutDate.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (checkIn < today) {
+                alert('Ngày check-in không thể là ngày trong quá khứ!');
+                checkInDate.focus();
+                return false;
+            }
+
+            if (checkOut <= checkIn) {
+                alert('Ngày check-out phải sau ngày check-in!');
+                checkOutDate.focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        // Validation cho form tìm kiếm
+        availabilityForm.addEventListener('submit', function(e) {
+            if (!checkInDate.value) {
+                alert('Vui lòng chọn ngày check-in!');
+                checkInDate.focus();
+                e.preventDefault();
+                return;
+            }
+
+            if (!checkOutDate.value) {
+                alert('Vui lòng chọn ngày check-out!');
+                checkOutDate.focus();
+                e.preventDefault();
+                return;
+            }
+
+            if (!validateDates()) {
+                e.preventDefault();
+                return;
+            }
+
+            // Form hợp lệ, cho phép submit để tìm kiếm phòng
+            console.log('Tìm kiếm phòng với thông tin:', {
+                check_in_date: checkInDate.value,
+                check_out_date: checkOutDate.value,
+                guests: guestsSelect.value
+            });
+        });
+
+        // Tự động cập nhật ngày check-out khi thay đổi ngày check-in
+        checkInDate.addEventListener('change', function() {
+            if (this.value) {
+                const checkIn = new Date(this.value);
+                const nextDay = new Date(checkIn);
+                nextDay.setDate(nextDay.getDate() + 1);
+                checkOutDate.min = nextDay.toISOString().split('T')[0];
+                
+                // Nếu ngày check-out hiện tại nhỏ hơn ngày check-in + 1, cập nhật
+                if (checkOutDate.value && new Date(checkOutDate.value) <= checkIn) {
+                    checkOutDate.value = nextDay.toISOString().split('T')[0];
+                }
+            }
+        });
+
+        // Hiển thị thông báo khi thay đổi số khách
+        guestsSelect.addEventListener('change', function() {
+            if (this.value) {
+                console.log('Số khách đã chọn:', this.value);
+            }
+        });
+    });
+    </script>
 @endsection

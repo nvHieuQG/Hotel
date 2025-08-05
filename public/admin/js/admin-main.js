@@ -7,62 +7,9 @@ $.ajaxSetup({
     }
 });
 
-// Toggle sidebar
-function initSidebarToggle() {
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebar = document.querySelector('.sidebar');
-    const mainContent = document.querySelector('.main-content');
-    const topbar = document.querySelector('.topbar');
-    
-    if (sidebarToggle && sidebar && mainContent && topbar) {
-        sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('expanded');
-            topbar.classList.toggle('expanded');
-            const icon = this.querySelector('i');
-            if (sidebar.classList.contains('collapsed')) {
-                icon.className = 'fas fa-bars';
-                this.title = 'Show Sidebar';
-            } else {
-                icon.className = 'fas fa-times';
-                this.title = 'Hide Sidebar';
-            }
-            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-        });
-        const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        if (sidebarCollapsed) {
-            sidebar.classList.add('collapsed');
-            mainContent.classList.add('expanded');
-            topbar.classList.add('expanded');
-            const icon = sidebarToggle.querySelector('i');
-            icon.className = 'fas fa-bars';
-            sidebarToggle.title = 'Show Sidebar';
-        }
-    }
-}
 
-// Đóng sidebar khi click bên ngoài trên mobile
-function initSidebarClose() {
-    document.addEventListener('click', function(e) {
-        const sidebar = document.querySelector('.sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        if (window.innerWidth <= 992 && sidebar.classList.contains('show')) {
-            if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
-                sidebar.classList.remove('show');
-            }
-        }
-    });
-}
 
-// Xử lý window resize
-function initWindowResize() {
-    window.addEventListener('resize', function() {
-        const sidebar = document.querySelector('.sidebar');
-        if (window.innerWidth > 992) {
-            sidebar.classList.remove('show');
-        }
-    });
-}
+
 
 // Đóng dropdown khi click bên ngoài
 function initDropdownClose() {
@@ -77,12 +24,9 @@ function initDropdownClose() {
 }
 
 $(document).ready(function() {
-    if (typeof initSidebarToggle === 'function') initSidebarToggle();
-    if (typeof initSidebarClose === 'function') initSidebarClose();
-    if (typeof initWindowResize === 'function') initWindowResize();
     if (typeof initDropdownClose === 'function') initDropdownClose();
     setTimeout(function() {
-        $('.alert').fadeOut();
+        $('.alert:not(.alert-warning):not(.alert-success)').fadeOut();
     }, 5000);
 });
 
@@ -110,7 +54,7 @@ window.AdminUtils = {
 
 // Real-time notification 
 function loadNotificationCount() {
-    $.get('/admin/get-unread-notification-count', function(res) {
+    $.get('/admin/api/notifications/count', function(res) {
         if (res.success) {
             $('#notificationBadge').text(res.count);
             $('#sidebarNotificationBadge').text(res.count);

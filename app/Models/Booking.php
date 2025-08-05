@@ -113,7 +113,99 @@ class Booking extends Model
         return $this->hasMany(BookingNote::class)->internal();
     }
 
-    
+    /**
+     * Lấy danh sách dịch vụ đã thêm cho booking này.
+     */
+    public function bookingServices()
+    {
+        return $this->hasMany(BookingService::class);
+    }
+
+    /**
+     * Lấy danh sách dịch vụ thuộc loại phòng.
+     */
+    public function roomTypeServices()
+    {
+        return $this->hasMany(BookingService::class)->roomType();
+    }
+
+    /**
+     * Lấy danh sách dịch vụ bổ sung (được thêm thủ công cho booking này).
+     */
+    public function additionalServices()
+    {
+        return $this->hasMany(BookingService::class)->additional();
+    }
+
+    /**
+     * Lấy các dịch vụ có sẵn từ loại phòng nhưng chưa được thêm vào booking.
+     */
+    public function getAvailableRoomTypeServices()
+    {
+        $roomTypeId = $this->room->room_type_id;
+        $existingServiceIds = $this->bookingServices()->pluck('service_id')->toArray();
+
+        return \App\Models\Service::whereHas('roomTypes', function ($query) use ($roomTypeId) {
+            $query->where('room_type_id', $roomTypeId);
+        })->whereNotIn('id', $existingServiceIds)->get();
+    }
+
+    /**
+     * Get the payments for this booking.
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Get the latest payment for this booking.
+     */
+    public function latestPayment()
+    {
+        return $this->hasOne(Payment::class)->latest();
+    }
+
+    /**
+     * Check if booking has successful payment
+     */
+    public function hasSuccessfulPayment()
+    {
+        return $this->payments()->where('status', 'completed')->exists();
+    }
+
+    /**
+     * Get the total amount paid for this booking
+     */
+    public function getTotalPaidAttribute()
+    {
+        return $this->payments()->where('status', 'completed')->sum('amount');
+    }
+
+    /**
+     * Check if booking is fully paid
+     */
+    public function isFullyPaid()
+    {
+        return $this->total_paid >= $this->total_booking_price;
+    }
+
+    /**
+     * Tính tổng giá tiền của các dịch vụ trong booking.
+     */
+    public function getTotalServicesPriceAttribute()
+    {
+        return $this->bookingServices()->sum('total_price');
+    }
+
+    /**
+     * Tính tổng giá trị của booking bao gồm cả tiền phòng và dịch vụ.
+     */
+    public function getTotalBookingPriceAttribute()
+    {
+        return $this->price + $this->total_services_price;
+    }
+
     /**
      * Accessor cho ngày check-out (chỉ lấy phần date)
      */
@@ -145,7 +237,7 @@ class Booking extends Model
     {
         return $this->price;
     }
-    
+
     /**
      * Get the number of guests.
      */
@@ -160,8 +252,8 @@ class Booking extends Model
      */
     public function isCompleted()
     {
-        return $this->status === 'completed' || 
-               ($this->check_out_date && $this->check_out_date->isPast());
+        return $this->status === 'completed' ||
+            ($this->check_out_date && $this->check_out_date->isPast());
     }
 
     /**
@@ -169,8 +261,9 @@ class Booking extends Model
      */
     public function getStatusTextAttribute()
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'Chờ xác nhận',
+            'pending_payment' => 'Chờ thanh toán',
             'confirmed' => 'Đã xác nhận',
             'checked_in' => 'Đã nhận phòng',
             'checked_out' => 'Đã trả phòng',

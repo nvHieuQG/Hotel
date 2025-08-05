@@ -81,7 +81,9 @@ class AdminRoomController extends Controller
     public function show($id)
     {
         $room = $this->roomService->getRoom($id);
-        return view('admin.rooms.show', compact('room'));
+        $services = $room->roomType && $room->roomType->services ? $room->roomType->services : collect();
+        $serviceCategories = $room->roomType && $room->roomType->serviceCategories ? $room->roomType->serviceCategories : collect();
+        return view('admin.rooms.show', compact('room', 'services', 'serviceCategories'));
     }
 
     public function create()
@@ -111,7 +113,7 @@ class AdminRoomController extends Controller
     {
         try {
             $this->roomService->updateRoom($id, $request->all());
-        return redirect()->route('admin.rooms.index')->with('success', 'Cập nhật phòng thành công');
+        return redirect()->route('admin.rooms.show', $id)->with('success', 'Cập nhật phòng thành công');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->validator)->withInput();
         }

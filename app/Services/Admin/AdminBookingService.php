@@ -9,10 +9,14 @@ use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\AdminNotification;
+use App\Mail\BookingConfirmationMail;
+use App\Mail\PaymentConfirmationMail;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Collection;
@@ -46,12 +50,13 @@ class AdminBookingService implements AdminBookingServiceInterface
     public function getBookingsWithPagination(Request $request): LengthAwarePaginator
     {
         $filters = [
-            'status' => $request->get('status')
+            'status' => $request->get('status'),
+            'payment_status' => $request->get('payment_status')
         ];
-        
+
         return $this->adminBookingRepository->getAllWithPagination($filters);
     }
-    
+
     /**
      * Lấy chi tiết đặt phòng
      *
@@ -61,14 +66,14 @@ class AdminBookingService implements AdminBookingServiceInterface
     public function getBookingDetails($id): Booking
     {
         $booking = $this->adminBookingRepository->findById($id);
-        
+
         if (!$booking) {
             throw new \Exception('Không tìm thấy đặt phòng');
         }
-        
+
         return $booking;
     }
-    
+
     /**
      * Tạo đặt phòng mới
      *
@@ -85,21 +90,21 @@ class AdminBookingService implements AdminBookingServiceInterface
             'check_out_date' => 'required|date|after:check_in_date',
             'status' => 'required|in:pending,confirmed',
         ]);
-        
+
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
-        
+
         // Tính tổng tiền
         $room = $this->roomRepository->findById($data['room_id']);
         $checkIn = new \DateTime($data['check_in_date']);
         $checkOut = new \DateTime($data['check_out_date']);
         $nights = $checkIn->diff($checkOut)->days;
         $totalPrice = $room->price * $nights;
-        
+
         // Tạo booking ID duy nhất
         $bookingId = 'BK' . date('ymd') . strtoupper(Str::random(5));
-        
+
         // Chuẩn bị dữ liệu
         $bookingData = [
             'user_id' => $data['user_id'],
@@ -110,11 +115,11 @@ class AdminBookingService implements AdminBookingServiceInterface
             'price' => $totalPrice,
             'status' => $data['status']
         ];
-        
+
         // Tạo đặt phòng
         return $this->adminBookingRepository->create($bookingData);
     }
-    
+
     /**
      * Cập nhật đặt phòng
      *
@@ -147,28 +152,30 @@ class AdminBookingService implements AdminBookingServiceInterface
             'guest_vehicle_number' => 'nullable|string|max:20',
             'guest_notes' => 'nullable|string|max:1000',
         ]);
-        
+
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
-        
+
         $booking = $this->adminBookingRepository->findById($id);
-        
+
         if (!$booking) {
             throw new \Exception('Không tìm thấy đặt phòng');
         }
-        
+
         // Tính lại tổng tiền nếu thay đổi phòng hoặc ngày
-        if ($booking->room_id != $data['room_id'] || 
-            $booking->check_in_date != $data['check_in_date'] || 
-            $booking->check_out_date != $data['check_out_date']) {
-            
+        if (
+            $booking->room_id != $data['room_id'] ||
+            $booking->check_in_date != $data['check_in_date'] ||
+            $booking->check_out_date != $data['check_out_date']
+        ) {
+
             $room = $this->roomRepository->findById($data['room_id']);
             $checkIn = new \DateTime($data['check_in_date']);
             $checkOut = new \DateTime($data['check_out_date']);
             $nights = $checkIn->diff($checkOut)->days;
             $totalPrice = $room->price * $nights;
-            
+
             $data['price'] = $totalPrice;
         }
         
@@ -195,8 +202,10 @@ class AdminBookingService implements AdminBookingServiceInterface
         }
         
         return $updatedBooking;
+
+        return $this->adminBookingRepository->findById($id);
     }
-    
+
     /**
      * Xóa đặt phòng
      *
@@ -207,7 +216,7 @@ class AdminBookingService implements AdminBookingServiceInterface
     {
         return $this->adminBookingRepository->delete($id);
     }
-    
+
     /**
      * Cập nhật trạng thái đặt phòng
      *
@@ -217,9 +226,43 @@ class AdminBookingService implements AdminBookingServiceInterface
      */
     public function updateBookingStatus(int $id, string $status): bool
     {
-        // Danh sách trạng thái theo thứ tự một chiều
+        $booking = $this->adminBookingRepository->findById($id);
+        if (!$booking) {
+            throw new \Exception('Không tìm thấy đặt phòng');
+        }
+
+        $currentStatus = $booking->status;
+
+        // Logic đặc biệt cho trạng thái pending_payment
+        if ($currentStatus === 'pending_payment') {
+            // Kiểm tra xem đã thanh toán chưa
+            if ($booking->hasSuccessfulPayment()) {
+                // Nếu đã thanh toán và chuyển sang confirmed
+                if ($status === 'confirmed') {
+                    $success = $this->adminBookingRepository->updateStatus($id, $status);
+                    if ($success) {
+                        $this->handleStatusChange($booking, $currentStatus, $status);
+                    }
+                    return $success;
+                }
+            } else {
+                // Nếu chưa thanh toán, chỉ cho phép hủy
+                if (in_array($status, ['cancelled', 'no_show'])) {
+                    $success = $this->adminBookingRepository->updateStatus($id, $status);
+                    if ($success) {
+                        $this->handleStatusChange($booking, $currentStatus, $status);
+                    }
+                    return $success;
+                } else {
+                    throw new \Exception('Không thể chuyển trạng thái khi chưa thanh toán. Chỉ có thể hủy đặt phòng.');
+                }
+            }
+        }
+
+        // Logic cho các trạng thái khác - chỉ cho phép chuyển từng bước một
         $statusOrder = [
             'pending',
+            'pending_payment',
             'confirmed',
             'checked_in',
             'checked_out',
@@ -228,13 +271,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             'no_show',
         ];
 
-        $booking = $this->adminBookingRepository->findById($id);
-        if (!$booking) {
-            throw new \Exception('Không tìm thấy đặt phòng');
-        }
-
-        $oldStatus = $booking->status;
-        $currentIndex = array_search($oldStatus, $statusOrder);
+        $currentIndex = array_search($currentStatus, $statusOrder);
         $newIndex = array_search($status, $statusOrder);
 
         // Kiểm tra trạng thái hợp lệ
@@ -242,33 +279,32 @@ class AdminBookingService implements AdminBookingServiceInterface
             throw new \Exception('Trạng thái không hợp lệ.');
         }
 
-        // Cho phép chuyển sang cancelled/no_show ở bất kỳ trạng thái nào
+        // Cho phép chuyển sang cancelled/no_show ở bất kỳ trạng thái nào (trừ completed)
         if (in_array($status, ['cancelled', 'no_show'])) {
+            if ($currentStatus !== 'completed') {
+                $success = $this->adminBookingRepository->updateStatus($id, $status);
+                if ($success) {
+                    $this->handleStatusChange($booking, $currentStatus, $status);
+                }
+                return $success;
+            } else {
+                throw new \Exception('Không thể chuyển trạng thái khi đã hoàn thành.');
+            }
+        }
+
+        // Chỉ cho phép chuyển sang trạng thái ngay tiếp theo (không nhảy cóc)
+        $nextIndex = $currentIndex + 1;
+        if ($nextIndex < count($statusOrder) && $newIndex === $nextIndex) {
             $success = $this->adminBookingRepository->updateStatus($id, $status);
             if ($success) {
-                $this->handleStatusChange($booking, $oldStatus, $status);
+                $this->handleStatusChange($booking, $currentStatus, $status);
             }
             return $success;
+        } else {
+            throw new \Exception('Chỉ được phép chuyển trạng thái theo thứ tự từng bước một.');
         }
-
-        // Chỉ cho phép chuyển tiếp (không lùi lại)
-        if ($newIndex <= $currentIndex) {
-            throw new \Exception('Không được chuyển trạng thái lùi lại hoặc lặp lại.');
-        }
-
-        // Kiểm tra xem trạng thái mới có trong danh sách hợp lệ không
-        $validNextStatuses = $this->getValidNextStatuses($id);
-        if (!array_key_exists($status, $validNextStatuses)) {
-            throw new \Exception('Trạng thái không được phép chuyển đổi.');
-        }
-
-        $success = $this->adminBookingRepository->updateStatus($id, $status);
-        if ($success) {
-            $this->handleStatusChange($booking, $oldStatus, $status);
-        }
-        return $success;
     }
-    
+
     /**
      * Lấy dữ liệu cho dashboard
      *
@@ -278,24 +314,24 @@ class AdminBookingService implements AdminBookingServiceInterface
     {
         // Đếm số đặt phòng hôm nay
         $todayBookings = $this->adminBookingRepository->countToday();
-        
+
         // Tính doanh thu tháng hiện tại
         $monthlyRevenue = $this->adminBookingRepository->calculateMonthlyRevenue();
-        
-        // Đếm số đặt phòng đang chờ xác nhận
-        $pendingBookings = $this->adminBookingRepository->countByStatus('pending');
-        
+
+        // Đếm số đặt phòng đang chờ xác nhận (bao gồm cả pending và pending_payment)
+        $pendingBookings = $this->adminBookingRepository->countByStatus('pending') + $this->adminBookingRepository->countByStatus('pending_payment');
+
         // Lấy danh sách đặt phòng gần đây
         $recentBookings = $this->adminBookingRepository->getRecent(5);
-        
+
         // Thống kê theo trạng thái
         $statusCounts = [
-            'pending' => $this->adminBookingRepository->countByStatus('pending'),
+            'pending' => $this->adminBookingRepository->countByStatus('pending') + $this->adminBookingRepository->countByStatus('pending_payment'),
             'confirmed' => $this->adminBookingRepository->countByStatus('confirmed'),
             'cancelled' => $this->adminBookingRepository->countByStatus('cancelled'),
             'completed' => $this->adminBookingRepository->countByStatus('completed'),
         ];
-        
+
         return [
             'todayBookings' => $todayBookings,
             'monthlyRevenue' => $monthlyRevenue,
@@ -304,7 +340,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             'statusCounts' => $statusCounts
         ];
     }
-    
+
     /**
      * Lấy dữ liệu cho báo cáo
      *
@@ -317,18 +353,18 @@ class AdminBookingService implements AdminBookingServiceInterface
         if (Auth::user()->role?->name == 'staff') {
             throw new \Exception('Bạn không có quyền truy cập trang báo cáo.');
         }
-        
+
         $filters = [
             'from_date' => $request->get('from_date'),
             'to_date' => $request->get('to_date'),
             'status' => $request->get('status')
         ];
-        
+
         $bookings = $this->adminBookingRepository->getBookingsForReport($filters);
-        
+
         // Tính toán tổng doanh thu
         $totalRevenue = $bookings->sum('price');
-        
+
         // Thống kê theo trạng thái
         $statusStats = $bookings->groupBy('status')
             ->map(function ($items) {
@@ -337,7 +373,7 @@ class AdminBookingService implements AdminBookingServiceInterface
                     'revenue' => $items->sum('price')
                 ];
             });
-        
+
         return [
             'bookings' => $bookings,
             'totalRevenue' => $totalRevenue,
@@ -345,7 +381,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             'filters' => $filters
         ];
     }
-    
+
     /**
      * Lấy dữ liệu cho form tạo đặt phòng
      *
@@ -355,13 +391,13 @@ class AdminBookingService implements AdminBookingServiceInterface
     {
         $rooms = $this->roomRepository->getAll();
         $users = $this->userRepository->getAll();
-        
+
         return [
             'rooms' => $rooms,
             'users' => $users
         ];
     }
-    
+
     /**
      * Lấy dữ liệu cho form chỉnh sửa đặt phòng
      *
@@ -371,14 +407,14 @@ class AdminBookingService implements AdminBookingServiceInterface
     public function getEditFormData(int $id): array
     {
         $booking = $this->adminBookingRepository->findById($id);
-        
+
         if (!$booking) {
             throw new \Exception('Không tìm thấy đặt phòng');
         }
-        
+
         $rooms = $this->roomRepository->getAll();
         $users = $this->userRepository->getAll();
-        
+
         return [
             'booking' => $booking,
             'rooms' => $rooms,
@@ -399,42 +435,60 @@ class AdminBookingService implements AdminBookingServiceInterface
             return [];
         }
 
+        $currentStatus = $booking->status;
+        $validStatuses = [];
+
+        // Logic đặc biệt cho trạng thái pending_payment
+        if ($currentStatus === 'pending_payment') {
+            // Kiểm tra xem đã thanh toán chưa
+            if ($booking->hasSuccessfulPayment()) {
+                // Nếu đã thanh toán, cho phép chuyển sang confirmed
+                $validStatuses['confirmed'] = 'Đã xác nhận';
+            } else {
+                // Nếu chưa thanh toán, chỉ cho phép hủy
+                $validStatuses['cancelled'] = 'Đã hủy';
+                $validStatuses['no_show'] = 'Khách không đến';
+            }
+            return $validStatuses;
+        }
+
+        // Logic cho các trạng thái khác - chỉ cho phép chuyển từng bước một
         $statusOrder = [
             'pending',
+            'pending_payment',
             'confirmed',
             'checked_in',
             'checked_out',
             'completed',
-            'cancelled',
-            'no_show',
         ];
 
-        $currentIndex = array_search($booking->status, $statusOrder);
+        $currentIndex = array_search($currentStatus, $statusOrder);
         if ($currentIndex === false) {
             return [];
         }
 
-        $validStatuses = [];
-
         // Nếu trạng thái hiện tại KHÔNG phải là completed thì luôn cho phép chuyển sang cancelled và no_show
-        if ($booking->status !== 'completed') {
+        if ($currentStatus !== 'completed') {
             $validStatuses['cancelled'] = 'Đã hủy';
-            $validStatuses['no_show'] = 'Khách không đến';
+            // Ẩn 'Khách không đến' nếu đã nhận phòng hoặc đã trả phòng
+            if ($currentStatus !== 'checked_in' && $currentStatus !== 'checked_out') {
+                $validStatuses['no_show'] = 'Khách không đến';
+            }
         }
 
-        // Cho phép chuyển sang tất cả các trạng thái phía trước (sau trạng thái hiện tại)
-        for ($i = $currentIndex + 1; $i < count($statusOrder); $i++) {
-            $nextStatus = $statusOrder[$i];
-            if (!in_array($nextStatus, ['cancelled', 'no_show'])) {
-                $validStatuses[$nextStatus] = match($nextStatus) {
-                    'pending' => 'Chờ xác nhận',
-                    'confirmed' => 'Đã xác nhận',
-                    'checked_in' => 'Đã nhận phòng',
-                    'checked_out' => 'Đã trả phòng',
-                    'completed' => 'Hoàn thành',
-                    default => 'Không xác định'
-                };
-            }
+        // Chỉ cho phép chuyển sang trạng thái ngay tiếp theo (không nhảy cóc)
+        $nextIndex = $currentIndex + 1;
+        if ($nextIndex < count($statusOrder)) {
+            $nextStatus = $statusOrder[$nextIndex];
+            $validStatuses[$nextStatus] = match ($nextStatus) {
+                'pending' => 'Chờ xác nhận',
+                'pending_payment' => 'Chờ thanh toán',
+                'confirmed' => 'Đã xác nhận',
+                'checked_in' => 'Đã nhận phòng',
+                'checked_out' => 'Đã trả phòng',
+                'completed' => 'Hoàn thành',
+                default => 'Không xác định'
+            };
         }
 
         return $validStatuses;
@@ -643,7 +697,7 @@ class AdminBookingService implements AdminBookingServiceInterface
         $user = \App\Models\User::find($bookingData['user_id']);
         $room = \App\Models\Room::find($bookingData['room_id']);
 
-        $statusText = match($newStatus) {
+        $statusText = match ($newStatus) {
             'pending' => 'Chờ xác nhận',
             'confirmed' => 'Đã xác nhận',
             'checked_in' => 'Đã nhận phòng',
@@ -677,7 +731,7 @@ class AdminBookingService implements AdminBookingServiceInterface
     {
         // Tạo ghi chú hệ thống
         $this->createSystemNote($booking->id, 'Đặt phòng mới được tạo', 'system');
-        
+
         // Tạo thông báo admin
         $this->createBookingNotification($booking->toArray());
     }
@@ -691,7 +745,7 @@ class AdminBookingService implements AdminBookingServiceInterface
         foreach ($changes as $field => $value) {
             $changeText[] = ucfirst($field) . ': ' . $value;
         }
-        
+
         $this->createSystemNote($booking->id, 'Cập nhật thông tin: ' . implode(', ', $changeText), 'system');
     }
 
@@ -709,6 +763,14 @@ class AdminBookingService implements AdminBookingServiceInterface
     public function onBookingConfirmed(Booking $booking): void
     {
         $this->createSystemNote($booking->id, 'Đặt phòng đã được xác nhận', 'system');
+
+        // Gửi email xác nhận đặt phòng
+        try {
+            $latestPayment = $booking->payments->where('status', 'completed')->first();
+            Mail::to($booking->user->email)->send(new BookingConfirmationMail($booking, $latestPayment));
+        } catch (\Exception $e) {
+            Log::error('Failed to send booking confirmation email: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -796,7 +858,7 @@ class AdminBookingService implements AdminBookingServiceInterface
     private function handleStatusChange(Booking $booking, string $oldStatus, string $newStatus): void
     {
         // Tạo ghi chú hệ thống
-        $statusText = match($newStatus) {
+        $statusText = match ($newStatus) {
             'pending' => 'Chờ xác nhận',
             'confirmed' => 'Đã xác nhận',
             'checked_in' => 'Đã nhận phòng',
@@ -807,7 +869,7 @@ class AdminBookingService implements AdminBookingServiceInterface
             default => 'Không xác định'
         };
 
-        $oldStatusText = match($oldStatus) {
+        $oldStatusText = match ($oldStatus) {
             'pending' => 'Chờ xác nhận',
             'confirmed' => 'Đã xác nhận',
             'checked_in' => 'Đã nhận phòng',
@@ -846,4 +908,4 @@ class AdminBookingService implements AdminBookingServiceInterface
                 break;
         }
     }
-} 
+}

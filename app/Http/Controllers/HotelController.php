@@ -54,12 +54,36 @@ class HotelController extends Controller
         return view('client.index', compact('roomTypes', 'fiveStarReviews'));
     }
 
-    public function rooms()
+    public function rooms(Request $request)
     {
+        // Lấy thông tin tìm kiếm từ URL
+        $searchParams = $request->only(['check_in_date', 'check_out_date', 'guests']);
+
         // Lấy tất cả phòng để hiển thị ở trang danh sách phòng
         $rooms = $this->roomRepository->getAll();
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
-        return view('client.rooms.index', compact('rooms', 'roomTypes'));
+
+        // Nếu có thông tin tìm kiếm, lọc phòng phù hợp
+        if (!empty($searchParams['check_in_date']) && !empty($searchParams['check_out_date'])) {
+            $checkInDate = $searchParams['check_in_date'];
+            $checkOutDate = $searchParams['check_out_date'];
+            $guests = $searchParams['guests'] ?? 2;
+
+            // Lọc phòng theo số khách
+            $rooms = $rooms->filter(function ($room) use ($guests) {
+                return $room->roomType && $room->roomType->capacity >= $guests;
+            });
+
+            // TODO: Thêm logic lọc phòng theo ngày (kiểm tra booking conflicts)
+            // Hiện tại chỉ lọc theo số khách
+
+            // Thêm thông báo tìm kiếm
+            $searchMessage = "Tìm kiếm phòng cho {$guests} khách từ {$checkInDate} đến {$checkOutDate}";
+        } else {
+            $searchMessage = null;
+        }
+
+        return view('client.rooms.index', compact('rooms', 'roomTypes', 'searchParams', 'searchMessage'));
     }
 
     public function restaurant()
@@ -112,10 +136,10 @@ class HotelController extends Controller
             // Lấy tất cả booking hoàn thành cho loại phòng này mà chưa đánh giá
             $completedBookings = \App\Models\Booking::where('user_id', Auth::id())
                 ->where('status', 'completed')
-                ->whereHas('room', function($query) use ($roomType) {
+                ->whereHas('room', function ($query) use ($roomType) {
                     $query->where('room_type_id', $roomType->id);
                 })
-                ->whereDoesntHave('review', function($q) {
+                ->whereDoesntHave('review', function ($q) {
                     $q->where('user_id', Auth::id());
                 })
                 ->get();

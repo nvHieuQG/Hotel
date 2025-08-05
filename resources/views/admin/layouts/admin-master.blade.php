@@ -62,10 +62,7 @@
 </head>
 
 <body>
-    <!-- Sidebar Toggle Button -->
-    <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
-        <i class="fas fa-bars"></i>
-    </button>
+
 
     <!-- Top Navbar -->
     <nav class="topbar">
@@ -93,27 +90,27 @@
                     </div>
                     <div id="notificationsList">
                         @if(isset($unreadCount) && $unreadCount > 0 && isset($unreadNotifications))
-                            @foreach($unreadNotifications as $notification)
-                                <div class="dropdown-item notification-item d-flex align-items-start justify-content-between gap-2">
-                                    <a href="{{ route('admin.notifications.show', $notification->id) }}" class="flex-grow-1 text-decoration-none text-dark">
+                            @foreach($unreadNotifications->take(5) as $notification)
+                                <div class="dropdown-item notification-item" data-notification-id="{{ $notification->id }}">
+                                    <a href="{{ route('admin.notifications.show', $notification->id) }}" class="text-decoration-none text-dark">
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="icon-circle bg-{{ $notification->color }}">
                                                 <i class="{{ $notification->display_icon }} text-white"></i>
                                             </div>
-                                            <div>
+                                            <div class="flex-grow-1">
                                                 <div class="fw-bold small text-truncate" title="{{ $notification->title }}">{{ $notification->title }}</div>
-                                                <div class="small text-muted text-truncate mb-1" title="{{ $notification->message }}">{{ $notification->message }}</div>
-                                                <div class="small text-gray-500"><i class="fas fa-clock me-1"></i>{{ $notification->time_ago }}</div>
+                                                <div class="small text-gray-500">{{ $notification->time_ago }}</div>
                                             </div>
                                         </div>
                                     </a>
-                                    <form method="POST" action="{{ route('admin.notifications.destroy', $notification->id) }}" style="margin:0;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 ms-2" title="Xóa" style="font-size:1rem;"><i class="fas fa-trash"></i></button>
-                                    </form>
                                 </div>
                             @endforeach
+                            @if($unreadNotifications->count() > 5)
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-item text-center small text-muted">
+                                    Và {{ $unreadNotifications->count() - 5 }} thông báo khác...
+                                </div>
+                            @endif
                         @else
                             <div class="dropdown-item text-center small text-gray-500 py-3">
                                 <i class="fas fa-check-circle text-success me-2"></i> Không có thông báo mới
@@ -276,7 +273,9 @@
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}" href="{{ route('admin.notifications.index') }}">
                         <i class="fas fa-bell"></i> Thông báo
-                        
+                        @if(isset($unreadCount) && $unreadCount > 0)
+                            <span class="badge bg-danger ms-auto" id="sidebarNotificationBadge">{{ $unreadCount }}</span>
+                        @endif
                     </a>
                 </li>
                 <li class="nav-item mt-5">
@@ -347,6 +346,46 @@
     <script src="{{ asset('admin/js/admin-main.js') }}"></script>
     
     @yield('scripts')
+    <style>
+        .notification-item {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+        
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        
+        .notification-item a {
+            display: block;
+            width: 100%;
+        }
+        
+        .icon-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .dropdown-menu {
+            max-width: 450px;
+            min-width: 400px;
+        }
+        
+        .dropdown-item {
+            white-space: normal;
+            word-wrap: break-word;
+        }
+    </style>
     <script>
         $(document).ready(function() {
             // Xử lý thông báo - đảm bảo chỉ hiển thị một thông báo
@@ -364,37 +403,105 @@
             
             // Khi bấm chuông, load danh sách thông báo chưa đọc
             $('#notificationsDropdown').on('show.bs.dropdown', function () {
-                $.get('/admin/get-unread-notifications', function(res) {
+                $.get('/admin/api/notifications/unread', function(res) {
                     if (res.success) {
                         let html = '';
                         if (res.notifications.length > 0) {
-                            res.notifications.forEach(function(notification) {
-                                html += `<div class="dropdown-item notification-item d-flex align-items-start justify-content-between gap-2">
-                                    <a href="/admin/notifications/${notification.id}" class="flex-grow-1 text-decoration-none text-dark">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="icon-circle bg-${notification.color}">
-                                                <i class="${notification.display_icon} text-white"></i>
-                                            </div>
-                                            <div>
-                                                <div class="fw-bold small text-truncate" title="${notification.title}">${notification.title}</div>
-                                                <div class="small text-muted text-truncate mb-1" title="${notification.message}">${notification.message}</div>
-                                                <div class="small text-gray-500"><i class="fas fa-clock me-1"></i>${notification.time_ago}</div>
-                                            </div>
+                                                    // Chỉ hiển thị tối đa 5 thông báo
+                        res.notifications.slice(0, 5).forEach(function(notification) {
+                                                            html += `<div class="dropdown-item notification-item" data-notification-id="${notification.id}">
+                                    <a href="/admin/notifications/${notification.id}" class="text-decoration-none text-dark">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="icon-circle bg-${notification.color}">
+                                            <i class="${notification.display_icon} text-white"></i>
                                         </div>
-                                    </a>
-                                    <form method="POST" action="/admin/notifications/${notification.id}" style="margin:0;">
-                                        <input type="hidden" name="_token" value="${$('meta[name=csrf-token]').attr('content')}">
-                                        <input type="hidden" name="_method" value="DELETE">
-                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 ms-2" title="Xóa" style="font-size:1rem;"><i class="fas fa-trash"></i></button>
-                                    </form>
-                                </div>`;
-                            });
-                        } else {
-                            html = `<div class="dropdown-item text-center small text-gray-500 py-3">
-                                <i class="fas fa-check-circle text-success me-2"></i> Không có thông báo mới
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold small text-truncate" title="${notification.title}">${notification.title}</div>
+                                            <div class="small text-gray-500">${notification.time_ago}</div>
+                                        </div>
+                                    </div>
+                                </a>
                             </div>`;
+                        });
+                        
+                        // Thêm thông báo nếu có nhiều hơn 5 thông báo
+                        if (res.notifications.length > 5) {
+                            html += `<div class="dropdown-divider"></div>
+                                <div class="dropdown-item text-center small text-muted">
+                                    Và ${res.notifications.length - 5} thông báo khác...
+                                </div>`;
                         }
-                        $('#notificationsList').html(html);
+                    } else {
+                        html = `<div class="dropdown-item text-center small text-gray-500 py-3">
+                            <i class="fas fa-check-circle text-success me-2"></i> Không có thông báo mới
+                        </div>`;
+                    }
+                    $('#notificationsList').html(html);
+                    
+                    // Thêm event listener cho việc click vào notification
+                    $('#notificationsList .notification-item a').on('click', function(e) {
+                        e.preventDefault();
+                        const notificationId = $(this).closest('.notification-item').data('notification-id');
+                        const href = $(this).attr('href');
+                        
+                        // Đánh dấu thông báo cụ thể này là đã đọc
+                        $.ajax({
+                            url: `/admin/api/notifications/${notificationId}/mark-read`,
+                            type: 'PATCH',
+                            data: {
+                                _token: $('meta[name=csrf-token]').attr('content')
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    // Cập nhật badge count
+                                    const currentCount = parseInt($('#notificationBadge').text()) || 0;
+                                    const newCount = Math.max(0, currentCount - 1);
+                                    $('#notificationBadge').text(newCount);
+                                    $('#sidebarNotificationBadge').text(newCount);
+                                    
+                                    // Chuyển hướng đến trang chi tiết thông báo
+                                    window.location.href = href;
+                                }
+                            },
+                            error: function() {
+                                // Nếu có lỗi, vẫn chuyển hướng
+                                window.location.href = href;
+                            }
+                        });
+                    });
+                });
+                
+                // Xử lý click cho notification items tĩnh (khi trang được load lần đầu)
+                $(document).on('click', '#notificationsList .notification-item a', function(e) {
+                    e.preventDefault();
+                    const notificationId = $(this).closest('.notification-item').data('notification-id');
+                    const href = $(this).attr('href');
+                    
+                    // Đánh dấu thông báo cụ thể này là đã đọc
+                    $.ajax({
+                        url: `/admin/api/notifications/${notificationId}/mark-read`,
+                        type: 'PATCH',
+                        data: {
+                            _token: $('meta[name=csrf-token]').attr('content')
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Cập nhật badge count
+                                const currentCount = parseInt($('#notificationBadge').text()) || 0;
+                                const newCount = Math.max(0, currentCount - 1);
+                                $('#notificationBadge').text(newCount);
+                                $('#sidebarNotificationBadge').text(newCount);
+                                
+                                // Chuyển hướng đến trang chi tiết thông báo
+                                window.location.href = href;
+                            }
+                        },
+                        error: function() {
+                            // Nếu có lỗi, vẫn chuyển hướng
+                            window.location.href = href;
+                        }
+                    });
+                });
                     }
                 });
             });

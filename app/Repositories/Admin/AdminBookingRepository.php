@@ -29,16 +29,47 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function getAllWithPagination(array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        $query = $this->bookingModel->with(['user', 'room']);
-        
-        // Áp dụng bộ lọc
+        $query = $this->bookingModel->with(['user', 'room', 'payments']);
+
+        // Áp dụng bộ lọc trạng thái booking
         if (isset($filters['status']) && $filters['status']) {
             $query->where('status', $filters['status']);
         }
-        
+
+        // Áp dụng bộ lọc trạng thái thanh toán
+        if (isset($filters['payment_status']) && $filters['payment_status']) {
+            switch ($filters['payment_status']) {
+                case 'paid':
+                    $query->whereHas('payments', function ($q) {
+                        $q->where('status', 'completed');
+                    });
+                    break;
+                case 'processing':
+                    $query->whereHas('payments', function ($q) {
+                        $q->where('status', 'processing');
+                    });
+                    break;
+                case 'pending':
+                    $query->whereHas('payments', function ($q) {
+                        $q->where('status', 'pending');
+                    });
+                    break;
+                case 'failed':
+                    $query->whereHas('payments', function ($q) {
+                        $q->where('status', 'failed');
+                    });
+                    break;
+                case 'unpaid':
+                    $query->whereDoesntHave('payments', function ($q) {
+                        $q->whereIn('status', ['completed', 'processing', 'pending']);
+                    });
+                    break;
+            }
+        }
+
         return $query->latest()->paginate($perPage);
     }
-    
+
     /**
      * Lấy đặt phòng theo booking_id (mã code)
      *
@@ -49,13 +80,13 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     {
         // Nếu là số, thử tìm theo id số trước
         if (is_numeric($id)) {
-            $booking = $this->bookingModel->with(['user', 'room'])->find($id);
+            $booking = $this->bookingModel->with(['user', 'room', 'payments'])->find($id);
             if ($booking) return $booking;
         }
         // Nếu không thấy hoặc là chuỗi, tìm theo booking_id (mã code)
-        return $this->bookingModel->with(['user', 'room'])->where('booking_id', $id)->first();
+        return $this->bookingModel->with(['user', 'room', 'payments'])->where('booking_id', $id)->first();
     }
-    
+
     /**
      * Tạo đặt phòng mới
      *
@@ -66,7 +97,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     {
         return $this->bookingModel->create($data);
     }
-    
+
     /**
      * Cập nhật đặt phòng
      *
@@ -78,7 +109,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     {
         return $booking->update($data);
     }
-    
+
     /**
      * Xóa đặt phòng
      *
@@ -89,7 +120,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     {
         return $this->bookingModel->destroy($id) > 0;
     }
-    
+
     /**
      * Cập nhật trạng thái đặt phòng
      *
@@ -106,7 +137,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
         }
         return false;
     }
-    
+
     /**
      * Lấy đặt phòng gần đây
      *
@@ -116,11 +147,11 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     public function getRecent(int $limit = 5): Collection
     {
         return $this->bookingModel->with(['user', 'room'])
-                           ->latest()
-                           ->limit($limit)
-                           ->get();
+            ->latest()
+            ->limit($limit)
+            ->get();
     }
-    
+
     /**
      * Đếm số đặt phòng theo trạng thái
      *
@@ -131,7 +162,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     {
         return $this->bookingModel->where('status', $status)->count();
     }
-    
+
     /**
      * Đếm số đặt phòng hôm nay
      *
@@ -141,7 +172,7 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     {
         return $this->bookingModel->whereDate('created_at', Carbon::today())->count();
     }
-    
+
     /**
      * Tính tổng doanh thu trong tháng
      *
@@ -150,11 +181,11 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     public function calculateMonthlyRevenue(): float
     {
         return $this->bookingModel->whereMonth('created_at', Carbon::now()->month)
-                           ->whereYear('created_at', Carbon::now()->year)
-                           ->where('status', '!=', 'cancelled')
-                           ->sum('price');
+            ->whereYear('created_at', Carbon::now()->year)
+            ->where('status', '!=', 'cancelled')
+            ->sum('price');
     }
-    
+
     /**
      * Lấy đặt phòng theo khoảng thời gian và trạng thái
      *
@@ -164,21 +195,21 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     public function getBookingsForReport(array $filters = []): Collection
     {
         $query = $this->bookingModel->with(['user', 'room']);
-        
+
         // Lọc theo ngày
         if (isset($filters['from_date']) && $filters['from_date']) {
             $query->where('check_in_date', '>=', $filters['from_date']);
         }
-        
+
         if (isset($filters['to_date']) && $filters['to_date']) {
             $query->where('check_out_date', '<=', $filters['to_date']);
         }
-        
+
         // Lọc theo trạng thái
         if (isset($filters['status']) && $filters['status'] && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
         }
-        
+
         return $query->get();
     }
 

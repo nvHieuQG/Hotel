@@ -29,15 +29,33 @@
                         <div class="col-md-12 ftco-animate">
                             <h2 class="mb-4">{{ $roomType->name }}</h2>
                             <div class="single-slider owl-carousel">
-                                <div class="item">
-                                    <div class="room-img" style="background-image: url('/client/images/room-1.jpg');"></div>
-                                </div>
-                                <div class="item">
-                                    <div class="room-img" style="background-image: url('/client/images/room-2.jpg');"></div>
-                                </div>
-                                <div class="item">
-                                    <div class="room-img" style="background-image: url('/client/images/room-3.jpg');"></div>
-                                </div>
+                                @php
+                                    $roomImages = collect();
+                                    $rooms = $roomType->rooms()->with(['primaryImage', 'firstImage'])->get();
+                                    
+                                    foreach ($rooms as $room) {
+                                        if ($room->primaryImage) {
+                                            $roomImages->push(asset('storage/' . $room->primaryImage->image_url));
+                                        } elseif ($room->firstImage) {
+                                            $roomImages->push(asset('storage/' . $room->firstImage->image_url));
+                                        }
+                                    }
+                                    
+                                    // Nếu không có ảnh thực tế, sử dụng ảnh mẫu
+                                    if ($roomImages->isEmpty()) {
+                                        $roomImages = collect([
+                                            '/client/images/room-1.jpg',
+                                            '/client/images/room-2.jpg',
+                                            '/client/images/room-3.jpg'
+                                        ]);
+                                    }
+                                @endphp
+                                
+                                @foreach($roomImages->take(5) as $imageUrl)
+                                    <div class="item">
+                                        <div class="room-img" style="background-image: url('{{ $imageUrl }}');"></div>
+                                    </div>
+                                @endforeach
                             </div>  
                         </div>
                         <div class="col-md-12 room-single mt-4 mb-5 ftco-animate">
@@ -61,7 +79,20 @@
                                 </button>
                             </div>
                             <div class="text-center">
-                                <a href="{{ route('booking') }}?room_type_id={{ $roomType->id }}" class="btn btn-primary py-3 px-5">Đặt phòng ngay</a>
+                                @php
+                                    $bookingParams = [];
+                                    if (request()->has('check_in_date')) {
+                                        $bookingParams['check_in_date'] = request()->get('check_in_date');
+                                    }
+                                    if (request()->has('check_out_date')) {
+                                        $bookingParams['check_out_date'] = request()->get('check_out_date');
+                                    }
+                                    if (request()->has('guests')) {
+                                        $bookingParams['guests'] = request()->get('guests');
+                                    }
+                                    $bookingParams['room_type_id'] = $roomType->id;
+                                @endphp
+                                <a href="{{ route('booking') }}?{{ http_build_query($bookingParams) }}" class="btn btn-primary py-3 px-5">Đặt phòng ngay</a>
                             </div>
                         </div>
 
@@ -437,6 +468,37 @@
                 </div> <!-- .col-md-8 -->
 
                 <div class="col-lg-4 sidebar ftco-animate">
+                    <div class="sidebar-box ftco-animate">
+                        <form action="{{ route('booking') }}" method="GET" class="p-3 bg-light">
+                            <h3>Đặt phòng này vào ngày:</h3>
+                            <input type="hidden" name="room_type_id" value="{{ $roomType->id }}">
+                            <div class="form-group">
+                                <label for="checkin_date">Ngày nhận phòng</label>
+                                <input type="date" name="check_in_date" class="form-control" required
+                                    min="{{ date('Y-m-d') }}" 
+                                    value="{{ request()->get('check_in_date', date('Y-m-d')) }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="checkout_date">Ngày trả phòng</label>
+                                <input type="date" name="check_out_date" class="form-control" required
+                                    min="{{ date('Y-m-d', strtotime('+1 day')) }}" 
+                                    value="{{ request()->get('check_out_date', date('Y-m-d', strtotime('+1 day'))) }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="guests">Số khách</label>
+                                <select name="guests" class="form-control">
+                                    @for ($i = 1; $i <= $roomType->capacity; $i++)
+                                        <option value="{{ $i }}" {{ request()->get('guests', 2) == $i ? 'selected' : '' }}>
+                                            {{ $i }} người
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary py-2 px-4">Đặt ngay</button>
+                            </div>
+                        </form>
+                    </div>
                     <div class="sidebar-box">
                         <form action="{{ route('rooms.search') }}" method="GET">
                             <div class="fields">
@@ -461,33 +523,7 @@
                         </div>
                     </div>
 
-                    <div class="sidebar-box ftco-animate">
-                        <h3>Đặt phòng nhanh</h3>
-                        <form action="{{ route('booking') }}" method="GET" class="p-3 bg-light">
-                            <input type="hidden" name="room_type_id" value="{{ $roomType->id }}">
-                            <div class="form-group">
-                                <label for="checkin_date">Ngày nhận phòng</label>
-                                <input type="date" name="check_in" class="form-control" required
-                                    min="{{ date('Y-m-d') }}">
-                            </div>
-                            <div class="form-group">
-                                <label for="checkout_date">Ngày trả phòng</label>
-                                <input type="date" name="check_out" class="form-control" required
-                                    min="{{ date('Y-m-d', strtotime('+1 day')) }}">
-                            </div>
-                            <div class="form-group">
-                                <label for="guests">Số khách</label>
-                                <select name="guests" class="form-control">
-                                    @for ($i = 1; $i <= $roomType->capacity; $i++)
-                                        <option value="{{ $i }}">{{ $i }} người</option>
-                                    @endfor
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary py-2 px-4">Đặt ngay</button>
-                            </div>
-                        </form>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -612,6 +648,57 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
+    // Xử lý form đặt phòng nhanh
+    const quickBookingForm = $('.sidebar-box form');
+    const checkInDate = quickBookingForm.find('input[name="check_in_date"]');
+    const checkOutDate = quickBookingForm.find('input[name="check_out_date"]');
+    const guestsSelect = quickBookingForm.find('select[name="guests"]');
+
+    // Tự động cập nhật ngày check-out khi thay đổi ngày check-in
+    checkInDate.on('change', function() {
+        if (this.value) {
+            const checkIn = new Date(this.value);
+            const nextDay = new Date(checkIn);
+            nextDay.setDate(nextDay.getDate() + 1);
+            checkOutDate.attr('min', nextDay.toISOString().split('T')[0]);
+            
+            // Nếu ngày check-out hiện tại nhỏ hơn ngày check-in + 1, cập nhật
+            if (checkOutDate.val() && new Date(checkOutDate.val()) <= checkIn) {
+                checkOutDate.val(nextDay.toISOString().split('T')[0]);
+            }
+        }
+    });
+
+    // Validation cho form đặt phòng nhanh
+    quickBookingForm.on('submit', function(e) {
+        const checkIn = new Date(checkInDate.val());
+        const checkOut = new Date(checkOutDate.val());
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (checkIn < today) {
+            alert('Ngày check-in không thể là ngày trong quá khứ!');
+            checkInDate.focus();
+            e.preventDefault();
+            return;
+        }
+
+        if (checkOut <= checkIn) {
+            alert('Ngày check-out phải sau ngày check-in!');
+            checkOutDate.focus();
+            e.preventDefault();
+            return;
+        }
+
+        // Form hợp lệ, cho phép submit
+        console.log('Đặt phòng nhanh với thông tin:', {
+            room_type_id: {{ $roomType->id }},
+            check_in_date: checkInDate.val(),
+            check_out_date: checkOutDate.val(),
+            guests: guestsSelect.val()
+        });
+    });
+
     // Rating stars chính
     $('.rating-stars').each(function() {
         const container = $(this);

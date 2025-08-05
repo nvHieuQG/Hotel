@@ -14,7 +14,7 @@
             'staff' => 'Nhân viên', 
             'admin' => 'Quản lý',
             'system' => 'Hệ thống',
-            default => 'Không xác định'
+            default => 'Nhân Viên'
         };
         $note->visibility_text = match($note->visibility) {
             'public' => 'Công khai',

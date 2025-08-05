@@ -85,11 +85,16 @@ class AppServiceProvider extends ServiceProvider
         \App\Services\RoomTypeReviewService::class
     );
 
-    // Admin Service Bindings
-    $this->app->bind(
-        \App\Interfaces\Services\Admin\AdminBookingServiceInterface::class,
-        \App\Services\Admin\AdminBookingService::class
-    );
+        // Admin Service Bindings
+        $this->app->bind(
+            \App\Interfaces\Services\Admin\AdminBookingServiceInterface::class,
+            \App\Services\Admin\AdminBookingService::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Services\Admin\AdminBookingServiceServiceInterface::class,
+            \App\Services\Admin\AdminBookingServiceService::class
+        );
 
     $this->app->bind(
         \App\Interfaces\Services\Admin\AdminDashboardServiceInterface::class,
@@ -158,6 +163,42 @@ class AppServiceProvider extends ServiceProvider
         \App\Repositories\SupportTicketRepository::class
     );
 
+        // Service Category Repository Binding
+        $this->app->bind(
+            \App\Interfaces\Repositories\ServiceCategoryRepositoryInterface::class,
+            \App\Repositories\ServiceCategoryRepository::class
+        );
+        // Service Category Service Binding
+        $this->app->bind(
+            \App\Interfaces\Services\ServiceCategoryServiceInterface::class,
+            \App\Services\ServiceCategoryService::class
+        );
+        // Service Repository Binding
+        $this->app->bind(
+            \App\Interfaces\Repositories\ServiceRepositoryInterface::class,
+            \App\Repositories\ServiceRepository::class
+        );
+        // Service Service Binding
+        $this->app->bind(
+            \App\Interfaces\Services\ServiceServiceInterface::class,
+            \App\Services\ServiceService::class
+        );
+        // Room Type Service Repository Binding
+        $this->app->bind(
+            \App\Interfaces\Repositories\RoomTypeServiceRepositoryInterface::class,
+            \App\Repositories\RoomTypeServiceRepository::class
+        );
+        // Room Type Service Service Binding
+        $this->app->bind(
+            \App\Interfaces\Services\RoomTypeServiceServiceInterface::class,
+            \App\Services\RoomTypeServiceService::class
+        );
+
+        // Payment Service Binding
+        $this->app->bind(
+            \App\Interfaces\Services\PaymentServiceInterface::class,
+            \App\Services\PaymentService::class
+        );
     // Service Category Repository Binding
     $this->app->bind(
         \App\Interfaces\Repositories\ServiceCategoryRepositoryInterface::class,

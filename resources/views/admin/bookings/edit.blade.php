@@ -84,10 +84,9 @@
                     <div class="form-text">
                         <strong>Hướng dẫn chuyển trạng thái:</strong><br>
                         • <strong>Thứ tự đề xuất:</strong> Chờ xác nhận → Đã xác nhận → Đã nhận phòng → Đã trả phòng → Hoàn thành<br>
-                        • <strong>Chuyển linh hoạt:</strong> Có thể chuyển sang bất kỳ trạng thái nào phía trước<br>
+                        • <strong>Chỉ tiến lên:</strong> Chỉ có thể chuyển sang trạng thái tiếp theo<br>
                         • <strong>Chuyển đặc biệt:</strong> Có thể chuyển sang "Đã hủy" hoặc "Khách không đến" ở bất kỳ trạng thái nào<br>
-                        • <strong>Không được lùi:</strong> Không thể chuyển về trạng thái trước đó
-                        <br><small class="text-muted">Trạng thái hiện tại: <strong>{{ $booking->status_text }}</strong></small>
+                        • <strong>Trạng thái hiện tại:</strong> <strong>{{ $booking->status_text }}</strong>
                     </div>
                     @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>
