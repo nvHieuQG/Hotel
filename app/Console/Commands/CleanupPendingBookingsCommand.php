@@ -12,23 +12,23 @@ class CleanupPendingBookingsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'bookings:cleanup-pending';
+    protected $signature = 'cleanup:all';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Cleanup pending bookings that have not been paid within 30 minutes';
+    protected $description = 'Cleanup pending bookings and payments that have not been completed within 30 minutes';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $this->info('Starting cleanup of pending bookings...');
+        $this->info('Starting cleanup of pending bookings and payments...');
 
-        // Dispatch the cleanup job
+        // Dispatch the cleanup job (bao gồm cả bookings và payments)
         CleanupPendingBookings::dispatch();
 
         $this->info('Cleanup job dispatched successfully.');

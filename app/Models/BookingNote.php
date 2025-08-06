@@ -116,24 +116,20 @@ class BookingNote extends Model
             return true;
         }
 
-        // Ghi chú nội bộ chỉ admin xem được
-        if ($this->is_internal) {
+        // Staff có thể xem ghi chú công khai và nội bộ
+        if ($user->hasRole('staff')) {
+            return $this->visibility === 'public' || $this->visibility === 'internal';
+        }
+
+        // Customer chỉ xem được ghi chú công khai và ghi chú riêng tư của mình
+        if ($user->hasRole('customer')) {
+            if ($this->visibility === 'public') {
+                return true;
+            }
+            if ($this->visibility === 'private') {
+                return $this->user_id === $user->id;
+            }
             return false;
-        }
-
-        // Ghi chú công khai ai cũng xem được
-        if ($this->visibility === 'public') {
-            return true;
-        }
-
-        // Ghi chú riêng tư chỉ người tạo xem được
-        if ($this->visibility === 'private') {
-            return $this->user_id === $user->id;
-        }
-
-        // Ghi chú nội bộ chỉ staff và admin xem được
-        if ($this->visibility === 'internal') {
-            return $user->hasRole('admin') || $user->hasRole('staff');
         }
 
         return false;
@@ -149,9 +145,14 @@ class BookingNote extends Model
             return true;
         }
 
-        // Người tạo ghi chú có thể chỉnh sửa (trừ ghi chú nội bộ)
-        if ($this->user_id === $user->id && !$this->is_internal) {
-            return true;
+        // Staff có thể chỉnh sửa ghi chú công khai và nội bộ
+        if ($user->hasRole('staff')) {
+            return $this->visibility === 'public' || $this->visibility === 'internal';
+        }
+
+        // Người tạo ghi chú có thể chỉnh sửa ghi chú của mình
+        if ($this->user_id === $user->id) {
+            return $this->visibility === 'public' || $this->visibility === 'private';
         }
 
         return false;
@@ -167,9 +168,14 @@ class BookingNote extends Model
             return true;
         }
 
-        // Người tạo ghi chú có thể xóa (trừ ghi chú nội bộ)
-        if ($this->user_id === $user->id && !$this->is_internal) {
-            return true;
+        // Staff có thể xóa ghi chú công khai và nội bộ
+        if ($user->hasRole('staff')) {
+            return $this->visibility === 'public' || $this->visibility === 'internal';
+        }
+
+        // Người tạo ghi chú có thể xóa ghi chú của mình
+        if ($this->user_id === $user->id) {
+            return $this->visibility === 'public' || $this->visibility === 'private';
         }
 
         return false;

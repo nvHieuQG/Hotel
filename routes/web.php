@@ -125,12 +125,25 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
     // Quản lý đặt phòng
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
-    Route::patch('bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
-    Route::resource('bookings', AdminBookingController::class);
+    Route::patch('bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
+    Route::resource('bookings', AdminBookingController::class)->except(['destroy']);
+    
+    // Giấy đăng ký tạm chú tạm vắng
+    Route::get('bookings/{booking}/registration/preview', [AdminBookingController::class, 'previewRegistration'])->name('bookings.registration.preview');
+
+    // Quản lý giấy đăng ký tạm chú tạm vắng
+    Route::post('bookings/{id}/generate-pdf', [AdminBookingController::class, 'generateRegistrationPdf'])->name('bookings.generate-pdf');
+    Route::post('bookings/{id}/send-email', [AdminBookingController::class, 'sendRegistrationEmail'])->name('bookings.send-email');
+    Route::get('bookings/{id}/download-registration', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-registration');
+    Route::get('bookings/{id}/download-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-word');
+    Route::get('bookings/{id}/view-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.view-word');
+    
+
 
     // Quản lý thông báo
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
     Route::get('notifications/{id}', [AdminBookingController::class, 'notificationShow'])->name('notifications.show');
+    Route::patch('notifications/{id}/mark-read', [AdminBookingController::class, 'markAsRead'])->name('notifications.mark-read');
     Route::delete('notifications/{id}', [AdminBookingController::class, 'destroy'])->name('notifications.destroy');
 
     // API thông báo
@@ -154,6 +167,10 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('bookings/{id}/services/add', [AdminBookingController::class, 'addServiceToBooking'])->name('bookings.services.add');
     Route::delete('bookings/{id}/services/{bookingServiceId}', [AdminBookingController::class, 'destroyServiceFromBooking'])->name('bookings.services.destroy');
     Route::post('bookings/{id}/confirm-payment', [AdminBookingController::class, 'confirmPayment'])->name('bookings.confirm-payment');
+
+    // Bulk action (POST)
+    Route::post('notifications/delete-multi', [AdminBookingController::class, 'deleteMulti'])->name('notifications.delete-multi');
+    Route::post('notifications/mark-read-multi', [AdminBookingController::class, 'markReadMulti'])->name('notifications.mark-read-multi');
 
     // Quản lý phòng
     Route::resource('rooms', AdminRoomController::class);

@@ -71,12 +71,24 @@
                     <label for="status" class="form-label">Trạng thái</label>
                     <select name="status" id="status" class="form-select @error('status') is-invalid @enderror" required>
                         <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Chờ xác nhận</option>
+                        <option value="pending_payment" {{ old('status') == 'pending_payment' ? 'selected' : '' }}>Chờ thanh toán</option>
                         <option value="confirmed" {{ old('status') == 'confirmed' ? 'selected' : '' }}>Đã xác nhận</option>
+                        <option value="checked_in" {{ old('status') == 'checked_in' ? 'selected' : '' }}>Đã nhận phòng</option>
+                        <option value="checked_out" {{ old('status') == 'checked_out' ? 'selected' : '' }}>Đã trả phòng</option>
+                        <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
+                        <option value="cancelled" {{ old('status') == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
+                        <option value="no_show" {{ old('status') == 'no_show' ? 'selected' : '' }}>Khách không đến</option>
                     </select>
                     <div class="form-text">
                         <strong>Hướng dẫn:</strong><br>
                         • <strong>Chờ xác nhận:</strong> Khách đã đặt phòng, chờ admin xác nhận<br>
-                        • <strong>Đã xác nhận:</strong> Admin đã xác nhận đặt phòng ngay lập tức
+                        • <strong>Chờ thanh toán:</strong> Đã xác nhận, chờ khách thanh toán<br>
+                        • <strong>Đã xác nhận:</strong> Admin đã xác nhận đặt phòng<br>
+                        • <strong>Đã nhận phòng:</strong> Khách đã check-in<br>
+                        • <strong>Đã trả phòng:</strong> Khách đã check-out<br>
+                        • <strong>Hoàn thành:</strong> Đã hoàn tất toàn bộ quy trình<br>
+                        • <strong>Đã hủy:</strong> Đặt phòng bị hủy<br>
+                        • <strong>Khách không đến:</strong> Khách không đến nhận phòng
                     </div>
                     @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>

@@ -98,4 +98,37 @@ interface AdminBookingRepositoryInterface
     public function getBookingsForReport(array $filters = []): Collection;
 
     public function findByBookingCode(string $code): ?\App\Models\Booking;
+
+    /**
+     * Lấy số lượng thông báo chưa đọc
+     * @return int
+     */
+    public function getUnreadNotificationCount(): int;
+
+    /**
+     * Lấy danh sách thông báo chưa đọc
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getUnreadNotifications(int $limit = 10): Collection;
+
+    /**
+     * Lấy tất cả thông báo (có phân trang)
+     * @param int $perPage
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getAllNotifications(int $perPage = 20): LengthAwarePaginator;
+
+    /**
+     * Đánh dấu thông báo đã đọc
+     * @param int $id
+     * @return bool
+     */
+    public function markNotificationAsRead(int $id): bool;
+
+    /**
+     * Đánh dấu tất cả thông báo đã đọc
+     * @return int
+     */
+    public function markAllNotificationsAsRead(): int;
 } 
