@@ -540,7 +540,7 @@
                                                 </div>
 
                                                 <!-- Xem và tải xuống -->
-                                                @if($booking->registration_status === 'generated')
+                                                {{-- @if($booking->registration_status === 'generated')
                                                     <div class="row">
                                                         <div class="col-12">
                                                             <div class="btn-group-vertical w-100" role="group">
@@ -553,12 +553,12 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                @else
-                                                    <div class="alert alert-info alert-sm">
+                                                @else --}}
+                                                    {{-- <div class="alert alert-info alert-sm">
                                                         <i class="fas fa-info-circle"></i>
                                                         Vui lòng tạo file trước khi xem/tải xuống
                                                     </div>
-                                                @endif
+                                                @endif --}}
                                             </div>
                                         </div>
                                     </div>

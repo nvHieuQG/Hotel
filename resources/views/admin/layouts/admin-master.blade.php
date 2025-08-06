@@ -58,6 +58,54 @@
         .alert-container .alert:not(:first-child) {
             display: none;
         }
+        
+        /* Notification dropdown table styling */
+        .notification-table {
+            margin-bottom: 0;
+        }
+        
+        .notification-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .notification-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        
+        .notification-table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .notification-table th {
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .notification-table td {
+            padding: 0.4rem 0.5rem;
+            border: none;
+            vertical-align: middle;
+        }
+        
+        .notification-table tbody tr {
+            height: 45px;
+        }
+        
+        .icon-circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+        }
+        
+        .notification-row {
+            transition: background-color 0.2s ease;
+        }
     </style>
 </head>
 
@@ -82,7 +130,7 @@
                     <i class="fas fa-bell"></i>
                     <span class="topbar-badge" id="notificationBadge">{{ isset($unreadCount) && $unreadCount > 0 ? $unreadCount : 0 }}</span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-end animate slideIn" aria-labelledby="notificationsDropdown">
+                <div class="dropdown-menu dropdown-menu-end animate slideIn" aria-labelledby="notificationsDropdown" style="width: 500px; max-height: 600px;">
                     <div class="dropdown-header d-flex justify-content-between align-items-center py-2">
                         <h6 class="m-0">
                             <i class="fas fa-bell me-2"></i>Thông báo
@@ -90,25 +138,81 @@
                     </div>
                     <div id="notificationsList">
                         @if(isset($unreadCount) && $unreadCount > 0 && isset($unreadNotifications))
-                            @foreach($unreadNotifications->take(5) as $notification)
-                                <div class="dropdown-item notification-item" data-notification-id="{{ $notification->id }}">
-                                    <a href="{{ route('admin.notifications.show', $notification->id) }}" class="text-decoration-none text-dark">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="icon-circle bg-{{ $notification->color }}">
-                                                <i class="{{ $notification->display_icon }} text-white"></i>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <div class="fw-bold small text-truncate" title="{{ $notification->title }}">{{ $notification->title }}</div>
-                                                <div class="small text-gray-500">{{ $notification->time_ago }}</div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-                            @endforeach
-                            @if($unreadNotifications->count() > 5)
+                            <!-- Table Header -->
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0 notification-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            {{-- <th class="text-center" style="width: 50px;">#</th> --}}
+                                            <th class="text-center" style="width: 60px;">ICON</th>
+                                            <th>NỘI DUNG</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($unreadNotifications->take(15) as $index => $notification)
+                                            @php
+                                                $link = null;
+                                                // Thông báo ghi chú hoặc bất kỳ thông báo nào liên quan đến booking
+                                                if (str_contains($notification->type, 'note') || 
+                                                    str_contains($notification->type, 'booking') ||
+                                                    (isset($notification->data['booking_id']) && $notification->data['booking_id'])) {
+                                                    $bookingId = $notification->data['booking_id'] ?? null;
+                                                    if ($bookingId) {
+                                                        $link = route('admin.bookings.show', $bookingId);
+                                                    }
+                                                } 
+                                                // Thông báo đánh giá
+                                                elseif (str_contains($notification->type, 'review')) {
+                                                    $reviewId = $notification->data['review_id'] ?? null;
+                                                    if ($reviewId) {
+                                                        $link = route('admin.room-type-reviews.show', $reviewId);
+                                                    }
+                                                } 
+                                                // Thông báo liên quan đến phòng
+                                                elseif (str_contains($notification->type, 'room')) {
+                                                    $roomId = $notification->data['room_id'] ?? null;
+                                                    if ($roomId) {
+                                                        $link = route('admin.rooms.show', $roomId);
+                                                    }
+                                                }
+                                                
+                                                // Nếu không có link cụ thể, không chuyển hướng
+                                                if (!$link) {
+                                                    $link = '#';
+                                                }
+                                            @endphp
+                                            <tr class="notification-row" data-notification-id="{{ $notification->id }}" style="cursor: pointer;">
+                                                {{-- <td class="text-center align-middle">
+                                                    <span class="text-muted">{{ $notification->id }}</span>
+                                                </td> --}}
+                                                <td class="text-center align-middle">
+                                                    <div class="icon-circle bg-{{ $notification->color ?? 'primary' }}" style="width: 28px; height: 28px; margin: 0 auto;">
+                                                        <i class="{{ $notification->display_icon ?? 'fas fa-bell' }} text-white" style="font-size: 11px;"></i>
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle">
+                                                    @if($link !== '#')
+                                                        <a href="{{ $link }}" class="text-decoration-none text-dark">
+                                                    @endif
+                                                        <div class="fw-bold" style="font-size: 0.8rem; line-height: 1.2; margin-bottom: 2px;" title="{{ $notification->title }}">
+                                                            {{ $notification->title }}
+                                                        </div>
+                                                        <div class="text-muted text-truncate" style="font-size: 0.75rem; line-height: 1.1;" title="{{ $notification->message ?? $notification->data['message'] ?? '' }}">
+                                                            {{ Str::limit($notification->message ?? $notification->data['message'] ?? '', 60) }}
+                                                        </div>
+                                                    @if($link !== '#')
+                                                        </a>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            @if($unreadNotifications->count() > 15)
                                 <div class="dropdown-divider"></div>
                                 <div class="dropdown-item text-center small text-muted">
-                                    Và {{ $unreadNotifications->count() - 5 }} thông báo khác...
+                                    Và {{ $unreadNotifications->count() - 15 }} thông báo khác...
                                 </div>
                             @endif
                         @else
@@ -130,43 +234,71 @@
                     aria-expanded="false">
                     <i class="fas fa-envelope"></i>
                     <span class="topbar-badge">
-                        {{ \App\Models\SupportTicket::with('messages')->whereHas('messages')->count() }}
+                        {{ \App\Models\SupportMessage::where('sender_type', 'user')->where('is_read', false)->count() }}
                     </span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end animate slideIn" aria-labelledby="messagesDropdown">
-                    <h6 class="dropdown-header">Tin nhắn hỗ trợ</h6>
-                    @php
-                        $tickets = \App\Models\SupportTicket::with([
-                            'user',
-                            'messages' => function ($q) {
-                                $q->latest();
-                            },
-                        ])
-                            ->whereHas('messages')
-                            ->latest('updated_at')
-                            ->take(5)
-                            ->get();
-                    @endphp
-                    @forelse($tickets as $ticket)
-                        <a class="dropdown-item" href="{{ route('admin.support.showTicket', $ticket->id) }}">
-                            <div class="dropdown-item-message">
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($ticket->user->name ?? 'Khach') }}&background=random"
-                                    alt="{{ $ticket->user->name ?? 'Khách' }}">
-                                <div class="dropdown-item-message-content">
-                                    <div class="dropdown-item-message-title">{{ $ticket->user->name ?? 'Khách' }}</div>
-                                    <p class="dropdown-item-message-text">
-                                        {{ optional($ticket->messages->first())->message ?? '...' }}</p>
-                                    <div class="dropdown-item-message-time">
-                                        {{ optional($ticket->messages->first())->created_at ? optional($ticket->messages->first())->created_at->diffForHumans() : '' }}
-                                    </div>
+                    <div class="dropdown-header d-flex justify-content-between align-items-center py-2">
+                        <h6 class="m-0">
+                            <i class="fas fa-envelope me-2"></i>Tin nhắn hỗ trợ
+                        </h6>
+                    </div>
+                    <div id="messagesList">
+                        @php
+                            $conversations = \App\Models\SupportMessage::select('conversation_id', 'subject', 'sender_id', 'message', 'created_at')
+                                ->with('user')
+                                ->whereIn('id', function($query) {
+                                    $query->select(\DB::raw('MAX(id)'))
+                                        ->from('support_messages')
+                                        ->groupBy('conversation_id');
+                                })
+                                ->orderByDesc('created_at')
+                                ->take(3)
+                                ->get();
+                        @endphp
+                        @if($conversations->count() > 0)
+                            @foreach($conversations as $conversation)
+                                @php
+                                    $unreadCount = \App\Models\SupportMessage::where('conversation_id', $conversation->conversation_id)
+                                        ->where('sender_type', 'user')
+                                        ->where('is_read', false)
+                                        ->count();
+                                    $iconColor = $unreadCount > 0 ? 'bg-danger' : 'bg-primary';
+                                @endphp
+                                <div class="dropdown-item notification-item d-flex align-items-start justify-content-between gap-2">
+                                    <a href="{{ route('admin.support.showConversation', $conversation->conversation_id) }}" class="flex-grow-1 text-decoration-none text-dark">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="icon-circle {{ $iconColor }}">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold small text-truncate" title="{{ $conversation->user->name ?? 'Khách' }}">
+                                                    {{ $conversation->user->name ?? 'Khách' }}
+                                                    @if($unreadCount > 0)
+                                                        <span class="badge bg-danger ms-1" style="font-size: 0.6rem;">{{ $unreadCount }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="small text-muted text-truncate mb-1" title="{{ $conversation->message }}">
+                                                    {{ Str::limit($conversation->message, 30) }}
+                                                </div>
+                                                <div class="small text-gray-500">
+                                                    <i class="fas fa-clock me-1"></i>{{ \Carbon\Carbon::parse($conversation->created_at)->diffForHumans() }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
                                 </div>
+                            @endforeach
+                        @else
+                            <div class="dropdown-item text-center small text-gray-500 py-3">
+                                <i class="fas fa-check-circle text-success me-2"></i> Không có tin nhắn mới
                             </div>
-                        </a>
-                    @empty
-                        <div class="dropdown-item text-center small text-gray-500">Không có tin nhắn mới</div>
-                    @endforelse
-                    <a class="dropdown-item text-center small text-gray-500"
-                        href="{{ route('admin.support.index') }}">Xem tất cả tin nhắn</a>
+                        @endif
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item text-center small text-gray-500 py-2" href="{{ route('admin.support.index') }}">
+                        <i class="fas fa-list me-1"></i>Xem tất cả tin nhắn
+                    </a>
                 </div>
             </div>
 
@@ -278,6 +410,18 @@
                         @endif
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.support.*') ? 'active' : '' }}" href="{{ route('admin.support.index') }}">
+                        <i class="fas fa-headset"></i> Hỗ trợ
+                        @php
+                            $unreadCount = \App\Models\SupportMessage::where('sender_type', 'user')->where('is_read', false)->count();
+                        @endphp
+                        @if($unreadCount > 0)
+                            <span class="badge bg-danger ms-2">{{ $unreadCount }}</span>
+                        @endif
+                    </a>
+                </li>
+                
                 <li class="nav-item mt-5">
                     <a class="nav-link" href="{{ route('index') }}" target="_blank">
                         <i class="fas fa-external-link-alt"></i> Xem trang chủ
@@ -386,6 +530,8 @@
             word-wrap: break-word;
         }
     </style>
+
+    <!-- Debug script -->
     <script>
         $(document).ready(function() {
             // Xử lý thông báo - đảm bảo chỉ hiển thị một thông báo
@@ -471,6 +617,63 @@
                     });
                 });
                 
+                // Xử lý click cho notification rows mới
+                $(document).on('click', '#notificationsList .notification-row', function(e) {
+                    e.preventDefault();
+                    const notificationId = $(this).data('notification-id');
+                    const href = $(this).find('a').attr('href');
+                    
+                    // Kiểm tra nếu href là '#' thì không chuyển hướng
+                    if (href === '#') {
+                        // Chỉ đánh dấu đã đọc mà không chuyển hướng
+                        $.ajax({
+                            url: `/admin/api/notifications/${notificationId}/mark-read`,
+                            type: 'PATCH',
+                            data: {
+                                _token: $('meta[name=csrf-token]').attr('content')
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    // Cập nhật badge count
+                                    const currentCount = parseInt($('#notificationBadge').text()) || 0;
+                                    const newCount = Math.max(0, currentCount - 1);
+                                    $('#notificationBadge').text(newCount);
+                                    $('#sidebarNotificationBadge').text(newCount);
+                                    
+                                    // Ẩn notification row này
+                                    $(this).closest('.notification-row').fadeOut();
+                                }
+                            }
+                        });
+                        return;
+                    }
+                    
+                    // Đánh dấu thông báo cụ thể này là đã đọc
+                    $.ajax({
+                        url: `/admin/api/notifications/${notificationId}/mark-read`,
+                        type: 'PATCH',
+                        data: {
+                            _token: $('meta[name=csrf-token]').attr('content')
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Cập nhật badge count
+                                const currentCount = parseInt($('#notificationBadge').text()) || 0;
+                                const newCount = Math.max(0, currentCount - 1);
+                                $('#notificationBadge').text(newCount);
+                                $('#sidebarNotificationBadge').text(newCount);
+                                
+                                // Chuyển hướng đến trang tương ứng
+                                window.location.href = href;
+                            }
+                        },
+                        error: function() {
+                            // Nếu có lỗi, vẫn chuyển hướng
+                            window.location.href = href;
+                        }
+                    });
+                });
+                
                 // Xử lý click cho notification items tĩnh (khi trang được load lần đầu)
                 $(document).on('click', '#notificationsList .notification-item a', function(e) {
                     e.preventDefault();
@@ -505,8 +708,42 @@
                     }
                 });
             });
+            console.log('Document ready in layout');
+            console.log('Notification elements:', {
+                badge: $('#notificationBadge').length,
+                list: $('#notificationsList').length,
+                markAllBtn: $('#markAllReadBtn').length,
+                sidebarBadge: $('#sidebarNotificationBadge').length,
+            });
+
+            // Test API call
+            $.ajax({
+                url: '/admin/api/notifications/unread',
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    console.log('API test successful:', response);
+                    if (response.success) {
+                        console.log('Found', response.count, 'unread notifications');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('API test failed:', {xhr, status, error});
+                }
+            });
+
+            // Test notification manager
+            setTimeout(function() {
+                if (window.notificationManager) {
+                    console.log('NotificationManager is available');
+                } else {
+                    console.error('NotificationManager not found!');
+                }
+            }, 1000);
         });
     </script>
+
+    @yield('scripts')
 </body>
 
 </html>
