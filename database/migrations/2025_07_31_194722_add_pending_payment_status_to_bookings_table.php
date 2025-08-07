@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            // Cập nhật enum status để bao gồm pending_payment
-            $table->enum('status', ['pending', 'pending_payment', 'confirmed', 'cancelled', 'completed'])->change();
+            // Cập nhật enum status để bao gồm tất cả các trạng thái
+            $table->enum('status', ['pending', 'pending_payment', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'completed', 'no_show'])->change();
         });
     }
 

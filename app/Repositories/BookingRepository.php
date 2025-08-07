@@ -254,17 +254,18 @@ class BookingRepository implements BookingRepositoryInterface
         if (in_array('staff', $userRoles)) {
             return $query->where(function($q) {
                 $q->where('visibility', 'public')
-                  ->orWhere('visibility', 'internal')
-                  ->orWhere('is_internal', true);
+                  ->orWhere('visibility', 'internal');
             })->with('user')->orderBy('created_at', 'desc')->get();
         }
 
-        // Customer chỉ xem được ghi chú công khai
-        return $query->where('visibility', 'public')
-            ->where('is_internal', false)
-            ->with('user')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Customer chỉ xem được ghi chú công khai và ghi chú riêng tư của mình
+        return $query->where(function($q) use ($userId) {
+            $q->where('visibility', 'public')
+              ->orWhere(function($subQ) use ($userId) {
+                  $subQ->where('visibility', 'private')
+                        ->where('user_id', $userId);
+              });
+        })->with('user')->orderBy('created_at', 'desc')->get();
     }
 
     /**
@@ -353,24 +354,20 @@ class BookingRepository implements BookingRepositoryInterface
             return true;
         }
 
-        // Ghi chú nội bộ chỉ admin xem được
-        if ($note->is_internal) {
+        // Staff có thể xem ghi chú công khai và nội bộ
+        if (in_array('staff', $userRoles)) {
+            return $note->visibility === 'public' || $note->visibility === 'internal';
+        }
+
+        // Customer chỉ xem được ghi chú công khai và ghi chú riêng tư của mình
+        if (in_array('customer', $userRoles)) {
+            if ($note->visibility === 'public') {
+                return true;
+            }
+            if ($note->visibility === 'private') {
+                return $note->user_id === $userId;
+            }
             return false;
-        }
-
-        // Ghi chú công khai ai cũng xem được
-        if ($note->visibility === 'public') {
-            return true;
-        }
-
-        // Ghi chú riêng tư chỉ người tạo xem được
-        if ($note->visibility === 'private') {
-            return $note->user_id === $userId;
-        }
-
-        // Ghi chú nội bộ chỉ staff và admin xem được
-        if ($note->visibility === 'internal') {
-            return in_array('admin', $userRoles) || in_array('staff', $userRoles);
         }
 
         return false;
@@ -396,9 +393,14 @@ class BookingRepository implements BookingRepositoryInterface
             return true;
         }
 
-        // Người tạo ghi chú có thể chỉnh sửa (trừ ghi chú nội bộ)
-        if ($note->user_id === $userId && !$note->is_internal) {
-            return true;
+        // Staff có thể chỉnh sửa ghi chú công khai và nội bộ
+        if (in_array('staff', $userRoles)) {
+            return $note->visibility === 'public' || $note->visibility === 'internal';
+        }
+
+        // Người tạo ghi chú có thể chỉnh sửa ghi chú của mình
+        if ($note->user_id === $userId) {
+            return $note->visibility === 'public' || $note->visibility === 'private';
         }
 
         return false;
@@ -424,9 +426,14 @@ class BookingRepository implements BookingRepositoryInterface
             return true;
         }
 
-        // Người tạo ghi chú có thể xóa (trừ ghi chú nội bộ)
-        if ($note->user_id === $userId && !$note->is_internal) {
-            return true;
+        // Staff có thể xóa ghi chú công khai và nội bộ
+        if (in_array('staff', $userRoles)) {
+            return $note->visibility === 'public' || $note->visibility === 'internal';
+        }
+
+        // Người tạo ghi chú có thể xóa ghi chú của mình
+        if ($note->user_id === $userId) {
+            return $note->visibility === 'public' || $note->visibility === 'private';
         }
 
         return false;

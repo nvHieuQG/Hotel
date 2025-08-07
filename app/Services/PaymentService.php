@@ -6,6 +6,7 @@ use App\Interfaces\Services\PaymentServiceInterface;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Mail\PaymentConfirmationMail;
+use App\Mail\BookingConfirmationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -299,14 +300,16 @@ class PaymentService implements PaymentServiceInterface
     public function confirmBookingAfterPayment(Booking $booking): bool
     {
         try {
-            // Chỉ xác nhận booking có trạng thái pending_payment
-            if ($booking->status !== 'pending_payment') {
+            // Chỉ xác nhận booking có trạng thái pending hoặc pending_payment
+            if ($booking->status !== 'pending' && $booking->status !== 'pending_payment') {
                 Log::warning('Cannot confirm booking: invalid status', [
                     'booking_id' => $booking->id,
                     'current_status' => $booking->status
                 ]);
                 return false;
             }
+
+            $oldStatus = $booking->status;
 
             // Cập nhật trạng thái booking thành confirmed
             $booking->update([
@@ -322,10 +325,18 @@ class PaymentService implements PaymentServiceInterface
                 'is_internal' => true
             ]);
 
+            // Tạo thông báo cho việc xác nhận booking
+            $this->createBookingConfirmationNotification($booking, $oldStatus);
+
+            // Gửi email xác nhận đặt phòng
+            $this->sendBookingConfirmationEmail($booking);
+
             Log::info('Booking confirmed after successful payment', [
                 'booking_id' => $booking->id,
                 'user_id' => $booking->user_id,
-                'amount' => $booking->price
+                'amount' => $booking->price,
+                'old_status' => $oldStatus,
+                'new_status' => 'confirmed'
             ]);
 
             return true;
@@ -339,19 +350,65 @@ class PaymentService implements PaymentServiceInterface
     }
 
     /**
+     * Tạo thông báo xác nhận booking
+     */
+    private function createBookingConfirmationNotification(Booking $booking, string $oldStatus): void
+    {
+        try {
+            // Tạo thông báo cho việc xác nhận booking
+            $notificationData = [
+                'booking_id' => $booking->id,
+                'old_status' => $oldStatus,
+                'new_status' => 'confirmed'
+            ];
+
+            // Gọi service để tạo thông báo
+            $adminBookingService = app(\App\Services\Admin\AdminBookingService::class);
+            $adminBookingService->createNotification(
+                'booking_confirmed',
+                'Đặt phòng đã được xác nhận',
+                "Đặt phòng #{$booking->booking_id} đã được xác nhận sau khi thanh toán thành công.",
+                $notificationData,
+                'high',
+                'fas fa-check-circle',
+                'success'
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to create booking confirmation notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Gửi email xác nhận đặt phòng
+     */
+    private function sendBookingConfirmationEmail(Booking $booking): void
+    {
+        try {
+            $latestPayment = $booking->payments->where('status', 'completed')->first();
+            if ($latestPayment) {
+                Mail::to($booking->user->email)->send(new \App\Mail\BookingConfirmationMail($booking, $latestPayment));
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send booking confirmation email: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Hủy booking khi thanh toán thất bại
      */
     public function cancelBookingAfterFailedPayment(Booking $booking): bool
     {
         try {
-            // Chỉ hủy booking có trạng thái pending_payment
-            if ($booking->status !== 'pending_payment') {
+            // Chỉ hủy booking có trạng thái pending hoặc pending_payment
+            if ($booking->status !== 'pending' && $booking->status !== 'pending_payment') {
                 Log::warning('Cannot cancel booking: invalid status', [
                     'booking_id' => $booking->id,
                     'current_status' => $booking->status
                 ]);
                 return false;
             }
+
+            $oldStatus = $booking->status;
 
             // Cập nhật trạng thái booking thành cancelled
             $booking->update([
@@ -367,9 +424,14 @@ class PaymentService implements PaymentServiceInterface
                 'is_internal' => true
             ]);
 
+            // Tạo thông báo cho việc hủy booking
+            $this->createBookingCancellationNotification($booking, $oldStatus);
+
             Log::info('Booking cancelled after failed payment', [
                 'booking_id' => $booking->id,
-                'user_id' => $booking->user_id
+                'user_id' => $booking->user_id,
+                'old_status' => $oldStatus,
+                'new_status' => 'cancelled'
             ]);
 
             return true;
@@ -379,6 +441,35 @@ class PaymentService implements PaymentServiceInterface
                 'error' => $e->getMessage()
             ]);
             return false;
+        }
+    }
+
+    /**
+     * Tạo thông báo hủy booking
+     */
+    private function createBookingCancellationNotification(Booking $booking, string $oldStatus): void
+    {
+        try {
+            // Tạo thông báo cho việc hủy booking
+            $notificationData = [
+                'booking_id' => $booking->id,
+                'old_status' => $oldStatus,
+                'new_status' => 'cancelled'
+            ];
+
+            // Gọi service để tạo thông báo
+            $adminBookingService = app(\App\Services\Admin\AdminBookingService::class);
+            $adminBookingService->createNotification(
+                'booking_cancelled',
+                'Đặt phòng đã bị hủy',
+                "Đặt phòng #{$booking->booking_id} đã bị hủy do thanh toán thất bại.",
+                $notificationData,
+                'high',
+                'fas fa-times-circle',
+                'danger'
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to create booking cancellation notification: ' . $e->getMessage());
         }
     }
 
@@ -464,7 +555,19 @@ class PaymentService implements PaymentServiceInterface
             $updateData['paid_at'] = $data['paid_at'];
         }
 
-        return $payment->update($updateData);
+        $success = $payment->update($updateData);
+
+        // Nếu thanh toán thành công và booking đang ở trạng thái pending hoặc pending_payment
+        if ($success && $status === 'completed' && ($payment->booking->status === 'pending' || $payment->booking->status === 'pending_payment')) {
+            $this->confirmBookingAfterPayment($payment->booking);
+        }
+
+        // Nếu thanh toán thất bại và booking đang ở trạng thái pending hoặc pending_payment
+        if ($success && $status === 'failed' && ($payment->booking->status === 'pending' || $payment->booking->status === 'pending_payment')) {
+            $this->cancelBookingAfterFailedPayment($payment->booking);
+        }
+
+        return $success;
     }
 
     /**
@@ -488,8 +591,8 @@ class PaymentService implements PaymentServiceInterface
      */
     public function canPayBooking(Booking $booking): bool
     {
-        // Chỉ cho phép thanh toán booking có trạng thái pending_payment
-        return $booking->status === 'pending_payment' && !$booking->hasSuccessfulPayment();
+        // Chỉ cho phép thanh toán booking có trạng thái pending hoặc pending_payment
+        return ($booking->status === 'pending' || $booking->status === 'pending_payment') && !$booking->hasSuccessfulPayment();
     }
 
     /**

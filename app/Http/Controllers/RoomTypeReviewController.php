@@ -318,4 +318,21 @@ class RoomTypeReviewController extends Controller
             return response()->json(['error' => 'Không thể tải form đánh giá: ' . $e->getMessage()], 500);
         }
     }
+
+    public function getRandomFiveStarReviews($limit = 5)
+    {
+        try {
+            $reviews = \App\Models\RoomTypeReview::where('rating', 5)
+                ->where('status', 'approved')
+                ->with(['user', 'roomType'])
+                ->inRandomOrder()
+                ->limit($limit)
+                ->get();
+
+            return $reviews;
+        } catch (\Exception $e) {
+            Log::error('Error getting random five star reviews: ' . $e->getMessage());
+            return collect();
+        }
+    }
 } 

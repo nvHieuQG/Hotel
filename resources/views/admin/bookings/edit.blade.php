@@ -84,10 +84,9 @@
                     <div class="form-text">
                         <strong>Hướng dẫn chuyển trạng thái:</strong><br>
                         • <strong>Thứ tự đề xuất:</strong> Chờ xác nhận → Đã xác nhận → Đã nhận phòng → Đã trả phòng → Hoàn thành<br>
-                        • <strong>Chuyển linh hoạt:</strong> Có thể chuyển sang bất kỳ trạng thái nào phía trước<br>
+                        • <strong>Chỉ tiến lên:</strong> Chỉ có thể chuyển sang trạng thái tiếp theo<br>
                         • <strong>Chuyển đặc biệt:</strong> Có thể chuyển sang "Đã hủy" hoặc "Khách không đến" ở bất kỳ trạng thái nào<br>
-                        • <strong>Không được lùi:</strong> Không thể chuyển về trạng thái trước đó
-                        <br><small class="text-muted">Trạng thái hiện tại: <strong>{{ $booking->status_text }}</strong></small>
+                        • <strong>Trạng thái hiện tại:</strong> <strong>{{ $booking->status_text }}</strong>
                     </div>
                     @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -129,6 +128,146 @@
                     @enderror
                 </div>
             </div>
+
+            <!-- Thông tin căn cước của khách -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-id-card me-1"></i>
+                        Thông tin căn cước của khách hàng
+                        @if($booking->hasCompleteIdentityInfo())
+                            <span class="badge bg-success ms-2">Đầy đủ</span>
+                        @else
+                            <span class="badge bg-warning ms-2">Thiếu thông tin</span>
+                        @endif
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="guest_full_name" class="form-label">Họ tên đầy đủ <span class="text-danger">*</span></label>
+                            <input type="text" name="guest_full_name" id="guest_full_name" class="form-control @error('guest_full_name') is-invalid @enderror" value="{{ old('guest_full_name', $booking->guest_full_name) }}" placeholder="Nhập họ tên đầy đủ">
+                            @error('guest_full_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label for="guest_id_number" class="form-label">Số căn cước công dân <span class="text-danger">*</span></label>
+                            <input type="text" name="guest_id_number" id="guest_id_number" class="form-control @error('guest_id_number') is-invalid @enderror" value="{{ old('guest_id_number', $booking->guest_id_number) }}" placeholder="Nhập số CCCD/CMND">
+                            @error('guest_id_number')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="guest_birth_date" class="form-label">Ngày sinh <span class="text-danger">*</span></label>
+                            <input type="date" name="guest_birth_date" id="guest_birth_date" class="form-control @error('guest_birth_date') is-invalid @enderror" value="{{ old('guest_birth_date', $booking->guest_birth_date ? $booking->guest_birth_date->format('Y-m-d') : '') }}">
+                            @error('guest_birth_date')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label for="guest_gender" class="form-label">Giới tính <span class="text-danger">*</span></label>
+                            <select name="guest_gender" id="guest_gender" class="form-select @error('guest_gender') is-invalid @enderror">
+                                <option value="">-- Chọn giới tính --</option>
+                                <option value="male" {{ old('guest_gender', $booking->guest_gender) == 'male' ? 'selected' : '' }}>Nam</option>
+                                <option value="female" {{ old('guest_gender', $booking->guest_gender) == 'female' ? 'selected' : '' }}>Nữ</option>
+                                <option value="other" {{ old('guest_gender', $booking->guest_gender) == 'other' ? 'selected' : '' }}>Khác</option>
+                            </select>
+                            @error('guest_gender')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label for="guest_nationality" class="form-label">Quốc tịch <span class="text-danger">*</span></label>
+                            <input type="text" name="guest_nationality" id="guest_nationality" class="form-control @error('guest_nationality') is-invalid @enderror" value="{{ old('guest_nationality', $booking->guest_nationality) }}" placeholder="Ví dụ: Việt Nam">
+                            @error('guest_nationality')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="guest_permanent_address" class="form-label">Địa chỉ thường trú <span class="text-danger">*</span></label>
+                            <textarea name="guest_permanent_address" id="guest_permanent_address" class="form-control @error('guest_permanent_address') is-invalid @enderror" rows="2" placeholder="Nhập địa chỉ thường trú đầy đủ">{{ old('guest_permanent_address', $booking->guest_permanent_address) }}</textarea>
+                            @error('guest_permanent_address')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label for="guest_current_address" class="form-label">Địa chỉ tạm trú</label>
+                            <textarea name="guest_current_address" id="guest_current_address" class="form-control @error('guest_current_address') is-invalid @enderror" rows="2" placeholder="Nhập địa chỉ tạm trú hiện tại">{{ old('guest_current_address', $booking->guest_current_address) }}</textarea>
+                            @error('guest_current_address')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="guest_phone" class="form-label">Số điện thoại</label>
+                            <input type="text" name="guest_phone" id="guest_phone" class="form-control @error('guest_phone') is-invalid @enderror" value="{{ old('guest_phone', $booking->guest_phone) }}" placeholder="Nhập số điện thoại">
+                            @error('guest_phone')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label for="guest_email" class="form-label">Email</label>
+                            <input type="email" name="guest_email" id="guest_email" class="form-control @error('guest_email') is-invalid @enderror" value="{{ old('guest_email', $booking->guest_email) }}" placeholder="Nhập email">
+                            @error('guest_email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label for="guest_purpose_of_stay" class="form-label">Mục đích lưu trú</label>
+                            <select name="guest_purpose_of_stay" id="guest_purpose_of_stay" class="form-select @error('guest_purpose_of_stay') is-invalid @enderror">
+                                <option value="">-- Chọn mục đích --</option>
+                                <option value="business" {{ old('guest_purpose_of_stay', $booking->guest_purpose_of_stay) == 'business' ? 'selected' : '' }}>Công tác</option>
+                                <option value="tourism" {{ old('guest_purpose_of_stay', $booking->guest_purpose_of_stay) == 'tourism' ? 'selected' : '' }}>Du lịch</option>
+                                <option value="family" {{ old('guest_purpose_of_stay', $booking->guest_purpose_of_stay) == 'family' ? 'selected' : '' }}>Thăm gia đình</option>
+                                <option value="medical" {{ old('guest_purpose_of_stay', $booking->guest_purpose_of_stay) == 'medical' ? 'selected' : '' }}>Khám chữa bệnh</option>
+                                <option value="study" {{ old('guest_purpose_of_stay', $booking->guest_purpose_of_stay) == 'study' ? 'selected' : '' }}>Học tập</option>
+                                <option value="other" {{ old('guest_purpose_of_stay', $booking->guest_purpose_of_stay) == 'other' ? 'selected' : '' }}>Khác</option>
+                            </select>
+                            @error('guest_purpose_of_stay')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="guest_vehicle_number" class="form-label">Biển số xe (nếu có)</label>
+                            <input type="text" name="guest_vehicle_number" id="guest_vehicle_number" class="form-control @error('guest_vehicle_number') is-invalid @enderror" value="{{ old('guest_vehicle_number', $booking->guest_vehicle_number) }}" placeholder="Nhập biển số xe">
+                            @error('guest_vehicle_number')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label for="guest_notes" class="form-label">Ghi chú thêm</label>
+                            <textarea name="guest_notes" id="guest_notes" class="form-control @error('guest_notes') is-invalid @enderror" rows="2" placeholder="Ghi chú thêm về khách hàng">{{ old('guest_notes', $booking->guest_notes) }}</textarea>
+                            @error('guest_notes')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    @if(!$booking->hasCompleteIdentityInfo())
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Lưu ý:</strong> Thông tin căn cước chưa đầy đủ. Vui lòng điền đầy đủ các trường bắt buộc (có dấu *) để có thể tạo giấy đăng ký tạm chú tạm vắng.
+                        </div>
+                    @else
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Thông tin đầy đủ:</strong> Có thể tạo giấy đăng ký tạm chú tạm vắng cho khách hàng này.
+                        </div>
+                    @endif
+                </div>
+            </div>
             
             <div class="mt-4">
                 <button type="submit" class="btn btn-primary">Cập nhật</button>
@@ -157,4 +296,31 @@
         }
     });
 </script>
-@endsection 
+@endsection
+
+@push('styles')
+<style>
+    .card-header .badge {
+        font-size: 0.75rem;
+    }
+    
+    .form-label .text-danger {
+        font-weight: bold;
+    }
+    
+    .alert {
+        border-radius: 0.5rem;
+    }
+    
+    .alert i {
+        margin-right: 0.5rem;
+    }
+    
+    /* Responsive cho form thông tin căn cước */
+    @media (max-width: 768px) {
+        .col-md-4, .col-md-6 {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+@endpush 

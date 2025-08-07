@@ -112,9 +112,10 @@
     
     @php
         $roomType = $booking->room->roomType;
-        $hasReviewed = \App\Models\RoomTypeReview::where('user_id', auth()->id())
-            ->where('room_type_id', $roomType->id)
-            ->exists();
+        $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+            ->where('booking_id', $booking->id)
+            ->first();
+        $hasReviewed = !!$review;
     @endphp
     
     @if($hasReviewed)
@@ -122,11 +123,6 @@
         <div class="row">
             <div class="col-12">
                 <h6 class="text-warning mb-3"><i class="fas fa-star mr-2"></i>Đánh Giá</h6>
-                @php 
-                    $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
-                        ->where('room_type_id', $roomType->id)
-                        ->first();
-                @endphp
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -171,7 +167,7 @@
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle mr-2"></i>
                         Bạn có thể đánh giá loại phòng này để giúp chúng tôi cải thiện dịch vụ.
-                        <button class="btn btn-sm btn-primary ml-2 create-review-btn" data-room-type-id="{{ $roomType->id }}">
+                        <button class="btn btn-sm btn-primary ml-2 create-review-btn" data-room-type-id="{{ $roomType->id }}" data-booking-id="{{ $booking->id }}">
                             <i class="fas fa-star"></i> Viết đánh giá
                         </button>
                     </div>
@@ -192,4 +188,49 @@
     <div class="mt-4">
         <x-booking-notes :booking="$booking" :showAddButton="true" :showSearch="true" />
     </div>
+
+    <!-- Yêu cầu đổi phòng -->
+    <div class="mt-4">
+        <h6 class="text-info mb-3"><i class="fas fa-exchange-alt mr-2"></i>Yêu cầu đổi phòng</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Yêu cầu đổi phòng</h6>
+                        <p class="card-text text-muted">
+                            Nếu bạn muốn đổi sang phòng khác, vui lòng gửi yêu cầu và chờ xét duyệt từ khách sạn.
+                        </p>
+                        @php
+                            $hasPendingRequest = $booking->roomChanges()->where('status', 'pending')->exists();
+                        @endphp
+                        @if($hasPendingRequest)
+                            <div class="alert alert-warning">
+                                <i class="fas fa-clock mr-2"></i>
+                                Bạn đã có yêu cầu đổi phòng đang chờ duyệt.
+                            </div>
+                        @else
+                            <a href="{{ route('room-change.request', $booking->id) }}" class="btn btn-primary">
+                                <i class="fas fa-exchange-alt"></i> Yêu cầu đổi phòng
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Lịch sử đổi phòng</h6>
+                        <p class="card-text text-muted">
+                            Xem lịch sử các yêu cầu đổi phòng của booking này.
+                        </p>
+                        <a href="{{ route('room-change.history', $booking->id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-history"></i> Xem lịch sử
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
 </div> 
