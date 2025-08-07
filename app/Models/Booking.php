@@ -21,7 +21,8 @@ class Booking extends Model
         'check_in_date',
         'check_out_date',
         'status',
-        'price'
+        'price',
+        'surcharge',
     ];
 
     /**
@@ -125,6 +126,22 @@ class Booking extends Model
         return \App\Models\Service::whereHas('roomTypes', function ($query) use ($roomTypeId) {
             $query->where('room_type_id', $roomTypeId);
         })->whereNotIn('id', $existingServiceIds)->get();
+    }
+
+    /**
+     * Get the room changes for this booking.
+     */
+    public function roomChanges()
+    {
+        return $this->hasMany(RoomChange::class);
+    }
+
+    /**
+     * Get the pending room change for this booking.
+     */
+    public function pendingRoomChange()
+    {
+        return $this->hasOne(RoomChange::class)->pending();
     }
 
     /**
@@ -249,5 +266,10 @@ class Booking extends Model
             'no_show' => 'Khách không đến',
             default => 'Không xác định'
         };
+    }
+
+    public function getTotalAmountAttribute()
+    {
+        return $this->price + $this->surcharge;
     }
 }
