@@ -43,7 +43,15 @@ class HotelController extends Controller
         // Lấy tất cả loại phòng để hiển thị ở trang chủ
         $roomTypes = $this->roomTypeService->getAllRoomTypes()->take(6); // Lấy 6 loại phòng đầu tiên
 
-        return view('client.index', compact('roomTypes'));
+        // Lấy các đánh giá 5 sao ngẫu nhiên
+        $fiveStarReviews = \App\Models\RoomTypeReview::where('rating', 5)
+            ->where('status', 'approved')
+            ->with(['user', 'roomType'])
+            ->inRandomOrder()
+            ->limit(5)
+            ->get();
+
+        return view('client.index', compact('roomTypes', 'fiveStarReviews'));
     }
 
     public function rooms(Request $request)

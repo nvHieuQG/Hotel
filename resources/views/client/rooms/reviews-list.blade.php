@@ -2,9 +2,9 @@
     <div class="reviews-list">
         @foreach($reviews as $review)
             <div class="review-item border-bottom pb-3 mb-3">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div class="d-flex align-items-center">
-                        <div class="stars mr-2">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-2">
+                    <div class="d-flex align-items-center mb-2 mb-md-0">
+                        <div class="stars me-2">
                             @for ($i = 1; $i <= 5; $i++)
                                 @if ($i <= $review->rating)
                                     <span class="icon-star text-warning"></span>
@@ -13,44 +13,54 @@
                                 @endif
                             @endfor
                         </div>
-                        <span class="text-muted">{{ $review->rating }}/5</span>
+                        <span class="text-muted small">{{ $review->rating }}/5</span>
                     </div>
                     <small class="text-muted">{{ $review->created_at->format('d/m/Y H:i') }}</small>
                 </div>
                 
                 <div class="review-content">
                     @if($review->is_anonymous)
-                        <p class="mb-1"><strong>Khách hàng ẩn danh</strong></p>
+                        <p class="mb-1 fw-bold">Khách hàng ẩn danh</p>
                     @else
-                        <p class="mb-1"><strong>{{ $review->user->name }}</strong></p>
+                        <p class="mb-1 fw-bold">{{ $review->user->name }}</p>
                     @endif
                     
                     @if($review->comment)
                         <p class="mb-2">{{ $review->comment }}</p>
                     @else
-                        <p class="mb-2 text-muted"><em>Không có bình luận</em></p>
+                        <p class="mb-2 text-muted fst-italic">Không có bình luận</p>
                     @endif
                     
                     <!-- Hiển thị đánh giá chi tiết -->
                     @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
                         <div class="detailed-ratings">
-                            <small class="text-muted">
+                            <div class="row g-2">
                                 @if($review->cleanliness_rating)
-                                    <span class="mr-3">Vệ sinh: {{ $review->cleanliness_rating }}/5</span>
+                                    <div class="col-6 col-md-auto">
+                                        <small class="text-muted d-block">Vệ sinh: {{ $review->cleanliness_rating }}/5</small>
+                                    </div>
                                 @endif
                                 @if($review->comfort_rating)
-                                    <span class="mr-3">Tiện nghi: {{ $review->comfort_rating }}/5</span>
+                                    <div class="col-6 col-md-auto">
+                                        <small class="text-muted d-block">Tiện nghi: {{ $review->comfort_rating }}/5</small>
+                                    </div>
                                 @endif
                                 @if($review->location_rating)
-                                    <span class="mr-3">Vị trí: {{ $review->location_rating }}/5</span>
+                                    <div class="col-6 col-md-auto">
+                                        <small class="text-muted d-block">Vị trí: {{ $review->location_rating }}/5</small>
+                                    </div>
                                 @endif
                                 @if($review->facilities_rating)
-                                    <span class="mr-3">Cơ sở vật chất: {{ $review->facilities_rating }}/5</span>
+                                    <div class="col-6 col-md-auto">
+                                        <small class="text-muted d-block">Cơ sở vật chất: {{ $review->facilities_rating }}/5</small>
+                                    </div>
                                 @endif
                                 @if($review->value_rating)
-                                    <span>Giá trị: {{ $review->value_rating }}/5</span>
+                                    <div class="col-6 col-md-auto">
+                                        <small class="text-muted d-block">Giá trị: {{ $review->value_rating }}/5</small>
+                                    </div>
                                 @endif
-                            </small>
+                            </div>
                         </div>
                     @endif
                 </div>

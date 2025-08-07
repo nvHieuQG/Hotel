@@ -14,7 +14,10 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('roles')->delete(); // Xoá toàn bộ dữ liệu cũ
+        // Kiểm tra nếu bảng roles đã có dữ liệu thì không chạy seeder
+        if (Role::count() > 0) {
+            return;
+        }
 
         $roles = [
             ['name' => 'admin'],     // id = 1

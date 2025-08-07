@@ -4,28 +4,17 @@ namespace App\Interfaces\Services;
 
 interface SupportServiceInterface
 {
-    /**
-     * Lấy danh sách ticket của user
-     */
-    public function getUserTickets($userId);
+    public function sendMessage($conversationId, $senderId, $senderType, $message, $subject = null);
 
-    /**
-     * Tạo ticket mới
-     */
-    public function createTicket($userId, $subject);
+    public function getNewMessages($conversationId, $lastId);
 
-    /**
-     * Lấy chi tiết ticket và lịch sử chat
-     */
-    public function getTicketWithMessages($ticketId);
+    public function createFirstMessage($userId, $subject, $firstMessage);
 
-    /**
-     * Gửi tin nhắn mới vào ticket
-     */
-    public function sendMessage($ticketId, $senderId, $senderType, $message);
+    public function getAllConversations();
 
-    /**
-     * Lấy danh sách tất cả ticket (cho admin)
-     */
-    public function getAllTickets();
+    public function getConversationMessages($conversationId);
+
+    public function markMessagesAsRead($conversationId, $userId = null);
+
+    public function getUnreadCount();
 }

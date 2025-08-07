@@ -7,6 +7,7 @@ use App\Interfaces\Repositories\Admin\AdminBookingRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\AdminNotification;
 
 class AdminBookingRepository implements AdminBookingRepositoryInterface
 {
@@ -216,4 +217,39 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
     {
         return $this->bookingModel->with(['user', 'room'])->where('booking_id', $code)->first();
     }
-}
+
+    // ==================== NOTIFICATION METHODS ====================
+    public function getUnreadNotificationCount(): int
+    {
+        return AdminNotification::where('is_read', false)->count();
+    }
+
+    public function getUnreadNotifications(int $limit = 10): Collection
+    {
+        return AdminNotification::where('is_read', false)
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function getAllNotifications(int $perPage = 20): LengthAwarePaginator
+    {
+        return AdminNotification::orderByDesc('created_at')->paginate($perPage);
+    }
+
+    public function markNotificationAsRead(int $id): bool
+    {
+        $notification = AdminNotification::find($id);
+        if ($notification && !$notification->is_read) {
+            $notification->is_read = true;
+            $notification->save();
+            return true;
+        }
+        return false;
+    }
+
+    public function markAllNotificationsAsRead(): int
+    {
+        return AdminNotification::where('is_read', false)->update(['is_read' => true]);
+    }
+} 

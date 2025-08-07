@@ -22,7 +22,27 @@ class Booking extends Model
         'check_out_date',
         'status',
         'price',
-        'surcharge',
+        'surcharge',,
+        'guest_full_name',
+        'guest_id_number',
+        'guest_birth_date',
+        'guest_gender',
+        'guest_nationality',
+        'guest_permanent_address',
+        'guest_current_address',
+        'guest_phone',
+        'guest_email',
+        'guest_purpose_of_stay',
+        'guest_vehicle_number',
+        'guest_notes',
+        'booker_full_name',
+        'booker_id_number',
+        'booker_phone',
+        'booker_email',
+        'booker_relationship',
+        'registration_status',
+        'registration_generated_at',
+        'registration_sent_at'
     ];
 
     /**
@@ -33,6 +53,9 @@ class Booking extends Model
     protected $casts = [
         'check_in_date' => 'datetime',
         'check_out_date' => 'datetime',
+        'guest_birth_date' => 'date',
+        'registration_generated_at' => 'datetime',
+        'registration_sent_at' => 'datetime',
     ];
 
     /**
@@ -272,4 +295,141 @@ class Booking extends Model
     {
         return $this->price + $this->surcharge;
     }
-}
+
+    /**
+     * Lấy trạng thái hiển thị của giấy đăng ký
+     */
+    public function getRegistrationStatusTextAttribute()
+    {
+        return match($this->registration_status) {
+            'pending' => 'Chưa tạo',
+            'generated' => 'Đã tạo',
+            'sent' => 'Đã gửi',
+            default => 'Không xác định'
+        };
+    }
+
+    /**
+     * Kiểm tra xem có thể tạo giấy đăng ký tạm chú tạm vắng không
+     */
+    public function canGenerateRegistration(): bool
+    {
+        return $this->status === 'confirmed' && 
+               $this->guest_full_name && 
+               $this->guest_id_number;
+    }
+
+    /**
+     * Kiểm tra xem đã có đầy đủ thông tin căn cước chưa
+     */
+    public function hasCompleteIdentityInfo(): bool
+    {
+        return !empty($this->guest_full_name) && 
+               !empty($this->guest_id_number) && 
+               !empty($this->guest_birth_date) && 
+               !empty($this->guest_gender) && 
+               !empty($this->guest_nationality) && 
+               !empty($this->guest_permanent_address);
+    }
+
+    /**
+     * Lấy thông tin khách sạn (có thể cấu hình từ config)
+     */
+    public function getHotelInfo(): array
+    {
+        return [
+            'name' => config('hotel.name', 'Marron Hotel'),
+            'address' => config('hotel.address', '123 Đường ABC, Quận XYZ, TP.HCM'),
+            'phone' => config('hotel.phone', '028-1234-5678'),
+            'email' => config('hotel.email', 'info@marronhotel.com'),
+            'license_number' => config('hotel.license_number', 'GP123456789'),
+            'tax_code' => config('hotel.tax_code', '0123456789'),
+            'representative' => config('hotel.representative', 'Nguyễn Văn A'),
+            'representative_position' => config('hotel.representative_position', 'Giám đốc'),
+            'representative_id' => config('hotel.representative_id', '012345678901'),
+        ];
+    }
+
+    /**
+     * Lấy trạng thái thanh toán tổng quát của booking
+     */
+    public function getPaymentStatusAttribute()
+    {
+        // Nếu không có payment nào
+        if ($this->payments()->count() === 0) {
+            return 'unpaid';
+        }
+
+        // Kiểm tra xem có payment thành công không
+        $hasSuccessfulPayment = $this->payments()->where('status', 'completed')->exists();
+        if ($hasSuccessfulPayment) {
+            return 'paid';
+        }
+
+        // Kiểm tra xem có payment đang xử lý không
+        $hasProcessingPayment = $this->payments()->where('status', 'processing')->exists();
+        if ($hasProcessingPayment) {
+            return 'processing';
+        }
+
+        // Kiểm tra xem có payment pending không
+        $hasPendingPayment = $this->payments()->where('status', 'pending')->exists();
+        if ($hasPendingPayment) {
+            return 'pending';
+        }
+
+        // Kiểm tra xem có payment failed không
+        $hasFailedPayment = $this->payments()->where('status', 'failed')->exists();
+        if ($hasFailedPayment) {
+            return 'failed';
+        }
+
+        // Kiểm tra xem có payment cancelled không
+        $hasCancelledPayment = $this->payments()->where('status', 'cancelled')->exists();
+        if ($hasCancelledPayment) {
+            return 'cancelled';
+        }
+
+        // Kiểm tra xem có payment refunded không
+        $hasRefundedPayment = $this->payments()->where('status', 'refunded')->exists();
+        if ($hasRefundedPayment) {
+            return 'refunded';
+        }
+
+        return 'unpaid';
+    }
+
+    /**
+     * Lấy text hiển thị trạng thái thanh toán
+     */
+    public function getPaymentStatusTextAttribute()
+    {
+        return match ($this->payment_status) {
+            'paid' => 'Đã thanh toán',
+            'processing' => 'Đang xử lý',
+            'pending' => 'Chờ thanh toán',
+            'failed' => 'Thanh toán thất bại',
+            'cancelled' => 'Đã hủy',
+            'refunded' => 'Đã hoàn tiền',
+            'unpaid' => 'Chưa thanh toán',
+            default => 'Không xác định'
+        };
+    }
+
+    /**
+     * Lấy icon cho trạng thái thanh toán
+     */
+    public function getPaymentStatusIconAttribute()
+    {
+        return match ($this->payment_status) {
+            'paid' => 'fas fa-check-circle',
+            'processing' => 'fas fa-clock',
+            'pending' => 'fas fa-hourglass-half',
+            'failed' => 'fas fa-times-circle',
+            'cancelled' => 'fas fa-ban',
+            'refunded' => 'fas fa-undo',
+            'unpaid' => 'fas fa-minus-circle',
+            default => 'fas fa-question-circle'
+        };
+    }
+} 

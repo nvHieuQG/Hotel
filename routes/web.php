@@ -84,9 +84,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Support
     Route::get('/support', [SupportController::class, 'index'])->name('support.index');
-    Route::post('/support/ticket', [SupportController::class, 'createTicket'])->name('support.createTicket');
-    Route::get('/support/ticket/{id}', [SupportController::class, 'showTicket'])->name('support.showTicket');
-    Route::post('/support/ticket/{id}/message', [SupportController::class, 'sendMessage'])->name('support.sendMessage');
+    Route::get('/support/conversation/{conversationId}', [SupportController::class, 'showConversation'])->name('support.showConversation');
+    Route::post('/support/conversation/{conversationId}/message', [SupportController::class, 'sendMessage'])->name('support.sendMessage');
+    Route::post('/support/message', [SupportController::class, 'sendMessage'])->name('support.createMessage');
+    Route::get('/support/conversation/{conversationId}/messages', [SupportController::class, 'getNewMessages'])->name('support.getNewMessages');
     Route::get('/booking/{id}/detail', [BookingController::class, 'showDetail'])->name('booking.detail');
 
     // AJAX Room Type Reviews - Đặt trước để tránh xung đột
@@ -126,12 +127,25 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
     // Quản lý đặt phòng
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
-    Route::patch('bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
-    Route::resource('bookings', AdminBookingController::class);
+    Route::patch('bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
+    Route::resource('bookings', AdminBookingController::class)->except(['destroy']);
+    
+    // Giấy đăng ký tạm chú tạm vắng
+    Route::get('bookings/{booking}/registration/preview', [AdminBookingController::class, 'previewRegistration'])->name('bookings.registration.preview');
+
+    // Quản lý giấy đăng ký tạm chú tạm vắng
+    Route::post('bookings/{id}/generate-pdf', [AdminBookingController::class, 'generateRegistrationPdf'])->name('bookings.generate-pdf');
+    Route::post('bookings/{id}/send-email', [AdminBookingController::class, 'sendRegistrationEmail'])->name('bookings.send-email');
+    Route::get('bookings/{id}/download-registration', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-registration');
+    Route::get('bookings/{id}/download-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-word');
+    Route::get('bookings/{id}/view-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.view-word');
+    
+
 
     // Quản lý thông báo
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
     Route::get('notifications/{id}', [AdminBookingController::class, 'notificationShow'])->name('notifications.show');
+    Route::patch('notifications/{id}/mark-read', [AdminBookingController::class, 'markAsRead'])->name('notifications.mark-read');
     Route::delete('notifications/{id}', [AdminBookingController::class, 'destroy'])->name('notifications.destroy');
 
     // API thông báo
@@ -156,12 +170,18 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::delete('bookings/{id}/services/{bookingServiceId}', [AdminBookingController::class, 'destroyServiceFromBooking'])->name('bookings.services.destroy');
     Route::post('bookings/{id}/confirm-payment', [AdminBookingController::class, 'confirmPayment'])->name('bookings.confirm-payment');
 
+    // Bulk action (POST)
+    Route::post('notifications/delete-multi', [AdminBookingController::class, 'deleteMulti'])->name('notifications.delete-multi');
+    Route::post('notifications/mark-read-multi', [AdminBookingController::class, 'markReadMulti'])->name('notifications.mark-read-multi');
+
     // Quản lý phòng
     Route::resource('rooms', AdminRoomController::class);
 
     Route::get('/support', [AdminSupportController::class, 'index'])->name('support.index');
-    Route::get('/support/ticket/{id}', [AdminSupportController::class, 'showTicket'])->name('support.showTicket');
-    Route::post('/support/ticket/{id}/message', [AdminSupportController::class, 'sendMessage'])->name('support.sendMessage');
+    Route::get('/support/conversation/{conversationId}', [AdminSupportController::class, 'showConversation'])->name('support.showConversation');
+    Route::post('/support/conversation/{conversationId}/message', [AdminSupportController::class, 'sendMessage'])->name('support.sendMessage');
+    Route::get('/support/conversation/{conversationId}/messages', [AdminSupportController::class, 'getNewMessages'])->name('support.getNewMessages');
+    Route::post('/support/conversations/updates', [AdminSupportController::class, 'getUpdates'])->name('support.getUpdates');
 
     // Routes cho quản lý ảnh phòng
     Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete');

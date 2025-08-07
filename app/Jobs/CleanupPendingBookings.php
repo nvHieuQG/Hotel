@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Booking;
+use App\Models\Payment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,6 +30,7 @@ class CleanupPendingBookings implements ShouldQueue
     public function handle(): void
     {
         try {
+            // ===== CLEANUP PENDING BOOKINGS =====
             // Tìm các booking có trạng thái pending_payment và tạo hơn 30 phút trước
             $pendingBookings = Booking::where('status', 'pending_payment')
                 ->where('created_at', '<', Carbon::now()->subMinutes(30))
@@ -66,9 +68,67 @@ class CleanupPendingBookings implements ShouldQueue
                 }
             }
 
-            Log::info('Cleanup pending bookings completed', [
-                'cancelled_count' => $cancelledCount,
-                'total_processed' => $pendingBookings->count()
+            // ===== CLEANUP PENDING PAYMENTS =====
+            // Tìm các payment có trạng thái pending và tạo hơn 30 phút trước
+            $pendingPayments = Payment::where('status', 'pending')
+                ->where('created_at', '<', Carbon::now()->subMinutes(30))
+                ->get();
+
+            $deletedPendingCount = 0;
+            foreach ($pendingPayments as $payment) {
+                try {
+                    // Xóa payment pending cũ
+                    $payment->delete();
+
+                    $deletedPendingCount++;
+
+                    Log::info('Auto-deleted pending payment', [
+                        'payment_id' => $payment->id,
+                        'booking_id' => $payment->booking_id,
+                        'amount' => $payment->amount,
+                        'created_at' => $payment->created_at
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error deleting pending payment', [
+                        'payment_id' => $payment->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // Tìm các payment có trạng thái failed và tạo hơn 30 phút trước
+            $failedPayments = Payment::where('status', 'failed')
+                ->where('created_at', '<', Carbon::now()->subMinutes(30))
+                ->get();
+
+            $deletedFailedCount = 0;
+            foreach ($failedPayments as $payment) {
+                try {
+                    // Xóa payment failed cũ
+                    $payment->delete();
+
+                    $deletedFailedCount++;
+
+                    Log::info('Auto-deleted failed payment', [
+                        'payment_id' => $payment->id,
+                        'booking_id' => $payment->booking_id,
+                        'amount' => $payment->amount,
+                        'created_at' => $payment->created_at
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error deleting failed payment', [
+                        'payment_id' => $payment->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // Log tổng kết
+            Log::info('Cleanup completed', [
+                'cancelled_bookings_count' => $cancelledCount,
+                'deleted_pending_payments_count' => $deletedPendingCount,
+                'deleted_failed_payments_count' => $deletedFailedCount,
+                'total_processed' => $pendingBookings->count() + $pendingPayments->count() + $failedPayments->count()
             ]);
         } catch (\Exception $e) {
             Log::error('Error in CleanupPendingBookings job', [
