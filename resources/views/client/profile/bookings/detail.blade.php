@@ -188,4 +188,49 @@
     <div class="mt-4">
         <x-booking-notes :booking="$booking" :showAddButton="true" :showSearch="true" />
     </div>
+
+    <!-- Yêu cầu đổi phòng -->
+    <div class="mt-4">
+        <h6 class="text-info mb-3"><i class="fas fa-exchange-alt mr-2"></i>Yêu cầu đổi phòng</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Yêu cầu đổi phòng</h6>
+                        <p class="card-text text-muted">
+                            Nếu bạn muốn đổi sang phòng khác, vui lòng gửi yêu cầu và chờ xét duyệt từ khách sạn.
+                        </p>
+                        @php
+                            $hasPendingRequest = $booking->roomChanges()->where('status', 'pending')->exists();
+                        @endphp
+                        @if($hasPendingRequest)
+                            <div class="alert alert-warning">
+                                <i class="fas fa-clock mr-2"></i>
+                                Bạn đã có yêu cầu đổi phòng đang chờ duyệt.
+                            </div>
+                        @else
+                            <a href="{{ route('room-change.request', $booking->id) }}" class="btn btn-primary">
+                                <i class="fas fa-exchange-alt"></i> Yêu cầu đổi phòng
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Lịch sử đổi phòng</h6>
+                        <p class="card-text text-muted">
+                            Xem lịch sử các yêu cầu đổi phòng của booking này.
+                        </p>
+                        <a href="{{ route('room-change.history', $booking->id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-history"></i> Xem lịch sử
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
 </div> 

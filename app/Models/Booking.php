@@ -22,6 +22,7 @@ class Booking extends Model
         'check_out_date',
         'status',
         'price',
+        'surcharge',,
         'guest_full_name',
         'guest_id_number',
         'guest_birth_date',
@@ -151,6 +152,22 @@ class Booking extends Model
     }
 
     /**
+     * Get the room changes for this booking.
+     */
+    public function roomChanges()
+    {
+        return $this->hasMany(RoomChange::class);
+    }
+
+    /**
+     * Get the pending room change for this booking.
+     */
+    public function pendingRoomChange()
+    {
+        return $this->hasOne(RoomChange::class)->pending();
+    }
+
+    /**
      * Get the payments for this booking.
      */
     public function payments()
@@ -272,6 +289,11 @@ class Booking extends Model
             'no_show' => 'Khách không đến',
             default => 'Không xác định'
         };
+    }
+
+    public function getTotalAmountAttribute()
+    {
+        return $this->price + $this->surcharge;
     }
 
     /**
