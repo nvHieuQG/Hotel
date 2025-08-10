@@ -20,6 +20,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomChangeController;
 use App\Http\Controllers\RoomTypeReviewController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Support\Facades\Auth;
@@ -200,6 +201,9 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     // Quản lý người dùng
     Route::resource('users', AdminUserController::class)->except(['create', 'store']);
 
+    // Quản lý khuyến mãi
+    Route::resource('promotions', \App\Http\Controllers\Admin\AdminPromotionController::class);
+
     // Quản lý danh mục dịch vụ (Service Categories)
     Route::get('service-categories', [AdminServiceCategoryController::class, 'index'])->name('service-categories.index');
     Route::get('service-categories/create', [AdminServiceCategoryController::class, 'create'])->name('service-categories.create');
@@ -233,6 +237,10 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
 // Route công khai cho room type reviews (chỉ hiển thị) - đặt sau admin routes để tránh xung đột
 Route::get('/room-type-reviews/{roomTypeId}/ajax', [RoomTypeReviewController::class, 'getReviewsAjax'])->name('room-type-reviews.ajax');
+
+// Promotions - client
+Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
+Route::get('/promotions/{promotion}', [PromotionController::class, 'show'])->name('promotions.show');
 
 // Password reset routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
