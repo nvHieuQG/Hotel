@@ -50,7 +50,14 @@
                             <div class="">
                                 <h6 class="alert-heading">Thông tin đặt phòng</h6>
                                 <p class="mb-1"><strong>Mã đặt phòng:</strong> {{ $booking->booking_id }}</p>
-                                <p class="mb-1"><strong>Số tiền cần thanh toán:</strong> <span class="text-danger font-weight-bold">{{ number_format($booking->total_booking_price) }} VNĐ</span></p>
+                                <p class="mb-1"><strong>Số tiền cần thanh toán:</strong> <span class="text-danger font-weight-bold">{{ number_format($payment->amount) }} VNĐ</span></p>
+                                @if($payment->discount_amount > 0)
+                                    <div class="mt-2 small">
+                                        <div>Giá gốc: <strong>{{ number_format($booking->total_booking_price) }} VNĐ</strong></div>
+                                        <div>Khuyến mại: <span class="text-success">-{{ number_format($payment->discount_amount) }} VNĐ</span></div>
+                                        <div>Cần thanh toán: <strong class="text-primary">{{ number_format($payment->amount) }} VNĐ</strong></div>
+                                    </div>
+                                @endif
                                 <p class="mb-0"><strong>Nội dung chuyển khoản:</strong> <code>Thanh toan dat phong {{ $booking->booking_id }}</code></p>
                             </div>
 
@@ -112,9 +119,12 @@
                             </h6>
                         </div>
                         <div class="card-body">
-                            <form action="{{ route('payment.bank-transfer.confirm', $booking->id) }}" method="POST" enctype="multipart/form-data">
+                             <form action="{{ route('payment.bank-transfer.confirm', $booking->id) }}" method="POST" enctype="multipart/form-data">
                                 @csrf
                                 <input type="hidden" name="transaction_id" value="{{ $payment->transaction_id }}">
+                                 @if($payment->promotion_id)
+                                     <input type="hidden" name="promotion_id" value="{{ $payment->promotion_id }}">
+                                 @endif
                                 
                                 <div class="form-group">
                                     <label for="bank_name">Ngân hàng đã chuyển khoản <span class="text-danger">*</span></label>
@@ -128,8 +138,8 @@
 
                                 <div class="form-group">
                                     <label for="transfer_amount">Số tiền đã chuyển <span class="text-danger">*</span></label>
-                                    <input type="number" name="transfer_amount" id="transfer_amount" 
-                                           class="form-control" value="{{ $booking->total_booking_price }}" required>
+                                     <input type="number" name="transfer_amount" id="transfer_amount" 
+                                           class="form-control" value="{{ (int) $payment->amount }}" required>
                                 </div>
 
                                 <div class="form-group">
@@ -275,7 +285,7 @@
                     return;
                 }
 
-                if (parseFloat(transferAmount) !== {{ $booking->total_booking_price }}) {
+                if (parseFloat(transferAmount) !== {{ (int) $payment->amount }}) {
                     e.preventDefault();
                     alert('Số tiền chuyển khoản phải bằng số tiền cần thanh toán!');
                     return;

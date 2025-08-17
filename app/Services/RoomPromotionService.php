@@ -29,7 +29,12 @@ class RoomPromotionService
      */
     public function getTopPromotions(Room $room, float $amountContext, int $limit = 3): Collection
     {
-        $available = $this->getAvailablePromotions($room);
+        $available = $this->getAvailablePromotions($room)
+            // Chỉ lấy khuyến mại thực sự áp dụng được ở mức giá hiện tại
+            ->filter(function ($promotion) use ($amountContext) {
+                return $promotion->canApplyToAmount($amountContext)
+                    && $promotion->calculateDiscount($amountContext) > 0;
+            });
 
         if ($available->isEmpty()) {
             return collect();

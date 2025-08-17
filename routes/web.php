@@ -270,6 +270,11 @@ Route::get('/confirm-info-payment/{booking}', [PaymentController::class, 'confir
 Route::get('/payment-method/{booking?}', [PaymentController::class, 'paymentMethod'])->name('payment-method');
 Route::post('/ajax-booking', [BookingController::class, 'ajaxStoreBooking'])->name('ajax-booking');
 Route::get('/api/room-type/{id}/image', [BookingController::class, 'getRoomTypeImage'])->name('api.room-type.image');
+// Payment promotion preview API
+Route::get('/api/payment/promotion-preview/{booking}', [PaymentController::class, 'promotionPreview'])->name('api.payment.promotion-preview');
+
+// Room type promotion preview API
+Route::get('/api/room-type/promotion-preview', [HotelController::class, 'promotionPreviewForRoomType'])->name('api.room-type.promotion-preview');
 
 
 Route::get('/payment/bank-transfer/{booking}', [PaymentController::class, 'processBankTransfer'])->name('payment.bank-transfer');

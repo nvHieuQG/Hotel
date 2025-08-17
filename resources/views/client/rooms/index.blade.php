@@ -77,17 +77,23 @@
                                                 </a>
                                             </h3>
                                             @php
-                                                $representativeRoom = $type->rooms()->first();
+                                                $representativeRoom = $type->rooms()->where('status', 'available')->first();
                                                 $promotions = collect();
                                                 if ($representativeRoom) {
-                                                    $promotions = app(\App\Services\RoomPromotionService::class)->getTopPromotions($representativeRoom, (float)($type->price ?? 0), 3);
-                                                } else {
-                                                    $promotions = \App\Models\Promotion::active()->available()->get()->filter(function($p) use ($type) {
-                                                        return $p->canApplyToRoomType($type->id);
-                                                    })->sortByDesc(function($p) use ($type) { return $p->calculateDiscount((float)($type->price ?? 0)); })->take(3);
+                                                    // Tính số đêm từ bộ lọc nếu có
+                                                    $nights = 1;
+                                                    try {
+                                                        $ci = request()->get('check_in_date');
+                                                        $co = request()->get('check_out_date');
+                                                        if ($ci && $co) {
+                                                            $nights = max(1, \Carbon\Carbon::parse($ci)->diffInDays(\Carbon\Carbon::parse($co)));
+                                                        }
+                                                    } catch (\Exception $e) {}
+                                                    $amountContext = (float)($type->price ?? 0) * $nights;
+                                                    $promotions = app(\App\Services\RoomPromotionService::class)->getTopPromotions($representativeRoom, $amountContext, 3);
                                                 }
                                             @endphp
-                                            @if($promotions->isNotEmpty())
+                                @if($promotions && $promotions->count() > 0)
                                                 @php
                                                     $topList = $promotions->take(3);
                                                     $extraCount = max(0, $promotions->count() - $topList->count());
