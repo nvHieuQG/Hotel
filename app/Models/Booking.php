@@ -227,8 +227,19 @@ class Booking extends Model
      */
     public function getTotalBookingPriceAttribute()
     {
-        // price đã là tổng cuối cùng (bao gồm phụ thu và dịch vụ nếu có)
-        return $this->price;
+        // Tính tổng thực tế = giá phòng + phụ phí + dịch vụ khách chọn + dịch vụ admin thêm
+        $adminServicesTotal = $this->bookingServices()->sum('total_price');
+        return $this->price + $adminServicesTotal;
+    }
+
+    /**
+     * Lấy giá phòng cơ bản (không bao gồm dịch vụ và phụ phí)
+     */
+    public function getBaseRoomPriceAttribute()
+    {
+        // Tính giá phòng cơ bản = tổng giá - phụ phí - dịch vụ khách chọn
+        $basePrice = $this->price - $this->surcharge - $this->extra_services_total;
+        return max(0, $basePrice); // Đảm bảo không âm
     }
 
     /**

@@ -194,6 +194,26 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\RoomTypeServiceService::class
         );
 
+        // Promotion Repository Bindings
+        $this->app->bind(
+            \App\Interfaces\Repositories\PromotionRepositoryInterface::class,
+            \App\Repositories\PromotionRepository::class
+        );
+        $this->app->bind(
+            \App\Interfaces\Repositories\Admin\AdminPromotionRepositoryInterface::class,
+            \App\Repositories\Admin\AdminPromotionRepository::class
+        );
+
+        // Promotion Service Bindings
+        $this->app->bind(
+            \App\Interfaces\Services\PromotionServiceInterface::class,
+            \App\Services\PromotionService::class
+        );
+        $this->app->bind(
+            \App\Interfaces\Services\Admin\AdminPromotionServiceInterface::class,
+            \App\Services\Admin\AdminPromotionService::class
+        );
+
         // Payment Service Binding
         $this->app->bind(
             \App\Interfaces\Services\PaymentServiceInterface::class,
@@ -273,5 +293,17 @@ class AppServiceProvider extends ServiceProvider
         Booking::observe(BookingObserver::class);
         BookingNote::observe(BookingNoteObserver::class);
         RoomTypeReview::observe(RoomTypeReviewObserver::class);
+
+        // Share featured promotions to client master layout if exists
+        try {
+            \Illuminate\Support\Facades\View::composer('client.layouts.master', function ($view) {
+                if (class_exists(\App\Models\Promotion::class)) {
+                    $featuredPromotions = \App\Models\Promotion::active()->featured()->limit(5)->get();
+                    $view->with('featuredPromotions', $featuredPromotions);
+                }
+            });
+        } catch (\Throwable $e) {
+            // Avoid breaking boot if promotions tables not ready on some environments
+        }
     }
 }

@@ -54,6 +54,9 @@
                                                 @endforeach
                                             </select>
                                         </div>
+                                        @if(isset($bookingData['promotion_id']))
+                                            <input type="hidden" name="promotion_id" value="{{ (int) $bookingData['promotion_id'] }}">
+                                        @endif
 
                                         <div class="row">
                                             <div class="col-md-6">
@@ -169,8 +172,12 @@
                                                                         @elseif($ct === 'per_day' || $ct === 'per_hour')
                                                                             <div class="form-row">
                                                                                 <div class="col-6">
-                                                                                    <label class="small">Số lượng xe</label>
+                                                                                    <label class="small">Số lượng</label>
                                                                                     <input type="number" class="form-control form-control-sm svc-quantity" data-service-id="{{ $svc->id }}" min="1" value="1" style="max-width:140px">
+                                                                                </div>
+                                                                                <div class="col-6">
+                                                                                    <label class="small">Số ngày</label>
+                                                                                    <input type="number" class="form-control form-control-sm svc-days" data-service-id="{{ $svc->id }}" min="1" value="1" style="max-width:140px">
                                                                                 </div>
                                                                             </div>
                                                                         @endif
@@ -855,7 +862,12 @@
                     alert('Đặt phòng thành công! Bạn có 30 phút để hoàn tất thanh toán.');
                     
                     // Chuyển đến trang payment-method
-                    window.location.href = `/payment-method/${data.booking.id}`;
+                    // Chuyển đến trang payment-method, truyền tiếp promotion_id nếu có
+                    const url = new URL(`/payment-method/${data.booking.id}`, window.location.origin);
+                    @if(isset($bookingData['promotion_id']))
+                        url.searchParams.set('promotion_id', '{{ (int) $bookingData['promotion_id'] }}');
+                    @endif
+                    window.location.href = url.pathname + (url.search ? '?' + url.searchParams.toString() : '');
                 } else {
                     alert('Có lỗi khi lưu đặt phòng: ' + (data.message || 'Lỗi không xác định'));
                     resetSubmitButton();

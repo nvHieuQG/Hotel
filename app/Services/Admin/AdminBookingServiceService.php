@@ -72,11 +72,8 @@ class AdminBookingServiceService implements AdminBookingServiceServiceInterface
                 'notes' => $notes
             ]);
 
-            // Cộng thêm vào tổng giá trị booking (price đang được dùng như tổng cuối)
-            // Đảm bảo đồng bộ công nợ khi thêm dịch vụ phát sinh bởi nhân viên
-            $booking = Booking::lockForUpdate()->findOrFail($bookingId);
-            $booking->price = (float) $booking->price + ((float) $servicePrice * (int) $quantity);
-            $booking->save();
+            // Không cộng vào booking.price nữa vì sẽ làm sai logic promotion
+            // Dịch vụ admin thêm sẽ được tính riêng qua bookingServices() relationship
 
             DB::commit();
             return $bookingService->load('service');

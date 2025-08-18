@@ -189,9 +189,19 @@
                                     <p><strong>Tiền dịch vụ (tổng):</strong>
                                         <span class="text-{{ ($svcTotal ?? 0) > 0 ? 'success' : 'muted' }}">{{ number_format($svcTotal ?? 0) }} VNĐ</span>
                                     </p>
-                                    @php $grand = ($roomCost ?? 0) + ($guestSurcharge ?? 0) + ($roomChangeSurcharge ?? 0) + ($svcTotal ?? 0); @endphp
+                                    @php 
+                                        $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
+                                        $grand = ($roomCost ?? 0) + ($guestSurcharge ?? 0) + ($roomChangeSurcharge ?? 0) + ($svcTotal ?? 0); 
+                                        $finalAmount = $grand - $totalDiscount;
+                                    @endphp
+                                    @if($totalDiscount > 0)
+                                        <p><strong>Khuyến mại (chỉ áp dụng giá phòng):</strong>
+                                            <span class="text-success">-{{ number_format($totalDiscount) }} VNĐ</span>
+                                        </p>
+                                    @endif
+                                    <hr>
                                     <p class="mb-0"><strong>Tổng cộng:</strong>
-                                        <span class="text-primary fw-bold">{{ number_format($grand) }} VNĐ</span>
+                                        <span class="text-primary fw-bold">{{ number_format($finalAmount) }} VNĐ</span>
                                     </p>
                                 </div>
                             </div>
@@ -410,8 +420,10 @@
                                             $svcFromClient2 = (float)($booking->extra_services_total ?? 0);
                                             $svcTotal2 = $svcFromAdmin2 + $svcFromClient2;
 
-                                            // 4) Tổng tiền và đã thu/còn thiếu
-                                            $totalPrice = (float)($roomCost2 + $guestSurcharge2 + $roomChangeSurcharge2 + $svcTotal2);
+                                            // 4) Khuyến mại và tổng tiền cuối
+                                            $totalDiscount2 = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
+                                            $totalBeforeDiscount = (float)($roomCost2 + $guestSurcharge2 + $roomChangeSurcharge2 + $svcTotal2);
+                                            $totalPrice = $totalBeforeDiscount - $totalDiscount2;
                                             $totalPaid = (float)($booking->total_paid ?? 0);
                                             $outstanding = max(0, $totalPrice - $totalPaid);
                                         @endphp
@@ -525,7 +537,7 @@
                                                     <tfoot class="table-light small">
                                                         <tr>
                                                             <td colspan="4" class="text-end fw-semibold">Tổng cộng:</td>
-                                                            <td class="text-success fw-bold">{{ number_format($bookingServices->sum('total_price')) }} VNĐ</td>
+                                                            <div class="text-muted small">Phụ phí & dịch vụ: {{ number_format($booking->surcharge + $booking->extra_services_total + $booking->total_services_price) }} VNĐ</div>
                                                             <td></td>
                                                         </tr>
                                                     </tfoot>

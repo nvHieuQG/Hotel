@@ -61,8 +61,16 @@
                         <div class="col-md-12 room-single mt-4 mb-5 ftco-animate">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4>Thông tin loại phòng</h4>
-                                <p><span class="price mr-2">{{ number_format($roomType->price) }}đ</span> <span
-                                        class="per">mỗi đêm</span></p>
+                                <div class="text-right">
+                                    @php $basePrice = (int) $roomType->price; @endphp
+                                    <div>
+                                        <span class="per">Giá mỗi đêm</span>
+                                    </div>
+                                    <div>
+                                        <span id="price_original" class="text-muted" style="text-decoration: line-through; display:none;">{{ number_format($basePrice) }}đ</span>
+                                        <span id="price_final" class="price ml-2">{{ number_format($basePrice) }}đ</span>
+                                    </div>
+                                </div>
                             </div>
                             <p class="mb-4">{{ $roomType->description }}</p>
                             <div class="d-md-flex mt-5 mb-5">
@@ -73,6 +81,76 @@
                                     <li><span>Mô tả:</span> {{ Str::limit($roomType->description, 100) }}</li>
                                 </ul>
                             </div>
+                            <div class="row mb-4">
+                                <div class="col-md-7">
+                                    <div class="card">
+                                        <div class="card-header"><i class="fas fa-gift mr-1"></i> Khuyến mại</div>
+                                        <div class="card-body">
+                                            @php
+                                                $listToShow = !empty($topPromotions) ? $topPromotions : [];
+                                            @endphp
+                                            @if(!empty($listToShow))
+                                                @foreach($listToShow as $promo)
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="radio" name="promotion_id" value="{{ $promo['id'] }}" id="promo_{{ $promo['id'] }}" data-discount="{{ (int) $promo['discount_amount'] }}" data-final="{{ (int) $promo['final_amount'] }}">
+                                                        <label class="form-check-label" for="promo_{{ $promo['id'] }}">
+                                                            <strong>{{ $promo['title'] }}</strong>
+                                                            <span class="badge bg-success ml-2">{{ $promo['discount_text'] }}</span>
+                                                            @if(!empty($promo['code']))
+                                                                <span class="badge bg-secondary ml-1">{{ $promo['code'] }}</span>
+                                                            @endif
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                                @if(!empty($allPromotions) && count($allPromotions) > count($listToShow))
+                                                    <details class="mt-2">
+                                                        <summary class="small text-muted">Xem thêm khuyến mại</summary>
+                                                        @foreach($allPromotions as $promo)
+                                                            @if(!in_array($promo['id'], array_column($listToShow, 'id')))
+                                                                <div class="form-check mb-2 mt-2">
+                                                                    <input class="form-check-input" type="radio" name="promotion_id" value="{{ $promo['id'] }}" id="promo_all_{{ $promo['id'] }}" data-discount="{{ (int) $promo['discount_amount'] }}" data-final="{{ (int) $promo['final_amount'] }}">
+                                                                    <label class="form-check-label" for="promo_all_{{ $promo['id'] }}">
+                                                                        <strong>{{ $promo['title'] }}</strong>
+                                                                        <span class="badge bg-success ml-2">{{ $promo['discount_text'] }}</span>
+                                                                        @if(!empty($promo['code']))
+                                                                            <span class="badge bg-secondary ml-1">{{ $promo['code'] }}</span>
+                                                                        @endif
+                                                                    </label>
+                                                                </div>
+                                                            @endif
+                                                        @endforeach
+                                                    </details>
+                                                @endif
+                                            @else
+                                                <div class="text-muted small">Hiện chưa có khuyến mại phù hợp</div>
+                                            @endif
+                                            <div id="promoAlert" class="alert d-none mt-2"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="card">
+                                        <div class="card-header"><i class="fas fa-receipt mr-1"></i> Tóm tắt giá</div>
+                                        <div class="card-body">
+                                            @php $nights = isset($nights) ? (int)$nights : 1; @endphp
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>Giá gốc ({{ $nights }} đêm)</span>
+                                                <span id="sum_original">{{ number_format($roomType->price * $nights) }} đ</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-1 text-success">
+                                                <span>Khuyến mại</span>
+                                                <span id="sum_discount">- 0 đ</span>
+                                            </div>
+                                            <hr class="my-2">
+                                            <div class="d-flex justify-content-between fw-bold">
+                                                <span>Giá sau giảm</span>
+                                                <span id="sum_final">{{ number_format($roomType->price * $nights) }} đ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Dịch vụ đi kèm --}}
 @if ($roomType->services && $roomType->services->count())
     <div class="services-section mb-5">
@@ -129,7 +207,7 @@
                                     }
                                     $bookingParams['room_type_id'] = $roomType->id;
                                 @endphp
-                                <a href="{{ route('booking') }}?{{ http_build_query($bookingParams) }}" class="btn btn-primary py-3 px-5">Đặt phòng ngay</a>
+                                <a id="bookNowBtn" href="{{ route('booking') }}?{{ http_build_query($bookingParams) }}" class="btn btn-primary py-3 px-5">Đặt phòng ngay</a>
                             </div>
                         </div>
 
@@ -975,6 +1053,70 @@ $(document).ready(function() {
         } else {
             $(this).removeClass('is-invalid').addClass('is-valid');
         }
+    });
+});
+
+// Khuyến mại: cập nhật giá và link đặt phòng
+document.addEventListener('DOMContentLoaded', function() {
+    const radios = document.querySelectorAll('input[name="promotion_id"]');
+    const priceOriginalEl = document.getElementById('price_original');
+    const priceFinalEl = document.getElementById('price_final');
+    const sumOriginalEl = document.getElementById('sum_original');
+    const sumDiscountEl = document.getElementById('sum_discount');
+    const sumFinalEl = document.getElementById('sum_final');
+    const bookNowBtn = document.getElementById('bookNowBtn');
+
+    const baseNightPrice = {{ (int) $roomType->price }};
+    const nights = {{ isset($nights) ? (int)$nights : 1 }};
+
+    function formatVND(number) {
+        return Number(number).toLocaleString('vi-VN') + ' đ';
+    }
+
+    function updatePrice(discountAmount, finalAmount) {
+        const base = baseNightPrice;
+        if (discountAmount > 0) {
+            priceOriginalEl.style.display = '';
+            priceOriginalEl.textContent = formatVND(base);
+        } else {
+            priceOriginalEl.style.display = 'none';
+        }
+        priceFinalEl.textContent = formatVND(finalAmount / nights);
+        sumOriginalEl.textContent = formatVND(base * nights);
+        sumDiscountEl.textContent = '- ' + formatVND(discountAmount);
+        sumFinalEl.textContent = formatVND(finalAmount);
+    }
+
+    function preview(promotionId) {
+        const url = new URL(`{{ route('api.room-type.promotion-preview') }}`, window.location.origin);
+        url.searchParams.set('room_type_id', '{{ $roomType->id }}');
+        const checkIn = new URLSearchParams(window.location.search).get('check_in_date');
+        const checkOut = new URLSearchParams(window.location.search).get('check_out_date');
+        if (checkIn) url.searchParams.set('check_in_date', checkIn);
+        if (checkOut) url.searchParams.set('check_out_date', checkOut);
+        if (promotionId) url.searchParams.set('promotion_id', promotionId);
+
+        fetch(url.toString(), { headers: { 'Accept': 'application/json' }})
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    updatePrice(data.discount_amount || 0, data.final_amount || (baseNightPrice * nights));
+                }
+            })
+            .catch(() => {});
+    }
+
+    radios.forEach(r => {
+        r.addEventListener('change', function() {
+            preview(this.value);
+
+            // Thêm promotion_id vào link Đặt phòng
+            if (bookNowBtn) {
+                const url = new URL(bookNowBtn.getAttribute('href'), window.location.origin);
+                url.searchParams.set('promotion_id', this.value);
+                bookNowBtn.setAttribute('href', url.pathname + '?' + url.searchParams.toString());
+            }
+        });
     });
 });
 

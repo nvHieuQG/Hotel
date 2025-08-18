@@ -76,8 +76,9 @@
                                 <th>Phòng</th>
                                 <th>Check-in</th>
                                 <th>Check-out</th>
-                                <th>Giá</th>
-                            <th>Phụ thu</th>
+                                <th>Giá phòng</th>
+                            <th>Phụ thu & DV</th>
+                            <th>Khuyến mại</th>
                             <th>Tổng tiền</th>
                                 <th>Trạng thái</th>
                                 <th>Thanh toán</th>
@@ -93,14 +94,23 @@
                                 <td>{{ $booking->room->name }}</td>
                                 <td>{{ $booking->check_in_date }}</td>    
                                 <td>{{ $booking->check_out_date }}</td>
-                                <td>{{ number_format($booking->price, 0, ',', '.') }} VNĐ</td>
                             @php
                                 $roomChangeSurcharge = $booking->roomChanges()
                                     ->whereIn('status', ['approved', 'completed'])
                                     ->sum('price_difference');
+                                $servicesAndSurcharge = $booking->surcharge + $booking->extra_services_total + $booking->total_services_price + $roomChangeSurcharge;
+                                $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
                             @endphp
-                            <td>{{ number_format($roomChangeSurcharge, 0, ',', '.') }} VNĐ</td>
-                            <td>{{ number_format($booking->price + $roomChangeSurcharge, 0, ',', '.') }} VNĐ</td>
+                                <td>{{ number_format($booking->base_room_price, 0, ',', '.') }} VNĐ</td>
+                            <td>{{ number_format($servicesAndSurcharge, 0, ',', '.') }} VNĐ</td>
+                            <td>
+                                @if($totalDiscount > 0)
+                                    <span class="text-success">-{{ number_format($totalDiscount, 0, ',', '.') }} VNĐ</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>{{ number_format($booking->total_booking_price + $roomChangeSurcharge - $totalDiscount, 0, ',', '.') }} VNĐ</td>
                                 <td>
                                     <span class="badge bg-{{ 
                                         $booking->status == 'pending' ? 'warning' : 
@@ -174,8 +184,8 @@
                                 <strong>{{ $booking->room->name }}</strong>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted d-block">Giá:</small>
-                                <strong>{{ number_format($booking->price) }} VND</strong>
+                                <small class="text-muted d-block">Giá phòng:</small>
+                                <strong>{{ number_format($booking->base_room_price) }} VND</strong>
                             </div>
                         </div>
                         

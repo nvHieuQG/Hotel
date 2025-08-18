@@ -96,7 +96,7 @@
                                             <h6 class="card-title text-primary mb-3">
                                                 <i class="fas fa-receipt mr-2"></i>Thông tin giao dịch
                                             </h6>
-                                            <div class="row">
+                                                <div class="row">
                                                 <div class="col-md-6">
                                                     <table class="table table-borderless">
                                                         <tr>
@@ -111,6 +111,16 @@
                                                             <td><strong>Số tiền:</strong></td>
                                                             <td class="text-success"><strong>{{ $latestPayment->formatted_amount ?? number_format($latestPayment->amount) }} VNĐ</strong></td>
                                                         </tr>
+                                                        @if(($latestPayment->discount_amount ?? 0) > 0)
+                                                        <tr>
+                                                            <td><strong>Giá gốc:</strong></td>
+                                                            <td>{{ number_format($booking->total_booking_price) }} VNĐ</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Khuyến mại:</strong></td>
+                                                            <td class="text-success">-{{ number_format($latestPayment->discount_amount) }} VNĐ</td>
+                                                        </tr>
+                                                        @endif
                                                     </table>
                                                 </div>
                                                 <div class="col-md-6">
@@ -144,6 +154,17 @@
                                                         <tr>
                                                             <td><strong>Mã giao dịch:</strong></td>
                                                             <td><code>{{ $latestPayment->transaction_id }}</code></td>
+                                                        </tr>
+                                                        @endif
+                                                        @if($latestPayment->promotion_id && $latestPayment->promotion)
+                                                        <tr>
+                                                            <td><strong>Khuyến mại áp dụng:</strong></td>
+                                                            <td>
+                                                                <i class="fas fa-gift text-success"></i> {{ $latestPayment->promotion->title }}
+                                                                @if($latestPayment->promotion->code)
+                                                                    <br><small class="text-muted">Mã: {{ $latestPayment->promotion->code }}</small>
+                                                                @endif
+                                                            </td>
                                                         </tr>
                                                         @endif
                                                     </table>

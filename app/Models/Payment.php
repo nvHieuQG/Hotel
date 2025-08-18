@@ -11,8 +11,10 @@ class Payment extends Model
 
     protected $fillable = [
         'booking_id',
+        'promotion_id',
         'payment_method',
         'amount',
+        'discount_amount',
         'currency',
         'status',
         'transaction_id',
@@ -25,6 +27,7 @@ class Payment extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'gateway_response' => 'array',
         'paid_at' => 'datetime',
     ];
@@ -35,6 +38,11 @@ class Payment extends Model
     public function booking()
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    public function promotion()
+    {
+        return $this->belongsTo(Promotion::class);
     }
 
     /**
@@ -98,6 +106,11 @@ class Payment extends Model
      */
     public function getFormattedAmountAttribute()
     {
-        return number_format($this->amount, 0, ',', '.') . ' VND';
+        return number_format((float) $this->amount, 0, ',', '.') . ' VND';
+    }
+
+    public function getFormattedDiscountAttribute()
+    {
+        return number_format((float) $this->discount_amount, 0, ',', '.') . ' VND';
     }
 }
