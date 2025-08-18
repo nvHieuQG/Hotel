@@ -44,100 +44,10 @@
         </div>
     </div>
 
-    <!-- Đánh giá chi tiết -->
-    <div class="detailed-ratings mb-4">
-        <h6 class="font-weight-bold text-dark mb-3">
-            <i class="fas fa-chart-bar text-primary mr-2"></i>Đánh giá chi tiết
-            <small class="text-muted font-weight-normal">(không bắt buộc)</small>
-        </h6>
-        
-        <div class="row">
-            <div class="col-md-6">
-                <div class="rating-item mb-3">
-                    <label class="rating-label">
-                        <i class="fas fa-broom text-success mr-2"></i>Vệ sinh
-                    </label>
-                    <div class="rating-stars-sm" data-rating="0">
-                        @for ($i = 5; $i >= 1; $i--)
-                            <input type="radio" name="cleanliness_rating" value="{{ $i }}" id="cleanliness_star{{ $i }}" class="rating-input-sm">
-                            <label for="cleanliness_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                <i class="fas fa-star"></i>
-                            </label>
-                        @endfor
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="rating-item mb-3">
-                    <label class="rating-label">
-                        <i class="fas fa-couch text-info mr-2"></i>Thoải mái
-                    </label>
-                    <div class="rating-stars-sm" data-rating="0">
-                        @for ($i = 5; $i >= 1; $i--)
-                            <input type="radio" name="comfort_rating" value="{{ $i }}" id="comfort_star{{ $i }}" class="rating-input-sm">
-                            <label for="comfort_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                <i class="fas fa-star"></i>
-                            </label>
-                        @endfor
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="rating-item mb-3">
-                    <label class="rating-label">
-                        <i class="fas fa-map-marker-alt text-warning mr-2"></i>Vị trí
-                    </label>
-                    <div class="rating-stars-sm" data-rating="0">
-                        @for ($i = 5; $i >= 1; $i--)
-                            <input type="radio" name="location_rating" value="{{ $i }}" id="location_star{{ $i }}" class="rating-input-sm">
-                            <label for="location_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                <i class="fas fa-star"></i>
-                            </label>
-                        @endfor
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="rating-item mb-3">
-                    <label class="rating-label">
-                        <i class="fas fa-wifi text-primary mr-2"></i>Tiện nghi
-                    </label>
-                    <div class="rating-stars-sm" data-rating="0">
-                        @for ($i = 5; $i >= 1; $i--)
-                            <input type="radio" name="facilities_rating" value="{{ $i }}" id="facilities_star{{ $i }}" class="rating-input-sm">
-                            <label for="facilities_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                <i class="fas fa-star"></i>
-                            </label>
-                        @endfor
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="rating-item mb-3">
-                    <label class="rating-label">
-                        <i class="fas fa-dollar-sign text-success mr-2"></i>Giá trị
-                    </label>
-                    <div class="rating-stars-sm" data-rating="0">
-                        @for ($i = 5; $i >= 1; $i--)
-                            <input type="radio" name="value_rating" value="{{ $i }}" id="value_star{{ $i }}" class="rating-input-sm">
-                            <label for="value_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                <i class="fas fa-star"></i>
-                            </label>
-                        @endfor
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bình luận -->
+    <!-- Nội dung đánh giá -->
     <div class="form-group mb-4">
         <label for="comment" class="form-label font-weight-bold text-dark mb-2">
-            <i class="fas fa-comment text-primary mr-2"></i>Bình luận của bạn
+            <i class="fas fa-comment text-primary mr-2"></i>Nội dung đánh giá
             <span class="text-danger">*</span>
         </label>
         <textarea name="comment" id="comment" class="form-control border-0 bg-light" rows="4" 
@@ -145,7 +55,7 @@
         <div class="form-text">
             <small class="text-muted">
                 <i class="fas fa-info-circle mr-1"></i>
-                Bình luận sẽ giúp khách hàng khác hiểu rõ hơn về chất lượng phòng
+                Nội dung đánh giá sẽ giúp khách hàng khác hiểu rõ hơn về chất lượng phòng
             </small>
         </div>
     </div>
@@ -225,54 +135,6 @@
     min-height: 20px;
 }
 
-/* Rating stars nhỏ cho đánh giá chi tiết */
-.rating-stars-sm {
-    display: inline-flex;
-    flex-direction: row-reverse;
-    gap: 4px;
-}
-
-.rating-input-sm {
-    display: none;
-}
-
-.rating-star-sm {
-    font-size: 1.2rem;
-    color: #e0e0e0;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 2px;
-}
-
-.rating-star-sm:hover,
-.rating-star-sm:hover ~ .rating-star-sm,
-.rating-input-sm:checked ~ .rating-star-sm {
-    color: #ffc107;
-    transform: scale(1.1);
-}
-
-.rating-item {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
-    transition: all 0.2s ease;
-}
-
-.rating-item:hover {
-    background: #ffffff;
-    border-color: #007bff;
-    box-shadow: 0 2px 8px rgba(0,123,255,0.1);
-}
-
-.rating-label {
-    display: block;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-}
-
 .form-control {
     border-radius: 8px;
     border: 2px solid #e9ecef;
@@ -346,14 +208,6 @@
         font-size: 2rem;
     }
     
-    .rating-star-sm {
-        font-size: 1rem;
-    }
-    
-    .rating-item {
-        padding: 12px;
-    }
-    
     .btn-lg {
         padding: 10px 20px;
         font-size: 1rem;
@@ -418,51 +272,6 @@ $(function() {
         });
     });
     
-    // Rating stars nhỏ
-    $('.rating-stars-sm').each(function() {
-        const container = $(this);
-        const stars = container.find('.rating-star-sm');
-        
-        stars.on('click', function() {
-            const value = $(this).data('value');
-            container.attr('data-rating', value);
-            
-            // Reset tất cả stars
-            stars.find('i').removeClass('text-warning').addClass('text-muted');
-            
-            // Highlight stars đã chọn
-            stars.each(function() {
-                const starValue = $(this).data('value');
-                if (starValue <= value) {
-                    $(this).find('i').removeClass('text-muted').addClass('text-warning');
-                }
-            });
-        });
-        
-        // Hover effect
-        stars.on('mouseenter', function() {
-            const value = $(this).data('value');
-            stars.find('i').removeClass('text-warning').addClass('text-muted');
-            stars.each(function() {
-                const starValue = $(this).data('value');
-                if (starValue <= value) {
-                    $(this).find('i').removeClass('text-muted').addClass('text-warning');
-                }
-            });
-        });
-        
-        stars.on('mouseleave', function() {
-            const currentRating = container.attr('data-rating') || 0;
-            stars.find('i').removeClass('text-warning').addClass('text-muted');
-            stars.each(function() {
-                const starValue = $(this).data('value');
-                if (starValue <= currentRating) {
-                    $(this).find('i').removeClass('text-muted').addClass('text-warning');
-                }
-            });
-        });
-    });
-    
     // Form submission
     $('#reviewFormPopup').off('submit').on('submit', function(e) {
         e.preventDefault();
@@ -482,7 +291,7 @@ $(function() {
         // Kiểm tra comment
         const comment = form.find('#comment').val().trim();
         if (comment.length < 10) {
-            showToast('Bình luận phải có ít nhất 10 ký tự!', 'warning');
+            showToast('Nội dung đánh giá phải có ít nhất 10 ký tự!', 'warning');
             return;
         }
         
@@ -512,8 +321,7 @@ $(function() {
                 setTimeout(() => {
                     form[0].reset();
                     $('.rating-stars').attr('data-rating', '0');
-                    $('.rating-stars-sm').attr('data-rating', '0');
-                    $('.rating-star i, .rating-star-sm i').removeClass('text-warning').addClass('text-muted');
+                    $('.rating-star i').removeClass('text-warning').addClass('text-muted');
                     $('.rating-text').text('Chọn số sao để đánh giá');
                 }, 1000);
             },

@@ -111,7 +111,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="comment" class="form-label">Bình luận</label>
+                            <label for="comment" class="form-label">Nội dung đánh giá</label>
                             <textarea name="comment" id="comment" rows="5" class="form-control @error('comment') is-invalid @enderror" placeholder="Nội dung đánh giá...">{{ old('comment') }}</textarea>
                             @error('comment')
                                 <div class="text-danger mt-1">{{ $message }}</div>

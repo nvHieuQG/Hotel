@@ -5,7 +5,7 @@
                 <tr>
                     <th>Phòng</th>
                     <th>Điểm đánh giá</th>
-                    <th>Bình luận</th>
+                    <th>Nội dung đánh giá</th>
                     <th>Trạng thái</th>
                     <th>Ngày đánh giá</th>
                     <th>Hành động</th>
@@ -36,27 +36,6 @@
                                 @endfor
                                 <span class="ml-2">{{ $review->rating }}/5</span>
                             </div>
-                            @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
-                                <div class="mt-1">
-                                    <small class="text-muted">
-                                        @if($review->cleanliness_rating)
-                                            <span class="mr-1">Vệ sinh: {{ $review->cleanliness_rating }}/5</span>
-                                        @endif
-                                        @if($review->comfort_rating)
-                                            <span class="mr-1">Tiện nghi: {{ $review->comfort_rating }}/5</span>
-                                        @endif
-                                        @if($review->location_rating)
-                                            <span class="mr-1">Vị trí: {{ $review->location_rating }}/5</span>
-                                        @endif
-                                        @if($review->facilities_rating)
-                                            <span class="mr-1">CSVC: {{ $review->facilities_rating }}/5</span>
-                                        @endif
-                                        @if($review->value_rating)
-                                            <span>Giá trị: {{ $review->value_rating }}/5</span>
-                                        @endif
-                                    </small>
-                                </div>
-                            @endif
                         </td>
                         <td>
                             @if($review->comment)
@@ -64,7 +43,7 @@
                                     {{ $review->comment }}
                                 </div>
                             @else
-                                <span class="text-muted"><em>Không có bình luận</em></span>
+                                <span class="text-muted"><em>Không có nội dung đánh giá</em></span>
                             @endif
                         </td>
                         <td>

@@ -20,11 +20,6 @@ class RoomTypeReview extends Model
         'booking_id',
         'rating',
         'comment',
-        'cleanliness_rating',
-        'comfort_rating',
-        'location_rating',
-        'facilities_rating',
-        'value_rating',
         'status',
         'is_anonymous'
     ];
@@ -36,11 +31,6 @@ class RoomTypeReview extends Model
      */
     protected $casts = [
         'rating' => 'integer',
-        'cleanliness_rating' => 'integer',
-        'comfort_rating' => 'integer',
-        'location_rating' => 'integer',
-        'facilities_rating' => 'integer',
-        'value_rating' => 'integer',
         'is_anonymous' => 'boolean',
     ];
 

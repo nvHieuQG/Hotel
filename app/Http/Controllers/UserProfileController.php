@@ -141,11 +141,6 @@ class UserProfileController extends Controller
             $validator = Validator::make($request->all(), [
                 'rating' => 'required|integer|min:1|max:5',
                 'comment' => 'nullable|string|max:1000',
-                'cleanliness_rating' => 'nullable|integer|min:1|max:5',
-                'comfort_rating' => 'nullable|integer|min:1|max:5',
-                'location_rating' => 'nullable|integer|min:1|max:5',
-                'facilities_rating' => 'nullable|integer|min:1|max:5',
-                'value_rating' => 'nullable|integer|min:1|max:5',
                 'is_anonymous' => 'boolean',
             ]);
 
@@ -184,11 +179,6 @@ class UserProfileController extends Controller
             $validator = Validator::make($request->all(), [
                 'rating' => 'required|integer|min:1|max:5',
                 'comment' => 'nullable|string|max:1000',
-                'cleanliness_rating' => 'nullable|integer|min:1|max:5',
-                'comfort_rating' => 'nullable|integer|min:1|max:5',
-                'location_rating' => 'nullable|integer|min:1|max:5',
-                'facilities_rating' => 'nullable|integer|min:1|max:5',
-                'value_rating' => 'nullable|integer|min:1|max:5',
                 'is_anonymous' => 'boolean',
             ]);
 

@@ -96,9 +96,9 @@
                             </div>
                         </div>
 
-                        <!-- Phần đánh giá và bình luận -->
+                        <!-- Phần đánh giá -->
                         <div class="col-md-12 room-single ftco-animate mb-5 reviews-section">
-                            <h4 class="mb-4">Đánh giá và bình luận</h4>
+                            <h4 class="mb-4">Đánh giá</h4>
                             
                             <!-- Thống kê đánh giá -->
                             <div class="row mb-4">
@@ -209,100 +209,10 @@
                                                         </div>
                                                     </div>
 
-                                                    <!-- Đánh giá chi tiết -->
-                                                    <div class="detailed-ratings mb-4">
-                                                        <h6 class="font-weight-bold text-dark mb-3">
-                                                            <i class="fas fa-chart-bar text-primary mr-2"></i>Đánh giá chi tiết
-                                                            <small class="text-muted font-weight-normal">(không bắt buộc)</small>
-                                                        </h6>
-                                                        
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-broom text-success mr-2"></i>Vệ sinh
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="cleanliness_rating" value="{{ $i }}" id="cleanliness_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="cleanliness_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-couch text-info mr-2"></i>Thoải mái
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="comfort_rating" value="{{ $i }}" id="comfort_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="comfort_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-map-marker-alt text-warning mr-2"></i>Vị trí
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="location_rating" value="{{ $i }}" id="location_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="location_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-wifi text-primary mr-2"></i>Tiện nghi
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="facilities_rating" value="{{ $i }}" id="facilities_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="facilities_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-dollar-sign text-success mr-2"></i>Giá trị
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="value_rating" value="{{ $i }}" id="value_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="value_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Bình luận -->
+                                                    <!-- Nội dung đánh giá -->
                                                     <div class="form-group mb-4">
                                                         <label for="comment" class="form-label font-weight-bold text-dark mb-2">
-                                                            <i class="fas fa-comment text-primary mr-2"></i>Bình luận của bạn
+                                                            <i class="fas fa-comment text-primary mr-2"></i>Nội dung đánh giá của bạn
                                                             <span class="text-danger">*</span>
                                                         </label>
                                                         <textarea name="comment" id="comment" class="form-control border-0 bg-light" rows="4" 
@@ -310,7 +220,7 @@
                                                         <div class="form-text">
                                                             <small class="text-muted">
                                                                 <i class="fas fa-info-circle mr-1"></i>
-                                                                Bình luận sẽ giúp khách hàng khác hiểu rõ hơn về chất lượng phòng
+                                                                Nội dung đánh giá sẽ giúp khách hàng khác hiểu rõ hơn về chất lượng phòng
                                                             </small>
                                                         </div>
                                                     </div>
@@ -378,30 +288,7 @@
                                                     @if($review->comment)
                                                         <p class="mb-2">{{ $review->comment }}</p>
                                                     @else
-                                                        <p class="mb-2 text-muted"><em>Không có bình luận</em></p>
-                                                    @endif
-                                                    
-                                                    <!-- Hiển thị đánh giá chi tiết -->
-                                                    @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
-                                                        <div class="detailed-ratings">
-                                                            <small class="text-muted">
-                                                                @if($review->cleanliness_rating)
-                                                                    <span class="mr-3">Vệ sinh: {{ $review->cleanliness_rating }}/5</span>
-                                                                @endif
-                                                                @if($review->comfort_rating)
-                                                                    <span class="mr-3">Tiện nghi: {{ $review->comfort_rating }}/5</span>
-                                                                @endif
-                                                                @if($review->location_rating)
-                                                                    <span class="mr-3">Vị trí: {{ $review->location_rating }}/5</span>
-                                                                @endif
-                                                                @if($review->facilities_rating)
-                                                                    <span class="mr-3">Cơ sở vật chất: {{ $review->facilities_rating }}/5</span>
-                                                                @endif
-                                                                @if($review->value_rating)
-                                                                    <span>Giá trị: {{ $review->value_rating }}/5</span>
-                                                                @endif
-                                                            </small>
-                                                        </div>
+                                                        <p class="mb-2 text-muted"><em>Không có nội dung đánh giá</em></p>
                                                     @endif
                                                 </div>
                                             </div>
@@ -536,17 +423,12 @@
 <style>
 /* CSS cho rating stars */
 .rating-input {
-    display: inline-block;
-    direction: rtl;
-}
-
-.rating-input input[type="radio"] {
     display: none;
 }
 
 .rating-star {
-    font-size: 1.5rem;
-    color: #ccc;
+    font-size: 2.5rem;
+    color: #e0e0e0;
     cursor: pointer;
     transition: color 0.2s ease;
 }
@@ -806,17 +688,17 @@ $(document).ready(function() {
         
         // Enable/disable form dựa trên việc chọn booking
         if (selectedBookingId) {
-            $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', false);
+            $('#reviewForm .form-control, #reviewForm .rating-input').prop('disabled', false);
             $('#reviewForm button[type="submit"]').prop('disabled', false);
         } else {
-            $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', true);
+            $('#reviewForm .form-control, #reviewForm .rating-input').prop('disabled', true);
             $('#reviewForm button[type="submit"]').prop('disabled', true);
         }
     });
     
     // Tự động enable form nếu chỉ có 1 booking (đã được chọn tự động)
     if ($('#booking_select').length && $('#booking_select').val()) {
-        $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', false);
+        $('#reviewForm .form-control, #reviewForm .rating-input').prop('disabled', false);
         $('#reviewForm button[type="submit"]').prop('disabled', false);
     }
     
@@ -847,7 +729,7 @@ $(document).ready(function() {
         // Kiểm tra comment
         const comment = form.find('#comment').val().trim();
         if (comment.length < 10) {
-            showToast('Bình luận phải có ít nhất 10 ký tự!', 'warning');
+            showToast('Nội dung đánh giá phải có ít nhất 10 ký tự!', 'warning');
             return;
         }
         
@@ -883,12 +765,11 @@ $(document).ready(function() {
                     $('#booking_select').val('');
                     $('#selected_booking_id').val('');
                     $('.rating-stars').attr('data-rating', '0');
-                    $('.rating-stars-sm').attr('data-rating', '0');
-                    $('.rating-star i, .rating-star-sm i').removeClass('text-warning').addClass('text-muted');
+                    $('.rating-star i').removeClass('text-warning').addClass('text-muted');
                     $('.rating-text').text('Chọn số sao để đánh giá');
                     
                     // Disable form
-                    $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', true);
+                    $('#reviewForm .form-control, #reviewForm .rating-input').prop('disabled', true);
                     $('#reviewForm button[type="submit"]').prop('disabled', true);
                     
                     // Tự động load danh sách đánh giá mới
