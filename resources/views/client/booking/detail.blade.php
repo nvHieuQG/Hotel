@@ -164,7 +164,9 @@
                                                 <tr>
                                                     <th>Thời gian</th>
                                                     <th>Phương thức</th>
-                                                    <th>Số tiền</th>
+                                                    <th>Giá gốc</th>
+                                                    <th>Khuyến mại</th>
+                                                    <th>Thanh toán</th>
                                                     <th>Trạng thái</th>
                                                 </tr>
                                             </thead>
@@ -173,7 +175,7 @@
                                                 <tr>
                                                     <td>{{ $payment->created_at->format('d/m/Y H:i') }}</td>
                                                     <td>
-                                                        @if($payment->payment_method === 'credit_card')
+                    	                                @if($payment->payment_method === 'credit_card')
                                                             <i class="fas fa-credit-card text-primary"></i> Thẻ tín dụng
                                                         @elseif($payment->payment_method === 'bank_transfer')
                                                             <i class="fas fa-university text-primary"></i> Chuyển khoản
@@ -181,7 +183,22 @@
                                                             {{ ucfirst($payment->payment_method) }}
                                                         @endif
                                                     </td>
-                                                    <td class="text-success"><strong>{{ $payment->formatted_amount }}</strong></td>
+                                                    <td>{{ number_format($booking->total_booking_price) }} VND</td>
+                                                    <td class="text-success">
+                                                        -{{ number_format((float)($payment->discount_amount ?? 0)) }} VND
+                                                        @if(($payment->discount_amount ?? 0) > 0 && $payment->promotion)
+                                                            <div class="mt-1">
+                                                                <span class="badge bg-success">
+                                                                    <i class="fas fa-gift"></i>
+                                                                    {{ $payment->promotion->title }}
+                                                                    @if($payment->promotion->code)
+                                                                        ({{ $payment->promotion->code }})
+                                                                    @endif
+                                                                </span>
+                                                            </div>
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-primary"><strong>{{ number_format((float)$payment->amount) }} VND</strong></td>
                                                     <td>
                                                         <span class="badge bg-{{ $payment->status_color }}">
                                                             {{ $payment->status_text }}

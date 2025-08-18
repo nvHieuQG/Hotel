@@ -20,6 +20,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomChangeController;
 use App\Http\Controllers\RoomTypeReviewController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Support\Facades\Auth;
@@ -200,6 +201,9 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     // Quản lý người dùng
     Route::resource('users', AdminUserController::class)->except(['create', 'store']);
 
+    // Quản lý khuyến mãi
+    Route::resource('promotions', \App\Http\Controllers\Admin\AdminPromotionController::class);
+
     // Quản lý danh mục dịch vụ (Service Categories)
     Route::get('service-categories', [AdminServiceCategoryController::class, 'index'])->name('service-categories.index');
     Route::get('service-categories/create', [AdminServiceCategoryController::class, 'create'])->name('service-categories.create');
@@ -234,6 +238,10 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 // Route công khai cho room type reviews (chỉ hiển thị) - đặt sau admin routes để tránh xung đột
 Route::get('/room-type-reviews/{roomTypeId}/ajax', [RoomTypeReviewController::class, 'getReviewsAjax'])->name('room-type-reviews.ajax');
 
+// Promotions - client
+Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
+Route::get('/promotions/{promotion}', [PromotionController::class, 'show'])->name('promotions.show');
+
 // Password reset routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
     ->middleware('guest')
@@ -262,6 +270,11 @@ Route::get('/confirm-info-payment/{booking}', [PaymentController::class, 'confir
 Route::get('/payment-method/{booking?}', [PaymentController::class, 'paymentMethod'])->name('payment-method');
 Route::post('/ajax-booking', [BookingController::class, 'ajaxStoreBooking'])->name('ajax-booking');
 Route::get('/api/room-type/{id}/image', [BookingController::class, 'getRoomTypeImage'])->name('api.room-type.image');
+// Payment promotion preview API
+Route::get('/api/payment/promotion-preview/{booking}', [PaymentController::class, 'promotionPreview'])->name('api.payment.promotion-preview');
+
+// Room type promotion preview API
+Route::get('/api/room-type/promotion-preview', [HotelController::class, 'promotionPreviewForRoomType'])->name('api.room-type.promotion-preview');
 
 
 Route::get('/payment/bank-transfer/{booking}', [PaymentController::class, 'processBankTransfer'])->name('payment.bank-transfer');

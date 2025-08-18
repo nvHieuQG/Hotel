@@ -11,6 +11,7 @@ use App\Interfaces\Services\RoomServiceInterface;
 use App\Interfaces\Repositories\RoomRepositoryInterface;
 use App\Interfaces\Repositories\BookingRepositoryInterface;
 use App\Interfaces\Services\ServiceCategoryServiceInterface;
+use App\Models\Promotion;
 
 class HotelController extends Controller
 {
@@ -149,7 +150,60 @@ class HotelController extends Controller
 
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
         $serviceCategories = $this->serviceCategoryService->getAll();
-        return view('client.rooms.single', compact('roomType', 'rooms', 'reviews', 'averageRating', 'reviewsCount', 'roomTypes', 'canReview', 'completedBookings', 'serviceCategories'));
+
+        // Promotions for room type detail (use RoomPromotionService to match listings/home)
+        $checkIn = request()->get('check_in_date');
+        $checkOut = request()->get('check_out_date');
+        $nights = 1;
+        if ($checkIn && $checkOut) {
+            try {
+                $start = \Carbon\Carbon::parse($checkIn);
+                $end = \Carbon\Carbon::parse($checkOut);
+                $diff = $start->diffInDays($end);
+                $nights = max(1, $diff);
+            } catch (\Exception $e) {
+                $nights = 1;
+            }
+        }
+
+        $baseAmount = (float) $roomType->price * $nights;
+        $representativeRoom = $rooms->first() ?? $roomType->rooms()->where('status', 'available')->first();
+        $topPromotions = collect();
+        $allPromotions = collect();
+        if ($representativeRoom) {
+            $promoService = app(\App\Services\RoomPromotionService::class);
+            $topPromotions = $promoService->getTopPromotions($representativeRoom, $baseAmount, 3);
+            $allPromotions = $promoService->getAvailablePromotions($representativeRoom)
+                ->filter(function($p) use ($baseAmount) { return $p->canApplyToAmount($baseAmount) && $p->calculateDiscount($baseAmount) > 0; });
+        } else {
+            $allPromotions = collect();
+        }
+
+        $mapPromotion = function($promo) use ($baseAmount) {
+            $discount = (float) $promo->calculateDiscount($baseAmount);
+            return [
+                'id' => $promo->id,
+                'title' => $promo->title,
+                'code' => $promo->code,
+                'discount_type' => $promo->discount_type,
+                'discount_value' => (float) $promo->discount_value,
+                'discount_text' => $promo->discount_text,
+                'discount_amount' => $discount,
+                'final_amount' => max(0, $baseAmount - $discount),
+            ];
+        };
+
+        $topPromotionsArr = $topPromotions->map($mapPromotion)->values()->all();
+        $allPromotionsArr = $allPromotions->map($mapPromotion)->values()->all();
+
+        return view('client.rooms.single', compact(
+            'roomType', 'rooms', 'reviews', 'averageRating', 'reviewsCount',
+            'roomTypes', 'canReview', 'completedBookings', 'serviceCategories',
+            'nights'
+        ))->with([
+            'topPromotions' => $topPromotionsArr,
+            'allPromotions' => $allPromotionsArr,
+        ]);
     }
 
     public function blogSingle()
@@ -171,5 +225,62 @@ class HotelController extends Controller
         $reviews = $this->roomTypeReviewService->getRoomTypeReviews($roomType->id, 10);
 
         return view('client.rooms.reviews-list', compact('reviews'))->render();
+    }
+
+    /**
+     * Preview khuyến mại cho loại phòng theo query (check_in_date, check_out_date, promotion_id|code)
+     */
+    public function promotionPreviewForRoomType(Request $request)
+    {
+        try {
+            $roomTypeId = (int) $request->query('room_type_id');
+            $roomType = $this->roomTypeService->findById($roomTypeId);
+            if (!$roomType) {
+                return response()->json(['success' => false, 'message' => 'Không tìm thấy loại phòng'], 404);
+            }
+
+            $checkIn = $request->query('check_in_date');
+            $checkOut = $request->query('check_out_date');
+            $nights = 1;
+            if ($checkIn && $checkOut) {
+                $start = \Carbon\Carbon::parse($checkIn);
+                $end = \Carbon\Carbon::parse($checkOut);
+                $nights = max(1, $start->diffInDays($end));
+            }
+
+            $promotionId = $request->query('promotion_id');
+            $promotionCode = $request->query('promotion_code');
+
+            $baseAmount = (float) $roomType->price * $nights;
+
+            $promotion = null;
+            if ($promotionId) {
+                $promotion = Promotion::find($promotionId);
+            } elseif ($promotionCode) {
+                $promotion = Promotion::where('code', $promotionCode)->first();
+            }
+
+            $discount = 0.0;
+            if ($promotion && $promotion->isValid() && $promotion->canApplyToRoomType($roomType->id) && $promotion->canApplyToAmount($baseAmount)) {
+                $discount = (float) $promotion->calculateDiscount($baseAmount);
+            }
+            $final = max(0.0, $baseAmount - $discount);
+
+            return response()->json([
+                'success' => true,
+                'base_amount' => (int) $baseAmount,
+                'discount_amount' => (int) $discount,
+                'final_amount' => (int) $final,
+                'nights' => $nights,
+                'promotion' => $promotion ? [
+                    'id' => $promotion->id,
+                    'title' => $promotion->title,
+                    'code' => $promotion->code,
+                    'discount_text' => $promotion->discount_text,
+                ] : null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Không thể xem trước khuyến mại'], 422);
+        }
     }
 }

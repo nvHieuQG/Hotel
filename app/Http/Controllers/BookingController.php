@@ -80,6 +80,11 @@ class BookingController extends Controller
             }
 
             // Thêm bookingData vào data để truyền đến view
+            // Truyền promotion_id nếu có từ URL (được gắn từ trang chi tiết phòng)
+            if ($request->filled('promotion_id')) {
+                $bookingData['promotion_id'] = (int) $request->get('promotion_id');
+            }
+
             $data['bookingData'] = $bookingData;
 
             return view('client.booking.confirm', $data);
