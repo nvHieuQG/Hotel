@@ -25,7 +25,7 @@ class PaymentService implements PaymentServiceInterface
 
         return $this->createPayment($booking, [
             'payment_method' => 'bank_transfer',
-            'amount' => $booking->total_booking_price,
+            'amount' => $booking->price,
             'currency' => 'VND',
             'status' => 'pending',
             'transaction_id' => $transactionId,
@@ -46,7 +46,7 @@ class PaymentService implements PaymentServiceInterface
 
         return $this->createPayment($booking, [
             'payment_method' => 'credit_card',
-            'amount' => $booking->total_booking_price,
+            'amount' => $booking->price,
             'currency' => 'VND',
             'status' => 'pending',
             'transaction_id' => $transactionId,

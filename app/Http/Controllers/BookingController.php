@@ -29,6 +29,15 @@ class BookingController extends Controller
     {
         try {
             $data = $this->bookingService->getBookingPageData();
+            // Lấy danh sách dịch vụ bổ sung đang hoạt động để hiển thị ở trang xác nhận
+            try {
+                $data['extraServices'] = \App\Models\ExtraService::query()
+                    ->where('is_active', true)
+                    ->orderBy('name')
+                    ->get();
+            } catch (\Throwable $e) {
+                $data['extraServices'] = collect();
+            }
 
             // Xử lý tham số từ URL để pre-fill form
             $bookingData = [
@@ -120,18 +129,44 @@ class BookingController extends Controller
     public function ajaxStoreBooking(Request $request)
     {
         try {
-            $validated = $request->validate([
+            // Validate cơ bản trước
+            $baseValidated = $request->validate([
                 'room_type_id' => 'required|exists:room_types,id',
                 'check_in_date' => 'required|date|after_or_equal:today',
                 'check_out_date' => 'required|date|after:check_in_date',
-                'guests' => 'required|integer|min:1|max:5',
+                'guests' => 'required|integer|min:1',
+                'adults' => 'nullable|integer|min:1',
+                'children' => 'nullable|integer|min:0',
+                'infants' => 'nullable|integer|min:0',
                 'phone' => 'required|string|max:20',
                 'notes' => 'nullable|string|max:1000',
+                'total_booking_price' => 'nullable|numeric|min:0',
+                'surcharge' => 'nullable|numeric|min:0',
+                'extra_services' => 'sometimes|string', // JSON string from frontend
+                'extra_services_total' => 'sometimes|numeric|min:0',
             ]);
+
+            // Lấy capacity từ room_type để ràng buộc guests theo sức chứa
+            $roomType = RoomType::findOrFail($baseValidated['room_type_id']);
+            $capacity = max(1, (int)($roomType->capacity ?? 1));
+            $extraAllowed = $capacity <= 3 ? 1 : 0;
+            $capacityLimit = $capacity + $extraAllowed; // Giới hạn guests = adults + children
+
+            if ((int)$baseValidated['guests'] > $capacityLimit) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Số khách vượt quá giới hạn cho phép của loại phòng (' . $capacityLimit . ')'
+                ], 422);
+            }
+
+            $validated = $baseValidated;
 
             // Tạo booking với trạng thái pending_payment (chờ thanh toán)
             $booking = $this->bookingService->createPendingBooking($validated + ['user_id' => Auth::id()]);
             $booking->load('user', 'room.roomType', 'room.primaryImage', 'room.firstImage');
+
+            // Không lưu total_booking_price trực tiếp vào DB (không có cột).
+            // Tổng tiền sẽ được lưu vào booking->price tại BookingService.
 
             // Lấy URL ảnh phòng
             $roomImage = null;

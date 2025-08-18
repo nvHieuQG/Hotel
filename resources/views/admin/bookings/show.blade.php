@@ -69,18 +69,129 @@
                                     <p><strong>Ngày đặt:</strong> {{ date('d/m/Y H:i', strtotime($booking->created_at)) }}</p>
                                     <p><strong>Check-in:</strong> {{ date('d/m/Y', strtotime($booking->check_in_date)) }}</p>
                                     <p><strong>Check-out:</strong> {{ date('d/m/Y', strtotime($booking->check_out_date)) }}</p>
-                                    <p><strong>Số đêm:</strong> {{ date_diff(new DateTime($booking->check_in_date), new DateTime($booking->check_out_date))->days }}</p>
+                                    <p class="mb-2">Người lớn: {{ (int)($booking->adults_count ?? 0) }} - Trẻ em: {{ (int)($booking->children_count ?? 0) }} - Em bé: {{ (int)($booking->infants_count ?? 0) }}</p>
+                                    @php 
+                                        /** @var \Carbon\Carbon $ci */
+                                        /** @var \Carbon\Carbon $co */
+                                        $ci = $booking->check_in_date instanceof \Carbon\Carbon ? $booking->check_in_date : \Carbon\Carbon::parse($booking->check_in_date);
+                                        $co = $booking->check_out_date instanceof \Carbon\Carbon ? $booking->check_out_date : \Carbon\Carbon::parse($booking->check_out_date);
+                                        // Tính số đêm theo ngày (bỏ phần giờ phút) để tránh số thập phân
+                                        $ciDate = $ci ? $ci->copy()->startOfDay() : null;
+                                        $coDate = $co ? $co->copy()->startOfDay() : null;
+                                        $nights = ($ciDate && $coDate) ? (int) $ciDate->diffInDays($coDate) : 0;
+                                        // Lấy giá/đêm ưu tiên roomType->price, fallback room->price
+                                        $nightly = (int)($booking->room->roomType->price ?? $booking->room->price ?? 0);
+                                        $roomCost = max(0, $nights) * $nightly;
+                                        $surcharge = (float)($booking->surcharge ?? 0);
+                                        // Phụ thu đổi phòng: cộng chênh lệch đã duyệt/hoàn tất
+                                        $roomChangeSurcharge = (float) $booking->roomChanges()
+                                            ->whereIn('status', ['approved', 'completed'])
+                                            ->sum('price_difference');
+                                        // Phụ phí người lớn/trẻ em = surcharge tổng trừ phụ thu đổi phòng (không âm)
+                                        $guestSurcharge = max(0, $surcharge - $roomChangeSurcharge);
+                                    @endphp
+                                    <p><strong>Số đêm:</strong> {{ $nights }}</p>
                                     <hr>
-                                    <p><strong>Tiền phòng:</strong> {{ number_format($booking->price) }} VNĐ</p>
-                                    <p><strong>Tiền dịch vụ:</strong> 
-                                        <span class="text-{{ $booking->total_services_price > 0 ? 'success' : 'muted' }}">
-                                            {{ number_format($booking->total_services_price) }} VNĐ
-                                        </span>
+                                    <p><strong>Tiền phòng ({{ number_format($nightly) }} VNĐ/đêm × {{ (int)$nights }} đêm):</strong> {{ number_format($roomCost) }} VNĐ</p>
+                                    <p><strong>Phụ phí (người lớn/trẻ em):</strong> {{ number_format($guestSurcharge) }} VNĐ</p>
+                                    <p><strong>Phụ thu đổi phòng:</strong> {{ number_format($roomChangeSurcharge) }} VNĐ</p>
+                                    @php 
+                                        // Tính tổng dịch vụ: cộng cả dịch vụ khách chọn (extra_services_total) và dịch vụ admin thêm (bookingServices)
+                                        $svcFromAdmin = (float)($booking->total_services_price ?? 0);
+                                        $svcFromClient = (float)($booking->extra_services_total ?? 0);
+                                        $svcTotal = $svcFromAdmin + $svcFromClient; 
+                                    @endphp
+                                    <p class="mb-1"><strong>Tiền dịch vụ (khách chọn)</strong></p>
+                                    @php 
+                                        $extraSvcs = $booking->extra_services ?? [];
+                                        if (is_string($extraSvcs)) {
+                                            $decoded = json_decode($extraSvcs, true);
+                                            $extraSvcs = (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [];
+                                        }
+                                        $svcNames = [];
+                                        try {
+                                            $ids = collect($extraSvcs)->pluck('id')->filter()->unique()->values()->all();
+                                            if (!empty($ids)) {
+                                                $svcNames = \App\Models\ExtraService::whereIn('id', $ids)->pluck('name', 'id')->toArray();
+                                            }
+                                        } catch (\Throwable $e) { $svcNames = []; }
+                                        $chargeTypeLabel = function($t) {
+                                            return match($t) {
+                                                'per_person' => 'Theo người',
+                                                'per_day' => 'Theo ngày',
+                                                'per_service' => 'Theo dịch vụ',
+                                                'per_hour' => 'Theo giờ',
+                                                'per_night' => 'Theo đêm',
+                                                default => ucfirst((string)$t)
+                                            };
+                                        };
+                                    @endphp
+                                    @if(!empty($extraSvcs) && is_array($extraSvcs))
+                                        <div class="mb-2">
+                                            <ul class="small mb-0 ps-3">
+                                                @foreach($extraSvcs as $es)
+                                                    @php 
+                                                        $sid = $es['id'] ?? null;
+                                                        $type = $es['charge_type'] ?? '';
+                                                        $adultsSel = (int)($es['adults_used'] ?? 0);
+                                                        $childrenSel = (int)($es['children_used'] ?? 0);
+                                                        $days = (int)($es['days'] ?? 0);
+                                                        $qty = (int)($es['quantity'] ?? 1);
+                                                        $name = $sid && isset($svcNames[$sid]) ? $svcNames[$sid] : ('Dịch vụ #'.($sid ?? ''));
+                                                        // Tính thành tiền mỗi dịch vụ (ưu tiên dùng subtotal từ JSON)
+                                                        $lineTotal = null;
+                                                        if (isset($es['subtotal'])) {
+                                                            $lineTotal = (float) $es['subtotal'];
+                                                        } else {
+                                                            $pa = (float)($es['price_adult'] ?? 0);
+                                                            $pc = (float)($es['price_child'] ?? 0);
+                                                            if ($type === 'per_person') {
+                                                                $multDays = $days > 0 ? $days : max(1, (int)($nights ?? 1));
+                                                                $lineTotal = ($adultsSel * $pa + $childrenSel * $pc) * $multDays;
+                                                            } elseif ($type === 'per_day' || $type === 'per_hour') {
+                                                                $multDays = $days > 0 ? $days : max(1, (int)($nights ?? 1));
+                                                                $unit = $pa > 0 ? $pa : $pc; // fallback nếu chỉ có 1 giá
+                                                                $lineTotal = $unit * max(1, $qty) * $multDays;
+                                                            } elseif ($type === 'per_service') {
+                                                                $unit = $pa > 0 ? $pa : $pc;
+                                                                $lineTotal = $unit * max(1, $qty);
+                                                            } elseif ($type === 'per_night') {
+                                                                $unit = $pa > 0 ? $pa : $pc;
+                                                                $lineTotal = $unit * max(1, (int)($nights ?? 1));
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    <li>
+                                                        <strong>{{ $name }}</strong>
+                                                        @if($type === 'per_person')
+                                                            : Người lớn {{ $adultsSel }} — Trẻ em {{ $childrenSel }}
+                                                            @if($days > 0)
+                                                                — Ngày: {{ $days }}
+                                                            @endif
+                                                        @elseif($type === 'per_day' || $type === 'per_hour')
+                                                            — Ngày: {{ max(1, $days) }} — SL: {{ max(1, $qty) }}
+                                                        @elseif($type === 'per_service')
+                                                            — SL: {{ max(1, $qty) }}
+                                                        @elseif($type === 'per_night')
+                                                            — Theo đêm
+                                                        @endif
+                                                        @if(!is_null($lineTotal))
+                                                            — <span class="text-success">{{ number_format((float)$lineTotal) }} VNĐ</span>
+                                                        @endif
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+                                    <p class="mb-1"><strong>Tiền dịch vụ (Admin thêm):</strong>
+                                        <span class="text-{{ ($svcFromAdmin ?? 0) > 0 ? 'success' : 'muted' }}">{{ number_format($svcFromAdmin ?? 0) }} VNĐ</span>
                                     </p>
-                                    <p class="mb-0"><strong>Tổng cộng:</strong> 
-                                        <span class="text-primary fw-bold">
-                                            {{ number_format($booking->price + $booking->total_services_price) }} VNĐ
-                                        </span>
+                                    <p><strong>Tiền dịch vụ (tổng):</strong>
+                                        <span class="text-{{ ($svcTotal ?? 0) > 0 ? 'success' : 'muted' }}">{{ number_format($svcTotal ?? 0) }} VNĐ</span>
+                                    </p>
+                                    @php $grand = ($roomCost ?? 0) + ($guestSurcharge ?? 0) + ($roomChangeSurcharge ?? 0) + ($svcTotal ?? 0); @endphp
+                                    <p class="mb-0"><strong>Tổng cộng:</strong>
+                                        <span class="text-primary fw-bold">{{ number_format($grand) }} VNĐ</span>
                                     </p>
                                 </div>
                             </div>
@@ -274,6 +385,61 @@
                                                 @endif
                                             </div>
                                         </div>
+
+                                        <!-- Thu tiền phát sinh tại quầy -->
+                                        @php
+                                            // Tính lại tổng tiền theo logic mới để hiển thị ở phần thanh toán
+                                            // 1) Số đêm và tiền phòng
+                                            $ci2 = $booking->check_in_date instanceof \Carbon\Carbon ? $booking->check_in_date : \Carbon\Carbon::parse($booking->check_in_date);
+                                            $co2 = $booking->check_out_date instanceof \Carbon\Carbon ? $booking->check_out_date : \Carbon\Carbon::parse($booking->check_out_date);
+                                            $ciDate2 = $ci2 ? $ci2->copy()->startOfDay() : null;
+                                            $coDate2 = $co2 ? $co2->copy()->startOfDay() : null;
+                                            $nights2 = ($ciDate2 && $coDate2) ? (int) $ciDate2->diffInDays($coDate2) : 0;
+                                            $nightly2 = (int)($booking->room->roomType->price ?? $booking->room->price ?? 0);
+                                            $roomCost2 = max(0, $nights2) * $nightly2;
+
+                                            // 2) Phụ phí người lớn/trẻ em & phụ thu đổi phòng
+                                            $surcharge2 = (float)($booking->surcharge ?? 0);
+                                            $roomChangeSurcharge2 = (float) $booking->roomChanges()
+                                                ->whereIn('status', ['approved', 'completed'])
+                                                ->sum('price_difference');
+                                            $guestSurcharge2 = max(0, $surcharge2 - $roomChangeSurcharge2);
+
+                                            // 3) Dịch vụ (khách chọn + admin thêm)
+                                            $svcFromAdmin2 = (float)($booking->total_services_price ?? 0);
+                                            $svcFromClient2 = (float)($booking->extra_services_total ?? 0);
+                                            $svcTotal2 = $svcFromAdmin2 + $svcFromClient2;
+
+                                            // 4) Tổng tiền và đã thu/còn thiếu
+                                            $totalPrice = (float)($roomCost2 + $guestSurcharge2 + $roomChangeSurcharge2 + $svcTotal2);
+                                            $totalPaid = (float)($booking->total_paid ?? 0);
+                                            $outstanding = max(0, $totalPrice - $totalPaid);
+                                        @endphp
+                                        <div class="row mt-2">
+                                            <div class="col-md-8">
+                                                <div class="card border-0 bg-light">
+                                                    <div class="card-body py-2">
+                                                        <div class="d-flex flex-wrap gap-3 align-items-center small">
+                                                            <div><strong>Tổng tiền:</strong> <span class="text-primary fw-semibold">{{ number_format($totalPrice) }} VNĐ</span></div>
+                                                            <div><strong>Đã thu:</strong> <span class="text-success fw-semibold">{{ number_format($totalPaid) }} VNĐ</span></div>
+                                                            <div><strong>Còn thiếu:</strong> <span class="fw-bold {{ $outstanding > 0 ? 'text-danger' : 'text-muted' }}">{{ number_format($outstanding) }} VNĐ</span></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <form action="{{ route('admin.bookings.payments.collect', $booking->id) }}" method="POST" class="d-flex gap-2 align-items-start">
+                                                    @csrf
+                                                    <div class="flex-grow-1">
+                                                        <input type="number" name="amount" class="form-control form-control-sm" placeholder="Số tiền thu (VNĐ)" min="0" step="1000" value="{{ (int)$outstanding }}" {{ $outstanding <= 0 ? 'disabled' : '' }}>
+                                                        <input type="hidden" name="note" value="Thu tiền phát sinh tại quầy">
+                                                    </div>
+                                                    <button type="submit" class="btn btn-sm btn-primary" {{ $outstanding <= 0 ? 'disabled' : '' }}>
+                                                        <i class="fas fa-money-bill-wave"></i> Thu tiền
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     @else
                                         <div class="alert alert-warning">
                                             <i class="fas fa-exclamation-triangle"></i>
@@ -301,7 +467,7 @@
                                     @if($bookingServices->count())
                                         <div class="text-end">
                                             <small class="text-muted">Tổng tiền:</small><br>
-                                            <span class="text-success fw-semibold">{{ number_format($booking->total_services_price) }} VNĐ</span>
+                                            <span class="text-success fw-semibold">{{ number_format($bookingServices->sum('total_price')) }} VNĐ</span>
                                         </div>
                                     @endif
                                 </div>

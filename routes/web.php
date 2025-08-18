@@ -170,6 +170,8 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('bookings/{id}/services/add', [AdminBookingController::class, 'addServiceToBooking'])->name('bookings.services.add');
     Route::delete('bookings/{id}/services/{bookingServiceId}', [AdminBookingController::class, 'destroyServiceFromBooking'])->name('bookings.services.destroy');
     Route::post('bookings/{id}/confirm-payment', [AdminBookingController::class, 'confirmPayment'])->name('bookings.confirm-payment');
+    // Thu tiền phát sinh tại quầy (COD)
+    Route::post('bookings/{id}/payments/collect', [AdminBookingController::class, 'collectAdditionalPayment'])->name('bookings.payments.collect');
 
     // Bulk action (POST)
     Route::post('notifications/delete-multi', [AdminBookingController::class, 'deleteMulti'])->name('notifications.delete-multi');

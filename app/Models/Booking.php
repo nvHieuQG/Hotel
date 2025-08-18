@@ -23,6 +23,11 @@ class Booking extends Model
         'status',
         'price',
         'surcharge',
+        'extra_services',
+        'extra_services_total',
+        'adults_count',
+        'children_count',
+        'infants_count',
         'guest_full_name',
         'guest_id_number',
         'guest_birth_date',
@@ -54,6 +59,8 @@ class Booking extends Model
         'check_in_date' => 'datetime',
         'check_out_date' => 'datetime',
         'guest_birth_date' => 'date',
+        'extra_services' => 'array',
+        'extra_services_total' => 'decimal:2',
         'registration_generated_at' => 'datetime',
         'registration_sent_at' => 'datetime',
     ];
@@ -220,7 +227,8 @@ class Booking extends Model
      */
     public function getTotalBookingPriceAttribute()
     {
-        return $this->price + $this->total_services_price;
+        // price đã là tổng cuối cùng (bao gồm phụ thu và dịch vụ nếu có)
+        return $this->price;
     }
 
     /**

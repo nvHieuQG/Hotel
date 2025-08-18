@@ -94,8 +94,13 @@
                                 <td>{{ $booking->check_in_date }}</td>    
                                 <td>{{ $booking->check_out_date }}</td>
                                 <td>{{ number_format($booking->price, 0, ',', '.') }} VNĐ</td>
-                            <td>{{ number_format($booking->surcharge, 0, ',', '.') }} VNĐ</td>
-                            <td>{{ number_format($booking->total_amount, 0, ',', '.') }} VNĐ</td>
+                            @php
+                                $roomChangeSurcharge = $booking->roomChanges()
+                                    ->whereIn('status', ['approved', 'completed'])
+                                    ->sum('price_difference');
+                            @endphp
+                            <td>{{ number_format($roomChangeSurcharge, 0, ',', '.') }} VNĐ</td>
+                            <td>{{ number_format($booking->price + $roomChangeSurcharge, 0, ',', '.') }} VNĐ</td>
                                 <td>
                                     <span class="badge bg-{{ 
                                         $booking->status == 'pending' ? 'warning' : 

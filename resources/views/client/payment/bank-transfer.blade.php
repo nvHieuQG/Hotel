@@ -50,7 +50,7 @@
                             <div class="">
                                 <h6 class="alert-heading">Thông tin đặt phòng</h6>
                                 <p class="mb-1"><strong>Mã đặt phòng:</strong> {{ $booking->booking_id }}</p>
-                                <p class="mb-1"><strong>Số tiền cần thanh toán:</strong> <span class="text-danger font-weight-bold">{{ number_format($booking->total_booking_price) }} VNĐ</span></p>
+                                <p class="mb-1"><strong>Số tiền cần thanh toán:</strong> <span class="text-danger font-weight-bold">{{ number_format($payment->amount) }} VNĐ</span></p>
                                 <p class="mb-0"><strong>Nội dung chuyển khoản:</strong> <code>Thanh toan dat phong {{ $booking->booking_id }}</code></p>
                             </div>
 
@@ -127,10 +127,10 @@
                                                                  </div>
 
                                 <div class="form-group">
-                                    <label for="transfer_amount">Số tiền đã chuyển <span class="text-danger">*</span></label>
-                                    <input type="number" name="transfer_amount" id="transfer_amount" 
-                                           class="form-control" value="{{ $booking->total_booking_price }}" required>
-                                </div>
+                                     <label for="transfer_amount">Số tiền đã chuyển <span class="text-danger">*</span></label>
+                                     <input type="number" name="transfer_amount" id="transfer_amount" 
+                                           class="form-control" value="{{ $payment->amount }}" required>
+                                 </div>
 
                                 <div class="form-group">
                                     <label for="transfer_date">Ngày chuyển khoản <span class="text-danger">*</span></label>
