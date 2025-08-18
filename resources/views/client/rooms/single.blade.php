@@ -151,11 +151,48 @@
                                 </div>
                             </div>
 
-                            <div class="text-center mb-4">
-                                <button type="button" class="btn btn-primary py-3 px-5" data-bs-toggle="modal" data-bs-target="#roomServicesModal">
-                                    <i class="icon-list"></i> Xem dịch vụ loại phòng
-                                </button>
+                            {{-- Dịch vụ đi kèm --}}
+@if ($roomType->services && $roomType->services->count())
+    <div class="services-section mb-5">
+        <div class="card border-0 shadow-sm">
+                <h4>Dịch vụ đi kèm</h4>
+            <div class="card-body">
+                @foreach ($serviceCategories as $category)
+                    @php
+                        $servicesInCategory = $category->services->filter(function ($service) use ($roomType) {
+                            return $roomType->services->contains($service);
+                        });
+                    @endphp
+
+                    @if ($servicesInCategory->count())
+                        <div class="mb-4">
+                            <h6 class="text-dark mb-2" style="font-size: 14px; font-weight: normal;">
+                                <i class="fas fa-star text-warning me-2"></i>
+                                {{ $category->name }}
+                            </h6>
+                            <div class="row">
+                                @foreach ($servicesInCategory->chunk(ceil($servicesInCategory->count() / 3)) as $chunk)
+                                    <div class="col-md-4">
+                                        @foreach ($chunk as $service)
+                                            <div class="mb-2">
+                                                <span
+                                                    class="badge bg-light border text-dark px-2 py-1 w-100 d-block text-start"
+                                                    style="font-size: 12.5px; font-weight: normal;">
+                                                    {{ $service->name }}
+                                                </span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endforeach
                             </div>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+    </div>
+@endif
+
                             <div class="text-center">
                                 @php
                                     $bookingParams = [];
@@ -606,8 +643,6 @@
             </div>
         </div>
     </section>
-    {{-- Modal Dịch vụ loại phòng --}}
-    @include('client.rooms.room-services', ['roomType' => $roomType, 'serviceCategories' => $serviceCategories])
 @endsection
 
 @section('styles')

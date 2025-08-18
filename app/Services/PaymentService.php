@@ -85,7 +85,7 @@ class PaymentService implements PaymentServiceInterface
      */
     public function getAvailablePromotionsForBooking(Booking $booking): array
     {
-        $baseAmount = (float) $booking->total_booking_price;
+        $roomPrice = (float) $booking->base_room_price;
         $roomTypeId = (int) $booking->room->room_type_id;
 
         $promotions = Promotion::active()->available()->get();
@@ -95,7 +95,7 @@ class PaymentService implements PaymentServiceInterface
             if (!$promo->canApplyToRoomType($roomTypeId)) {
                 continue;
             }
-            if (!$promo->canApplyToAmount($baseAmount)) {
+            if (!$promo->canApplyToAmount($roomPrice)) {
                 continue;
             }
             $list[] = [
@@ -111,7 +111,12 @@ class PaymentService implements PaymentServiceInterface
 
     public function validatePromotionForBooking(Booking $booking, ?int $promotionId = null, ?string $code = null): array
     {
+        if (!$promotionId && !$code) {
+            return ['valid' => false, 'message' => 'Không có thông tin khuyến mại.', 'promotion' => null];
+        }
+
         $promotion = null;
+
         if ($promotionId) {
             $promotion = Promotion::find($promotionId);
         } elseif ($code) {
@@ -122,19 +127,20 @@ class PaymentService implements PaymentServiceInterface
             return ['valid' => false, 'message' => 'Không tìm thấy khuyến mại.', 'promotion' => null];
         }
 
-        if (!$promotion->isValid()) {
+        if (!$promotion->isActive()) {
             return ['valid' => false, 'message' => 'Khuyến mại không còn hiệu lực.', 'promotion' => null];
         }
 
-        $baseAmount = (float) $booking->total_booking_price;
+        // Sử dụng giá phòng cơ bản để validate promotion (không bao gồm dịch vụ và phụ phí)
+        $roomPrice = (float) $booking->base_room_price;
         $roomTypeId = (int) $booking->room->room_type_id;
 
         if (!$promotion->canApplyToRoomType($roomTypeId)) {
             return ['valid' => false, 'message' => 'Khuyến mại không áp dụng cho loại phòng này.', 'promotion' => null];
         }
 
-        if (!$promotion->canApplyToAmount($baseAmount)) {
-            return ['valid' => false, 'message' => 'Giá trị đặt phòng không đủ điều kiện áp dụng khuyến mại.', 'promotion' => null];
+        if (!$promotion->canApplyToAmount($roomPrice)) {
+            return ['valid' => false, 'message' => 'Giá phòng không đủ điều kiện áp dụng khuyến mại.', 'promotion' => null];
         }
 
         return ['valid' => true, 'message' => 'Áp dụng khuyến mại thành công.', 'promotion' => $promotion];
@@ -142,18 +148,27 @@ class PaymentService implements PaymentServiceInterface
 
     public function calculateFinalAmountWithPromotion(Booking $booking, ?int $promotionId = null, ?string $code = null): array
     {
-        $baseAmount = (float) $booking->total_booking_price;
+        // Chỉ áp dụng promotion cho giá phòng cơ bản, không cho dịch vụ và phụ phí
+        $roomPrice = (float) $booking->base_room_price;
+        $servicesAndSurcharge = $booking->surcharge + $booking->extra_services_total + $booking->total_services_price;
+        $totalAmount = (float) $booking->total_booking_price;
+        
         $discount = 0.0;
         $promotion = null;
         $promotionData = $this->validatePromotionForBooking($booking, $promotionId, $code);
         if ($promotionData['valid'] && $promotionData['promotion']) {
             $promotion = $promotionData['promotion'];
-            $discount = (float) $promotion->calculateDiscount($baseAmount);
+            // Chỉ tính discount trên giá phòng cơ bản
+            $discount = (float) $promotion->calculateDiscount($roomPrice);
         }
-        $final = max(0.0, $baseAmount - $discount);
+        
+        // Tổng cuối = giá phòng sau giảm giá + dịch vụ + phụ phí
+        $final = max(0.0, $roomPrice - $discount + $servicesAndSurcharge);
 
         return [
-            'base_amount' => $baseAmount,
+            'base_amount' => $totalAmount, // Giữ nguyên để hiển thị
+            'room_price' => $roomPrice,
+            'services_surcharge' => $servicesAndSurcharge,
             'discount_amount' => $discount,
             'final_amount' => $final,
             'promotion_id' => $promotion?->id,

@@ -29,7 +29,10 @@ class AdminBookingRepository implements AdminBookingRepositoryInterface
      */
     public function getAllWithPagination(array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
-        $query = $this->bookingModel->with(['user', 'room', 'payments']);
+        $query = $this->bookingModel
+            ->with(['user', 'room', 'room.roomType', 'payments'])
+            // Preload tổng tiền dịch vụ admin thêm để hiển thị nhanh và chính xác
+            ->withSum('bookingServices as total_services_price', 'total_price');
 
         // Áp dụng bộ lọc trạng thái booking
         if (isset($filters['status']) && $filters['status']) {

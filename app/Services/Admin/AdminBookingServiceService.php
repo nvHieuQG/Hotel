@@ -72,6 +72,9 @@ class AdminBookingServiceService implements AdminBookingServiceServiceInterface
                 'notes' => $notes
             ]);
 
+            // Không cộng vào booking.price nữa vì sẽ làm sai logic promotion
+            // Dịch vụ admin thêm sẽ được tính riêng qua bookingServices() relationship
+
             DB::commit();
             return $bookingService->load('service');
 

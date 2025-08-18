@@ -262,6 +262,16 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\RoomChangeService::class
         );
 
+        // Extra Service Binding
+        $this->app->bind(
+            \App\Interfaces\Repositories\ExtraServiceRepositoryInterface::class,
+            \App\Repositories\ExtraServiceRepository::class
+        );
+        $this->app->bind(
+            \App\Interfaces\Services\ExtraServiceServiceInterface::class,
+            \App\Services\ExtraServiceService::class
+        );
+
     // View Composer cho dropdown notification
     \Illuminate\Support\Facades\View::composer('admin.layouts.admin-master', function ($view) {
         $unreadNotifications = \App\Models\AdminNotification::unread()->orderBy('created_at', 'desc')->limit(5)->get();

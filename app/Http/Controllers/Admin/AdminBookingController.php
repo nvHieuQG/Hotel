@@ -888,4 +888,59 @@ class AdminBookingController extends Controller
             ]);
         }
     }
+
+    /**
+     * Thu tiền phát sinh (COD) cho các dịch vụ thêm sau khi khách đã thanh toán trước đó.
+     */
+    public function collectAdditionalPayment(Request $request, $id)
+    {
+        try {
+            $booking = $this->bookingService->getBookingDetails($id);
+            if (!$booking) {
+                return redirect()->back()->with('error', 'Booking không tồn tại');
+            }
+
+            $request->validate([
+                'amount' => 'nullable|numeric|min:0.01',
+                'note' => 'nullable|string|max:500'
+            ]);
+
+            // Tính công nợ còn thiếu
+            $outstanding = max(0, (float)($booking->total_booking_price ?? 0) - (float)($booking->total_paid ?? 0));
+            $amount = $request->filled('amount') ? (float)$request->input('amount') : $outstanding;
+            // Không cho thu vượt công nợ
+            $amount = min($amount, $outstanding);
+
+            if ($amount <= 0) {
+                return redirect()->back()->with('error', 'Không có công nợ cần thu.');
+            }
+
+            // Tạo giao dịch COD hoàn tất ngay
+            $payment = $this->paymentService->createPayment($booking, [
+                'payment_method' => 'cod',
+                'amount' => $amount,
+                'currency' => 'VND',
+                'status' => 'completed',
+                'transaction_id' => 'COD_' . $booking->booking_id . '_' . time(),
+                'gateway_name' => 'Cash at Desk',
+                'gateway_response' => [
+                    'note' => $request->input('note')
+                ]
+            ]);
+
+            // Gắn mốc thời gian thanh toán và ghi chú cổng (nếu có cột)
+            $payment->update([
+                'paid_at' => now(),
+                'gateway_message' => 'Thanh toán tại quầy'
+            ]);
+
+            // Gửi email xác nhận
+            $this->paymentService->sendPaymentConfirmationEmail($payment);
+
+            return redirect()->back()->with('success', 'Đã thu ' . number_format($amount) . ' VND cho phần phát sinh.');
+        } catch (\Throwable $e) {
+            \Log::error('collectAdditionalPayment error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi thu tiền: ' . $e->getMessage());
+        }
+    }
 }
