@@ -238,6 +238,14 @@ class Promotion extends Model
     }
 
     /**
+     * Alias for isValid() method
+     */
+    public function isActive(): bool
+    {
+        return $this->isValid();
+    }
+
+    /**
      * Kiểm tra có thể áp dụng cho đơn hàng với giá trị cụ thể
      */
     public function canApplyToAmount(float $amount): bool

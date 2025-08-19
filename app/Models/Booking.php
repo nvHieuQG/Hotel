@@ -23,6 +23,11 @@ class Booking extends Model
         'status',
         'price',
         'surcharge',
+        'extra_services',
+        'extra_services_total',
+        'adults_count',
+        'children_count',
+        'infants_count',
         'promotion_id',
         'promotion_discount',
         'promotion_code',
@@ -57,6 +62,8 @@ class Booking extends Model
         'check_in_date' => 'datetime',
         'check_out_date' => 'datetime',
         'guest_birth_date' => 'date',
+        'extra_services' => 'array',
+        'extra_services_total' => 'decimal:2',
         'registration_generated_at' => 'datetime',
         'registration_sent_at' => 'datetime',
     ];
@@ -247,7 +254,19 @@ class Booking extends Model
      */
     public function getTotalBookingPriceAttribute()
     {
-        return $this->price + $this->total_services_price;
+        // Tính tổng thực tế = giá phòng + phụ phí + dịch vụ khách chọn + dịch vụ admin thêm
+        $adminServicesTotal = $this->bookingServices()->sum('total_price');
+        return $this->price + $adminServicesTotal;
+    }
+
+    /**
+     * Lấy giá phòng cơ bản (không bao gồm dịch vụ và phụ phí)
+     */
+    public function getBaseRoomPriceAttribute()
+    {
+        // Tính giá phòng cơ bản = tổng giá - phụ phí - dịch vụ khách chọn
+        $basePrice = $this->price - $this->surcharge - $this->extra_services_total;
+        return max(0, $basePrice); // Đảm bảo không âm
     }
 
     /**

@@ -81,10 +81,10 @@
                                                 <div class="card-header"><i class="fas fa-receipt mr-1"></i> Tóm tắt thanh toán</div>
                                                 <div class="card-body">
                                                     <div class="d-flex justify-content-between mb-1">
-                                                        <span>Giá gốc</span><span id="price_original">{{ number_format($booking->total_booking_price) }} VND</span>
+                                                        <span>Giá phòng</span><span id="price_room">{{ number_format($booking->base_room_price) }} VND</span>
                                                     </div>
                                                     <div class="d-flex justify-content-between mb-1 text-success">
-                                                        <span>Khuyến mại</span><span id="price_discount">- 0 VND</span>
+                                                        <span>Khuyến mại (chỉ phòng)</span><span id="price_discount">- 0 VND</span>
                                                     </div>
                                                     <hr class="my-2">
                                                     <div class="d-flex justify-content-between fw-bold">
@@ -212,7 +212,7 @@
                                         </div>
                                     @endif
                                 </div>
-                                
+                                <div>Dịch vụ & phụ phí: <strong>{{ number_format($booking->surcharge + $booking->extra_services_total + $booking->total_services_price) }} VNĐ</strong></div>
                                 <div class="mb-3"><strong>{{ $booking->room->roomType->name }}</strong></div>
                                 <div class="row mb-3 align-items-center">
                                     <div class="col-5">
@@ -310,8 +310,10 @@
         }
 
         function updateSummary(discountAmount) {
-            currentDiscount = Math.max(0, Math.min(priceOriginal, Math.round(discountAmount)));
-            const finalAmount = priceOriginal - currentDiscount;
+            currentDiscount = Math.max(0, Math.round(discountAmount));
+            const roomPrice = {{ (int) $booking->base_room_price }};
+            const servicesPrice = {{ (int) ($booking->surcharge + $booking->extra_services_total + $booking->total_services_price) }};
+            const finalAmount = roomPrice - currentDiscount + servicesPrice;
             document.getElementById('price_discount').textContent = `- ${currentDiscount.toLocaleString('vi-VN')} VND`;
             document.getElementById('price_final').textContent = `${finalAmount.toLocaleString('vi-VN')} VND`;
         }

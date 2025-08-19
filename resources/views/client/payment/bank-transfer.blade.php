@@ -53,8 +53,10 @@
                                 <p class="mb-1"><strong>Số tiền cần thanh toán:</strong> <span class="text-danger font-weight-bold">{{ number_format($payment->amount) }} VNĐ</span></p>
                                 @if($payment->discount_amount > 0)
                                     <div class="mt-2 small">
-                                        <div>Giá gốc: <strong>{{ number_format($booking->total_booking_price) }} VNĐ</strong></div>
-                                        <div>Khuyến mại: <span class="text-success">-{{ number_format($payment->discount_amount) }} VNĐ</span></div>
+                                        <div>Giá phòng: <strong>{{ number_format($booking->base_room_price) }} VNĐ</strong></div>
+                                        <div>Dịch vụ & phụ phí: <strong>{{ number_format($booking->surcharge + $booking->extra_services_total + $booking->total_services_price) }} VNĐ</strong></div>
+                                        <div>Khuyến mại (chỉ áp dụng cho phòng): <span class="text-success">-{{ number_format($payment->discount_amount) }} VNĐ</span></div>
+                                        <hr class="my-2">
                                         <div>Cần thanh toán: <strong class="text-primary">{{ number_format($payment->amount) }} VNĐ</strong></div>
                                     </div>
                                 @endif
