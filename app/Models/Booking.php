@@ -22,7 +22,7 @@ class Booking extends Model
         'check_out_date',
         'status',
         'price',
-        'surcharge',,
+        'surcharge',
         'guest_full_name',
         'guest_id_number',
         'guest_birth_date',

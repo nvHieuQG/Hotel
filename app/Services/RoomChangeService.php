@@ -89,6 +89,13 @@ class RoomChangeService implements RoomChangeServiceInterface
             'admin_note' => $data['admin_note'] ?? null,
         ];
 
+        // Set payment status based on price difference
+        if ($roomChange->price_difference > 0) {
+            $updateData['payment_status'] = 'pending';
+        } else {
+            $updateData['payment_status'] = 'not_required';
+        }
+
         $result = $this->roomChangeRepository->updateStatus($roomChangeId, 'approved', $updateData);
         
         Log::info('RoomChangeService: Update status result', [
@@ -96,12 +103,7 @@ class RoomChangeService implements RoomChangeServiceInterface
             'result' => $result
         ]);
 
-        // Sau khi duyệt đổi phòng và xác định chênh lệch > 0
-        if ($roomChange->price_difference > 0) {
-            $booking = $roomChange->booking;
-            $booking->surcharge += $roomChange->price_difference;
-            $booking->save();
-        }
+        // Do NOT modify booking surcharge here. It will be applied when receptionist confirms payment.
 
         return $result;
     }
@@ -122,12 +124,7 @@ class RoomChangeService implements RoomChangeServiceInterface
 
         $result = $this->roomChangeRepository->updateStatus($roomChangeId, 'rejected', $updateData);
 
-        // Nếu từ chối và có phụ thu, trừ lại phụ thu
-        if ($roomChange->price_difference > 0) {
-            $booking = $roomChange->booking;
-            $booking->surcharge -= $roomChange->price_difference;
-            $booking->save();
-        }
+        // No surcharge rollback here; surcharge is only applied upon payment confirmation at reception.
 
         return $result;
     }

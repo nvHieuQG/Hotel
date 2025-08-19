@@ -26,7 +26,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h4 class="mb-0">Lịch sử đổi phòng - Booking #{{ $booking->booking_id }}</h4>
-                        <a href="{{ route('booking.detail', $booking->id) }}" class="btn btn-secondary btn-sm">
+                        <a href="{{ route('user.bookings') }}" class="btn btn-secondary btn-sm">
                             <i class="fa fa-arrow-left"></i> Quay lại
                         </a>
                     </div>
@@ -42,6 +42,7 @@
                                             <th>Lý do</th>
                                             <th>Chênh lệch giá</th>
                                             <th>Trạng thái</th>
+                                            <th>Thanh toán</th>
                                             <th>Ghi chú</th>
                                         </tr>
                                     </thead>
@@ -73,8 +74,41 @@
                                                     </span>
                                                 </td>
                                                 <td>
+                                                    {{-- Thông báo hoàn tiền khi chênh lệch âm --}}
+                                                    @if($roomChange->price_difference < 0)
+                                                        <div class="alert alert-info mt-2 mb-2 p-2">
+                                                            <i class="fa fa-info-circle"></i>
+                                                            <strong>Thông báo:</strong><br>
+                                                            Bạn sẽ được hoàn lại số tiền: <strong>{{ number_format(abs($roomChange->price_difference), 0, ',', '.') }} VNĐ</strong>.<br>
+                                                            <small>Vui lòng nhận tiền thừa tại quầy lễ tân sau khi đổi phòng hoàn tất.</small>
+                                                        </div>
+                                                    @endif
+
+                                                    @if($roomChange->requiresPayment())
+                                                        <span class="badge badge-{{ $roomChange->getPaymentStatusColor() }}">
+                                                            {{ $roomChange->getPaymentStatusText() }}
+                                                        </span>
+                                                        @if($roomChange->isPaymentPending())
+                                                            <div class="alert alert-warning mt-2 mb-0 p-2">
+                                                                <i class="fa fa-exclamation-triangle"></i>
+                                                                <strong>Thông báo:</strong><br>
+                                                                Số tiền chênh lệch cần thanh toán: <strong>{{ number_format($roomChange->price_difference, 0, ',', '.') }} VNĐ</strong><br>
+                                                                <small>Vui lòng thanh toán tại quầy lễ tân.</small>
+                                                            </div>
+                                                        @elseif($roomChange->isPaidAtReception())
+                                                            <div class="alert alert-success mt-2 mb-0 p-2">
+                                                                <i class="fa fa-check-circle"></i>
+                                                                <strong>Đã thanh toán:</strong> {{ number_format($roomChange->price_difference, 0, ',', '.') }} VNĐ<br>
+                                                                <small>Thanh toán tại quầy lễ tân lúc {{ $roomChange->paid_at->format('d/m/Y H:i') }}</small>
+                                                            </div>
+                                                        @endif
+                                                    @else
+                                                        <span class="badge badge-secondary">Không cần thanh toán</span>
+                                                    @endif
+                                                </td>
+                                                <td>
                                                     @if($roomChange->customer_note)
-                                                        <strong>Ghi chú của bạn:</strong><br>
+                                                        
                                                         <small>{{ $roomChange->customer_note }}</small>
                                                     @endif
                                                     @if($roomChange->admin_note)
@@ -103,4 +137,4 @@
         </div>
     </div>
 </section>
-@endsection 
+@endsection
