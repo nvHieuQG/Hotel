@@ -99,6 +99,11 @@ class RoomChangeRepository implements RoomChangeRepositoryInterface
             $updateData['admin_note'] = $data['admin_note'];
         }
 
+        // Persist payment_status if provided by service (e.g., set to 'pending' or 'not_required')
+        if (isset($data['payment_status'])) {
+            $updateData['payment_status'] = $data['payment_status'];
+        }
+
         Log::info('RoomChangeRepository: Update data', [
             'id' => $id,
             'update_data' => $updateData
@@ -155,9 +160,8 @@ class RoomChangeRepository implements RoomChangeRepositoryInterface
         $checkInDate = $booking->check_in_date;
         $checkOutDate = $booking->check_out_date;
 
-        // Lấy các phòng cùng loại hoặc cao cấp hơn
-        $availableRooms = Room::where('room_type_id', '>=', $currentRoom->room_type_id)
-            ->where('id', '!=', $currentRoom->id)
+        // Lấy tất cả phòng khả dụng (không giới hạn loại phòng), trừ chính phòng hiện tại
+        $availableRooms = Room::where('id', '!=', $currentRoom->id)
             ->where('status', 'available')
             ->whereDoesntHave('bookings', function ($query) use ($checkInDate, $checkOutDate) {
                 $query->where(function ($q) use ($checkInDate, $checkOutDate) {
@@ -195,11 +199,11 @@ class RoomChangeRepository implements RoomChangeRepositoryInterface
         $newRoomPricePerNight = $newRoom->price ?? $newRoom->roomType->price ?? 0;
         $newRoomTotalPrice = $newRoomPricePerNight * $nights;
 
-        // Lấy tổng tiền đã thanh toán cho booking (đã tính theo đêm)
-        $oldRoomTotalPrice = $booking->price;
+        // Lấy giá phòng cơ bản (không bao gồm phụ phí và dịch vụ)
+        $oldRoomBasePrice = $booking->base_room_price;
 
-        // Tính chênh lệch: Tổng tiền phòng mới - Tổng tiền đã thanh toán
-        return $newRoomTotalPrice - $oldRoomTotalPrice;
+        // Tính chênh lệch: Tổng tiền phòng mới - Giá phòng cơ bản cũ
+        return $newRoomTotalPrice - $oldRoomBasePrice;
     }
 
     /**
@@ -234,8 +238,8 @@ class RoomChangeRepository implements RoomChangeRepositoryInterface
         $checkInDate = $booking->check_in_date;
         $checkOutDate = $booking->check_out_date;
 
-        // Lấy các loại phòng cùng loại hoặc cao cấp hơn
-        $availableRoomTypes = RoomType::where('id', '>=', $currentRoomType->id)
+        // Lấy tất cả loại phòng có ít nhất một phòng khả dụng trong khoảng ngày (không giới hạn theo cấp độ loại phòng)
+        $availableRoomTypes = RoomType::query()
             ->whereHas('rooms', function ($query) use ($checkInDate, $checkOutDate) {
                 $query->where('status', 'available')
                     ->whereDoesntHave('bookings', function ($subQuery) use ($checkInDate, $checkOutDate) {
@@ -287,11 +291,11 @@ class RoomChangeRepository implements RoomChangeRepositoryInterface
         $newRoomTypePricePerNight = $newRoomType->price ?? 0;
         $newRoomTypeTotalPrice = $newRoomTypePricePerNight * $nights;
 
-        // Lấy tổng tiền đã thanh toán cho booking (đã tính theo đêm)
-        $oldRoomTotalPrice = $booking->price;
+        // Lấy giá phòng cơ bản (không bao gồm phụ phí và dịch vụ)
+        $oldRoomBasePrice = $booking->base_room_price;
 
-        // Tính chênh lệch: Tổng tiền loại phòng mới - Tổng tiền đã thanh toán
-        return $newRoomTypeTotalPrice - $oldRoomTotalPrice;
+        // Tính chênh lệch: Tổng tiền loại phòng mới - Giá phòng cơ bản cũ
+        return $newRoomTypeTotalPrice - $oldRoomBasePrice;
     }
 
 } 

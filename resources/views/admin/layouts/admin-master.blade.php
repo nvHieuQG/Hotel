@@ -19,6 +19,7 @@
     <!-- Admin Components CSS -->
     <link rel="stylesheet" href="{{ asset('admin/css/admin-components.css') }}">
     @yield('styles')
+    @stack('styles')
     <style>
         .page-header h1 {
             font-size: 1.7rem;
