@@ -8,6 +8,9 @@
                     <i class="fas fa-link me-2"></i>Gán dịch vụ cho loại phòng
                 </h5>
                 <div class="d-flex gap-2">
+                <a href="{{ route('admin.extra-services.index') }}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-list"></i> Quản lý dịch vụ bổ sung
+                    </a>
                     <a href="{{ route('admin.services.index') }}" class="btn btn-outline-light btn-sm">
                         <i class="fas fa-list"></i> Quản lý dịch vụ
                     </a>

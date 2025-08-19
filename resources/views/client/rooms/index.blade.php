@@ -76,6 +76,59 @@
                                                     {{ $type->name }}
                                                 </a>
                                             </h3>
+                                            @php
+                                                $representativeRoom = $type->rooms()->where('status', 'available')->first();
+                                                $promotions = collect();
+                                                if ($representativeRoom) {
+                                                    // Tính số đêm từ bộ lọc nếu có
+                                                    $nights = 1;
+                                                    try {
+                                                        $ci = request()->get('check_in_date');
+                                                        $co = request()->get('check_out_date');
+                                                        if ($ci && $co) {
+                                                            $nights = max(1, \Carbon\Carbon::parse($ci)->diffInDays(\Carbon\Carbon::parse($co)));
+                                                        }
+                                                    } catch (\Exception $e) {}
+                                                    $amountContext = (float)($type->price ?? 0) * $nights;
+                                                    $promotions = app(\App\Services\RoomPromotionService::class)->getTopPromotions($representativeRoom, $amountContext, 3);
+                                                }
+                                            @endphp
+                                @if($promotions && $promotions->count() > 0)
+                                                @php
+                                                    $topList = $promotions->take(3);
+                                                    $extraCount = max(0, $promotions->count() - $topList->count());
+                                                @endphp
+                                                @if($loop->first)
+                                                    <style>
+                                                        .promo-box{background:#F9F5EF;border-radius:8px;padding:12px;text-align:left;margin-top:8px;margin-bottom:8px}
+                                                        .promo-title{font-weight:700;font-size:15px;margin-bottom:6px;color:#8E713D;display:flex;align-items:center;gap:6px}
+                                                        .promo-list{list-style:none;margin:0;padding:0}
+                                                        .promo-item{display:flex;align-items:center;gap:8px;margin:5px 0;line-height:1.2}
+                                                        .promo-code-badge{background:#8E713D;color:#fff;border-radius:5px;font-weight:700;font-size:12px;padding:2px 6px;white-space:nowrap}
+                                                        .promo-desc{font-size:13px;color:#333;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+                                                        .promo-extra{font-size:12px;color:#555;margin-top:6px}
+                                                    </style>
+                                                @endif
+                                                <div class="promo-box">
+                                                    <div class="promo-title">🎯 Ưu đãi hôm nay</div>
+                                                    <ul class="promo-list">
+                                                        @foreach($topList as $promo)
+                                                            @php
+                                                                $icon = '💸';
+                                                                if (strtolower($promo->discount_type ?? '') === 'percentage') { $icon = '🎁'; }
+                                                                if (Str::contains(strtolower($promo->title), ['flash','sale','hot'])) { $icon = '⏳'; }
+                                                            @endphp
+                                                            <li class="promo-item" title="{{ $promo->discount_text }}">
+                                                                <span class="promo-code-badge">{{ $promo->code }}</span>
+                                                                <span class="promo-desc">{{ $icon }} {{ $promo->title }}</span>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                    @if($extraCount > 0)
+                                                        <div class="promo-extra">+{{ $extraCount }} ưu đãi khác</div>
+                                                    @endif
+                                                </div>
+                                            @endif
                                             <p>
                                                 <span class="price mr-2">{{ number_format($type->price) }}đ</span>
                                                 <span class="per">mỗi đêm</span>

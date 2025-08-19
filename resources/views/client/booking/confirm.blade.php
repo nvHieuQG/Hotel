@@ -24,7 +24,7 @@
     <section class="ftco-section bg-light" style="font-family: 'Segoe UI', sans-serif;">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-md-8">
+                <div class="col-12 col-lg-10 col-xl-9">
                     <div class="card shadow-sm rounded-lg">
                         <div class="card-header bg-primary text-white">
                             <h5 class="mb-0 text-white">
@@ -39,7 +39,7 @@
                                 @csrf
                                 
                                 <div class="row">
-                                    <div class="col-md-8">
+                                    <div class="col-md-8 booking-form-col">
                                         <h6 class="text-dark mb-3">Thông tin đặt phòng</h6>
                                         
                                         <div class="form-group mb-3">
@@ -47,13 +47,16 @@
                                             <select name="room_type_id" id="room_type_id" class="form-control" required>
                                                 <option value="">-- Chọn loại phòng --</option>
                                                 @foreach($roomTypes as $type)
-                                                    <option value="{{ $type->id }}" data-price="{{ $type->price }}" 
-                                                            {{ (isset($bookingData['room_type_id']) && $bookingData['room_type_id'] == $type->id) ? 'selected' : '' }}>
-                                                        {{ $type->name }} - {{ number_format($type->price) }}đ/đêm
+                                                    <option value="{{ $type->id }}" data-price="{{ $type->price }}" data-capacity="{{ $type->capacity ?? 1 }}" 
+                                                             {{ (isset($bookingData['room_type_id']) && $bookingData['room_type_id'] == $type->id) ? 'selected' : '' }}>
+                                                        {{ $type->name }} - {{ number_format($type->price) }}đ/đêm (Tối đa {{ $type->capacity ?? 1 }} khách)
                                                     </option>
                                                 @endforeach
                                             </select>
                                         </div>
+                                        @if(isset($bookingData['promotion_id']))
+                                            <input type="hidden" name="promotion_id" value="{{ (int) $bookingData['promotion_id'] }}">
+                                        @endif
 
                                         <div class="row">
                                             <div class="col-md-6">
@@ -75,16 +78,125 @@
                                         </div>
 
                                         <div class="form-group mb-3">
-                                            <label for="guests">Số khách <span class="text-danger">*</span></label>
-                                            <select name="guests" id="guests" class="form-control" required>
-                                                @for ($i = 1; $i <= 5; $i++)
-                                                    <option value="{{ $i }}" 
-                                                            {{ (isset($bookingData['guests']) && $bookingData['guests'] == $i) ? 'selected' : '' }}>
-                                                        {{ $i }} người
-                                                    </option>
-                                                @endfor
-                                            </select>
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label for="adults" class="small mb-1">Người lớn</label>
+                                                    <select name="adults" id="adults" class="form-control" required></select>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label for="children" class="small mb-1">Trẻ em (6-11 tuổi)</label>
+                                                    <select name="children" id="children" class="form-control">
+                                                        @for ($i = 0; $i <= 2; $i++)
+                                                            <option value="{{ $i }}">{{ $i }}</option>
+                                                        @endfor
+                                                    </select>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label for="infants" class="small mb-1">Em bé (0-5 tuổi)</label>
+                                                    <select name="infants" id="infants" class="form-control">
+                                                        @for ($i = 0; $i <= 2; $i++)
+                                                            <option value="{{ $i }}">{{ $i }}</option>
+                                                        @endfor
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div id="guest-fee-note" class="mt-2"></div>
+                                            <input type="hidden" name="guests" id="guests_hidden" value="{{ isset($bookingData['guests']) ? $bookingData['guests'] : 1 }}">
+                                            <input type="hidden" name="total_booking_price" id="total_booking_price" value="0">
+                                            <input type="hidden" name="surcharge" id="surcharge" value="0">
+                                            <input type="hidden" name="extra_services" id="extra_services" value="[]">
+                                            <input type="hidden" name="extra_services_total" id="extra_services_total" value="0">
                                         </div>
+
+                                        @if(isset($extraServices) && count($extraServices) > 0)
+                                        <div class="form-group mb-3">
+                                            <label class="d-block mb-2">Lựa chọn thêm cho kỳ nghỉ của bạn</label>
+                                            <div id="extra-services-list" class="border rounded p-2">
+                                                @foreach($extraServices as $svc)
+                                                    <div class="py-2 border-bottom">
+                                                        <div class="d-flex align-items-center justify-content-between">
+                                                            <div class="mr-2" style="min-width:0">
+                                                                <div class="font-weight-600 text-dark">{{ $svc->name }}</div>
+                                                                @if(!empty($svc->description))
+                                                                    <div class="small text-muted text-truncate">{{ $svc->description }}</div>
+                                                                @endif
+                                                                <div>
+                                                                    <span class="small text-muted ml-1">
+                                                                        @php $pa = (int)($svc->price_adult ?? 0); $pc = (int)($svc->price_child ?? 0); @endphp
+                                                                        @if($svc->charge_type === 'per_person')
+                                                                            NL {{ number_format($pa) }}đ @if($pc>0)/ TE {{ number_format($pc) }}đ @endif
+                                                                        @else
+                                                                            {{ number_format($pa) }}đ
+                                                                        @endif
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="custom-control custom-checkbox">
+                                                                <input type="checkbox" class="custom-control-input svc-check" id="svc_chk_{{ $svc->id }}"
+                                                                       data-service-id="{{ $svc->id }}"
+                                                                       data-charge-type="{{ $svc->charge_type }}"
+                                                                       data-service-name="{{ $svc->name }}"
+                                                                       data-price-adult="{{ (int)($svc->price_adult ?? 0) }}"
+                                                                       data-price-child="{{ (int)($svc->price_child ?? 0) }}">
+                                                                <label class="custom-control-label" for="svc_chk_{{ $svc->id }}"></label>
+                                                            </div>
+                                                        </div>
+                                                        <!-- Config block (hidden until checked) -->
+                                                        <div class="svc-config mt-2" data-service-id="{{ $svc->id }}" style="display:none;">
+                                                            @php $ct = strtolower($svc->charge_type); @endphp
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    @if($ct === 'per_person' || $ct === 'per_service')
+                                                                        <div class="form-group mb-2">
+                                                                            <label class="d-block small mb-1">Chọn số lượng khách sử dụng dịch vụ</label>
+                                                                        </div>
+                                                                        <div class="form-group mb-0 pl-2">
+                                                                            <div class="d-flex align-items-center mb-2">
+                                                                                <label class="small mb-0 mr-2" style="width:90px">Người lớn</label>
+                                                                                <select class="form-control form-control-sm svc-adults" data-service-id="{{ $svc->id }}" style="max-width:120px">
+                                                                                    <option value="0">0</option>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="d-flex align-items-center">
+                                                                                <label class="small mb-0 mr-2" style="width:90px">Trẻ em</label>
+                                                                                <select class="form-control form-control-sm svc-children" data-service-id="{{ $svc->id }}" style="max-width:120px">
+                                                                                    <option value="0">0</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                    @endif
+                                                                 </div>
+                                                                 <div class="col-md-6">
+                                                                    <div class="form-group mb-0 svc-quantity-wrap" data-service-id="{{ $svc->id }}" data-charge-type="{{ $ct }}" style="display:none;">
+                                                                        @if($ct === 'per_service')
+                                                                        @elseif($ct === 'per_day' || $ct === 'per_hour')
+                                                                            <div class="form-row">
+                                                                                <div class="col-6">
+                                                                                    <label class="small">Số lượng</label>
+                                                                                    <input type="number" class="form-control form-control-sm svc-quantity" data-service-id="{{ $svc->id }}" min="1" value="1" style="max-width:140px">
+                                                                                </div>
+                                                                                <div class="col-6">
+                                                                                    <label class="small">Số ngày</label>
+                                                                                    <input type="number" class="form-control form-control-sm svc-days" data-service-id="{{ $svc->id }}" min="1" value="1" style="max-width:140px">
+                                                                                </div>
+                                                                            </div>
+                                                                        @endif
+                                                                        @if($ct === 'per_night')
+                                                                            <div class="small text-muted">Tính theo số đêm lưu trú</div>
+                                                                        @endif
+                                                                        @if($ct === 'per_person')
+                                                                            <div class="small text-muted">Áp dụng cho cả kỳ nghỉ dưỡng của bạn</div>
+                                                                        @endif
+                                                                    </div>
+                                                                 </div>
+                                                             </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            <div class="mt-2 small text-muted" id="extra-services-note"></div>
+                                        </div>
+                                        @endif
 
                                         <div class="form-group mb-3">
                                             <label for="phone">Số điện thoại <span class="text-danger">*</span></label>
@@ -99,7 +211,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-md-4 booking-summary-col">
                                         <h6 class="text-dark mb-3">Tóm tắt</h6>
                                         
                                         <!-- Ảnh phòng preview -->
@@ -155,11 +267,320 @@
         const bookingSummary = document.getElementById('booking-summary');
         const roomTypeSelect = document.getElementById('room_type_id');
         const roomImagePreview = document.getElementById('room-image-preview');
+        const adultsSelect = document.getElementById('adults');
+        const childrenSelect = document.getElementById('children');
+        const infantsSelect = document.getElementById('infants');
+        const guestsHidden = document.getElementById('guests_hidden');
+        const guestFeeNote = document.getElementById('guest-fee-note');
+        const checkInInput = document.getElementById('check_in_date');
+        const checkOutInput = document.getElementById('check_out_date');
         let currentBooking = null;
+        let lastChanged = null; // 'adults' | 'children' | 'infants'
+
+        function formatCurrency(num) {
+            try { return new Intl.NumberFormat('vi-VN').format(num); } catch (e) { return num; }
+        }
+
+        // Populate per-service adults/children dropdowns according to current main selection
+        function populateServicePeopleOptionsFor(id) {
+            const maxA = Math.max(0, parseInt(document.getElementById('adults')?.value) || 0);
+            const maxC = Math.max(0, parseInt(document.getElementById('children')?.value) || 0);
+            const list = document.getElementById('extra-services-list');
+            if (!list) return;
+            const selA = list.querySelector(`.svc-adults[data-service-id="${id}"]`);
+            const selC = list.querySelector(`.svc-children[data-service-id="${id}"]`);
+            if (selA) {
+                const curA = parseInt(selA.value) || 0;
+                selA.innerHTML = '';
+                for (let i=0;i<=maxA;i++){ const opt=document.createElement('option'); opt.value=String(i); opt.textContent=String(i); selA.appendChild(opt);}            
+                selA.value = String(Math.min(curA, maxA));
+            }
+            if (selC) {
+                const curC = parseInt(selC.value) || 0;
+                selC.innerHTML = '';
+                for (let i=0;i<=maxC;i++){ const opt=document.createElement('option'); opt.value=String(i); opt.textContent=String(i); selC.appendChild(opt);}            
+                selC.value = String(Math.min(curC, maxC));
+            }
+        }
+
+        function populateAllServicePeopleOptions() {
+            const list = document.getElementById('extra-services-list');
+            if (!list) return;
+            list.querySelectorAll('.svc-adults').forEach(el => {
+                const id = el.getAttribute('data-service-id');
+                if (id) populateServicePeopleOptionsFor(id);
+            });
+        }
+
+        function formatDateVN(isoDate) {
+            if (!isoDate) return '';
+            const d = new Date(isoDate);
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${dd}/${mm}/${yyyy}`;
+        }
+
+        function getCapacity() {
+            const opt = roomTypeSelect.options[roomTypeSelect.selectedIndex];
+            const cap = opt ? parseInt(opt.getAttribute('data-capacity')) : 1;
+            return isNaN(cap) ? 1 : Math.max(1, cap);
+        }
+
+        function populateAdultsOptions() {
+            const capacity = getCapacity();
+            const prev = parseInt(adultsSelect.value) || 1;
+            adultsSelect.innerHTML = '';
+            // Chỉ cho phép thêm tối đa 1 người lớn vượt sức chứa nếu capacity <= 3
+            const extraAllowed = capacity <= 3 ? 1 : 0;
+            // Giới hạn theo sức chứa phòng
+            const capacityLimit = capacity + extraAllowed;
+            const maxAdults = capacityLimit;
+            for (let i = 1; i <= maxAdults; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i;
+                if (i === Math.min(prev, maxAdults)) opt.selected = true;
+                adultsSelect.appendChild(opt);
+            }
+        }
+
+        function diffNights() {
+            const ci = new Date(checkInInput.value);
+            const co = new Date(checkOutInput.value);
+            const ms = co - ci;
+            const nights = Math.max(1, Math.round(ms / (1000*60*60*24)));
+            return nights;
+        }
+
+        // Ensure per-day service 'days' inputs do not exceed the stay length (nights + 1)
+        function syncPerDayMaxDays() {
+            const list = document.getElementById('extra-services-list');
+            if (!list) return;
+            const stayDays = diffNights();
+            list.querySelectorAll('.svc-days').forEach(inp => {
+                inp.max = String(stayDays);
+                const v = parseInt(inp.value) || 1;
+                if (v > stayDays) inp.value = String(stayDays);
+                if (v < 1) inp.value = '1';
+            });
+        }
+
+        function calcExtraServicesTotal(adults, children, nights) {
+            const list = document.getElementById('extra-services-list');
+            if (!list) return { total: 0, items: [] };
+            const checks = list.querySelectorAll('.svc-check');
+            let total = 0; let items = [];
+            checks.forEach(chk => {
+                if (!chk.checked) return;
+                const id = parseInt(chk.getAttribute('data-service-id'));
+                const charge = (chk.getAttribute('data-charge-type') || '').toLowerCase();
+                const pa = Math.max(0, parseInt(chk.getAttribute('data-price-adult')) || 0);
+                const pc = Math.max(0, parseInt(chk.getAttribute('data-price-child')) || 0);
+
+                // Determine selected adults/children for this service
+                const applyAll = list.querySelector(`#svc_apply_all_${id}`)?.checked;
+                let selAdults = 0, selChildren = 0;
+                // For per_person and per_service, require explicit selection via per-service inputs
+                if (charge === 'per_person' || charge === 'per_service') {
+                    const inpA = list.querySelector(`.svc-adults[data-service-id="${id}"]`);
+                    const inpC = list.querySelector(`.svc-children[data-service-id="${id}"]`);
+                    selAdults = Math.max(0, parseInt(inpA?.value) || 0);
+                    selChildren = Math.max(0, parseInt(inpC?.value) || 0);
+                } else {
+                    const inpA = list.querySelector(`.svc-adults[data-service-id="${id}"]`);
+                    const inpC = list.querySelector(`.svc-children[data-service-id="${id}"]`);
+                    selAdults = Math.max(0, parseInt(inpA?.value) || 0);
+                    selChildren = Math.max(0, parseInt(inpC?.value) || 0);
+                }
+
+                // Quantity for per_service/per_day (treat legacy 'per_hour' like 'per_day')
+                let quantity = 1;
+                if (charge === 'per_service' || charge === 'per_day' || charge === 'per_hour') {
+                    const q = list.querySelector(`.svc-quantity[data-service-id="${id}"]`);
+                    quantity = Math.max(1, parseInt(q?.value) || 1);
+                }
+                // Number of days for per_day (or legacy per_hour treated as per_day)
+                let daysVal = 1;
+                if (charge === 'per_day' || charge === 'per_hour') {
+                    const dInput = list.querySelector(`.svc-days[data-service-id="${id}"]`);
+                    daysVal = Math.max(1, parseInt(dInput?.value) || 1);
+                }
+
+                let sub = 0;
+                switch (charge) {
+                    case 'per_person':
+                        // Only calculate after user selects people
+                        if ((selAdults + selChildren) > 0) {
+                            sub = selAdults * pa + selChildren * pc;
+                        } else {
+                            sub = 0;
+                        }
+                        break;
+                    case 'per_night':
+                        // Per night (per room)
+                        sub = pa * nights;
+                        break;
+                    case 'per_day':
+                        // Per day: price * days * quantity
+                        sub = pa * daysVal * quantity;
+                        break;
+                    case 'per_hour':
+                        // Legacy support: treat as per_day
+                        sub = pa * daysVal * quantity;
+                        break;
+                    case 'per_service':
+                        // Only calculate after user selects people
+                        if ((selAdults + selChildren) > 0) {
+                            sub = pa * quantity;
+                        } else {
+                            sub = 0;
+                        }
+                        break;
+                    default:
+                        sub = pa * quantity;
+                        break;
+                }
+                total += sub;
+                items.push({ id, apply: applyAll ? 'all' : 'custom', adults_used: selAdults, children_used: selChildren, quantity: (charge==='per_service'||charge==='per_day'||charge==='per_hour')?quantity:null, days: (charge==='per_day'||charge==='per_hour')?daysVal:null, charge_type: charge, price_adult: pa, price_child: pc, subtotal: sub });
+            });
+            return { total, items };
+        }
+
+        function updateGuestsAndFees() {
+            const capacity = getCapacity();
+            let adults = parseInt(adultsSelect.value) || 1;
+            let children = parseInt(childrenSelect.value) || 0;
+            const infants = parseInt(infantsSelect.value) || 0;
+
+            // Giới hạn tổng khách theo sức chứa để gửi backend: capacity + (capacity <= 3 ? 1 : 0)
+            const extraAllowed = capacity <= 3 ? 1 : 0;
+            const capacityLimit = capacity + extraAllowed;
+
+            // guests sent to backend = adults + children (em bé free, không tính)
+            guestsHidden.value = Math.min(adults + children, capacityLimit);
+
+            // Phụ phí người lớn: chỉ cho phép tối đa +1 người lớn nếu sức chứa <= 3, ngược lại không cho phép thêm
+            const extraAdultsAllowed = capacity <= 3 ? 1 : 0;
+            const extraAdults = Math.max(0, Math.min(adults - capacity, extraAdultsAllowed));
+
+            // Logic phụ phí trẻ em:
+            // - Nếu người lớn đang ở mức tối đa cho phép (capacity + extraAllowed), thu phụ phí cho TẤT CẢ trẻ em đã chọn.
+            // - Ngược lại: chỉ thu phụ phí phần trẻ em vượt quá chỗ trống còn lại trong capacity.
+            const adultsMaxAllowed = capacity + extraAllowed;
+            let childSurchargeCount = 0;
+            if (adults >= adultsMaxAllowed) {
+                childSurchargeCount = children;
+            } else {
+                const remaining = Math.max(0, capacity - Math.min(adults, capacity));
+                childSurchargeCount = Math.max(0, children - remaining);
+            }
+
+            const surchargePerChild = 75000;    // phụ phí trẻ em
+            const surchargePerAdult = 150000; // phụ phí người lớn
+            const adultSurchargeTotal = extraAdults * surchargePerAdult;
+            const childSurchargeTotal = childSurchargeCount * surchargePerChild;
+            const surchargeTotal = adultSurchargeTotal + childSurchargeTotal;
+
+            const roomPrice = parseInt(roomTypeSelect.options[roomTypeSelect.selectedIndex]?.getAttribute('data-price')) || 0;
+            const nights = diffNights();
+            // Phụ thu theo đêm
+            const adultSurchargePerNight = extraAdults * surchargePerAdult;
+            const childSurchargePerNight = childSurchargeCount * surchargePerChild;
+            const totalPerNight = roomPrice + adultSurchargePerNight + childSurchargePerNight;
+            // Giá phòng theo đêm đã bao gồm phụ thu * số đêm
+            const baseTotal = totalPerNight * nights;
+
+            // Extra services
+            // Sync per-day max days before calculating extras
+            syncPerDayMaxDays();
+            const extras = calcExtraServicesTotal(adults, children, nights);
+            const extrasTotal = extras.total;
+            const extrasInput = document.getElementById('extra_services');
+            const extrasTotalInput = document.getElementById('extra_services_total');
+            if (extrasInput) extrasInput.value = JSON.stringify(extras.items);
+            if (extrasTotalInput) extrasTotalInput.value = String(extrasTotal);
+
+            const grandTotal = baseTotal + extrasTotal;
+            // Cập nhật hidden để backend nhận đúng tổng tiền, giúp đồng bộ với trang bank-transfer
+            const totalInput = document.getElementById('total_booking_price');
+            if (totalInput) totalInput.value = String(grandTotal);
+            // Cập nhật hidden phụ thu (tổng phụ thu theo toàn bộ kỳ lưu trú)
+            const surchargeInput = document.getElementById('surcharge');
+            const totalSurcharge = (adultSurchargePerNight + childSurchargePerNight) * nights;
+            if (surchargeInput) surchargeInput.value = String(totalSurcharge);
+            // Chuỗi ngày tháng hiển thị trong khung (đưa vào trong .border)
+            const days = nights + 1; // ví dụ: 3 ngày 2 đêm
+            const rangeText = `${formatDateVN(checkInInput.value)} - ${formatDateVN(checkOutInput.value)} (${days} ngày ${nights} đêm )`;
+
+            // Hiển thị ghi chú/phụ thu theo định dạng: 
+            // "X Người lớn - Y Trẻ em - Z Em bé" + các dòng phụ thu "/đêm" + tổng "/đêm"
+            let detailHtml = `
+                <div class="summary-date text-muted mb-2">${rangeText}
+                <div class="d-flex justify-content-between align-items-center text-secondary text-nowrap summary-row"><span><strong>${adults}</strong> Người lớn - <strong>${children}</strong> Trẻ em - <strong>${infants}</strong> Em bé</span></div>`;
+            if (adultSurchargePerNight > 0) {
+                detailHtml += `<div class="d-flex justify-content-between align-items-center text-secondary text-nowrap summary-row"><span>Phụ thu người lớn:</span><span class="ml-3">${formatCurrency(adultSurchargePerNight)} VNĐ /đêm</span></div>`;
+            }
+            if (childSurchargePerNight > 0) {
+                detailHtml += `<div class="d-flex justify-content-between align-items-center text-secondary text-nowrap summary-row"><span>Phụ thu trẻ em:</span><span class="ml-3">${formatCurrency(childSurchargePerNight)} VNĐ /đêm</span></div>`;
+            }
+            // Tổng theo đêm hiển thị ngay trong khối, và đóng khối lại để đảm bảo bố cục
+            detailHtml += `<hr class="my-2"><div class="d-flex justify-content-between align-items-center text-dark text-nowrap price-per-night"><strong class="ml-auto">${formatCurrency(totalPerNight)} VNĐ /đêm</strong></div></div>`;
+            // Theo yêu cầu: dùng block này thay thế phần tóm tắt bên phải
+            guestFeeNote.innerHTML = '';
+
+            // Cập nhật nhanh phần tóm tắt nếu đang hiển thị chỗ trống
+            if (bookingSummary && roomPrice > 0) {
+                // Dựng danh sách chi tiết dịch vụ đã chọn
+                let servicesDetails = '';
+                if (extras.items && extras.items.length > 0) {
+                    servicesDetails = '<div class="mt-2">';
+                    servicesDetails += '<div class="mb-1 text-muted small">Dịch vụ đã chọn</div>';
+                    extras.items.forEach(it => {
+                        const chkEl = document.getElementById(`svc_chk_${it.id}`);
+                        const svcName = (chkEl && chkEl.getAttribute('data-service-name')) ? chkEl.getAttribute('data-service-name') : `Dịch vụ #${it.id}`;
+                        const parts = [];
+                        if (it.charge_type === 'per_person') {
+                            if ((it.adults_used || 0) > 0) parts.push(`${it.adults_used} NL`);
+                            if ((it.children_used || 0) > 0) parts.push(`${it.children_used} TE`);
+                        }
+                        if (it.charge_type === 'per_day' || it.charge_type === 'per_hour') {
+                            if ((it.quantity || 0) > 0) parts.push(`x${it.quantity}`);
+                        }
+                        if (it.charge_type === 'per_service') {
+                            if ((it.quantity || 0) > 0) parts.push(`x${it.quantity}`);
+                        }
+                        if (it.charge_type === 'per_night') {
+                            parts.push(`${nights} đêm`);
+                        }
+                        const detail = parts.length ? ` (${parts.join(' - ')})` : '';
+                        servicesDetails += `
+                            <div class="d-flex justify-content-between align-items-center text-nowrap">
+                                <span>${svcName}${detail}</span>
+                                <strong>${formatCurrency(it.subtotal)} VNĐ</strong>
+                            </div>
+                        `;
+                    });
+                    // Tổng dịch vụ
+                    servicesDetails += `<div class=\"d-flex justify-content-between align-items-center text-nowrap\"><span class=\"font-weight-600\">Tổng dịch vụ</span><strong>${formatCurrency(extrasTotal)} VNĐ</strong></div>`;
+                    servicesDetails += '</div>';
+                }
+
+                bookingSummary.innerHTML = `
+                    ${detailHtml}
+                    <hr>
+                    ${servicesDetails}
+                    <div class="d-flex justify-content-between align-items-center text-nowrap total-line"><span>Tổng cộng</span><strong style="color:#f59e0b">${formatCurrency(grandTotal)} VNĐ</strong></div>
+                `;
+            }
+        }
 
         // Xử lý hiển thị ảnh phòng khi chọn loại phòng
         roomTypeSelect.addEventListener('change', function() {
             const selectedRoomTypeId = this.value;
+            // cập nhật lại lựa chọn người lớn theo sức chứa của loại phòng
+            populateAdultsOptions();
+            updateGuestsAndFees();
             if (selectedRoomTypeId) {
                 // Hiển thị loading
                 roomImagePreview.innerHTML = `
@@ -218,12 +639,131 @@
         });
         
         // Load ảnh phòng nếu đã có loại phòng được chọn
+        // Khởi tạo dropdown người lớn theo sức chứa và set mặc định
+        populateAdultsOptions();
+        // Nếu có loại phòng được chọn thì load ảnh + cập nhật phí
         if (roomTypeSelect.value) {
             roomTypeSelect.dispatchEvent(new Event('change'));
+        } else {
+            updateGuestsAndFees();
+        }
+        // Populate service people dropdowns initially
+        populateAllServicePeopleOptions();
+
+        // Lắng nghe thay đổi để cập nhật phí và tổng
+        adultsSelect.addEventListener('change', function(){ lastChanged = 'adults'; populateAllServicePeopleOptions(); updateGuestsAndFees(); });
+        childrenSelect.addEventListener('change', function(){ lastChanged = 'children'; populateAllServicePeopleOptions(); updateGuestsAndFees(); });
+        infantsSelect.addEventListener('change', function(){ lastChanged = 'infants'; updateGuestsAndFees(); });
+        checkInInput.addEventListener('change', updateGuestsAndFees);
+        checkOutInput.addEventListener('change', updateGuestsAndFees);
+        // Extra services listeners & behaviors
+        const svcList = document.getElementById('extra-services-list');
+        function syncServiceApplyControls(id) {
+            const applyAll = document.getElementById(`svc_apply_all_${id}`);
+            const inputA = svcList.querySelector(`.svc-adults[data-service-id="${id}"]`);
+            const inputC = svcList.querySelector(`.svc-children[data-service-id="${id}"]`);
+            const maxA = Math.max(0, parseInt(document.getElementById('adults')?.value) || 0);
+            const maxC = Math.max(0, parseInt(document.getElementById('children')?.value) || 0);
+            if (applyAll?.checked) {
+                if (inputA) { inputA.value = String(maxA); inputA.disabled = true; inputA.max = String(maxA); }
+                if (inputC) { inputC.value = String(maxC); inputC.disabled = true; inputC.max = String(maxC); }
+            } else {
+                if (inputA) { inputA.disabled = false; inputA.max = String(maxA); if ((parseInt(inputA.value)||0) > maxA) inputA.value = String(maxA); }
+                if (inputC) { inputC.disabled = false; inputC.max = String(maxC); if ((parseInt(inputC.value)||0) > maxC) inputC.value = String(maxC); }
+            }
+        }
+
+        if (svcList) {
+            // Toggle config visibility when checking a service
+            svcList.addEventListener('change', function(e){
+                const t = e.target;
+                if (t && t.classList.contains('svc-check')) {
+                    const id = t.getAttribute('data-service-id');
+                    const cfg = svcList.querySelector(`.svc-config[data-service-id="${id}"]`);
+                    const qtyWrap = svcList.querySelector(`.svc-quantity-wrap[data-service-id="${id}"]`);
+                    if (t.checked) {
+                        if (cfg) cfg.style.display = '';
+                        // Show quantity wrap only if it exists (per_service/per_hour)
+                        if (qtyWrap) qtyWrap.style.display = '';
+                        // Populate selects for this service
+                        populateServicePeopleOptionsFor(id);
+                        // Sync per-day days max on show
+                        syncPerDayMaxDays();
+                        syncServiceApplyControls(id);
+                    } else {
+                        if (cfg) cfg.style.display = 'none';
+                        if (qtyWrap) {
+                            const q = qtyWrap.querySelector(`.svc-quantity[data-service-id="${id}"]`);
+                            if (q) q.value = '1';
+                            const d = qtyWrap.querySelector(`.svc-days[data-service-id="${id}"]`);
+                            if (d) d.value = '1';
+                            qtyWrap.style.display = (qtyWrap.getAttribute('data-charge-type')==='per_night' || qtyWrap.getAttribute('data-charge-type')==='per_person') ? 'none' : 'none';
+                        }
+                    }
+                    updateGuestsAndFees();
+                }
+                if (t && t.classList.contains('svc-apply')) {
+                    const id = t.getAttribute('data-service-id');
+                    syncServiceApplyControls(id);
+                    updateGuestsAndFees();
+                }
+                // Handle per-service people dropdown changes
+                if (t && (t.classList.contains('svc-adults') || t.classList.contains('svc-children'))) {
+                    const id = t.getAttribute('data-service-id');
+                    const chk = document.getElementById(`svc_chk_${id}`);
+                    if (chk && !chk.checked) chk.checked = true;
+                    // Clamp to current max based on main selection
+                    if (t.classList.contains('svc-adults')) {
+                        const maxA = Math.max(0, parseInt(document.getElementById('adults')?.value) || 0);
+                        const v = Math.max(0, Math.min(maxA, parseInt(t.value)||0));
+                        t.value = String(v);
+                    }
+                    if (t.classList.contains('svc-children')) {
+                        const maxC = Math.max(0, parseInt(document.getElementById('children')?.value) || 0);
+                        const v = Math.max(0, Math.min(maxC, parseInt(t.value)||0));
+                        t.value = String(v);
+                    }
+                    updateGuestsAndFees();
+                }
+            });
+
+            // Inputs inside config
+            svcList.addEventListener('input', function(e){
+                const t = e.target;
+                if (!t) return;
+                if (t.classList.contains('svc-adults') || t.classList.contains('svc-children') || t.classList.contains('svc-quantity') || t.classList.contains('svc-days')) {
+                    // ensure checkbox is checked when editing
+                    const id = t.getAttribute('data-service-id');
+                    const chk = document.getElementById(`svc_chk_${id}`);
+                    if (chk && !chk.checked) chk.checked = true;
+                    // clamp to max
+                    if (t.classList.contains('svc-adults')) {
+                        const maxA = Math.max(0, parseInt(document.getElementById('adults')?.value) || 0);
+                        if ((parseInt(t.value)||0) > maxA) t.value = String(maxA);
+                        if ((parseInt(t.value)||0) < 0) t.value = '0';
+                    }
+                    if (t.classList.contains('svc-children')) {
+                        const maxC = Math.max(0, parseInt(document.getElementById('children')?.value) || 0);
+                        if ((parseInt(t.value)||0) > maxC) t.value = String(maxC);
+                        if ((parseInt(t.value)||0) < 0) t.value = '0';
+                    }
+                    if (t.classList.contains('svc-quantity')) {
+                        if ((parseInt(t.value)||0) < 1) t.value = '1';
+                    }
+                    if (t.classList.contains('svc-days')) {
+                        const stayDays = diffNights() + 1;
+                        if ((parseInt(t.value)||0) < 1) t.value = '1';
+                        if ((parseInt(t.value)||0) > stayDays) t.value = String(stayDays);
+                    }
+                    updateGuestsAndFees();
+                }
+            });
         }
 
         bookingForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            // Đảm bảo các hidden inputs (tổng tiền, phụ thu, tổng khách) đã được cập nhật mới nhất
+            updateGuestsAndFees();
             const formData = new FormData(bookingForm);
             
             // Disable submit button
@@ -322,7 +862,12 @@
                     alert('Đặt phòng thành công! Bạn có 30 phút để hoàn tất thanh toán.');
                     
                     // Chuyển đến trang payment-method
-                    window.location.href = `/payment-method/${data.booking.id}`;
+                    // Chuyển đến trang payment-method, truyền tiếp promotion_id nếu có
+                    const url = new URL(`/payment-method/${data.booking.id}`, window.location.origin);
+                    @if(isset($bookingData['promotion_id']))
+                        url.searchParams.set('promotion_id', '{{ (int) $bookingData['promotion_id'] }}');
+                    @endif
+                    window.location.href = url.pathname + (url.search ? '?' + url.searchParams.toString() : '');
                 } else {
                     alert('Có lỗi khi lưu đặt phòng: ' + (data.message || 'Lỗi không xác định'));
                     resetSubmitButton();
@@ -371,6 +916,20 @@
         .card-header {
             border-radius: 12px 12px 0 0 !important;
         }
+
+        /* Layout width tweak: make summary column wider on desktop */
+        @media (min-width: 992px) { /* lg and up */
+            .booking-form-col { flex: 0 0 64%; max-width: 64%; }
+            .booking-summary-col { flex: 0 0 36%; max-width: 36%; }
+        }
+        @media (min-width: 1200px) { /* xl and up */
+            .booking-form-col { flex: 0 0 62%; max-width: 62%; }
+            .booking-summary-col { flex: 0 0 38%; max-width: 38%; }
+        }
+
+        /* Ensure summary lines stay on one row and box uses full width */
+        #booking-summary .summary-row { white-space: nowrap; }
+        #booking-summary .border { width: 105%; }
 
         /* Responsive */
         @media (max-width: 768px) {

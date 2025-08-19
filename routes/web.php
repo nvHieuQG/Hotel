@@ -1,29 +1,35 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminBookingController;
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\AdminRoomController;
-use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
-use App\Http\Controllers\Admin\AdminRoomTypeServiceController;
-use App\Http\Controllers\Admin\AdminRoomChangeController;
-use App\Http\Controllers\Admin\AdminServiceCategoryController;
-use App\Http\Controllers\Admin\AdminServiceController;
-use App\Http\Controllers\Admin\AdminSupportController;
-use App\Http\Controllers\Admin\AdminUserController;
-use App\Http\Controllers\Auth\EmailVerificationController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\HotelController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\RoomChangeController;
-use App\Http\Controllers\RoomTypeReviewController;
-use App\Http\Controllers\SupportController;
-use App\Http\Controllers\UserProfileController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\EmailVerificationController;
+
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\HotelController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\SupportController;
+use App\Http\Controllers\RoomChangeController;
+use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\RoomTypeReviewController;
+use App\Http\Controllers\PromotionController;
+
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminRoomController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Admin\AdminServiceController;
+use App\Http\Controllers\Admin\AdminSupportController;
+use App\Http\Controllers\Admin\AdminRoomChangeController;
+use App\Http\Controllers\Admin\AdminExtraServiceController;
+use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
+use App\Http\Controllers\Admin\AdminRoomTypeServiceController;
+use App\Http\Controllers\Admin\AdminServiceCategoryController;
+
 
 // Route::get('/', function () {
 //     return view('client.index');
@@ -169,6 +175,8 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('bookings/{id}/services/add', [AdminBookingController::class, 'addServiceToBooking'])->name('bookings.services.add');
     Route::delete('bookings/{id}/services/{bookingServiceId}', [AdminBookingController::class, 'destroyServiceFromBooking'])->name('bookings.services.destroy');
     Route::post('bookings/{id}/confirm-payment', [AdminBookingController::class, 'confirmPayment'])->name('bookings.confirm-payment');
+    // Thu tiền phát sinh tại quầy (COD)
+    Route::post('bookings/{id}/payments/collect', [AdminBookingController::class, 'collectAdditionalPayment'])->name('bookings.payments.collect');
 
     // Bulk action (POST)
     Route::post('notifications/delete-multi', [AdminBookingController::class, 'deleteMulti'])->name('notifications.delete-multi');
@@ -200,6 +208,9 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     // Quản lý người dùng
     Route::resource('users', AdminUserController::class)->except(['create', 'store']);
 
+    // Quản lý khuyến mãi
+    Route::resource('promotions', \App\Http\Controllers\Admin\AdminPromotionController::class);
+
     // Quản lý danh mục dịch vụ (Service Categories)
     Route::get('service-categories', [AdminServiceCategoryController::class, 'index'])->name('service-categories.index');
     Route::get('service-categories/create', [AdminServiceCategoryController::class, 'create'])->name('service-categories.create');
@@ -230,10 +241,22 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('room-changes/{roomChange}/mark-paid', [AdminRoomChangeController::class, 'markAsPaid'])->name('room-changes.mark-paid');
     Route::get('room-changes/statistics', [AdminRoomChangeController::class, 'statistics'])->name('room-changes.statistics');
     Route::post('room-changes/{roomChange}/update-status', [AdminRoomChangeController::class, 'updateStatus'])->name('room-changes.update-status');
+
+    // Quản lý dịch vụ bổ sung (Extra Services)
+    Route::get('extra-services', [AdminExtraServiceController::class, 'index'])->name('extra-services.index');
+    Route::get('extra-services/create', [AdminExtraServiceController::class, 'create'])->name('extra-services.create');
+    Route::post('extra-services', [AdminExtraServiceController::class, 'store'])->name('extra-services.store');
+    Route::get('extra-services/{extra_service}/edit', [AdminExtraServiceController::class, 'edit'])->name('extra-services.edit');
+    Route::put('extra-services/{extra_service}', [AdminExtraServiceController::class, 'update'])->name('extra-services.update');
+    Route::delete('extra-services/{extra_service}', [AdminExtraServiceController::class, 'destroy'])->name('extra-services.destroy');
 });
 
 // Route công khai cho room type reviews (chỉ hiển thị) - đặt sau admin routes để tránh xung đột
 Route::get('/room-type-reviews/{roomTypeId}/ajax', [RoomTypeReviewController::class, 'getReviewsAjax'])->name('room-type-reviews.ajax');
+
+// Promotions - client
+Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
+Route::get('/promotions/{promotion}', [PromotionController::class, 'show'])->name('promotions.show');
 
 // Password reset routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
@@ -263,6 +286,11 @@ Route::get('/confirm-info-payment/{booking}', [PaymentController::class, 'confir
 Route::get('/payment-method/{booking?}', [PaymentController::class, 'paymentMethod'])->name('payment-method');
 Route::post('/ajax-booking', [BookingController::class, 'ajaxStoreBooking'])->name('ajax-booking');
 Route::get('/api/room-type/{id}/image', [BookingController::class, 'getRoomTypeImage'])->name('api.room-type.image');
+// Payment promotion preview API
+Route::get('/api/payment/promotion-preview/{booking}', [PaymentController::class, 'promotionPreview'])->name('api.payment.promotion-preview');
+
+// Room type promotion preview API
+Route::get('/api/room-type/promotion-preview', [HotelController::class, 'promotionPreviewForRoomType'])->name('api.room-type.promotion-preview');
 
 
 Route::get('/payment/bank-transfer/{booking}', [PaymentController::class, 'processBankTransfer'])->name('payment.bank-transfer');

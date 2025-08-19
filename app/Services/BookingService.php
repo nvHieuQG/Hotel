@@ -229,11 +229,47 @@ class BookingService implements BookingServiceInterface
             'room_id' => $availableRoom->id,
             'check_in_date' => $checkInDateTime,
             'check_out_date' => $checkOutDateTime,
-            'price' => $totalPrice,
+            // Nếu có truyền tổng cộng từ client, ưu tiên dùng để khớp hiển thị và thanh toán
+            'price' => isset($data['total_booking_price']) ? (float)$data['total_booking_price'] : $totalPrice,
             'status' => 'pending_payment', // Trạng thái chờ thanh toán
             'phone' => $data['phone'] ?? null,
             'notes' => $data['notes'] ?? null,
         ];
+
+        // Lưu phụ thu nếu có
+        if (isset($data['surcharge'])) {
+            $bookingData['surcharge'] = (float)$data['surcharge'];
+        }
+
+        // Lưu tổng phí dịch vụ bổ sung nếu có
+        if (isset($data['extra_services_total'])) {
+            $bookingData['extra_services_total'] = (float)$data['extra_services_total'];
+        }
+
+        // Lưu chi tiết dịch vụ bổ sung dạng JSON nếu có
+        if (!empty($data['extra_services'])) {
+            // Dữ liệu gửi từ form là JSON string -> decode sang array để phù hợp với cast 'array'
+            $decoded = is_string($data['extra_services'])
+                ? json_decode($data['extra_services'], true)
+                : $data['extra_services'];
+            if (is_array($decoded)) {
+                $bookingData['extra_services'] = $decoded;
+            } else {
+                // Nếu decode lỗi, lưu raw để không chặn booking
+                $bookingData['extra_services'] = $data['extra_services'];
+            }
+        }
+
+        // Lưu số lượng khách theo nhóm nếu có
+        if (isset($data['adults'])) {
+            $bookingData['adults_count'] = (int)$data['adults'];
+        }
+        if (isset($data['children'])) {
+            $bookingData['children_count'] = (int)$data['children'];
+        }
+        if (isset($data['infants'])) {
+            $bookingData['infants_count'] = (int)$data['infants'];
+        }
 
         Log::info('Creating pending booking', [
             'check_in' => $checkInDateTime,

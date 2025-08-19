@@ -398,6 +398,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}" href="{{ route('admin.promotions.index') }}">
+                        <i class="fas fa-gift"></i> Khuyến mãi
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('admin.room-type-reviews.*') ? 'active' : '' }}"
                         href="{{ route('admin.room-type-reviews.index') }}">
                         <i class="fas fa-star"></i> Đánh giá
