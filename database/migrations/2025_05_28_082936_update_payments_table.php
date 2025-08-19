@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,28 +12,68 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Kiểm tra nếu các cột đã tồn tại thì không làm gì
+        if (Schema::hasColumn('payments', 'payment_method') && 
+            Schema::hasColumn('payments', 'currency') && 
+            Schema::hasColumn('payments', 'transaction_id')) {
+            return;
+        }
+
         Schema::table('payments', function (Blueprint $table) {
-            // Đổi tên cột method thành payment_method
-            $table->renameColumn('method', 'payment_method');
+            // Thêm cột payment_method mới nếu chưa có
+            if (!Schema::hasColumn('payments', 'payment_method')) {
+                $table->string('payment_method', 50)->nullable()->after('id');
+            }
 
-            // Thêm các cột mới
-            $table->string('currency', 3)->default('VND')->after('amount');
-            $table->string('transaction_id')->nullable()->after('status');
-            $table->json('gateway_response')->nullable()->after('transaction_id');
-            $table->string('gateway_code')->nullable()->after('gateway_response');
-            $table->text('gateway_message')->nullable()->after('gateway_code');
-            $table->timestamp('paid_at')->nullable()->after('gateway_message');
-            $table->string('gateway_name')->nullable()->after('paid_at');
-            $table->timestamp('updated_at')->nullable()->after('created_at');
+            // Thêm các cột mới nếu chưa có
+            if (!Schema::hasColumn('payments', 'currency')) {
+                $table->string('currency', 3)->default('VND')->after('amount');
+            }
+            if (!Schema::hasColumn('payments', 'transaction_id')) {
+                $table->string('transaction_id')->nullable()->after('status');
+            }
+            if (!Schema::hasColumn('payments', 'gateway_response')) {
+                $table->json('gateway_response')->nullable()->after('transaction_id');
+            }
+            if (!Schema::hasColumn('payments', 'gateway_code')) {
+                $table->string('gateway_code')->nullable()->after('gateway_response');
+            }
+            if (!Schema::hasColumn('payments', 'gateway_message')) {
+                $table->text('gateway_message')->nullable()->after('gateway_code');
+            }
+            if (!Schema::hasColumn('payments', 'paid_at')) {
+                $table->timestamp('paid_at')->nullable()->after('gateway_message');
+            }
+            if (!Schema::hasColumn('payments', 'gateway_name')) {
+                $table->string('gateway_name')->nullable()->after('paid_at');
+            }
+            if (!Schema::hasColumn('payments', 'updated_at')) {
+                $table->timestamp('updated_at')->nullable()->after('created_at');
+            }
 
-            // Cập nhật enum status
-            $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded'])->default('pending')->change();
-
-            // Thêm indexes
+            // Thêm indexes nếu chưa có
             $table->index(['booking_id', 'status']);
             $table->index('transaction_id');
             $table->index('payment_method');
         });
+
+        // Cập nhật dữ liệu từ cột method sang payment_method nếu cần
+        if (Schema::hasColumn('payments', 'method') && Schema::hasColumn('payments', 'payment_method')) {
+            DB::statement('UPDATE payments SET payment_method = method WHERE payment_method IS NULL');
+        }
+
+        // Xóa cột method cũ nếu tồn tại
+        if (Schema::hasColumn('payments', 'method')) {
+            Schema::table('payments', function (Blueprint $table) {
+                $table->dropColumn('method');
+            });
+        }
+
+        // Cập nhật enum status nếu cần
+        $currentStatus = DB::select("SHOW COLUMNS FROM payments LIKE 'status'")[0];
+        if (strpos($currentStatus->Type, 'pending,processing,completed,failed,cancelled,refunded') === false) {
+            DB::statement("ALTER TABLE payments MODIFY COLUMN status ENUM('pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded') DEFAULT 'pending'");
+        }
     }
 
     /**
@@ -40,29 +81,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('payments', function (Blueprint $table) {
-            // Xóa indexes
-            $table->dropIndex(['booking_id', 'status']);
-            $table->dropIndex(['transaction_id']);
-            $table->dropIndex(['payment_method']);
-
-            // Xóa các cột mới
-            $table->dropColumn([
-                'currency',
-                'transaction_id',
-                'gateway_response',
-                'gateway_code',
-                'gateway_message',
-                'paid_at',
-                'gateway_name',
-                'updated_at'
-            ]);
-
-            // Đổi tên cột về ban đầu
-            $table->renameColumn('payment_method', 'method');
-
-            // Khôi phục enum status
-            $table->enum('status', ['pending', 'paid', 'failed'])->default('pending')->change();
-        });
+        // Không cần rollback vì migration này chỉ thêm cột
+        // Nếu cần rollback, có thể thêm logic ở đây
     }
 };

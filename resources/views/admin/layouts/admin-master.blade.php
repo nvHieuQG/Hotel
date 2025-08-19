@@ -365,6 +365,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.tour-bookings.*') ? 'active' : '' }}"
+                        href="{{ route('admin.tour-bookings.index') }}">
+                        <i class="fas fa-route"></i> Tour 
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#submenuRoom" role="button"
                         aria-expanded="{{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'true' : 'false' }}"
