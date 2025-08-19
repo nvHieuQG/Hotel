@@ -75,16 +75,27 @@ class ServiceSeeder extends Seeder
         ];
 
         foreach ($categories as $categoryData) {
-            $category = ServiceCategory::create(['name' => $categoryData['name']]);
+            // Kiểm tra danh mục đã tồn tại chưa
+            $category = ServiceCategory::firstOrCreate(
+                ['name' => $categoryData['name']],
+                ['name' => $categoryData['name']]
+            );
 
             foreach ($categoryData['services'] as $serviceData) {
-                Service::create([
-                    'name' => $serviceData['name'],
-                    'description' => $serviceData['description'],
-                    'price' => $serviceData['price'],
-                    'quantity' => $serviceData['quantity'] ?? 1,
-                    'service_category_id' => $category->id
-                ]);
+                // Kiểm tra dịch vụ đã tồn tại chưa
+                Service::firstOrCreate(
+                    [
+                        'name' => $serviceData['name'],
+                        'service_category_id' => $category->id
+                    ],
+                    [
+                        'name' => $serviceData['name'],
+                        'description' => $serviceData['description'],
+                        'price' => $serviceData['price'],
+                        'quantity' => $serviceData['quantity'] ?? 1,
+                        'service_category_id' => $category->id
+                    ]
+                );
             }
         }
 

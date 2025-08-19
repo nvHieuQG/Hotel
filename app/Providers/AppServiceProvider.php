@@ -113,6 +113,17 @@ class AppServiceProvider extends ServiceProvider
 
     // Password Reset Bindings
 
+        // Tour Booking Repository and Service Bindings
+        $this->app->bind(
+            \App\Interfaces\Repositories\TourBookingRepositoryInterface::class,
+            \App\Repositories\TourBookingRepository::class
+        );
+
+        $this->app->bind(
+            \App\Interfaces\Services\TourBookingServiceInterface::class,
+            \App\Services\TourBookingService::class
+        );
+
     // Profile Service Binding
     $this->app->bind(
         \App\Interfaces\Services\ProfileServiceInterface::class,
@@ -288,7 +299,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
-        
+
         // Đăng ký Observer
         Booking::observe(BookingObserver::class);
         BookingNote::observe(BookingNoteObserver::class);

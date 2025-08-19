@@ -1,12 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminRoomController;
+use App\Http\Controllers\Admin\AdminTourBookingController;
+use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
+use App\Http\Controllers\Admin\AdminRoomTypeServiceController;
+use App\Http\Controllers\Admin\AdminServiceCategoryController;
+use App\Http\Controllers\Admin\AdminServiceController;
+use App\Http\Controllers\Admin\AdminSupportController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\EmailVerificationController;
 
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\HotelController;
@@ -14,21 +21,13 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\RoomChangeController;
+use App\Http\Controllers\TourBookingController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\RoomTypeReviewController;
 use App\Http\Controllers\PromotionController;
 
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\AdminRoomController;
-use App\Http\Controllers\Admin\AdminUserController;
-use App\Http\Controllers\Admin\AdminBookingController;
-use App\Http\Controllers\Admin\AdminServiceController;
-use App\Http\Controllers\Admin\AdminSupportController;
 use App\Http\Controllers\Admin\AdminRoomChangeController;
 use App\Http\Controllers\Admin\AdminExtraServiceController;
-use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
-use App\Http\Controllers\Admin\AdminRoomTypeServiceController;
-use App\Http\Controllers\Admin\AdminServiceCategoryController;
 
 
 // Route::get('/', function () {
@@ -108,6 +107,24 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/room-type-reviews/{roomTypeId}/form', [RoomTypeReviewController::class, 'reviewForm'])->name('room-type-reviews.form');
 });
 
+// Tour Booking Routes - Công khai (không cần auth)
+Route::get('/tour-booking/search', [TourBookingController::class, 'searchForm'])->name('tour-booking.search');
+Route::post('/tour-booking/search', [TourBookingController::class, 'search'])->name('tour-booking.search.post');
+Route::get('/tour-booking/search-test', [TourBookingController::class, 'search'])->name('tour-booking.search.test');
+Route::get('/tour-booking/select-rooms', [TourBookingController::class, 'selectRooms'])->name('tour-booking.select-rooms');
+Route::post('/tour-booking/calculate-price', [TourBookingController::class, 'calculatePrice'])->name('tour-booking.calculate-price');
+Route::post('/tour-booking/confirm', [TourBookingController::class, 'confirm'])->name('tour-booking.confirm');
+Route::post('/tour-booking/store', [TourBookingController::class, 'store'])->name('tour-booking.store');
+Route::get('/tour-booking/payment/{bookingId}', [TourBookingController::class, 'payment'])->name('tour-booking.payment');
+Route::get('/tour-booking', [TourBookingController::class, 'index'])->name('tour-booking.index');
+Route::get('/tour-booking/{id}', [TourBookingController::class, 'show'])->name('tour-booking.show');
+
+// Tour Booking Payment Routes - Cần auth
+Route::middleware(['auth'])->group(function () {
+    Route::post('/tour-booking/credit-card-payment', [TourBookingController::class, 'processCreditCardPayment'])->name('tour-booking.credit-card-payment');
+    Route::post('/tour-booking/bank-transfer-payment', [TourBookingController::class, 'processBankTransferPayment'])->name('tour-booking.bank-transfer-payment');
+});
+
 // Booking notes: KHÔNG lồng group auth bên ngoài nữa
 Route::middleware(['auth', 'check.booking.access'])->group(function () {
     Route::get('/booking-notes/{bookingId}', [BookingController::class, 'notesIndex'])->name('booking-notes.index');
@@ -147,6 +164,12 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('bookings/{id}/view-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.view-word');
     
 
+
+    // Quản lý Tour Booking
+    Route::get('tour-bookings/report', [AdminTourBookingController::class, 'report'])->name('tour-bookings.report');
+    Route::patch('tour-bookings/{id}/status', [AdminTourBookingController::class, 'updateStatus'])->name('tour-bookings.update-status');
+    Route::patch('tour-bookings/{id}/payments/{paymentId}', [AdminTourBookingController::class, 'updatePaymentStatus'])->name('tour-bookings.payments.update-status');
+    Route::resource('tour-bookings', AdminTourBookingController::class);
 
     // Quản lý thông báo
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
