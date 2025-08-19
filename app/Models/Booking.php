@@ -22,6 +22,10 @@ class Booking extends Model
         'check_out_date',
         'status',
         'price',
+        'surcharge',
+        'promotion_id',
+        'promotion_discount',
+        'promotion_code',
         'guest_full_name',
         'guest_id_number',
         'guest_birth_date',
@@ -79,6 +83,30 @@ class Booking extends Model
     public function review()
     {
         return $this->hasOne(RoomTypeReview::class);
+    }
+
+    /**
+     * Get the promotion applied to this booking.
+     */
+    public function promotion()
+    {
+        return $this->belongsTo(Promotion::class);
+    }
+
+    /**
+     * Get the final price after applying promotion discount.
+     */
+    public function getFinalPriceAttribute()
+    {
+        return $this->price - $this->promotion_discount;
+    }
+
+    /**
+     * Get the total amount including surcharge and promotion discount.
+     */
+    public function getTotalAmountAttribute()
+    {
+        return $this->price + $this->surcharge - $this->promotion_discount;
     }
 
     /**
@@ -148,6 +176,22 @@ class Booking extends Model
         return \App\Models\Service::whereHas('roomTypes', function ($query) use ($roomTypeId) {
             $query->where('room_type_id', $roomTypeId);
         })->whereNotIn('id', $existingServiceIds)->get();
+    }
+
+    /**
+     * Get the room changes for this booking.
+     */
+    public function roomChanges()
+    {
+        return $this->hasMany(RoomChange::class);
+    }
+
+    /**
+     * Get the pending room change for this booking.
+     */
+    public function pendingRoomChange()
+    {
+        return $this->hasOne(RoomChange::class)->pending();
     }
 
     /**

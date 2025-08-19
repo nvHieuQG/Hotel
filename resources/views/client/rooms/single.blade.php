@@ -61,8 +61,16 @@
                         <div class="col-md-12 room-single mt-4 mb-5 ftco-animate">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4>Thông tin loại phòng</h4>
-                                <p><span class="price mr-2">{{ number_format($roomType->price) }}đ</span> <span
-                                        class="per">mỗi đêm</span></p>
+                                <div class="text-right">
+                                    @php $basePrice = (int) $roomType->price; @endphp
+                                    <div>
+                                        <span class="per">Giá mỗi đêm</span>
+                                    </div>
+                                    <div>
+                                        <span id="price_original" class="text-muted" style="text-decoration: line-through; display:none;">{{ number_format($basePrice) }}đ</span>
+                                        <span id="price_final" class="price ml-2">{{ number_format($basePrice) }}đ</span>
+                                    </div>
+                                </div>
                             </div>
                             <p class="mb-4">{{ $roomType->description }}</p>
                             <div class="d-md-flex mt-5 mb-5">
@@ -73,6 +81,109 @@
                                     <li><span>Mô tả:</span> {{ Str::limit($roomType->description, 100) }}</li>
                                 </ul>
                             </div>
+                            <div class="row mb-4">
+                                <div class="col-md-7">
+                                   
+                                    @if(!empty($topPromotions) || !empty($allPromotions))
+                                        <div class="promotion-section mb-4">
+                                            <div class="card border-0 shadow-sm">
+                                                <div class="card-header bg-gradient-primary text-white">
+                                                    <i class="fas fa-gift mr-2"></i> 
+                                                    <strong>Ưu đãi đặc biệt</strong>
+                                                </div>
+                                                <div class="card-body p-3">
+                                                    @php
+                                                        $listToShow = !empty($topPromotions) ? $topPromotions : [];
+                                                    @endphp
+                                                    @if(!empty($listToShow))
+                                                        @foreach($listToShow as $promo)
+                                                            <div class="promotion-item mb-3 p-3 border rounded bg-light">
+                                                                <div class="d-flex justify-content-between align-items-start">
+                                                                    <div class="flex-grow-1">
+                                                                        <div class="fw-bold text-primary mb-1">{{ $promo['title'] }}</div>
+                                                                        <div class="small text-muted">{{ Str::limit($promo['description'] ?? '', 80) }}</div>
+                                                                    </div>
+                                                                    <div class="text-end ms-2">
+                                                                        <div class="badge bg-success mb-1">{{ $promo['discount_text'] }}</div>
+                                                                        @if(!empty($promo['code']))
+                                                                            <div class="badge bg-secondary small">{{ $promo['code'] }}</div>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                        @if(!empty($allPromotions) && count($allPromotions) > count($listToShow))
+                                                            <details class="mt-3">
+                                                                <summary class="text-primary small cursor-pointer">
+                                                                    <i class="fas fa-chevron-down"></i> Xem thêm {{ count($allPromotions) - count($listToShow) }} ưu đãi
+                                                                </summary>
+                                                                <div class="mt-2">
+                                                                    @foreach($allPromotions as $promo)
+                                                                        @if(!in_array($promo['id'], array_column($listToShow, 'id')))
+                                                                            <div class="promotion-item mb-2 p-2 border rounded bg-light">
+                                                                                <div class="d-flex justify-content-between align-items-start">
+                                                                                    <div class="flex-grow-1">
+                                                                                        <div class="fw-bold text-primary mb-1">{{ $promo['title'] }}</div>
+                                                                                        <div class="small text-muted">{{ Str::limit($promo['description'] ?? '', 60) }}</div>
+                                                                                    </div>
+                                                                                    <div class="text-end ms-2">
+                                                                                        <div class="badge bg-success mb-1">{{ $promo['discount_text'] }}</div>
+                                                                                        @if(!empty($promo['code']))
+                                                                                            <div class="badge bg-secondary small">{{ $promo['code'] }}</div>
+                                                                                        @endif
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        @endif
+                                                                    @endforeach
+                                                                </div>
+                                                            </details>
+                                                        @endif
+                                                    @else
+                                                        <div class="text-center text-muted py-3">
+                                                            <i class="fas fa-gift fa-2x mb-2"></i>
+                                                            <div>Hiện chưa có khuyến mại phù hợp</div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <!-- Thông tin phòng -->
+                                    <div class="room-info">
+                                        <h4 class="mb-3">Thông tin phòng</h4>
+                                        <ul class="list ml-md-5">
+                                            <li><span>Mô tả:</span> {{ Str::limit($roomType->description, 100) }}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-header bg-gradient-success text-white">
+                                            <i class="fas fa-receipt mr-2"></i> 
+                                            <strong>Tóm tắt giá</strong>
+                                        </div>
+                                        <div class="card-body">
+                                            @php $nights = isset($nights) ? (int)$nights : 1; @endphp
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Giá gốc ({{ $nights }} đêm)</span>
+                                                <span id="sum_original" class="fw-bold">{{ number_format($roomType->price * $nights) }} đ</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2 text-success">
+                                                <span>Khuyến mại</span>
+                                                <span id="sum_discount" class="fw-bold">- 0 đ</span>
+                                            </div>
+                                            <hr class="my-3">
+                                            <div class="d-flex justify-content-between fw-bold fs-5">
+                                                <span>Giá sau giảm</span>
+                                                <span id="sum_final" class="text-primary">{{ number_format($roomType->price * $nights) }} đ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="text-center mb-4">
                                 <button type="button" class="btn btn-primary py-3 px-5" data-bs-toggle="modal" data-bs-target="#roomServicesModal">
                                     <i class="icon-list"></i> Xem dịch vụ loại phòng
@@ -92,7 +203,7 @@
                                     }
                                     $bookingParams['room_type_id'] = $roomType->id;
                                 @endphp
-                                <a href="{{ route('booking') }}?{{ http_build_query($bookingParams) }}" class="btn btn-primary py-3 px-5">Đặt phòng ngay</a>
+                                <a id="bookNowBtn" href="{{ route('booking') }}?{{ http_build_query($bookingParams) }}" class="btn btn-primary py-3 px-5">Đặt phòng ngay</a>
                             </div>
                         </div>
 
@@ -824,6 +935,70 @@ $(document).ready(function() {
     });
 });
 
+// Khuyến mại: cập nhật giá và link đặt phòng
+document.addEventListener('DOMContentLoaded', function() {
+    const radios = document.querySelectorAll('input[name="promotion_id"]');
+    const priceOriginalEl = document.getElementById('price_original');
+    const priceFinalEl = document.getElementById('price_final');
+    const sumOriginalEl = document.getElementById('sum_original');
+    const sumDiscountEl = document.getElementById('sum_discount');
+    const sumFinalEl = document.getElementById('sum_final');
+    const bookNowBtn = document.getElementById('bookNowBtn');
+
+    const baseNightPrice = {{ (int) $roomType->price }};
+    const nights = {{ isset($nights) ? (int)$nights : 1 }};
+
+    function formatVND(number) {
+        return Number(number).toLocaleString('vi-VN') + ' đ';
+    }
+
+    function updatePrice(discountAmount, finalAmount) {
+        const base = baseNightPrice;
+        if (discountAmount > 0) {
+            priceOriginalEl.style.display = '';
+            priceOriginalEl.textContent = formatVND(base);
+        } else {
+            priceOriginalEl.style.display = 'none';
+        }
+        priceFinalEl.textContent = formatVND(finalAmount / nights);
+        sumOriginalEl.textContent = formatVND(base * nights);
+        sumDiscountEl.textContent = '- ' + formatVND(discountAmount);
+        sumFinalEl.textContent = formatVND(finalAmount);
+    }
+
+    function preview(promotionId) {
+        const url = new URL(`{{ route('api.room-type.promotion-preview') }}`, window.location.origin);
+        url.searchParams.set('room_type_id', '{{ $roomType->id }}');
+        const checkIn = new URLSearchParams(window.location.search).get('check_in_date');
+        const checkOut = new URLSearchParams(window.location.search).get('check_out_date');
+        if (checkIn) url.searchParams.set('check_in_date', checkIn);
+        if (checkOut) url.searchParams.set('check_out_date', checkOut);
+        if (promotionId) url.searchParams.set('promotion_id', promotionId);
+
+        fetch(url.toString(), { headers: { 'Accept': 'application/json' }})
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    updatePrice(data.discount_amount || 0, data.final_amount || (baseNightPrice * nights));
+                }
+            })
+            .catch(() => {});
+    }
+
+    radios.forEach(r => {
+        r.addEventListener('change', function() {
+            preview(this.value);
+
+            // Thêm promotion_id vào link Đặt phòng
+            if (bookNowBtn) {
+                const url = new URL(bookNowBtn.getAttribute('href'), window.location.origin);
+                url.searchParams.set('promotion_id', this.value);
+                bookNowBtn.setAttribute('href', url.pathname + '?' + url.searchParams.toString());
+            }
+        });
+    });
+});
+
 function loadReviews(roomTypeId) {
     $.ajax({
         url: `/room-type-reviews/${roomTypeId}/ajax`,
@@ -1054,6 +1229,51 @@ function showToast(message, type = 'info') {
         padding: 10px 20px;
         font-size: 1rem;
     }
+}
+
+/* Card improvements */
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Badge improvements */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Form check improvements */
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 </style>
 @endsection

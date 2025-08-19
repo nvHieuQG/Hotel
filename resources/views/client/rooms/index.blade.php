@@ -41,6 +41,40 @@
             @endif
 
             <div class="row">
+                {{-- Khuyến mại nổi bật --}}
+                @if($featuredPromotions && $featuredPromotions->count() > 0)
+                    <div class="col-12 mb-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-gradient-primary text-white">
+                                <i class="fas fa-gift mr-2"></i> 
+                                <strong>Ưu đãi đặc biệt hôm nay</strong>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="row">
+                                    @foreach($featuredPromotions->take(3) as $promo)
+                                        <div class="col-md-4 mb-3">
+                                            <div class="promotion-item p-3 border rounded bg-light h-100">
+                                                <div class="d-flex flex-column h-100">
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-bold text-primary mb-2">{{ $promo->title }}</div>
+                                                        <div class="small text-muted mb-2">{{ Str::limit($promo->description ?? '', 80) }}</div>
+                                                    </div>
+                                                    <div class="mt-auto">
+                                                        <div class="badge bg-success mb-2">{{ $promo->discount_text }}</div>
+                                                        @if(!empty($promo->code))
+                                                            <div class="badge bg-secondary small">{{ $promo->code }}</div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Danh sách phòng được tìm thấy --}}
                 <div class="col-lg-9">
                     <div class="row">
@@ -76,6 +110,9 @@
                                                     {{ $type->name }}
                                                 </a>
                                             </h3>
+                                            @php
+                                                $representativeRoom = $type->rooms()->where('status', 'available')->first();
+                                            @endphp
                                             <p>
                                                 <span class="price mr-2">{{ number_format($type->price) }}đ</span>
                                                 <span class="per">mỗi đêm</span>
@@ -220,4 +257,52 @@
             </div>
         </div>
     </section>
+@endsection
+
+@section('styles')
+<style>
+/* Promotion styles */
+.promotion-section { margin-bottom: 2rem; }
+.promotion-item { transition: all 0.3s ease; border: 1px solid #e9ecef !important; }
+.promotion-item:hover { border-color: #007bff !important; box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15); transform: translateY(-1px); }
+.bg-gradient-primary { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); }
+.bg-gradient-success { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); }
+.cursor-pointer { cursor: pointer; }
+.cursor-pointer:hover { color: #0056b3 !important; }
+
+/* Card improvements */
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Badge improvements */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+</style>
 @endsection

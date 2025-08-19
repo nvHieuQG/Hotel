@@ -320,6 +320,7 @@
                         <a class="nav-link" id="profile-password-tab" data-toggle="pill" href="#profile-password" role="tab"><i class="fas fa-key"></i> Đổi mật khẩu</a>
                         <a class="nav-link" id="profile-bookings-tab" data-toggle="pill" href="#profile-bookings" role="tab"><i class="fas fa-calendar-check"></i> Lịch sử đặt phòng</a>
                         <a class="nav-link" id="profile-reviews-tab" data-toggle="pill" href="#profile-reviews" role="tab"><i class="fas fa-star"></i> Đánh giá của tôi</a>
+                        <a class="nav-link" href="{{ route('user.promotions') }}"><i class="fas fa-gift"></i> Mã khuyến mại</a>
                     </nav>
                 </div>
             </div>

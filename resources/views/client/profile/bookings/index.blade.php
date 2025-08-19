@@ -65,6 +65,7 @@
                                         <th>Ngày nhận</th>
                                         <th>Ngày trả</th>
                                         <th>Tổng tiền</th>
+                                        <th>Khuyến mại</th>
                                         <th>Trạng thái</th>
                                         <th>Đánh giá</th>
                                         <th>Hành động</th>
@@ -77,7 +78,31 @@
                                             <td>{{ $booking->room->roomType->name }}</td>
                                             <td>{{ $booking->check_in_date->format('d/m/Y') }}</td>
                                             <td>{{ $booking->check_out_date->format('d/m/Y') }}</td>
-                                            <td>{{ number_format($booking->price) }}đ</td>
+                                            <td>
+                                                @if($booking->promotion_discount > 0)
+                                                    <div class="text-decoration-line-through text-muted">
+                                                        {{ number_format($booking->price) }}đ
+                                                    </div>
+                                                    <div class="text-danger font-weight-bold">
+                                                        {{ number_format($booking->final_price) }}đ
+                                                    </div>
+                                                @else
+                                                    {{ number_format($booking->price) }}đ
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($booking->promotion_discount > 0)
+                                                    <div class="text-success">
+                                                        <i class="fas fa-gift text-warning"></i>
+                                                        {{ $booking->promotion_code }}
+                                                    </div>
+                                                    <div class="small text-muted">
+                                                        -{{ number_format($booking->promotion_discount) }}đ
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">Không có</span>
+                                                @endif
+                                            </td>
                                             <td>
                                                 <span class="badge badge-{{ $booking->status == 'pending' ? 'warning' : ($booking->status == 'confirmed' ? 'success' : ($booking->status == 'cancelled' ? 'danger' : 'primary')) }}">
                                                     {{ $booking->status_text }}

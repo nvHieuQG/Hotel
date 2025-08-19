@@ -358,6 +358,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.room-changes.*') ? 'active' : '' }}"
+                        href="{{ route('admin.room-changes.index') }}">
+                        <i class="fas fa-exchange-alt"></i> Yêu cầu đổi phòng
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? '' : 'collapsed' }}"
                         data-bs-toggle="collapse" href="#submenuRoom" role="button"
                         aria-expanded="{{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'true' : 'false' }}"
@@ -388,6 +394,11 @@
                     <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
                         href="{{ route('admin.users.index') }}">
                         <i class="fas fa-users"></i> Người dùng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}" href="{{ route('admin.promotions.index') }}">
+                        <i class="fas fa-gift"></i> Khuyến mãi
                     </a>
                 </li>
                 <li class="nav-item">
@@ -744,6 +755,8 @@
     </script>
 
     @yield('scripts')
+    @stack('scripts')
+
 </body>
 
 </html>

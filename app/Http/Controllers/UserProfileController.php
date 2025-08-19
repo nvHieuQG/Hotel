@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Interfaces\Services\ProfileServiceInterface;
 use App\Interfaces\Services\BookingServiceInterface;
 use App\Interfaces\Repositories\RoomTypeReviewRepositoryInterface;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +26,62 @@ class UserProfileController extends Controller
         $this->userProfileService = $profileService;
         $this->userBookingService = $bookingService;
         $this->userRoomTypeReviewRepository = $roomTypeReviewRepository;
+    }
+
+    // Entry mặc định cho /profile
+    public function index()
+    {
+        return $this->showUserProfile();
+    }
+
+    // Trang thông tin cá nhân (alias)
+    public function info()
+    {
+        return $this->showUserProfile();
+    }
+
+    // Cập nhật thông tin cá nhân (alias)
+    public function updateInfo(Request $request)
+    {
+        return $this->updateUserProfile($request);
+    }
+
+    // Trang đổi mật khẩu (render cùng trang profile, set tab password)
+    public function password()
+    {
+        try {
+            $profileData = $this->userProfileService->getProfileData();
+            $profileData['dashboardData'] = $this->userProfileService->getDashboardData();
+            $profileData['active_tab'] = 'password';
+            return view('client.profile.index', $profileData);
+        } catch (\Exception $e) {
+            Log::error('User Password page error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi tải trang đổi mật khẩu');
+        }
+    }
+
+    // Cập nhật mật khẩu (alias)
+    public function updatePassword(Request $request)
+    {
+        return $this->changeUserPassword($request);
+    }
+
+    // Danh sách đặt phòng (alias)
+    public function bookings()
+    {
+        return $this->showUserBookings();
+    }
+
+    // Chi tiết đặt phòng trong profile: điều hướng về route hiện có
+    public function bookingDetail($bookingId)
+    {
+        return redirect()->route('booking.detail', $bookingId);
+    }
+
+    // Danh sách đánh giá (alias)
+    public function reviews()
+    {
+        return $this->showUserReviews();
     }
 
     // Trang thông tin cá nhân (chỉ hiển thị thông tin profile, không load bookings/reviews)
@@ -109,12 +166,30 @@ class UserProfileController extends Controller
         }
     }
 
+    // Trang quản lý khuyến mại
+    public function promotions()
+    {
+        try {
+            $user = Auth::user();
+            $bookingsWithPromotions = $user->bookings()
+                ->whereNotNull('promotion_id')
+                ->with(['promotion', 'room.roomType'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            return view('client.profile.promotions', compact('bookingsWithPromotions'));
+        } catch (\Exception $e) {
+            Log::error('User Promotions error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi tải danh sách khuyến mại');
+        }
+    }
+
     /**
      * Trả về partial danh sách đánh giá cho AJAX
      */
     public function partialReviews()
     {
-        $reviews = $this->userRoomTypeReviewRepository->getReviewsByUser(auth()->id());
+        $reviews = $this->userRoomTypeReviewRepository->getReviewsByUser(Auth::id());
         return view('client.profile.reviews.partial', compact('reviews'));
     }
 
@@ -126,11 +201,33 @@ class UserProfileController extends Controller
         $review = $this->userRoomTypeReviewRepository->getReviewById($id);
         
         // Kiểm tra quyền truy cập: chỉ cho phép user xem review của chính mình
-        if (!$review || $review->user_id !== auth()->id()) {
+        if (!$review || $review->user_id !== Auth::id()) {
             abort(403, 'Không tìm thấy review hoặc không có quyền truy cập.');
         }
 
         return view('client.profile.reviews.detail', compact('review'));
+    }
+
+    /**
+     * Lấy dữ liệu review cho AJAX
+     */
+    public function getReviewData($id)
+    {
+        try {
+            $review = $this->userRoomTypeReviewRepository->getReviewById($id);
+            
+            if (!$review || $review->user_id !== Auth::id()) {
+                return response()->json(['error' => 'Không tìm thấy review hoặc không có quyền truy cập'], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'review' => $review
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Get Review Data error: ' . $e->getMessage());
+            return response()->json(['error' => 'Có lỗi xảy ra khi lấy dữ liệu review'], 500);
+        }
     }
 
 

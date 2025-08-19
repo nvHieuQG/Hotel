@@ -58,6 +58,12 @@
                                 <div class="col-md-6">
                                     <p class="mb-1 text-muted small">Số tiền</p>
                                     <strong class="text-primary">{{ number_format($payment->amount) }} VND</strong>
+                                    @if($payment->discount_amount > 0)
+                                        <div class="small mt-1">
+                                            <span>Giá gốc: {{ number_format($booking->total_booking_price) }} VND</span><br>
+                                            <span>Khuyến mại: <span class="text-success">-{{ number_format($payment->discount_amount) }} VND</span></span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                             <div class="row mt-2">
@@ -76,6 +82,9 @@
                         <form id="credit-card-form" action="{{ route('payment.credit-card.confirm', $booking->id) }}" method="POST">
                             @csrf
                             <input type="hidden" name="transaction_id" value="{{ $payment->transaction_id }}">
+                            @if($payment->promotion_id)
+                                <input type="hidden" name="promotion_id" value="{{ $payment->promotion_id }}">
+                            @endif
                             
                             <div class="form-group mb-3">
                                 <label for="cardholder_name" class="form-label">Tên chủ thẻ <span class="text-danger">*</span></label>

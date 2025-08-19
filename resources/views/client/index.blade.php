@@ -705,6 +705,10 @@
                                         {{ $type->name }}
                                     </a>
                                 </h3>
+                                @php
+                                    $representativeRoom = $type->rooms()->first();
+                                @endphp
+                                
                                 <p>
                                     <span class="price mr-2">{{ number_format($type->price) }}đ</span>
                                     <span class="per">mỗi đêm</span>
@@ -773,6 +777,51 @@
         </div>
     	</div>
     </section>
+
+    {{-- Khuyến mại nổi bật --}}
+    @if($featuredPromotions && $featuredPromotions->count() > 0)
+        <section class="ftco-section bg-light">
+            <div class="container">
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-8 text-center">
+                        <h2 class="mb-3">
+                            <i class="fas fa-gift text-primary mr-2"></i>
+                            Ưu đãi đặc biệt hôm nay
+                        </h2>
+                        <p class="text-muted">Khám phá các khuyến mại hấp dẫn cho chuyến du lịch của bạn</p>
+                    </div>
+                </div>
+                <div class="row">
+                    @foreach($featuredPromotions->take(3) as $promo)
+                        <div class="col-md-4 mb-4">
+                            <div class="card border-0 shadow-sm h-100 promotion-card">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <i class="fas fa-gift fa-3x text-primary"></i>
+                                    </div>
+                                    <h5 class="card-title text-primary mb-3">{{ $promo->title }}</h5>
+                                    <p class="card-text text-muted mb-3">{{ Str::limit($promo->description ?? '', 100) }}</p>
+                                    <div class="mb-3">
+                                        <span class="badge bg-success fs-6 px-3 py-2">{{ $promo->discount_text }}</span>
+                                    </div>
+                                    @if(!empty($promo->code))
+                                        <div class="mb-3">
+                                            <span class="badge bg-secondary fs-6 px-3 py-2">
+                                                <i class="fas fa-tag mr-1"></i>{{ $promo->code }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                    <a href="{{ route('rooms') }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-arrow-right mr-1"></i>Xem phòng
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
 
     <!-- Section Giới thiệu khách sạn -->
     <section class="ftco-section bg-light">
@@ -1437,4 +1486,44 @@
         });
     });
     </script>
+
+    <style>
+    /* Promotion styles */
+    .promotion-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef !important;
+    }
+    
+    .promotion-card:hover {
+        border-color: #007bff !important;
+        box-shadow: 0 4px 20px rgba(0, 123, 255, 0.2) !important;
+        transform: translateY(-5px);
+    }
+    
+    .promotion-card .card-body {
+        transition: all 0.3s ease;
+    }
+    
+    .promotion-card:hover .card-body {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .badge.bg-success {
+        background-color: #28a745 !important;
+    }
+    
+    .badge.bg-secondary {
+        background-color: #6c757d !important;
+    }
+    
+    .fs-6 {
+        font-size: 0.875rem !important;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
+    </style>
 @endsection

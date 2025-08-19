@@ -68,4 +68,31 @@ class RoomType extends Model
     {
         return $this->belongsToMany(Service::class, 'room_type_services');
     }
+
+    /**
+     * Get the promotions that can be applied to this room type.
+     */
+    public function promotions()
+    {
+        return $this->belongsToMany(Promotion::class, 'promotion_room_type', 'room_type_id', 'promotion_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get active promotions for this room type.
+     */
+    public function activePromotions()
+    {
+        return $this->promotions()
+                    ->where('is_active', true)
+                    ->where(function($query) {
+                        $query->whereNull('valid_from')
+                              ->orWhere('valid_from', '<=', now());
+                    })
+                    ->where('expired_at', '>', now())
+                    ->where(function($query) {
+                        $query->whereNull('usage_limit')
+                              ->orWhereRaw('used_count < usage_limit');
+                    });
+    }
 } 

@@ -31,6 +31,13 @@ interface PaymentServiceInterface
     public function createCreditCardPayment(Booking $booking, array $data = []): Payment;
 
     /**
+     * Promotions: availability and calculation
+     */
+    public function getAvailablePromotionsForBooking(Booking $booking): array;
+    public function validatePromotionForBooking(Booking $booking, ?int $promotionId = null, ?string $code = null): array;
+    public function calculateFinalAmountWithPromotion(Booking $booking, ?int $promotionId = null, ?string $code = null): array;
+
+    /**
      * Process credit card payment
      */
     public function processCreditCardPayment(Request $request, Booking $booking): array;

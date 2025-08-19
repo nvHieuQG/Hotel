@@ -52,9 +52,19 @@
                     <td>{{ $booking->check_in_date->diffInDays($booking->check_out_date) }} đêm</td>
                 </tr>
                 <tr>
-                    <td><strong>Giá:</strong></td>
+                    <td><strong>Giá gốc:</strong></td>
                     <td class="text-primary font-weight-bold">{{ number_format($booking->price) }}đ</td>
                 </tr>
+                @if($booking->promotion_discount > 0)
+                <tr>
+                    <td><strong>Giảm giá:</strong></td>
+                    <td class="text-success font-weight-bold">-{{ number_format($booking->promotion_discount) }}đ</td>
+                </tr>
+                <tr>
+                    <td><strong>Giá cuối:</strong></td>
+                    <td class="text-danger font-weight-bold">{{ number_format($booking->final_price) }}đ</td>
+                </tr>
+                @endif
                 <tr>
                     <td><strong>Trạng thái:</strong></td>
                     <td>
@@ -109,6 +119,26 @@
             </table>
         </div>
     </div>
+
+    <!-- Khuyến mại -->
+    @if($booking->status == 'pending' || $booking->status == 'confirmed')
+        <hr>
+        <div class="row">
+            <div class="col-12">
+                @php
+                    $appliedPromotion = null;
+                    if ($booking->promotion_id) {
+                        $appliedPromotion = [
+                            'title' => $booking->promotion->title,
+                            'code' => $booking->promotion->code,
+                            'discount_amount' => $booking->promotion_discount
+                        ];
+                    }
+                @endphp
+                <x-promotion-form :booking="$booking" :appliedPromotion="$appliedPromotion" />
+            </div>
+        </div>
+    @endif
     
     @php
         $roomType = $booking->room->roomType;
@@ -188,4 +218,49 @@
     <div class="mt-4">
         <x-booking-notes :booking="$booking" :showAddButton="true" :showSearch="true" />
     </div>
+
+    <!-- Yêu cầu đổi phòng -->
+    <div class="mt-4">
+        <h6 class="text-info mb-3"><i class="fas fa-exchange-alt mr-2"></i>Yêu cầu đổi phòng</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Yêu cầu đổi phòng</h6>
+                        <p class="card-text text-muted">
+                            Nếu bạn muốn đổi sang phòng khác, vui lòng gửi yêu cầu và chờ xét duyệt từ khách sạn.
+                        </p>
+                        @php
+                            $hasPendingRequest = $booking->roomChanges()->where('status', 'pending')->exists();
+                        @endphp
+                        @if($hasPendingRequest)
+                            <div class="alert alert-warning">
+                                <i class="fas fa-clock mr-2"></i>
+                                Bạn đã có yêu cầu đổi phòng đang chờ duyệt.
+                            </div>
+                        @else
+                            <a href="{{ route('room-change.request', $booking->id) }}" class="btn btn-primary">
+                                <i class="fas fa-exchange-alt"></i> Yêu cầu đổi phòng
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Lịch sử đổi phòng</h6>
+                        <p class="card-text text-muted">
+                            Xem lịch sử các yêu cầu đổi phòng của booking này.
+                        </p>
+                        <a href="{{ route('room-change.history', $booking->id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-history"></i> Xem lịch sử
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
 </div> 

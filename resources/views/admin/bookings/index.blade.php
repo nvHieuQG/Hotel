@@ -74,9 +74,11 @@
                                 <th>Mã đặt phòng</th>
                                 <th>Khách hàng</th>
                                 <th>Phòng</th>
-                                <th>Ngày check-in</th>
-                                <th>Ngày check-out</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
                                 <th>Giá</th>
+                            <th>Phụ thu</th>
+                            <th>Tổng tiền</th>
                                 <th>Trạng thái</th>
                                 <th>Thanh toán</th>
                                 <th>Thao tác</th>
@@ -91,7 +93,9 @@
                                 <td>{{ $booking->room->name }}</td>
                                 <td>{{ $booking->check_in_date }}</td>    
                                 <td>{{ $booking->check_out_date }}</td>
-                                <td>{{ number_format($booking->price) }} VND</td>
+                                <td>{{ number_format($booking->price, 0, ',', '.') }} VNĐ</td>
+                            <td>{{ number_format($booking->surcharge, 0, ',', '.') }} VNĐ</td>
+                            <td>{{ number_format($booking->total_amount, 0, ',', '.') }} VNĐ</td>
                                 <td>
                                     <span class="badge bg-{{ 
                                         $booking->status == 'pending' ? 'warning' : 

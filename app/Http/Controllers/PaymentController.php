@@ -71,8 +71,15 @@ class PaymentController extends Controller
         }
 
         $paymentMethods = $this->paymentService->getAvailablePaymentMethods();
+        $availablePromotions = $this->paymentService->getAvailablePromotionsForBooking($booking);
 
-        return view('client.booking.payment-method', compact('booking', 'paymentMethods'));
+        // Nhận promotion_id|code từ query (được truyền từ trang confirm)
+        $promotionId = request()->get('promotion_id');
+        $promotionCode = request()->get('promotion_code');
+
+        return view('client.booking.payment-method', compact('booking', 'paymentMethods', 'availablePromotions'))
+            ->with('promotionId', $promotionId)
+            ->with('promotionCode', $promotionCode);
     }
 
 
@@ -104,6 +111,30 @@ class PaymentController extends Controller
     public function failed()
     {
         return view('client.payment.failed');
+    }
+
+    /**
+     * Preview khuyến mại theo thời gian thực
+     */
+    public function promotionPreview(Request $request, Booking $booking)
+    {
+        // Kiểm tra quyền
+        if ($booking->user_id !== Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        $promotionId = $request->query('promotion_id');
+        $promotionCode = $request->query('promotion_code');
+
+        $calc = $this->paymentService->calculateFinalAmountWithPromotion($booking, $promotionId, $promotionCode);
+
+        return response()->json([
+            'success' => true,
+            'base_amount' => (int) $calc['base_amount'],
+            'discount_amount' => (int) $calc['discount_amount'],
+            'final_amount' => (int) $calc['final_amount'],
+            'promotion' => $calc['promotion'],
+        ]);
     }
 
     /**
@@ -140,7 +171,9 @@ class PaymentController extends Controller
         try {
             // Tạo payment record cho chuyển khoản
             $payment = $this->paymentService->createBankTransferPayment($booking, [
-                'customer_note' => $request->input('customer_note')
+                'customer_note' => $request->input('customer_note'),
+                'promotion_id' => $request->input('promotion_id'),
+                'promotion_code' => $request->input('promotion_code'),
             ]);
 
             // Lấy thông tin ngân hàng
@@ -214,7 +247,9 @@ class PaymentController extends Controller
         try {
             // Tạo payment record cho credit card
             $payment = $this->paymentService->createCreditCardPayment($booking, [
-                'customer_note' => $request->input('customer_note')
+                'customer_note' => $request->input('customer_note'),
+                'promotion_id' => $request->input('promotion_id'),
+                'promotion_code' => $request->input('promotion_code'),
             ]);
 
             // Lấy thông tin thẻ test
