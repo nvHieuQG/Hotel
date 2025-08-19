@@ -205,17 +205,12 @@ class AdminRoomChangeController extends Controller
             }
 
             DB::transaction(function () use ($roomChange) {
-                // Cập nhật trạng thái thanh toán trên RoomChange
+                // Only update payment status on RoomChange. Do NOT touch booking amounts.
                 $roomChange->update([
                     'payment_status' => 'paid_at_reception',
                     'paid_at' => now(),
                     'paid_by' => Auth::id(),
                 ]);
-
-                // Cộng phụ thu vào booking
-                $booking = $roomChange->booking;
-                $booking->surcharge = ($booking->surcharge ?? 0) + max(0, (float)$roomChange->price_difference);
-                $booking->save();
             });
 
             if ($request->ajax()) {
