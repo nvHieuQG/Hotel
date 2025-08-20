@@ -28,13 +28,18 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
     
         if ($status) {
             if ($status === 'booked') {
-                // Lọc phòng có booking đang pending hoặc confirmed
-                $query->whereHas('bookings', function($q) {
-                    $q->whereIn('status', ['pending', 'confirmed']);
-                })->orWhere('status', 'booked');;
+                // Nhóm điều kiện để tránh orWhere ảnh hưởng filter khác
+                $query->where(function($q) {
+                    $q->whereHas('bookings', function($qq) {
+                        $qq->whereIn('status', ['pending', 'pending_payment', 'confirmed']);
+                    })->orWhere('status', 'booked');
+                });
+            } elseif ($status === 'repair') {
+                // 'repair' là trạng thái tĩnh của phòng → có thể where trực tiếp
+                $query->where('status', 'repair');
             } else {
-                // Lọc theo trạng thái phòng
-                $query->where('status', $status);
+                // 'pending' và 'available' sẽ được lọc ở Controller theo trạng thái tính toán
+                // Không áp dụng where theo DB ở đây để không loại nhầm phòng có booking
             }
         }
     
@@ -58,11 +63,15 @@ class AdminRoomRepository implements AdminRoomRepositoryInterface
 
         if (!empty($filters['status'])) {
             if ($filters['status'] === 'booked') {
-                $query->whereHas('bookings', function($q) {
-                    $q->whereIn('status', ['pending', 'confirmed']);
-                })->orWhere('status', 'booked');
+                $query->where(function($q) {
+                    $q->whereHas('bookings', function($qq) {
+                        $qq->whereIn('status', ['pending', 'pending_payment', 'confirmed']);
+                    })->orWhere('status', 'booked');
+                });
+            } elseif ($filters['status'] === 'repair') {
+                $query->where('status', 'repair');
             } else {
-                $query->where('status', $filters['status']);
+                // 'pending' và 'available' sẽ được lọc ở Controller theo trạng thái tính toán
             }
         }
 

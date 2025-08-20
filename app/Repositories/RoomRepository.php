@@ -46,6 +46,8 @@ class RoomRepository implements RoomRepositoryInterface
                       ->where('check_out_date', '>', $checkInDateTime);
                 })->where('status', '!=', 'cancelled');
             })
+            ->orderBy('floor', 'asc')
+            ->orderBy('room_number', 'asc')
             ->first();
     }
 
