@@ -38,6 +38,7 @@
                         <select name="status" id="status" class="form-select">
                             <option value="">Tất cả</option>
                             <option value="available" {{ ($filters['status'] ?? '') == 'available' ? 'selected' : '' }}>Trống</option>
+                            <option value="pending" {{ ($filters['status'] ?? '') == 'pending' ? 'selected' : '' }}>Chờ xác nhận</option>
                             <option value="booked" {{ ($filters['status'] ?? '') == 'booked' ? 'selected' : '' }}>Đã đặt</option>
                             <option value="repair" {{ ($filters['status'] ?? '') == 'repair' ? 'selected' : '' }}>Bảo trì</option>
                         </select>
@@ -109,16 +110,21 @@
                         <div class="d-none d-lg-block">
                             <div class="row g-3">
                                 @foreach($floorRooms as $room)
+                                    @php 
+                                        $displayStatus = !empty($filters['date']) 
+                                            ? $room->getStatusForDate($filters['date']) 
+                                            : $room->status_for_display; 
+                                    @endphp
                                     <div class="col-md-3 col-lg-2">
-                                        <div class="card h-100 {{ $statusClass[$room->status] ?? 'border-secondary' }} {{ $statusBgClass[$room->status] ?? 'bg-secondary bg-opacity-50' }}">
+                                        <div class="card h-100 {{ $statusClass[$displayStatus] ?? 'border-secondary' }} {{ $statusBgClass[$displayStatus] ?? 'bg-secondary bg-opacity-50' }}">
                                             <div class="card-body p-2 text-center">
                                                 <h6 class="card-title mb-1">{{ $room->room_number }}</h6>
                                                 <small class="text-muted d-block mb-2">{{ $room->roomType->name }}</small>
                                                 <span class="badge bg-{{ 
-                                                    $room->status == 'available' ? 'success' : 
-                                                    ($room->status == 'pending' ? 'warning' : 
-                                                    ($room->status == 'booked' ? 'danger' : 'secondary')) }}">
-                                                    {{ $statusText[$room->status] ?? 'Không xác định' }}
+                                                    $displayStatus == 'available' ? 'success' : 
+                                                    ($displayStatus == 'pending' ? 'warning' : 
+                                                    ($displayStatus == 'booked' ? 'danger' : 'secondary')) }}">
+                                                    {{ $statusText[$displayStatus] ?? 'Không xác định' }}
                                                 </span>
                                                 <div class="mt-2">
                                                     <a href="{{ route('admin.rooms.show', $room->id) }}" class="btn btn-sm btn-outline-primary">
@@ -138,7 +144,12 @@
                         <!-- Mobile/Tablet List View -->
                         <div class="d-lg-none">
                             @foreach($floorRooms as $room)
-                                <div class="card mb-2 {{ $statusClass[$room->status] ?? 'border-secondary' }}">
+                                @php 
+                                    $displayStatus = !empty($filters['date']) 
+                                        ? $room->getStatusForDate($filters['date']) 
+                                        : $room->status_for_display; 
+                                @endphp
+                                <div class="card mb-2 {{ $statusClass[$displayStatus] ?? 'border-secondary' }}">
                                     <div class="card-body p-3">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="flex-grow-1">
@@ -146,10 +157,10 @@
                                                 <small class="text-muted">{{ $room->roomType->name }}</small>
                                                 <div class="mt-2">
                                                     <span class="badge bg-{{ 
-                                                        $room->status == 'available' ? 'success' : 
-                                                        ($room->status == 'pending' ? 'warning' : 
-                                                        ($room->status == 'booked' ? 'danger' : 'secondary')) }}">
-                                                        {{ $statusText[$room->status] ?? 'Không xác định' }}
+                                                        $displayStatus == 'available' ? 'success' : 
+                                                        ($displayStatus == 'pending' ? 'warning' : 
+                                                        ($displayStatus == 'booked' ? 'danger' : 'secondary')) }}">
+                                                        {{ $statusText[$displayStatus] ?? 'Không xác định' }}
                                                     </span>
                                                 </div>
                                             </div>
