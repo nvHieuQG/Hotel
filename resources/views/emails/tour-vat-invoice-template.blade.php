@@ -18,6 +18,19 @@
     <div class="header">HÓA ĐƠN GIÁ TRỊ GIA TĂNG - TOUR BOOKING</div>
     <div class="sub">Căn cứ quy định pháp luật hiện hành (từ 01/07)</div>
     
+    @php
+        $nights = $tourBooking->check_in_date && $tourBooking->check_out_date 
+            ? $tourBooking->check_in_date->copy()->startOfDay()->diffInDays($tourBooking->check_out_date->copy()->startOfDay()) 
+            : 0;
+        $roomCost = $tourBooking->total_rooms_amount ?? 0;
+        $services = $tourBooking->total_services_amount ?? 0;
+        $discount = $tourBooking->promotion_discount ?? 0;
+        $grandTotal = $roomCost + $services - $discount;
+        $vatRate = 0.1;
+        $subtotal = round($grandTotal / (1 + $vatRate));
+        $vatAmount = $grandTotal - $subtotal;
+    @endphp
+    
     <div class="tour-info">
         <strong>Thông tin Tour:</strong> {{ $tourBooking->tour_name }}<br>
         <strong>Mã Tour:</strong> {{ $tourBooking->booking_code }}<br>

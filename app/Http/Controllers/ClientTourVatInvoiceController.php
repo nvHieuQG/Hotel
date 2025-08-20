@@ -85,15 +85,25 @@ class ClientTourVatInvoiceController extends Controller
             return back()->with('error', 'Hóa đơn VAT chưa được xuất.');
         }
 
-        // Kiểm tra file tồn tại
-        $filePath = storage_path("app/vat-invoices/tour-{$tourBooking->vat_invoice_number}.pdf");
+        // Kiểm tra file tồn tại - sử dụng file path từ database
+        if (empty($tourBooking->vat_invoice_file_path)) {
+            return back()->with('error', 'Hóa đơn VAT chưa có file. Vui lòng liên hệ admin để tạo hóa đơn.');
+        }
+        
+        $filePath = storage_path('app/' . $tourBooking->vat_invoice_file_path);
         
         if (!file_exists($filePath)) {
             // Tạo file mẫu nếu không tồn tại
             $this->createSampleVatInvoice($tourBooking);
+            $tourBooking->refresh(); // Refresh để lấy file path mới
             
-            if (!file_exists($filePath)) {
+            if (empty($tourBooking->vat_invoice_file_path)) {
                 return back()->with('error', 'Không thể tạo file hóa đơn VAT. Vui lòng liên hệ quản trị viên.');
+            }
+            
+            $filePath = storage_path('app/' . $tourBooking->vat_invoice_file_path);
+            if (!file_exists($filePath)) {
+                return back()->with('error', 'File hóa đơn VAT không tồn tại sau khi tạo. Vui lòng liên hệ quản trị viên.');
             }
         }
 
@@ -125,16 +135,12 @@ class ClientTourVatInvoiceController extends Controller
 
             $filePath = storage_path("app/vat-invoices/tour-{$tourBooking->vat_invoice_number}.pdf");
             
-            // Tạo PDF từ template HTML
-            $html = view('emails.tour-vat-invoice-template', compact('tourBooking'))->render();
+            // Sử dụng service để tạo PDF
+            $tourVatInvoiceService = app(\App\Services\TourVatInvoiceService::class);
+            $filePath = $tourVatInvoiceService->generateVatInvoice($tourBooking);
             
-            // Tạo PDF sử dụng DomPDF
-            $pdf = Pdf::loadHTML($html);
-            $pdf->setPaper('A4', 'portrait');
-            
-            // Lưu PDF
-            if (!$pdf->save($filePath)) {
-                throw new \Exception("Không thể tạo file PDF: {$filePath}");
+            if (!$filePath) {
+                throw new \Exception("Không thể tạo file hóa đơn VAT");
             }
             
             Log::info('VAT invoice PDF created successfully for client', [
@@ -170,38 +176,6 @@ class ClientTourVatInvoiceController extends Controller
         $content .= "THÔNG TIN KHÁCH HÀNG\n";
         $content .= str_repeat("-", 30) . "\n";
         $content .= "Tên công ty: {$tourBooking->company_name}\n";
-        $content .= "Mã số thuế: {$tourBooking->company_tax_code}\n";
-        $content .= "Địa chỉ: {$tourBooking->company_address}\n";
-        $content .= "Email: {$tourBooking->company_email}\n";
-        $content .= "Điện thoại: {$tourBooking->company_phone}\n\n";
-        
-        $content .= "THÔNG TIN TOUR\n";
-        $content .= str_repeat("-", 30) . "\n";
-        $content .= "Tên tour: {$tourBooking->tour_name}\n";
-        $content .= "Số khách: {$tourBooking->total_guests} người\n";
-        $content .= "Số phòng: {$tourBooking->total_rooms} phòng\n";
-        $content .= "Check-in: {$tourBooking->check_in_date->format('d/m/Y')}\n";
-        $content .= "Check-out: {$tourBooking->check_out_date->format('d/m/Y')}\n";
-        $content .= "Số đêm: " . $tourBooking->check_in_date->diffInDays($tourBooking->check_out_date) . " đêm\n\n";
-        
-        $content .= "CHI TIẾT GIÁ\n";
-        $content .= str_repeat("-", 30) . "\n";
-        $content .= "Tổng tiền phòng: " . number_format($tourBooking->total_rooms_amount, 0, ',', '.') . " VNĐ\n";
-        $content .= "Tổng tiền dịch vụ: " . number_format($tourBooking->total_services_amount, 0, ',', '.') . " VNĐ\n";
-        $content .= "Tổng cộng: " . number_format($tourBooking->total_amount_before_discount, 0, ',', '.') . " VNĐ\n";
-        
-        if ($tourBooking->promotion_discount > 0) {
-            $content .= "Giảm giá: -" . number_format($tourBooking->promotion_discount, 0, ',', '.') . " VNĐ\n";
-            $content .= "Giá cuối: " . number_format($tourBooking->final_amount, 0, ',', '.') . " VNĐ\n";
-        }
-        
-        $content .= "Thuế VAT (10%): " . number_format($tourBooking->final_amount * 0.1, 0, ',', '.') . " VNĐ\n";
-        $content .= "TỔNG CỘNG: " . number_format($tourBooking->final_amount * 1.1, 0, ',', '.') . " VNĐ\n\n";
-        
-        $content .= "Ghi chú:\n";
-        $content .= "- Hóa đơn này được tạo tự động bởi hệ thống\n";
-        $content .= "- Vui lòng giữ hóa đơn này để làm bằng chứng thanh toán\n";
-                $content .= "- Mọi thắc mắc vui lòng liên hệ: 1900-xxxx\n\n";
         
         return $content;
     }
