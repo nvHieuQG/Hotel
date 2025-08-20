@@ -236,6 +236,67 @@ class AdminRoomChangeController extends Controller
     }
 
     /**
+     * Xác nhận đã hoàn tiền tại quầy lễ tân (áp dụng khi chênh lệch âm)
+     */
+    public function markAsRefunded(Request $request, RoomChange $roomChange)
+    {
+        try {
+            // Chỉ cho phép hoàn tiền nếu chênh lệch âm
+            if ($roomChange->price_difference >= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Yêu cầu đổi phòng này không có khoản hoàn tiền.'
+                ], 400);
+            }
+
+            // Phải đang ở trạng thái chờ hoàn tiền
+            if (!$roomChange->isRefundPending()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Yêu cầu này không ở trạng thái chờ hoàn tiền.'
+                ], 400);
+            }
+
+            // Không xử lý lại nếu đã hoàn
+            if ($roomChange->isRefunded()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Yêu cầu này đã được xác nhận hoàn tiền trước đó.'
+                ], 400);
+            }
+
+            DB::transaction(function () use ($roomChange) {
+                // Chỉ cập nhật trạng thái hoàn tiền, không đổi số tiền booking
+                $roomChange->update([
+                    'payment_status' => 'refunded',
+                    'paid_at' => now(), // tái sử dụng cột thời gian thanh toán cho mốc hoàn tiền
+                    'paid_by' => Auth::id(),
+                ]);
+            });
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã xác nhận hoàn tiền thành công.'
+                ]);
+            }
+
+            return redirect()->route('admin.room-changes.index')
+                ->with('success', 'Đã xác nhận hoàn tiền thành công.');
+
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()
+                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * API để lấy thống kê yêu cầu đổi phòng
      */
     public function statistics()

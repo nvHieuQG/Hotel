@@ -123,6 +123,16 @@ class RoomChange extends Model
         return $this->payment_status === 'pending';
     }
 
+    public function isRefundPending(): bool
+    {
+        return $this->payment_status === 'refund_pending';
+    }
+
+    public function isRefunded(): bool
+    {
+        return $this->payment_status === 'refunded';
+    }
+
     public function isPaymentNotRequired(): bool
     {
         return $this->payment_status === 'not_required';
@@ -162,7 +172,9 @@ class RoomChange extends Model
         return match($this->payment_status) {
             'not_required' => 'Không cần thanh toán',
             'pending' => 'Chờ thanh toán tại quầy',
+            'refund_pending' => 'Chờ hoàn tiền tại quầy',
             'paid_at_reception' => 'Đã thanh toán tại quầy',
+            'refunded' => 'Đã hoàn tiền tại quầy',
             default => 'Không xác định'
         };
     }
@@ -172,7 +184,9 @@ class RoomChange extends Model
         return match($this->payment_status) {
             'not_required' => 'secondary',
             'pending' => 'warning',
+            'refund_pending' => 'info',
             'paid_at_reception' => 'success',
+            'refunded' => 'success',
             default => 'light'
         };
     }
