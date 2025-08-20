@@ -131,14 +131,24 @@
                                                                     </span>
                                                                 </div>
                                                             </div>
-                                                            <div class="custom-control custom-checkbox">
-                                                                <input type="checkbox" class="custom-control-input svc-check" id="svc_chk_{{ $svc->id }}"
-                                                                       data-service-id="{{ $svc->id }}"
-                                                                       data-charge-type="{{ $svc->charge_type }}"
-                                                                       data-service-name="{{ $svc->name }}"
-                                                                       data-price-adult="{{ (int)($svc->price_adult ?? 0) }}"
-                                                                       data-price-child="{{ (int)($svc->price_child ?? 0) }}">
-                                                                <label class="custom-control-label" for="svc_chk_{{ $svc->id }}"></label>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="custom-control custom-checkbox mr-2">
+                                                                    <input type="checkbox" class="custom-control-input svc-apply" id="svc_apply_all_{{ $svc->id }}"
+                                                                           data-service-id="{{ $svc->id }}"
+                                                                           title="Áp dụng cho tất cả khách">
+                                                                    <label class="custom-control-label small" for="svc_apply_all_{{ $svc->id }}" title="Áp dụng cho tất cả khách">
+                                                                        <i class="fas fa-users"></i>
+                                                                    </label>
+                                                                </div>
+                                                                <div class="custom-control custom-checkbox">
+                                                                    <input type="checkbox" class="custom-control-input svc-check" id="svc_chk_{{ $svc->id }}"
+                                                                           data-service-id="{{ $svc->id }}"
+                                                                           data-charge-type="{{ $svc->charge_type }}"
+                                                                           data-service-name="{{ $svc->name }}"
+                                                                           data-price-adult="{{ (int)($svc->price_adult ?? 0) }}"
+                                                                           data-price-child="{{ (int)($svc->price_child ?? 0) }}">
+                                                                    <label class="custom-control-label" for="svc_chk_{{ $svc->id }}"></label>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <!-- Config block (hidden until checked) -->

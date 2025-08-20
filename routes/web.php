@@ -12,13 +12,13 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingPromotionController;
-use App\Http\Controllers\HotelController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\RoomChangeController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\RoomTypeReviewController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\ClientVatInvoiceController;
 
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminRoomController;
@@ -124,6 +124,13 @@ Route::middleware(['auth', 'check.booking.access'])->group(function () {
     Route::post('/booking-notes/{bookingId}/response', [BookingController::class, 'notesStoreResponse'])->name('booking-notes.store-response');
 });
 
+// Client VAT invoice
+Route::middleware(['auth'])->group(function () {
+    Route::post('profile/bookings/{booking}/vat/request', [ClientVatInvoiceController::class, 'request'])->name('client.vat-invoice.request');
+    Route::post('profile/bookings/{booking}/vat/generate', [ClientVatInvoiceController::class, 'generate'])->name('client.vat-invoice.generate');
+    Route::post('profile/bookings/{booking}/vat/send', [ClientVatInvoiceController::class, 'send'])->name('client.vat-invoice.send');
+});
+
 // Routes công khai cho room type reviews (chỉ hiển thị)
 Route::get('/rooms/{id}/reviews-ajax', [HotelController::class, 'getRoomReviewsAjax'])->name('rooms.reviews-ajax');
 
@@ -147,6 +154,12 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('bookings/{id}/download-registration', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-registration');
     Route::get('bookings/{id}/download-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-word');
     Route::get('bookings/{id}/view-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.view-word');
+
+    // VAT invoice
+    Route::post('bookings/{id}/vat/generate', [AdminBookingController::class, 'generateVatInvoice'])->name('bookings.vat.generate');
+    Route::post('bookings/{id}/vat/send', [AdminBookingController::class, 'sendVatInvoice'])->name('bookings.vat.send');
+    Route::get('bookings/{id}/vat/preview', [AdminBookingController::class, 'previewVatInvoice'])->name('bookings.vat.preview');
+    Route::get('bookings/{id}/vat/download', [AdminBookingController::class, 'downloadVatInvoice'])->name('bookings.vat.download');
     
 
 

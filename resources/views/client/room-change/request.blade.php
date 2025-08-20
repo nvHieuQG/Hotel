@@ -24,8 +24,8 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">
-                        <h4 class="mb-0">Yêu cầu đổi phòng - Booking #{{ $booking->booking_id }}</h4>
+                    <div class="card-header" style="background-color: #C9A888; color: white;">
+                        <h4 class="mb-0">Yêu cầu đổi phòng - Booking #{{ $booking->id }}</h4>
                     </div>
                     <div class="card-body">
                         <!-- Thông tin booking hiện tại -->
@@ -56,14 +56,18 @@
                                 <select name="new_room_type_id" id="new_room_type_id" class="form-control" required>
                                     <option value="">-- Chọn loại phòng --</option>
                                     @foreach($availableRoomTypes as $roomType)
+                                        @php
+                                            $nights = $booking->check_in_date->diffInDays($booking->check_out_date);
+                                            $totalPrice = $roomType->price * $nights;
+                                        @endphp
                                         <option value="{{ $roomType->id }}" 
                                                 data-price="{{ $roomType->price ?? 0 }}"
                                                 data-available-rooms="{{ $roomType->rooms->count() }}">
                                             {{ $roomType->name }} 
                                             @if($roomType->id === $booking->room->room_type_id)
-                                                (Cùng loại - {{ $roomType->rooms->count() }} phòng trống)
+                                                (Cùng loại - {{ number_format($roomType->price, 0, ',', '.') }} VNĐ/đêm - {{ number_format($totalPrice, 0, ',', '.') }} VNĐ)
                                             @else
-                                                ({{ $roomType->rooms->count() }} phòng trống)
+                                                ({{ number_format($roomType->price, 0, ',', '.') }} VNĐ/đêm - {{ number_format($totalPrice, 0, ',', '.') }} VNĐ)
                                             @endif
                                         </option>
                                     @endforeach
@@ -105,7 +109,7 @@
                             </div>
 
                             <div class="form-group">
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn" style="background-color: #C9A888; color: white; border-color: #C9A888;">
                                     <i class="fa fa-paper-plane"></i> Gửi yêu cầu đổi phòng
                                 </button>
                                 <a href="{{ route('booking.detail', $booking->id) }}" class="btn btn-secondary">

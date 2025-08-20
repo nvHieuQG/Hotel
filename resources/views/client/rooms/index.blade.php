@@ -82,7 +82,26 @@
                             {{-- Duyệt qua từng loại phòng nếu có kết quả --}}
                             @foreach ($roomTypes as $type)
                                 <div class="col-sm col-md-6 col-lg-4 ftco-animate">
-                                    <div class="room">
+                                    <div class="room position-relative">
+                                        <!-- Khuyến mãi badge -->
+                                        @php
+                                            // Lấy khuyến mãi tốt nhất theo tổng tiền (giá x số đêm)
+                                            $n = isset($nights) && $nights > 0 ? (int)$nights : 1;
+                                            $amountContext = (float)$type->price * $n;
+                                            $promotionData = \App\Models\Promotion::getBestPromotionForRoomType($type->id, $amountContext);
+                                            $bestPromotion = $promotionData ? $promotionData['promotion'] : null;
+                                            $maxDiscountValue = $promotionData ? $promotionData['discount_amount'] : 0;
+                                            // Giá hiển thị theo mỗi đêm
+                                            $finalPrice = $promotionData ? max(0, (int)round($promotionData['final_price'] / $n)) : $type->price;
+                                        @endphp
+                                        @if($bestPromotion)
+                                            <div class="promotion-badge position-absolute" style="top: 10px; left: 10px; z-index: 10;">
+                                                <span class="badge badge-danger px-3 py-2" style="font-size: 0.8rem; background: linear-gradient(45deg, #ff6b6b, #ee5a52);">
+                                                    <i class="fas fa-tag mr-1"></i>
+                                                    {{ $promotionData['discount_text'] }}
+                                                </span>
+                                            </div>
+                                        @endif
                                         {{-- Đường dẫn và hình ảnh loại phòng --}}
                                         <a href="{{ route('rooms-single', $type->id) }}"
                                             class="img d-flex justify-content-center align-items-center"
@@ -114,8 +133,14 @@
                                                 $representativeRoom = $type->rooms()->where('status', 'available')->first();
                                             @endphp
                                             <p>
-                                                <span class="price mr-2">{{ number_format($type->price) }}đ</span>
-                                                <span class="per">mỗi đêm</span>
+                                                @if($bestPromotion)
+                                                    <span class="price mr-2 text-decoration-line-through text-muted" style="font-size: 0.9em;">{{ number_format($type->price) }}đ</span>
+                                                    <span class="price mr-2 text-danger font-weight-bold">{{ number_format($finalPrice) }}đ</span>
+                                                    <span class="per">mỗi đêm</span>
+                                                @else
+                                                    <span class="price mr-2">{{ number_format($type->price) }}đ</span>
+                                                    <span class="per">mỗi đêm</span>
+                                                @endif
                                             </p>
                                             <ul class="list">
                                                 <li><span>Sức chứa:</span> {{ $type->capacity }} Người</li>
@@ -303,6 +328,29 @@
 
 .badge.bg-secondary {
     background-color: #6c757d !important;
+}
+
+/* Promotion badge styles */
+.promotion-badge .badge {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border: 2px solid #fff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.room .position-relative {
+    overflow: hidden;
+}
+
+.room .promotion-badge {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 </style>
 @endsection

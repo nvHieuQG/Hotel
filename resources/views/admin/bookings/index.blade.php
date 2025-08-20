@@ -100,6 +100,9 @@
                                     ->sum('price_difference');
                                 $servicesAndSurcharge = $booking->surcharge + $booking->extra_services_total + $booking->total_services_price + $roomChangeSurcharge;
                                 $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
+                                if ($totalDiscount <= 0 && (float)($booking->promotion_discount ?? 0) > 0) {
+                                    $totalDiscount = (float) $booking->promotion_discount;
+                                }
                             @endphp
                                 <td>{{ number_format($booking->base_room_price, 0, ',', '.') }} VNĐ</td>
                             <td>{{ number_format($servicesAndSurcharge, 0, ',', '.') }} VNĐ</td>
@@ -185,7 +188,7 @@
                             </div>
                             <div class="col-6">
                                 <small class="text-muted d-block">Giá phòng:</small>
-                                <strong>{{ number_format($booking->base_room_price) }} VND</strong>
+                                <strong>{{ number_format($booking->base_room_price) }} VNĐ</strong>
                             </div>
                         </div>
                         

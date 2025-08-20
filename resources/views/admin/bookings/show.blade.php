@@ -191,11 +191,14 @@
                                     </p>
                                     @php 
                                         $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
+                                        if ($totalDiscount <= 0 && (float)($booking->promotion_discount ?? 0) > 0) {
+                                            $totalDiscount = (float) $booking->promotion_discount;
+                                        }
                                         $grand = ($roomCost ?? 0) + ($guestSurcharge ?? 0) + ($roomChangeSurcharge ?? 0) + ($svcTotal ?? 0); 
-                                        $finalAmount = $grand - $totalDiscount;
+                                        $finalAmount = $grand - ($totalDiscount ?? 0);
                                     @endphp
                                     @if($totalDiscount > 0)
-                                        <p><strong>Khuyến mại (chỉ áp dụng giá phòng):</strong>
+                                        <p><strong>Khuyến mại:</strong>
                                             <span class="text-success">-{{ number_format($totalDiscount) }} VNĐ</span>
                                         </p>
                                     @endif
@@ -459,6 +462,91 @@
                                             <br>
                                             <small class="text-muted">Khách hàng chưa thực hiện thanh toán cho đặt phòng này.</small>
                                         </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hóa đơn VAT -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                                                    <div class="card-header">
+                                        <i class="fas fa-file-invoice-dollar me-1"></i>
+                                        Hóa đơn VAT
+                                         {{-- <small class="text-muted">(Trạng thái: {{ $booking->vat_invoice_status ?? 'pending' }})</small>
+                                        <div class="small text-muted mt-1">
+                                            File path: {{ $booking->vat_invoice_file_path ?? 'Chưa có' }}
+                                        </div> --}}
+                                    </div>
+                                <div class="card-body">
+                                    @php $vatInfo = (array)($booking->vat_invoice_info ?? []); @endphp
+                                    @if(!empty($vatInfo))
+                                        <div class="row small">
+                                            <div class="col-md-4"><strong>Công ty:</strong> {{ $vatInfo['companyName'] ?? '' }}</div>
+                                            <div class="col-md-4"><strong>MST:</strong> {{ $vatInfo['taxCode'] ?? '' }}</div>
+                                            <div class="col-md-4"><strong>Email nhận HĐ:</strong> {{ $vatInfo['receiverEmail'] ?? '' }}</div>
+                                            <div class="col-12 mt-1"><strong>Địa chỉ:</strong> {{ $vatInfo['companyAddress'] ?? '' }}</div>
+                                        </div>
+                                        <div class="mt-3 d-flex gap-2 flex-wrap">
+                                            <form action="{{ route('admin.bookings.vat.generate', $booking->id) }}" method="POST" class="me-2 mb-1">
+                                                @csrf
+                                                <button class="btn btn-outline-primary btn-sm"><i class="fas fa-file-pdf"></i> Tạo hóa đơn PDF</button>
+                                            </form>
+                                            
+                                            @if($booking->vat_invoice_file_path)
+                                                <a class="btn btn-info btn-sm me-2 mb-1" href="{{ route('admin.bookings.vat.preview', $booking->id) }}" target="_blank">
+                                                    <i class="fas fa-eye"></i> Xem trước
+                                                </a>
+                                                <a class="btn btn-secondary btn-sm me-2 mb-1" href="{{ route('admin.bookings.vat.download', $booking->id) }}">
+                                                    <i class="fas fa-download"></i> Tải xuống
+                                                </a>
+                                            @endif
+                                            
+                                            <form action="{{ route('admin.bookings.vat.send', $booking->id) }}" method="POST" class="mb-1">
+                                                @csrf
+                                                <button class="btn btn-primary btn-sm" {{ empty($booking->vat_invoice_file_path) ? 'disabled' : '' }}>
+                                                    <i class="fas fa-envelope"></i> Gửi email hóa đơn
+                                                </button>
+                                                @if(empty($booking->vat_invoice_file_path))
+                                                    <small class="text-muted d-block mt-1">Cần tạo hóa đơn PDF trước</small>
+                                                @endif
+                                            </form>
+                                        </div>
+                                        @php
+                                            $ci = $booking->check_in_date;
+                                            $co = $booking->check_out_date;
+                                            $nights = $ci && $co ? $ci->copy()->startOfDay()->diffInDays($co->copy()->startOfDay()) : 0;
+                                            $nightly = (int)($booking->room->roomType->price ?? $booking->room->price ?? 0);
+                                            $roomCost = max(0, $nights) * $nightly;
+                                            $services = (float)($booking->extra_services_total ?? 0) + (float)($booking->total_services_price ?? 0);
+                                            $surcharge = (float)($booking->surcharge ?? 0);
+                                            $discount = (float) $booking->payments()->where('status','!=','failed')->sum('discount_amount');
+                                            $subtotal = $roomCost + $services + $surcharge - $discount;
+                                            $vatRate = 0.1;
+                                            $vatAmount = max(0, round($subtotal * $vatRate));
+                                            $grandTotal = $subtotal + $vatAmount;
+                                        @endphp
+                                        
+                                        <div class="alert alert-light mt-3 mb-0">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Thông tin VAT:</strong> Giá tiền đã bao gồm VAT 10%, không thu thêm phí. Hóa đơn chỉ để khách kê khai thuế.
+                                        </div>
+                                        
+                                        @if($grandTotal >= 5000000)
+                                            <div class="alert alert-warning mt-3 mb-0">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <strong>Lưu ý quan trọng:</strong> Hóa đơn từ 5.000.000đ ({{ number_format($grandTotal) }} VNĐ) phải thanh toán bằng thẻ/tài khoản công ty hoặc chuyển khoản công ty theo quy định pháp luật.
+                                            </div>
+                                        @else
+                                            <div class="alert alert-info mt-3 mb-0">
+                                                <i class="fas fa-info-circle"></i>
+                                                <strong>Thông tin:</strong> Hóa đơn dưới 5.000.000đ ({{ number_format($grandTotal) }} VNĐ) cho phép thanh toán cá nhân trước, sau đó khách chuyển khoản công ty để xuất hóa đơn VAT.
+                                            </div>
+                                        @endif
+                                    @else
+                                        <div class="text-muted">Chưa có yêu cầu xuất hóa đơn từ khách. Thực hiện từ phía khách hoặc liên hệ để bổ sung thông tin.</div>
                                     @endif
                                 </div>
                             </div>

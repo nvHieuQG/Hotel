@@ -75,19 +75,27 @@
                                     @foreach ($bookings as $booking)
                                         <tr>
                                             <td>{{ $booking->booking_id }}</td>
-                                            <td>{{ $booking->room->roomType->name }}</td>
+                                            <td>{{ $booking->room && $booking->room->roomType ? $booking->room->roomType->name : 'Không xác định' }}</td>
                                             <td>{{ $booking->check_in_date->format('d/m/Y') }}</td>
                                             <td>{{ $booking->check_out_date->format('d/m/Y') }}</td>
                                             <td>
-                                                @if($booking->promotion_discount > 0)
+                                                @php
+                                                    // Tính giá cuối cùng sau khi trừ khuyến mại (giống logic admin)
+                                                    $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
+                                                    if ($totalDiscount <= 0 && (float)($booking->promotion_discount ?? 0) > 0) {
+                                                        $totalDiscount = (float) $booking->promotion_discount;
+                                                    }
+                                                    $finalPrice = $booking->price - ($totalDiscount ?? 0);
+                                                @endphp
+                                                @if($totalDiscount > 0)
                                                     <div class="text-decoration-line-through text-muted">
-                                                        {{ number_format($booking->price) }}đ
+                                                        {{ number_format($booking->price) }} VNĐ
                                                     </div>
                                                     <div class="text-danger font-weight-bold">
-                                                        {{ number_format($booking->final_price) }}đ
+                                                        {{ number_format($finalPrice) }} VNĐ
                                                     </div>
                                                 @else
-                                                    {{ number_format($booking->price) }}đ
+                                                    {{ number_format($finalPrice) }} VNĐ
                                                 @endif
                                             </td>
                                             <td>
@@ -97,7 +105,7 @@
                                                         {{ $booking->promotion_code }}
                                                     </div>
                                                     <div class="small text-muted">
-                                                        -{{ number_format($booking->promotion_discount) }}đ
+                                                        -{{ number_format($totalDiscount) }} VNĐ
                                                     </div>
                                                 @else
                                                     <span class="text-muted">Không có</span>
@@ -110,14 +118,14 @@
                                             </td>
                                             <td>
                                                 @php
-                                                    $roomType = $booking->room->roomType;
-                                                    $hasReviewed = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+                                                    $roomType = $booking->room && $booking->room->roomType ? $booking->room->roomType : null;
+                                                    $hasReviewed = $roomType ? \App\Models\RoomTypeReview::where('user_id', auth()->id())
                                                         ->where('room_type_id', $roomType->id)
-                                                        ->exists();
-                                                    $canReview = $booking->status === 'completed' && !$hasReviewed;
+                                                        ->exists() : false;
+                                                    $canReview = $booking->status === 'completed' && !$hasReviewed && $roomType;
                                                 @endphp
                                                 
-                                                @if ($hasReviewed)
+                                                @if ($hasReviewed && $roomType)
                                                     @php 
                                                         $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
                                                             ->where('room_type_id', $roomType->id)
@@ -139,7 +147,7 @@
                                                             <button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="{{ $review->id }}">Xóa</button>
                                                         </div>
                                                     @endif
-                                                @elseif ($canReview)
+                                                @elseif ($canReview && $roomType)
                                                     <button class="btn btn-sm btn-success create-review-btn" data-room-type-id="{{ $roomType->id }}">
                                                         <i class="fas fa-star"></i> Đánh giá ngay
                                                     </button>

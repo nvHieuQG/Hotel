@@ -68,6 +68,18 @@ class HotelController extends Controller
     {
         // Lấy thông tin tìm kiếm từ URL
         $searchParams = $request->only(['check_in_date', 'check_out_date', 'guests']);
+        // Tính số đêm nếu có chọn ngày để dùng làm bối cảnh tính khuyến mại
+        $nights = 1;
+        if (!empty($searchParams['check_in_date']) && !empty($searchParams['check_out_date'])) {
+            try {
+                $start = \Carbon\Carbon::parse($searchParams['check_in_date']);
+                $end = \Carbon\Carbon::parse($searchParams['check_out_date']);
+                $diff = $start->diffInDays($end);
+                $nights = max(1, $diff);
+            } catch (\Throwable $e) {
+                $nights = 1;
+            }
+        }
 
         // Lấy tất cả phòng để hiển thị ở trang danh sách phòng
         $rooms = $this->roomRepository->getAll();
@@ -103,7 +115,7 @@ class HotelController extends Controller
             $searchMessage = null;
         }
 
-        return view('client.rooms.index', compact('rooms', 'roomTypes', 'searchParams', 'searchMessage', 'featuredPromotions'));
+        return view('client.rooms.index', compact('rooms', 'roomTypes', 'searchParams', 'searchMessage', 'featuredPromotions', 'nights'));
     }
 
     public function restaurant()

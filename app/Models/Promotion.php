@@ -377,4 +377,57 @@ class Promotion extends Model
                 return [];
         }
     }
+
+    /**
+     * Lấy khuyến mãi tốt nhất cho một loại phòng cụ thể
+     * Ưu tiên khuyến mãi có giá trị giảm cao nhất
+     */
+    public static function getBestPromotionForRoomType(int $roomTypeId, float $roomPrice): ?array
+    {
+        $availablePromotions = static::where('is_active', true)
+            ->where(function($query) use ($roomTypeId) {
+                // Khuyến mãi áp dụng cho tất cả
+                $query->where('apply_scope', 'all')
+                      // Hoặc khuyến mãi áp dụng cho loại phòng này
+                      ->orWhere(function($subQuery) use ($roomTypeId) {
+                          $subQuery->where('apply_scope', 'room_types')
+                                   ->whereHas('roomTypes', function($roomQuery) use ($roomTypeId) {
+                                       $roomQuery->where('room_types.id', $roomTypeId);
+                                   });
+                      });
+            })
+            ->where(function($query) {
+                $query->whereNull('valid_from')
+                      ->orWhere('valid_from', '<=', now());
+            })
+            ->where('expired_at', '>', now())
+            ->get();
+
+        $bestPromotion = null;
+        $maxDiscountValue = 0;
+
+        // Tìm khuyến mãi có giá trị cao nhất cho loại phòng này
+        foreach($availablePromotions as $promotion) {
+            if ($promotion->canApplyToAmount($roomPrice)) {
+                $discountAmount = $promotion->calculateDiscount($roomPrice);
+                if ($discountAmount > $maxDiscountValue) {
+                    $maxDiscountValue = $discountAmount;
+                    $bestPromotion = $promotion;
+                }
+            }
+        }
+
+        if (!$bestPromotion) {
+            return null;
+        }
+
+        return [
+            'promotion' => $bestPromotion,
+            'discount_amount' => $maxDiscountValue,
+            'final_price' => $roomPrice - $maxDiscountValue,
+            'discount_text' => $bestPromotion->discount_type === 'percentage' 
+                ? '-' . number_format($bestPromotion->discount_value, 0) . '%'
+                : '-' . number_format($bestPromotion->discount_value) . 'đ'
+        ];
+    }
 } 

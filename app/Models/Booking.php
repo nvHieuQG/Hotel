@@ -50,7 +50,13 @@ class Booking extends Model
         'booker_relationship',
         'registration_status',
         'registration_generated_at',
-        'registration_sent_at'
+        'registration_sent_at',
+        // VAT invoice fields
+        'vat_invoice_info',
+        'vat_invoice_status',
+        'vat_invoice_generated_at',
+        'vat_invoice_sent_at',
+        'vat_invoice_file_path'
     ];
 
     /**
@@ -66,6 +72,9 @@ class Booking extends Model
         'extra_services_total' => 'decimal:2',
         'registration_generated_at' => 'datetime',
         'registration_sent_at' => 'datetime',
+        'vat_invoice_info' => 'array',
+        'vat_invoice_generated_at' => 'datetime',
+        'vat_invoice_sent_at' => 'datetime',
     ];
 
     /**

@@ -821,6 +821,7 @@ function loadBookingDetail(bookingId) {
         document.getElementById('booking-detail-content').innerHTML = html;
     })
     .catch(error => {
+        console.error('Error loading booking detail:', error);
         document.getElementById('booking-detail-content').innerHTML = 
             '<div class="alert alert-danger">Không thể tải chi tiết đặt phòng: ' + error.message + '</div>';
     });
@@ -1088,8 +1089,9 @@ $(document).on('click', '.btn-view-booking', function() {
     $('#bookingDetailModal').modal('show');
     $.get('/user/bookings/' + bookingId + '/detail', function(html) {
         $('#booking-detail-content').html(html);
-    }).fail(function() {
-        $('#booking-detail-content').html('<div class="alert alert-danger">Không thể tải chi tiết booking.</div>');
+    }).fail(function(xhr, status, error) {
+        console.error('Failed to load booking detail:', status, error);
+        $('#booking-detail-content').html('<div class="alert alert-danger">Không thể tải chi tiết đặt phòng. Vui lòng thử lại sau.</div>');
     });
 });
 

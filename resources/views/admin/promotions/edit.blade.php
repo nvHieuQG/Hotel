@@ -213,11 +213,39 @@
 
                                     <!-- Tab: Tất cả phòng -->
                                     <div class="tab-pane fade {{ $currentScope === 'all' ? 'show active' : '' }}" id="all-rooms" role="tabpanel">
-                                        <div class="alert alert-info">
-                                            <i class="fas fa-info-circle"></i>
-                                            <strong>Khuyến mại này sẽ áp dụng cho tất cả phòng trong khách sạn.</strong>
-                                            <br>
-                                            <small class="text-muted">Không cần chọn loại phòng cụ thể.</small>
+                                        <div class="alert alert-success">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-globe fa-2x text-success me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-1"><strong>Áp dụng cho tất cả loại phòng</strong></h6>
+                                                    <p class="mb-0">Khuyến mại này sẽ hiển thị trên tất cả các loại phòng trong khách sạn.</p>
+                                                    <small class="text-muted">✓ Không cần chọn loại phòng cụ thể</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-primary">
+                                                    <i class="fas fa-chart-bar"></i> Thống kê áp dụng
+                                                </h6>
+                                                @php
+                                                    $totalRoomTypes = \App\Models\RoomType::count();
+                                                    $totalRooms = \App\Models\Room::count();
+                                                @endphp
+                                                <div class="row text-center">
+                                                    <div class="col-6">
+                                                        <div class="border-end">
+                                                            <h4 class="text-primary mb-0">{{ $totalRoomTypes }}</h4>
+                                                            <small class="text-muted">Loại phòng</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <h4 class="text-success mb-0">{{ $totalRooms }}</h4>
+                                                        <small class="text-muted">Tổng số phòng</small>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 

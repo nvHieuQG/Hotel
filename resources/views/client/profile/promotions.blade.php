@@ -84,13 +84,21 @@
                                                 <div class="small text-muted mt-1">{{ $booking->promotion->title }}</div>
                                             </td>
                                             <td class="text-success font-weight-bold">
-                                                -{{ number_format($booking->promotion_discount) }}đ
+                                                @php
+                                                    // Tính giá cuối cùng sau khi trừ khuyến mại (giống logic admin)
+                                                    $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
+                                                    if ($totalDiscount <= 0 && (float)($booking->promotion_discount ?? 0) > 0) {
+                                                        $totalDiscount = (float) $booking->promotion_discount;
+                                                    }
+                                                    $finalPrice = $booking->price - ($totalDiscount ?? 0);
+                                                @endphp
+                                                -{{ number_format($totalDiscount) }} VNĐ
                                             </td>
                                             <td class="text-decoration-line-through text-muted">
-                                                {{ number_format($booking->price) }}đ
+                                                {{ number_format($booking->price) }} VNĐ
                                             </td>
                                             <td class="text-danger font-weight-bold">
-                                                {{ number_format($booking->final_price) }}đ
+                                                {{ number_format($finalPrice) }} VNĐ
                                             </td>
                                             <td>{{ $booking->created_at->format('d/m/Y H:i') }}</td>
                                             <td>
@@ -132,7 +140,7 @@
                                 <div class="card text-center">
                                     <div class="card-body">
                                         <i class="fas fa-money-bill-wave fa-2x text-success mb-2"></i>
-                                        <h4 class="text-success">{{ number_format($bookingsWithPromotions->sum('promotion_discount')) }}đ</h4>
+                                        <h4 class="text-success">{{ number_format($bookingsWithPromotions->sum('promotion_discount')) }} VNĐ</h4>
                                         <p class="text-muted mb-0">Tổng tiết kiệm</p>
                                     </div>
                                 </div>

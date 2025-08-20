@@ -27,7 +27,21 @@
                 <div class="col-lg-8">
                     <div class="row">
                         <div class="col-md-12 ftco-animate">
-                            <h2 class="mb-4">{{ $roomType->name }}</h2>
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <h2 class="mb-0">{{ $roomType->name }}</h2>
+                                @php
+                                    $promotionData = \App\Models\Promotion::getBestPromotionForRoomType($roomType->id, (float)$roomType->price);
+                                    $bestPromotion = $promotionData ? $promotionData['promotion'] : null;
+                                @endphp
+                                @if($bestPromotion)
+                                    <div class="promotion-badge">
+                                        <span class="badge badge-danger px-3 py-2" style="font-size: 1rem; background: linear-gradient(45deg, #ff6b6b, #ee5a52);">
+                                            <i class="fas fa-tag mr-1"></i>
+                                            {{ $promotionData['discount_text'] }}
+                                        </span>
+                                    </div>
+                                @endif
+                            </div>
                             <div class="single-slider owl-carousel">
                                 @php
                                     $roomImages = collect();
@@ -62,13 +76,14 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4>Thông tin loại phòng</h4>
                                 <div class="text-right">
-                                    @php $basePrice = (int) $roomType->price; @endphp
+                                    @php $basePrice = (int) $roomType->price; 
+                                        $bestData = \App\Models\Promotion::getBestPromotionForRoomType($roomType->id, $basePrice);
+                                        $initialFinal = $bestData ? (int) $bestData['final_price'] : $basePrice;
+                                        $hasBest = !empty($bestData);
+                                    @endphp
                                     <div>
-                                        <span class="per">Giá mỗi đêm</span>
-                                    </div>
-                                    <div>
-                                        <span id="price_original" class="text-muted" style="text-decoration: line-through; display:none;">{{ number_format($basePrice) }}đ</span>
-                                        <span id="price_final" class="price ml-2">{{ number_format($basePrice) }}đ</span>
+                                        <span id="price_original" class="text-muted" style="text-decoration: line-through; {{ $hasBest ? '' : 'display:none;' }}">{{ number_format($basePrice) }}đ</span>
+                                        <span id="price_final" class="price ml-2">{{ number_format($initialFinal) }}đ</span>
                                     </div>
                                 </div>
                             </div>
@@ -165,19 +180,19 @@
                                             <strong>Tóm tắt giá</strong>
                                         </div>
                                         <div class="card-body">
-                                            @php $nights = isset($nights) ? (int)$nights : 1; @endphp
+                                            @php $nights = isset($nights) ? (int)$nights : 1; $sumBase = $basePrice * $nights; $sumFinal = $initialFinal * $nights; $sumDiscount = $sumBase - $sumFinal; @endphp
                                             <div class="d-flex justify-content-between mb-2">
                                                 <span>Giá gốc ({{ $nights }} đêm)</span>
-                                                <span id="sum_original" class="fw-bold">{{ number_format($roomType->price * $nights) }} đ</span>
+                                                <span id="sum_original" class="fw-bold">{{ number_format($sumBase) }} đ</span>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2 text-success">
                                                 <span>Khuyến mại</span>
-                                                <span id="sum_discount" class="fw-bold">- 0 đ</span>
+                                                <span id="sum_discount" class="fw-bold">- {{ number_format(max(0,$sumDiscount)) }} đ</span>
                                             </div>
                                             <hr class="my-3">
                                             <div class="d-flex justify-content-between fw-bold fs-5">
                                                 <span>Giá sau giảm</span>
-                                                <span id="sum_final" class="text-primary">{{ number_format($roomType->price * $nights) }} đ</span>
+                                                <span id="sum_final" class="text-primary">{{ number_format($sumFinal) }} đ</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1309,6 +1324,25 @@ function showToast(message, type = 'info') {
 
 .form-check-input:focus {
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Promotion badge styles */
+.promotion-badge .badge {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border: 2px solid #fff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.promotion-badge {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 </style>
 @endsection
