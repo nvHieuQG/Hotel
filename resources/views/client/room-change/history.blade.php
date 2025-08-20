@@ -74,17 +74,25 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    {{-- Thông báo hoàn tiền khi chênh lệch âm --}}
+                                                    {{-- Hiển thị theo chênh lệch giá và trạng thái thanh toán/hoàn tiền --}}
                                                     @if($roomChange->price_difference < 0)
-                                                        <div class="alert alert-info mt-2 mb-2 p-2">
-                                                            <i class="fa fa-info-circle"></i>
-                                                            <strong>Thông báo:</strong><br>
-                                                            Bạn sẽ được hoàn lại số tiền: <strong>{{ number_format(abs($roomChange->price_difference), 0, ',', '.') }} VNĐ</strong>.<br>
-                                                            <small>Vui lòng nhận tiền thừa tại quầy lễ tân sau khi đổi phòng hoàn tất.</small>
-                                                        </div>
-                                                    @endif
-
-                                                    @if($roomChange->requiresPayment())
+                                                        <span class="badge badge-{{ $roomChange->getPaymentStatusColor() }}">
+                                                            {{ $roomChange->getPaymentStatusText() }}
+                                                        </span>
+                                                        @if($roomChange->isRefundPending())
+                                                            <div class="alert alert-info mt-2 mb-0 p-2">
+                                                                <i class="fa fa-info-circle"></i>
+                                                                <strong>Sẽ hoàn lại:</strong> <strong>{{ number_format(abs($roomChange->price_difference), 0, ',', '.') }} VNĐ</strong><br>
+                                                                <small>Vui lòng nhận tiền tại quầy lễ tân.</small>
+                                                            </div>
+                                                        @elseif($roomChange->isRefunded())
+                                                            <div class="alert alert-success mt-2 mb-0 p-2">
+                                                                <i class="fa fa-check-circle"></i>
+                                                                <strong>Đã hoàn tiền:</strong> <strong>{{ number_format(abs($roomChange->price_difference), 0, ',', '.') }} VNĐ</strong><br>
+                                                                <small>Hoàn tại quầy lúc {{ optional($roomChange->paid_at)->format('d/m/Y H:i') }}</small>
+                                                            </div>
+                                                        @endif
+                                                    @elseif($roomChange->requiresPayment())
                                                         <span class="badge badge-{{ $roomChange->getPaymentStatusColor() }}">
                                                             {{ $roomChange->getPaymentStatusText() }}
                                                         </span>

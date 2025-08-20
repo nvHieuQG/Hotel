@@ -89,23 +89,17 @@ class RoomChangeService implements RoomChangeServiceInterface
             'admin_note' => $data['admin_note'] ?? null,
         ];
 
-        // Set payment status based on price difference
+        // Set payment status based on price difference (collect at reception after completion)
         if ($roomChange->price_difference > 0) {
             $updateData['payment_status'] = 'pending';
+        } elseif ($roomChange->price_difference < 0) {
+            $updateData['payment_status'] = 'refund_pending';
         } else {
             $updateData['payment_status'] = 'not_required';
         }
 
-        // Apply surcharge (if any) at APPROVE time, then set status to approved.
-        return DB::transaction(function () use ($roomChangeId, $roomChange, $updateData) {
-            if ($roomChange->price_difference > 0) {
-                $booking = $roomChange->booking;
-                // Tăng tổng price để tổng tiền tăng đúng với chênh lệch
-                $booking->price = ($booking->price ?? 0) + $roomChange->price_difference;
-                $booking->surcharge = ($booking->surcharge ?? 0) + $roomChange->price_difference;
-                $booking->save();
-            }
-
+        // Do NOT change booking amounts at approve. Only move status to approved.
+        return DB::transaction(function () use ($roomChangeId, $updateData) {
             $result = $this->roomChangeRepository->updateStatus($roomChangeId, 'approved', $updateData);
 
             Log::info('RoomChangeService: Update status result', [
@@ -133,8 +127,6 @@ class RoomChangeService implements RoomChangeServiceInterface
 
         $result = $this->roomChangeRepository->updateStatus($roomChangeId, 'rejected', $updateData);
 
-        // No surcharge rollback here; surcharge is only applied upon payment confirmation at reception.
-
         return $result;
     }
 
@@ -148,15 +140,18 @@ class RoomChangeService implements RoomChangeServiceInterface
             return false;
         }
 
-        // Only update booking to new room. Do NOT change any amounts here.
+        // Update booking to new room and apply price difference to booking->price (not surcharge)
         $booking = $roomChange->booking;
-        $booking->update([
-            'room_id' => $roomChange->new_room_id,
-        ]);
+        DB::transaction(function () use ($booking, $roomChange) {
+            // Cộng (hoặc trừ) chênh lệch vào giá phòng để base_room_price phản ánh giá mới
+            $booking->price = ($booking->price ?? 0) + ($roomChange->price_difference ?? 0);
+            $booking->room_id = $roomChange->new_room_id;
+            $booking->save();
 
-        // Cập nhật trạng thái phòng cũ và mới
-        $roomChange->oldRoom->update(['status' => 'available']);
-        $roomChange->newRoom->update(['status' => 'booked']);
+            // Cập nhật trạng thái phòng cũ và mới
+            $roomChange->oldRoom->update(['status' => 'available']);
+            $roomChange->newRoom->update(['status' => 'booked']);
+        });
 
         return $this->roomChangeRepository->updateStatus($roomChangeId, 'completed');
     }

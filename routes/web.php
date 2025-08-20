@@ -239,6 +239,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('room-changes/{roomChange}/reject', [AdminRoomChangeController::class, 'reject'])->name('room-changes.reject');
     Route::post('room-changes/{roomChange}/complete', [AdminRoomChangeController::class, 'complete'])->name('room-changes.complete');
     Route::post('room-changes/{roomChange}/mark-paid', [AdminRoomChangeController::class, 'markAsPaid'])->name('room-changes.mark-paid');
+    Route::post('room-changes/{roomChange}/mark-refunded', [AdminRoomChangeController::class, 'markAsRefunded'])->name('room-changes.mark-refunded');
     Route::get('room-changes/statistics', [AdminRoomChangeController::class, 'statistics'])->name('room-changes.statistics');
     Route::post('room-changes/{roomChange}/update-status', [AdminRoomChangeController::class, 'updateStatus'])->name('room-changes.update-status');
 

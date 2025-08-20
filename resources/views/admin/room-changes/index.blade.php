@@ -150,10 +150,22 @@
                                                 @endif
                                             @elseif($roomChange->price_difference < 0)
                                                 
-                                                <br><small class="text-info">
-                                                    <i class="fa fa-undo"></i>
-                                                    Sẽ hoàn tại quầy: {{ number_format(abs($roomChange->price_difference), 0, ',', '.') }} VNĐ
-                                                </small>
+                                                @if($roomChange->isRefundPending())
+                                                    <br><small class="text-info">
+                                                        <i class="fa fa-undo"></i>
+                                                        Chờ hoàn tại quầy: {{ number_format(abs($roomChange->price_difference), 0, ',', '.') }} VNĐ
+                                                    </small>
+                                                @elseif($roomChange->isRefunded())
+                                                    <br><small class="text-success">
+                                                        <i class="fa fa-check"></i>
+                                                        Đã hoàn tại quầy: {{ optional($roomChange->paid_at)->format('d/m/Y H:i') }}
+                                                    </small>
+                                                @else
+                                                    <br><small class="text-muted">
+                                                        <i class="fa fa-info-circle"></i>
+                                                        Không có yêu cầu hoàn tiền.
+                                                    </small>
+                                                @endif
                                             @else
                                             <span class="badge bg-light text-dark">Không có chênh lệch</span>
                                             @endif
@@ -215,6 +227,15 @@
                                                      <button type="button" class="btn btn-warning  btn-action" 
                                                              onclick="markAsPaid({{ $roomChange->id }})" title="Đánh dấu đã thanh toán">
                                                          Paid
+                                                     </button>
+                                                    </div>
+                                                @endif
+                                                
+                                                @if(($roomChange->status === 'approved' || $roomChange->status === 'completed') && ($roomChange->price_difference < 0) && $roomChange->isRefundPending())
+                                                    <div class="action-row-item">
+                                                     <button type="button" class="btn btn-info  btn-action" 
+                                                             onclick="markAsRefunded({{ $roomChange->id }})" title="Xác nhận đã hoàn tiền">
+                                                         Refund
                                                      </button>
                                                     </div>
                                                 @endif
@@ -323,6 +344,32 @@ function markAsPaid(id) {
                     location.reload();
                 } else {
                     alert('Lỗi: ' + (response.message || 'Không thể cập nhật trạng thái thanh toán'));
+                }
+            },
+            error: function(xhr) {
+                let message = 'Có lỗi xảy ra!';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                }
+                alert('Lỗi: ' + message);
+            }
+        });
+    }
+}
+
+function markAsRefunded(id) {
+    if (confirm('Xác nhận đã hoàn tiền chênh lệch cho khách tại quầy?')) {
+        $.ajax({
+            url: `/admin/room-changes/${id}/mark-refunded`,
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + (response.message || 'Không thể xác nhận hoàn tiền'));
                 }
             },
             error: function(xhr) {
