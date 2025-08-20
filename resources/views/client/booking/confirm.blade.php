@@ -208,6 +208,27 @@
                                         </div>
                                         @endif
 
+                                        <!-- Mã khuyến mại -->
+                                        <div class="form-group mb-3">
+                                            <label for="promotion_code" class="mb-2">
+                                                <i class="fas fa-tag text-success mr-2"></i>
+                                                Mã giảm giá
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="text" name="promotion_code" id="promotion_code" 
+                                                       class="form-control" placeholder="Nhập mã giảm giá (nếu có)"
+                                                       value="{{ isset($bookingData['promotion_code']) ? $bookingData['promotion_code'] : '' }}">
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-outline-success" id="apply-promotion-btn">
+                                                        <i class="fas fa-check"></i> Áp dụng
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div id="promotion-result" class="mt-2"></div>
+                                            <input type="hidden" name="promotion_discount" id="promotion_discount" value="0">
+                                            <input type="hidden" name="final_price" id="final_price" value="0">
+                                        </div>
+
                                         <div class="form-group mb-3">
                                             <label for="phone">Số điện thoại <span class="text-danger">*</span></label>
                                             <input type="text" name="phone" id="phone" class="form-control" 
@@ -894,6 +915,115 @@
             const submitButton = bookingForm.querySelector('button[type="submit"]');
             submitButton.disabled = false;
             submitButton.innerHTML = '<i class="fas fa-check mr-2"></i>Xác nhận đặt phòng';
+        }
+
+        // Xử lý mã khuyến mại
+        document.getElementById('apply-promotion-btn').addEventListener('click', function() {
+            const promotionCode = document.getElementById('promotion_code').value.trim();
+            if (!promotionCode) {
+                alert('Vui lòng nhập mã khuyến mại!');
+                return;
+            }
+
+            // Lấy tổng tiền hiện tại
+            const totalPrice = parseFloat(document.getElementById('total_booking_price').value) || 0;
+            if (totalPrice <= 0) {
+                alert('Vui lòng chọn phòng và ngày để tính toán giá trước khi áp dụng mã khuyến mại!');
+                return;
+            }
+
+            // Disable button và hiển thị loading
+            const button = this;
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...';
+
+            // Gọi API kiểm tra mã khuyến mại
+            fetch('/promotion/check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    code: promotionCode,
+                    amount: totalPrice
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Cập nhật UI
+                    document.getElementById('promotion_discount').value = data.discount_amount;
+                    document.getElementById('final_price').value = data.final_price;
+                    
+                    // Hiển thị kết quả
+                    document.getElementById('promotion-result').innerHTML = `
+                        <div class="alert alert-success py-2 px-3 mb-0">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <strong>Mã khuyến mại hợp lệ!</strong><br>
+                            <small>Giảm giá: <span class="text-success font-weight-bold">-${data.discount_formatted}</span><br>
+                            Giá cuối: <span class="text-danger font-weight-bold">${data.final_price_formatted} VNĐ</span></small>
+                        </div>
+                    `;
+
+                    // Cập nhật tổng tiền hiển thị
+                    updateTotalPriceDisplay();
+                } else {
+                    // Hiển thị lỗi
+                    document.getElementById('promotion-result').innerHTML = `
+                        <div class="alert alert-danger py-2 px-3 mb-0">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            ${data.message}
+                        </div>
+                    `;
+                    
+                    // Reset hidden fields
+                    document.getElementById('promotion_discount').value = 0;
+                    document.getElementById('final_price').value = 0;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('promotion-result').innerHTML = `
+                    <div class="alert alert-danger py-2 px-3 mb-0">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        Có lỗi xảy ra khi kiểm tra mã khuyến mại!
+                    </div>
+                `;
+            })
+            .finally(() => {
+                // Restore button
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        });
+
+        // Hàm cập nhật hiển thị tổng tiền
+        function updateTotalPriceDisplay() {
+            const totalPrice = parseFloat(document.getElementById('total_booking_price').value) || 0;
+            const discount = parseFloat(document.getElementById('promotion_discount').value) || 0;
+            const finalPrice = parseFloat(document.getElementById('final_price').value) || totalPrice;
+            
+            // Cập nhật hiển thị trong booking summary nếu có
+            const summaryElement = document.querySelector('#booking-summary .summary-row:last-child');
+            if (summaryElement && discount > 0) {
+                summaryElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Tổng cộng:</span>
+                        <div class="text-right">
+                            <div class="text-muted text-decoration-line-through small">${numberFormat(totalPrice)} VNĐ</div>
+                            <div class="text-danger font-weight-bold">${numberFormat(finalPrice)} VNĐ</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Hàm format số
+        function numberFormat(num) {
+            return new Intl.NumberFormat('vi-VN').format(num);
         }
     });
     </script>

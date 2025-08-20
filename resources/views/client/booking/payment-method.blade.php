@@ -117,12 +117,10 @@
                                     <div class="tab-pane fade show active" id="credit-card" role="tabpanel">
                                         <div class="payment-method-item">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="payment_method" id="creditCardPay" value="credit_card">
+                                                <input class="form-check-input" type="radio" name="method" id="creditCardPay" value="credit_card">
                                                 <label class="form-check-label" for="creditCardPay">
-                                                    <span>Thẻ tín dụng/ghi nợ</span>
-                                                    <span class="payment-icons">
-                                                        <i class="fas fa-credit-card text-primary" style="font-size: 24px;"></i>
-                                                    </span>
+                                                    <i class="fas fa-credit-card text-primary me-2"></i>
+                                                    Thẻ tín dụng/ghi nợ
                                                 </label>
                                             </div>
                                             <div class="payment-details mt-2">
@@ -147,12 +145,10 @@
                                     <div class="tab-pane fade" id="bank" role="tabpanel">
                                         <div class="payment-method-item">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="payment_method" id="bankTransferPay" value="bank_transfer">
+                                                <input class="form-check-input" type="radio" name="method" id="bankTransferPay" value="bank_transfer">
                                                 <label class="form-check-label" for="bankTransferPay">
-                                                    <span>Chuyển khoản ngân hàng</span>
-                                                    <span class="payment-icons">
-                                                        <i class="fas fa-university text-primary" style="font-size: 24px;"></i>
-                                                    </span>
+                                                    <i class="fas fa-university text-primary me-2"></i>
+                                                    Chuyển khoản ngân hàng
                                                 </label>
                                             </div>
                                             <div class="payment-details mt-2">

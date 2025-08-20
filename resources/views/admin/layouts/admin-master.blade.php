@@ -19,6 +19,7 @@
     <!-- Admin Components CSS -->
     <link rel="stylesheet" href="{{ asset('admin/css/admin-components.css') }}">
     @yield('styles')
+    @stack('styles')
     <style>
         .page-header h1 {
             font-size: 1.7rem;
@@ -361,6 +362,12 @@
                     <a class="nav-link {{ request()->routeIs('admin.room-changes.*') ? 'active' : '' }}"
                         href="{{ route('admin.room-changes.index') }}">
                         <i class="fas fa-exchange-alt"></i> Yêu cầu đổi phòng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.tour-bookings.*') ? 'active' : '' }}"
+                        href="{{ route('admin.tour-bookings.index') }}">
+                        <i class="fas fa-route"></i> Tour 
                     </a>
                 </li>
                 <li class="nav-item">

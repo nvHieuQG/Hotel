@@ -92,8 +92,9 @@
                                     <th>Lý do</th>
                                     <th>Chênh lệch giá</th>
                                     <th>Trạng thái</th>
+                                    <th>Thanh toán</th>
                                     <th>Ngày yêu cầu</th>
-                                    <th>Thao tác</th>
+                                    <th style="min-width: 320px;">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -133,41 +134,117 @@
                                                 {{ $roomChange->getStatusText() }}
                                             </span>
                                         </td>
+                                        <td>
+                                            @if($roomChange->price_difference > 0)
+                                                
+                                                @if($roomChange->isPaymentPending())
+                                                    <br><small class="text-warning">
+                                                        <i class="fa fa-exclamation-triangle"></i>
+                                                        Cần thu tại quầy: {{ number_format($roomChange->price_difference, 0, ',', '.') }} VNĐ
+                                                    </small>
+                                                @elseif($roomChange->isPaidAtReception())
+                                                    <br><small class="text-success">
+                                                        <i class="fa fa-check"></i>
+                                                        Đã thu tại quầy: {{ $roomChange->paid_at->format('d/m/Y H:i') }}
+                                                    </small>
+                                                @endif
+                                            @elseif($roomChange->price_difference < 0)
+                                                
+                                                @if($roomChange->isRefundPending())
+                                                    <br><small class="text-info">
+                                                        <i class="fa fa-undo"></i>
+                                                        Chờ hoàn tại quầy: {{ number_format(abs($roomChange->price_difference), 0, ',', '.') }} VNĐ
+                                                    </small>
+                                                @elseif($roomChange->isRefunded())
+                                                    <br><small class="text-success">
+                                                        <i class="fa fa-check"></i>
+                                                        Đã hoàn tại quầy: {{ optional($roomChange->paid_at)->format('d/m/Y H:i') }}
+                                                    </small>
+                                                @else
+                                                    <br><small class="text-muted">
+                                                        <i class="fa fa-info-circle"></i>
+                                                        Không có yêu cầu hoàn tiền.
+                                                    </small>
+                                                @endif
+                                            @else
+                                            <span class="badge bg-light text-dark">Không có chênh lệch</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $roomChange->created_at->format('d/m/Y H:i') }}</td>
                                         <td>
-                                            <div class="btn-group">
-                                                <a href="{{ route('admin.room-changes.show', $roomChange->id) }}" 
-                                                   class="btn btn-sm btn-info" title="Xem chi tiết">
-                                                    <i class="fa fa-eye"></i>
-                                                </a>
+                                            <div class="action-column">
+                                                <!-- Dòng 1: Nút xem chi tiết -->
+                                                <div class="action-row-item">
+                                                 <a href="{{ route('admin.room-changes.show', $roomChange->id) }}" 
+                                                    class="btn btn-info  btn-action" title="Xem chi tiết">
+                                                     <i class="fa fa-eye"></i>
+                                                 </a>
+                                                </div>
                                                 
                                                 @if($roomChange->status === 'pending')
-                                                    <form method="POST" action="{{ route('admin.room-changes.approve', $roomChange->id) }}" style="display:inline-block;">
-                                                        @csrf
-                                                        <input type="text" name="admin_note" class="form-control form-control-sm d-inline-block" style="width:120px;" placeholder="Ghi chú (tùy chọn)">
-                                                        <button type="submit" class="btn btn-sm btn-success" title="Duyệt">
-                                                            <i class="fa fa-check"></i>
-                                                        </button>
-                                                    </form>
-                                                    <form method="POST" action="{{ route('admin.room-changes.reject', $roomChange->id) }}" style="display:inline-block;">
-                                                        @csrf
-                                                        <input type="text" name="admin_note" class="form-control form-control-sm d-inline-block" style="width:120px;" placeholder="Lý do từ chối" required>
-                                                        <button type="submit" class="btn btn-sm btn-danger" title="Từ chối">
-                                                            <i class="fa fa-times"></i>
-                                                        </button>
-                                                    </form>
+                                                    <!-- Dòng 2: Duyệt kèm ghi chú -->
+                                                    <div class="action-row-item">
+                                                        <form method="POST" action="{{ route('admin.room-changes.approve', $roomChange->id) }}">
+                                                            @csrf
+                                                            <div class="input-group input-group-sm">
+                                                                <div class="input-group-append ">
+                                                                    <button type="submit" class="btn btn-success  btn-action mr-2" title="Duyệt">
+                                                                        <i class="fa fa-check"></i>
+                                                                    </button>
+                                                                </div>
+                                                                <input type="text" name="admin_note" class="form-control input-note" placeholder="Ghi chú (tùy chọn)">
+                                                                
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                    
+                                                    <!-- Dòng 3: Từ chối kèm lý do -->
+                                                    <div class="action-row-item">
+                                                        <form method="POST" action="{{ route('admin.room-changes.reject', $roomChange->id) }}">
+                                                            @csrf
+                                                            <div class="input-group input-group-sm">
+                                                                <div class="input-group-append ">
+                                                                    <button type="submit" class="btn btn-danger  btn-action mr-2" title="Từ chối">
+                                                                        <i class="fa fa-times"></i>
+                                                                    </button>
+                                                                </div>
+                                                                <input type="text" name="admin_note" class="form-control input-note" placeholder="Lý do từ chối" required>
+                                                                
+                                                            </div>
+                                                        </form>
+                                                    </div>
                                                 @elseif($roomChange->status === 'approved')
-                                                    <button type="button" class="btn btn-sm btn-primary" 
-                                                            onclick="completeRoomChange({{ $roomChange->id }})" title="Hoàn thành">
-                                                        <i class="fa fa-check-circle"></i>
-                                                    </button>
+                                                    <div class="action-row-item">
+                                                     <button type="button" class="btn btn-primary  btn-action" 
+                                                             onclick="completeRoomChange({{ $roomChange->id }})" title="Hoàn thành">
+                                                         <i class="fa fa-check-circle"></i>
+                                                     </button>
+                                                    </div>
                                                 @endif
-                                            </div>
-                                        </td>
+                                                
+                                                @if(($roomChange->status === 'approved' || $roomChange->status === 'completed') && $roomChange->requiresPayment() && $roomChange->isPaymentPending())
+                                                    <div class="action-row-item">
+                                                     <button type="button" class="btn btn-warning  btn-action" 
+                                                             onclick="markAsPaid({{ $roomChange->id }})" title="Đánh dấu đã thanh toán">
+                                                         Paid
+                                                     </button>
+                                                    </div>
+                                                @endif
+                                                
+                                                @if(($roomChange->status === 'approved' || $roomChange->status === 'completed') && ($roomChange->price_difference < 0) && $roomChange->isRefundPending())
+                                                    <div class="action-row-item">
+                                                     <button type="button" class="btn btn-info  btn-action" 
+                                                             onclick="markAsRefunded({{ $roomChange->id }})" title="Xác nhận đã hoàn tiền">
+                                                         Refund
+                                                     </button>
+                                                    </div>
+                                                @endif
+                                             </div>
+                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10" class="text-center py-4">
+                                        <td colspan="11" class="text-center py-4">
                                             <i class="fa fa-info-circle fa-2x text-muted mb-2"></i>
                                             <p class="text-muted">Không có yêu cầu đổi phòng nào.</p>
                                         </td>
@@ -180,7 +257,51 @@
             </div>
         </div>
     </div>
-<
+</div>
+
+@push('styles')
+<style>
+  /* Thống nhất nút thao tác */
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+
+  .input-group .btn-action {
+  margin-right: 10px; /* hoặc 0.5rem */
+}
+
+  .action-column {
+     display: flex;
+     flex-direction: column;
+     gap: 6px;
+     min-width: 300px;
+   }
+  .action-row-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .action-row-item form { margin: 0; }
+   .input-note { width: 180px; }
+  
+  /* Đảm bảo table responsive không làm cột thao tác quá nhỏ */
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+  .table th:last-child,
+  .table td:last-child {
+    min-width: 320px;
+    white-space: nowrap;
+  }
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -209,6 +330,58 @@ function completeRoomChange(id) {
         });
     }
 }
+
+function markAsPaid(id) {
+    if (confirm('Xác nhận khách hàng đã thanh toán tiền chênh lệch tại quầy lễ tân?')) {
+        $.ajax({
+            url: `/admin/room-changes/${id}/mark-paid`,
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + (response.message || 'Không thể cập nhật trạng thái thanh toán'));
+                }
+            },
+            error: function(xhr) {
+                let message = 'Có lỗi xảy ra!';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                }
+                alert('Lỗi: ' + message);
+            }
+        });
+    }
+}
+
+function markAsRefunded(id) {
+    if (confirm('Xác nhận đã hoàn tiền chênh lệch cho khách tại quầy?')) {
+        $.ajax({
+            url: `/admin/room-changes/${id}/mark-refunded`,
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + (response.message || 'Không thể xác nhận hoàn tiền'));
+                }
+            },
+            error: function(xhr) {
+                let message = 'Có lỗi xảy ra!';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                }
+                alert('Lỗi: ' + message);
+            }
+        });
+    }
+}
 </script>
 @endpush
-@endsection 
+@endsection

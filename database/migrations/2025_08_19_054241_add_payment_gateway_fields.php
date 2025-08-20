@@ -24,7 +24,7 @@ return new class extends Migration
             // Thêm indexes
             $table->index(['booking_id', 'status']);
             $table->index('transaction_id');
-            $table->index('payment_method');
+            $table->index('method');
         });
     }
 
@@ -37,7 +37,7 @@ return new class extends Migration
             // Xóa indexes
             $table->dropIndex(['booking_id', 'status']);
             $table->dropIndex(['transaction_id']);
-            $table->dropIndex(['payment_method']);
+            $table->dropIndex(['method']);
 
             // Xóa các cột mới
             $table->dropColumn([

@@ -7,6 +7,7 @@ use App\Interfaces\Services\RoomChangeServiceInterface;
 use App\Models\RoomChange;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AdminRoomChangeController extends Controller
@@ -169,6 +170,120 @@ class AdminRoomChangeController extends Controller
                 return redirect()->back()
                     ->with('error', 'Không thể hoàn thành đổi phòng.');
             }
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()
+                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Đánh dấu đã thanh toán tại quầy lễ tân
+     */
+    public function markAsPaid(Request $request, RoomChange $roomChange)
+    {
+        try {
+            // Kiểm tra xem room change có cần thanh toán không
+            if (!$roomChange->requiresPayment()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Yêu cầu đổi phòng này không cần thanh toán.'
+                ], 400);
+            }
+
+            // Kiểm tra trạng thái hiện tại
+            if ($roomChange->isPaidAtReception()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Đã được đánh dấu là đã thanh toán rồi.'
+                ], 400);
+            }
+
+            DB::transaction(function () use ($roomChange) {
+                // Only update payment status on RoomChange. Do NOT touch booking amounts.
+                $roomChange->update([
+                    'payment_status' => 'paid_at_reception',
+                    'paid_at' => now(),
+                    'paid_by' => Auth::id(),
+                ]);
+            });
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã đánh dấu thanh toán thành công.'
+                ]);
+            }
+
+            return redirect()->route('admin.room-changes.index')
+                ->with('success', 'Đã đánh dấu thanh toán thành công.');
+
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()
+                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Xác nhận đã hoàn tiền tại quầy lễ tân (áp dụng khi chênh lệch âm)
+     */
+    public function markAsRefunded(Request $request, RoomChange $roomChange)
+    {
+        try {
+            // Chỉ cho phép hoàn tiền nếu chênh lệch âm
+            if ($roomChange->price_difference >= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Yêu cầu đổi phòng này không có khoản hoàn tiền.'
+                ], 400);
+            }
+
+            // Phải đang ở trạng thái chờ hoàn tiền
+            if (!$roomChange->isRefundPending()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Yêu cầu này không ở trạng thái chờ hoàn tiền.'
+                ], 400);
+            }
+
+            // Không xử lý lại nếu đã hoàn
+            if ($roomChange->isRefunded()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Yêu cầu này đã được xác nhận hoàn tiền trước đó.'
+                ], 400);
+            }
+
+            DB::transaction(function () use ($roomChange) {
+                // Chỉ cập nhật trạng thái hoàn tiền, không đổi số tiền booking
+                $roomChange->update([
+                    'payment_status' => 'refunded',
+                    'paid_at' => now(), // tái sử dụng cột thời gian thanh toán cho mốc hoàn tiền
+                    'paid_by' => Auth::id(),
+                ]);
+            });
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã xác nhận hoàn tiền thành công.'
+                ]);
+            }
+
+            return redirect()->route('admin.room-changes.index')
+                ->with('success', 'Đã xác nhận hoàn tiền thành công.');
+
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([

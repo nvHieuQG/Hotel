@@ -155,10 +155,10 @@
             <div class="info-row">
                 <span class="info-label">Phương thức thanh toán:</span>
                 <span class="info-value">
-                    @if($payment->payment_method == 'bank_transfer')
-                        🏦 Chuyển khoản ngân hàng
+                    @if($payment->method == 'bank_transfer')
+                        <strong>Chuyển khoản ngân hàng</strong>
                     @else
-                        💰 {{ ucfirst($payment->payment_method) }}
+                        <strong>{{ ucfirst($payment->method) }}</strong>
                     @endif
                 </span>
             </div>

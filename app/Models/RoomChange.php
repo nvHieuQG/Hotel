@@ -23,12 +23,16 @@ class RoomChange extends Model
         'customer_note',
         'approved_at',
         'completed_at',
+        'payment_status',
+        'paid_at',
+        'paid_by',
     ];
 
     protected $casts = [
         'price_difference' => 'decimal:2',
         'approved_at' => 'datetime',
         'completed_at' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     // Relationships
@@ -55,6 +59,11 @@ class RoomChange extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function paidBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by');
     }
 
     // Scopes
@@ -104,6 +113,36 @@ class RoomChange extends Model
         return $this->status === 'cancelled';
     }
 
+    public function requiresPayment(): bool
+    {
+        return $this->price_difference > 0;
+    }
+
+    public function isPaymentPending(): bool
+    {
+        return $this->payment_status === 'pending';
+    }
+
+    public function isRefundPending(): bool
+    {
+        return $this->payment_status === 'refund_pending';
+    }
+
+    public function isRefunded(): bool
+    {
+        return $this->payment_status === 'refunded';
+    }
+
+    public function isPaymentNotRequired(): bool
+    {
+        return $this->payment_status === 'not_required';
+    }
+
+    public function isPaidAtReception(): bool
+    {
+        return $this->payment_status === 'paid_at_reception';
+    }
+
     public function getStatusText(): string
     {
         return match($this->status) {
@@ -124,6 +163,30 @@ class RoomChange extends Model
             'rejected' => 'danger',
             'completed' => 'success',
             'cancelled' => 'secondary',
+            default => 'light'
+        };
+    }
+
+    public function getPaymentStatusText(): string
+    {
+        return match($this->payment_status) {
+            'not_required' => 'Không cần thanh toán',
+            'pending' => 'Chờ thanh toán tại quầy',
+            'refund_pending' => 'Chờ hoàn tiền tại quầy',
+            'paid_at_reception' => 'Đã thanh toán tại quầy',
+            'refunded' => 'Đã hoàn tiền tại quầy',
+            default => 'Không xác định'
+        };
+    }
+
+    public function getPaymentStatusColor(): string
+    {
+        return match($this->payment_status) {
+            'not_required' => 'secondary',
+            'pending' => 'warning',
+            'refund_pending' => 'info',
+            'paid_at_reception' => 'success',
+            'refunded' => 'success',
             default => 'light'
         };
     }

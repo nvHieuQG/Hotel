@@ -11,14 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('booking_id')->constrained('bookings')->onDelete('cascade');
-            $table->string('payment_method'); // credit_card, bank_transfer, cash
-            $table->decimal('amount', 12, 2);
-            $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded'])->default('pending');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('payments')) {
+            Schema::create('payments', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('booking_id')->constrained('bookings');
+                $table->string('method', 50);
+                $table->decimal('amount', 10, 2);
+                $table->enum('status', ['pending', 'paid', 'failed'])->default('pending');
+                $table->timestamp('created_at')->nullable();
+                $table->timestamp('updated_at')->nullable();
+            });
+        }
     }
 
     /**

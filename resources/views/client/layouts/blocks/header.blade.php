@@ -23,12 +23,14 @@
                     <li class="nav-item"><a href="{{ route('login') }}" class="nav-link">Đăng nhập</a></li>
                     <li class="nav-item"><a href="{{ route('register') }}" class="nav-link">Đăng ký</a></li>
                 @else
+                    <li class="nav-item"><a href="{{ route('tour-booking.search') }}" class="nav-link">Đặt Tour</a></li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             {{ Auth::user()->name }}
                         </a>
                         <div class="dropdown-menu" aria-labelledby="userDropdown">
                             <a class="dropdown-item" href="{{ route('user.profile') }}">Quản lý tài khoản</a>
+                            <a class="dropdown-item" href="{{ route('tour-booking.index') }}">Tour Bookings</a>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="dropdown-item">Đăng xuất</button>

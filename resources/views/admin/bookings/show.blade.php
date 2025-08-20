@@ -307,15 +307,15 @@
                                                         <tr>
                                                             <td>
                                                                 <span class="badge bg-{{ 
-                                                                    $payment->payment_method == 'bank_transfer' ? 'primary' : 
-                                                                    ($payment->payment_method == 'cod' ? 'info' : 'secondary') 
+                                                                    $payment->method == 'bank_transfer' ? 'primary' : 
+                                                                    ($payment->method == 'cod' ? 'info' : 'secondary') 
                                                                 }}">
-                                                                    @if($payment->payment_method == 'bank_transfer')
+                                                                    @if($payment->method == 'bank_transfer')
                                                                         <i class="fas fa-university"></i> Chuyển khoản
-                                                                    @elseif($payment->payment_method == 'cod')
+                                                                    @elseif($payment->method == 'cod')
                                                                         <i class="fas fa-money-bill-wave"></i> Thanh toán tại khách sạn
                                                                     @else
-                                                                        <i class="fas fa-money-bill"></i> {{ ucfirst($payment->payment_method) }}
+                                                                        <i class="fas fa-money-bill"></i> {{ ucfirst($payment->method) }}
                                                                     @endif
                                                                 </span>
                                                             </td>
@@ -343,8 +343,10 @@
                                                             <td>
                                                                 @if($payment->paid_at)
                                                                     {{ $payment->paid_at->format('d/m/Y H:i:s') }}
-                                                                @else
+                                                                @elseif($payment->created_at)
                                                                     {{ $payment->created_at->format('d/m/Y H:i:s') }}
+                                                                @else
+                                                                    <span class="text-muted">N/A</span>
                                                                 @endif
                                                             </td>
                                                             <td>
@@ -381,7 +383,7 @@
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
-                                                @if($booking->payments->where('status', 'processing')->where('payment_method', 'bank_transfer')->count() > 0)
+                                                @if($booking->payments->where('status', 'processing')->where('method', 'bank_transfer')->count() > 0)
                                                     <div class="alert alert-warning">
                                                         <strong>Chuyển khoản đang chờ xác nhận:</strong>
                                                         <br>

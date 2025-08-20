@@ -78,6 +78,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the tour bookings for the user.
+     */
+    public function tourBookings()
+    {
+        return $this->hasMany(\App\Models\TourBooking::class);
+    }
+
+    /**
      * Get the room type reviews for the user.
      */
     public function roomTypeReviews()
@@ -88,5 +96,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function supportMessages()
     {
         return $this->hasMany(\App\Models\SupportMessage::class, 'sender_id');
+    }
+
+    /**
+     * Get the notifications for the user.
+     */
+    public function notifications()
+    {
+        return $this->hasMany(\App\Models\Notification::class);
     }
 }

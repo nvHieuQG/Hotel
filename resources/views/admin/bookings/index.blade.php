@@ -95,10 +95,8 @@
                                 <td>{{ $booking->check_in_date }}</td>    
                                 <td>{{ $booking->check_out_date }}</td>
                             @php
-                                $roomChangeSurcharge = $booking->roomChanges()
-                                    ->whereIn('status', ['approved', 'completed'])
-                                    ->sum('price_difference');
-                                $servicesAndSurcharge = $booking->surcharge + $booking->extra_services_total + $booking->total_services_price + $roomChangeSurcharge;
+                                // Do not add roomChangeSurcharge here; surcharge was already added at approve step
+                                $servicesAndSurcharge = $booking->surcharge + $booking->extra_services_total + $booking->total_services_price;
                                 $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
                                 if ($totalDiscount <= 0 && (float)($booking->promotion_discount ?? 0) > 0) {
                                     $totalDiscount = (float) $booking->promotion_discount;
@@ -113,7 +111,7 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
-                            <td>{{ number_format($booking->total_booking_price + $roomChangeSurcharge - $totalDiscount, 0, ',', '.') }} VNĐ</td>
+                            <td>{{ number_format($booking->base_room_price + $servicesAndSurcharge - $totalDiscount, 0, ',', '.') }} VNĐ</td>
                                 <td>
                                     <span class="badge bg-{{ 
                                         $booking->status == 'pending' ? 'warning' : 

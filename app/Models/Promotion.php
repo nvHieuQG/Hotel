@@ -244,6 +244,17 @@ class Promotion extends Model
     {
         return $this->isValid();
     }
+    
+    /**
+     * Kiểm tra promotion có sẵn để sử dụng không
+     */
+    public function isAvailable(): bool
+    {
+        return $this->isValid() && 
+               (!$this->usage_limit || $this->used_count < $this->usage_limit) &&
+               (!$this->valid_from || $this->valid_from->isPast()) &&
+               (!$this->expired_at || $this->expired_at->isFuture());
+    }
 
     /**
      * Kiểm tra có thể áp dụng cho đơn hàng với giá trị cụ thể

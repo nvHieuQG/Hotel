@@ -996,7 +996,7 @@ class AdminBookingController extends Controller
 
             // Tạo giao dịch COD hoàn tất ngay
             $payment = $this->paymentService->createPayment($booking, [
-                'payment_method' => 'cod',
+                'method' => 'cod',
                 'amount' => $amount,
                 'currency' => 'VND',
                 'status' => 'completed',

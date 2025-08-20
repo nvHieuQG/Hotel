@@ -32,7 +32,7 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <h6>Thông tin booking hiện tại:</h6>
-                                <p><strong>Phòng:</strong> {{ $booking->room->room_number }} ({{ $booking->room->roomType->name }})</p>
+                                <p><strong>Phòng:</strong>({{ $booking->room->roomType->name }})</p>
                                 <p><strong>Check-in:</strong> {{ $booking->check_in_date->format('d/m/Y') }}</p>
                                 <p><strong>Check-out:</strong> {{ $booking->check_out_date->format('d/m/Y') }}</p>
                                 <p><strong>Giá:</strong> {{ number_format($booking->price, 0, ',', '.') }} VNĐ</p>

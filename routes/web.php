@@ -1,12 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminRoomController;
+use App\Http\Controllers\Admin\AdminTourBookingController;
+use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
+use App\Http\Controllers\Admin\AdminRoomTypeServiceController;
+use App\Http\Controllers\Admin\AdminServiceCategoryController;
+use App\Http\Controllers\Admin\AdminServiceController;
+use App\Http\Controllers\Admin\AdminSupportController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\EmailVerificationController;
 
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\HotelController;
@@ -15,22 +22,18 @@ use App\Http\Controllers\BookingPromotionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\RoomChangeController;
+use App\Http\Controllers\TourBookingController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\RoomTypeReviewController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ClientVatInvoiceController;
+use App\Http\Controllers\ClientTourVatInvoiceController;
 
-use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\AdminRoomController;
-use App\Http\Controllers\Admin\AdminUserController;
-use App\Http\Controllers\Admin\AdminBookingController;
-use App\Http\Controllers\Admin\AdminServiceController;
-use App\Http\Controllers\Admin\AdminSupportController;
 use App\Http\Controllers\Admin\AdminRoomChangeController;
 use App\Http\Controllers\Admin\AdminExtraServiceController;
-use App\Http\Controllers\Admin\AdminRoomTypeReviewController;
-use App\Http\Controllers\Admin\AdminRoomTypeServiceController;
-use App\Http\Controllers\Admin\AdminServiceCategoryController;
+use App\Http\Controllers\Admin\AdminTourVatInvoiceController;
+use App\Http\Controllers\Admin\TourBookingServiceController;
+use App\Http\Controllers\Admin\TourBookingNoteController;
 
 
 // Route::get('/', function () {
@@ -110,6 +113,36 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/room-type-reviews/{roomTypeId}/form', [RoomTypeReviewController::class, 'reviewForm'])->name('room-type-reviews.form');
 });
 
+// Tour Booking Routes - Công khai (không cần auth)
+Route::get('/tour-booking/search', [TourBookingController::class, 'searchForm'])->name('tour-booking.search');
+Route::post('/tour-booking/search', [TourBookingController::class, 'search'])->name('tour-booking.search.post');
+Route::get('/tour-booking/search-test', [TourBookingController::class, 'search'])->name('tour-booking.search.test');
+Route::get('/tour-booking/select-rooms', [TourBookingController::class, 'selectRooms'])->name('tour-booking.select-rooms');
+Route::post('/tour-booking/calculate-price', [TourBookingController::class, 'calculatePrice'])->name('tour-booking.calculate-price');
+Route::post('/tour-booking/confirm', [TourBookingController::class, 'confirm'])->name('tour-booking.confirm');
+Route::post('/tour-booking/store', [TourBookingController::class, 'store'])->name('tour-booking.store');
+Route::get('/tour-booking/payment/{bookingId}', [TourBookingController::class, 'payment'])->name('tour-booking.payment');
+Route::get('/tour-booking', [TourBookingController::class, 'index'])->name('tour-booking.index');
+Route::get('/tour-booking/{id}', [TourBookingController::class, 'show'])->name('tour-booking.show');
+
+// Tour Booking Payment Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/tour-booking/{tourBooking}/credit-card', [TourBookingController::class, 'processCreditCardPayment'])->name('tour-booking.credit-card');
+    Route::get('/tour-booking/{tourBooking}/bank-transfer', [TourBookingController::class, 'processBankTransferPayment'])->name('tour-booking.bank-transfer');
+    
+    Route::post('/tour-booking/{tourBooking}/credit-card/confirm', [TourBookingController::class, 'confirmCreditCardPayment'])->name('tour-booking.credit-card.confirm');
+    Route::post('/tour-booking/{tourBooking}/bank-transfer/confirm', [TourBookingController::class, 'confirmBankTransferPayment'])->name('tour-booking.bank-transfer.confirm');
+
+    // Client Tour VAT invoice routes
+    Route::get('/tour-booking/{id}/vat-invoice', [ClientTourVatInvoiceController::class, 'showVatForm'])->name('tour-booking.vat-invoice');
+    Route::post('/tour-booking/{id}/vat-invoice', [ClientTourVatInvoiceController::class, 'requestVatInvoice'])->name('tour-booking.vat-invoice.request');
+    Route::get('/tour-booking/{id}/vat-invoice/download', [ClientTourVatInvoiceController::class, 'downloadVatInvoice'])->name('tour-booking.vat-invoice.download');
+    
+    // Tour booking promotion routes
+    Route::post('/tour-booking/{id}/apply-promotion', [TourBookingController::class, 'applyPromotion'])->name('tour-booking.apply-promotion');
+    Route::post('/tour-booking/{id}/remove-promotion', [TourBookingController::class, 'removePromotion'])->name('tour-booking.remove-promotion');
+});
+
 // Booking notes: KHÔNG lồng group auth bên ngoài nữa
 Route::middleware(['auth', 'check.booking.access'])->group(function () {
     Route::get('/booking-notes/{bookingId}', [BookingController::class, 'notesIndex'])->name('booking-notes.index');
@@ -162,6 +195,32 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('bookings/{id}/vat/download', [AdminBookingController::class, 'downloadVatInvoice'])->name('bookings.vat.download');
     
 
+
+    // Quản lý Tour Booking
+    Route::get('tour-bookings/report', [AdminTourBookingController::class, 'report'])->name('tour-bookings.report');
+    Route::patch('tour-bookings/{id}/status', [AdminTourBookingController::class, 'updateStatus'])->name('tour-bookings.update-status');
+    Route::patch('tour-bookings/{id}/payments/{paymentId}', [AdminTourBookingController::class, 'updatePaymentStatus'])->name('tour-bookings.payments.update-status');
+    Route::post('tour-bookings/{id}/collect-payment', [AdminTourBookingController::class, 'collectPayment'])->name('tour-bookings.collect-payment');
+    Route::resource('tour-bookings', AdminTourBookingController::class);
+
+    // Quản lý VAT Invoice Tour Booking
+    Route::get('tour-vat-invoices', [AdminTourVatInvoiceController::class, 'index'])->name('tour-vat-invoices.index');
+    Route::get('tour-vat-invoices/{id}', [AdminTourVatInvoiceController::class, 'show'])->name('tour-vat-invoices.show');
+            Route::post('tour-vat-invoices/{id}/generate', [AdminTourVatInvoiceController::class, 'generateVatInvoice'])->name('tour-vat-invoices.generate');
+        Route::post('tour-vat-invoices/{id}/reject', [AdminTourVatInvoiceController::class, 'rejectVatRequest'])->name('tour-vat-invoices.reject');
+        Route::get('tour-vat-invoices/{id}/download', [AdminTourVatInvoiceController::class, 'downloadVatInvoice'])->name('tour-vat-invoices.download');
+        Route::get('tour-vat-invoices/{id}/preview', [AdminTourVatInvoiceController::class, 'previewVatInvoice'])->name('tour-vat-invoices.preview');
+        Route::post('tour-vat-invoices/{id}/send', [AdminTourVatInvoiceController::class, 'sendVatInvoice'])->name('tour-vat-invoices.send');
+        Route::post('tour-vat-invoices/{id}/regenerate', [AdminTourVatInvoiceController::class, 'regenerateVatInvoice'])->name('tour-vat-invoices.regenerate');
+        Route::get('tour-vat-invoices/statistics', [AdminTourVatInvoiceController::class, 'statistics'])->name('tour-vat-invoices.statistics');
+
+    // Tour Booking Services routes
+    Route::post('tour-bookings/{id}/services', [TourBookingServiceController::class, 'store'])->name('tour-bookings.services.store');
+    Route::delete('tour-bookings/{id}/services/{serviceId}', [TourBookingServiceController::class, 'destroy'])->name('tour-bookings.services.destroy');
+
+    // Tour Booking Notes routes
+    Route::post('tour-bookings/{id}/notes', [TourBookingNoteController::class, 'store'])->name('tour-bookings.notes.store');
+    Route::delete('tour-bookings/{id}/notes/{noteId}', [TourBookingNoteController::class, 'destroy'])->name('tour-bookings.notes.destroy');
 
     // Quản lý thông báo
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
@@ -253,6 +312,8 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('room-changes/{roomChange}/approve', [AdminRoomChangeController::class, 'approve'])->name('room-changes.approve');
     Route::post('room-changes/{roomChange}/reject', [AdminRoomChangeController::class, 'reject'])->name('room-changes.reject');
     Route::post('room-changes/{roomChange}/complete', [AdminRoomChangeController::class, 'complete'])->name('room-changes.complete');
+    Route::post('room-changes/{roomChange}/mark-paid', [AdminRoomChangeController::class, 'markAsPaid'])->name('room-changes.mark-paid');
+    Route::post('room-changes/{roomChange}/mark-refunded', [AdminRoomChangeController::class, 'markAsRefunded'])->name('room-changes.mark-refunded');
     Route::get('room-changes/statistics', [AdminRoomChangeController::class, 'statistics'])->name('room-changes.statistics');
     Route::post('room-changes/{roomChange}/update-status', [AdminRoomChangeController::class, 'updateStatus'])->name('room-changes.update-status');
 
@@ -271,6 +332,7 @@ Route::get('/room-type-reviews/{roomTypeId}/ajax', [RoomTypeReviewController::cl
 // Promotions - client
 Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
 Route::get('/promotions/{promotion}', [PromotionController::class, 'show'])->name('promotions.show');
+Route::post('/promotion/check', [PromotionController::class, 'checkPromotion'])->name('promotion.check');
 
 // Password reset routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])

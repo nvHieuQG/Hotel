@@ -47,13 +47,12 @@
                     <tr>
                       <td>{{ $p->paid_at ? $p->paid_at->format('d/m/Y H:i') : $p->created_at->format('d/m/Y H:i') }}</td>
                       <td>
-                        @if($p->payment_method === 'credit_card')
-                          <i class="fas fa-credit-card text-primary"></i> Thẻ
-                        @elseif($p->payment_method === 'bank_transfer')
-                          <i class="fas fa-university text-primary"></i> Chuyển khoản
-                        @else
-                          {{ ucfirst($p->payment_method) }}
+                        @if($p->method === 'credit_card')
+                            <i class="fas fa-credit-card text-primary"></i>
+                        @elseif($p->method === 'bank_transfer')
+                            <i class="fas fa-university text-success"></i>
                         @endif
+                        {{ ucfirst($p->method) }}
                       </td>
                       <td>{{ number_format($booking->total_booking_price) }} VND</td>
                       <td class="text-success">

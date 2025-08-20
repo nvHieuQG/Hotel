@@ -11,10 +11,12 @@ class Payment extends Model
 
     protected $fillable = [
         'booking_id',
+        'tour_booking_id',
         'promotion_id',
-        'payment_method',
+        'method',
         'amount',
         'discount_amount',
+        'promotion_code',
         'currency',
         'status',
         'transaction_id',
@@ -43,6 +45,29 @@ class Payment extends Model
     public function promotion()
     {
         return $this->belongsTo(Promotion::class);
+    }
+
+    /**
+     * Get the tour booking that owns the payment.
+     */
+    public function tourBooking()
+    {
+        return $this->belongsTo(TourBooking::class, 'tour_booking_id');
+    }
+
+    /**
+     * Get the related booking (either regular booking or tour booking)
+     */
+    public function getRelatedBookingAttribute()
+    {
+        // Try to get regular booking first
+        $booking = $this->booking;
+        if ($booking) {
+            return $booking;
+        }
+        
+        // If not found, try to get tour booking
+        return $this->tourBooking;
     }
 
     /**
