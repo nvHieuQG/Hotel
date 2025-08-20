@@ -37,7 +37,7 @@ return new class extends Migration
             
             // Thời gian và giới hạn
             $table->timestamp('valid_from')->nullable();
-            $table->timestamp('expired_at');
+            $table->timestamp('expired_at')->nullable();
             $table->integer('usage_limit')->unsigned()->nullable();
             $table->integer('used_count')->unsigned()->default(0);
             

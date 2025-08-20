@@ -46,6 +46,29 @@ class Payment extends Model
     }
 
     /**
+     * Get the tour booking that owns the payment.
+     */
+    public function tourBooking()
+    {
+        return $this->belongsTo(TourBooking::class, 'booking_id');
+    }
+
+    /**
+     * Get the related booking (either regular booking or tour booking)
+     */
+    public function getRelatedBookingAttribute()
+    {
+        // Try to get regular booking first
+        $booking = $this->booking;
+        if ($booking) {
+            return $booking;
+        }
+        
+        // If not found, try to get tour booking
+        return $this->tourBooking;
+    }
+
+    /**
      * Get the status text for display
      */
     public function getStatusTextAttribute()

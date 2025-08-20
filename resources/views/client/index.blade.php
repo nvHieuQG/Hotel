@@ -560,7 +560,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 d-flex">
+                            <div class="col-md-2 d-flex">
                                 <div class="form-group p-4 align-self-stretch d-flex align-items-end">
                                     <div class="wrap">
                                         <label for="guests">Số khách</label>
@@ -580,17 +580,97 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 d-flex">
-                                <div class="form-group d-flex align-self-stretch">
-                                    <button type="submit" class="btn btn-primary py-3 px-4 align-self-stretch">Tìm kiếm phòng</button>
+                            <div class="col-md-2 d-flex">
+                                <div class="form-group p-4 align-self-stretch d-flex align-items-end">
+                                    <div class="wrap">
+                                        <label for="booking_type">Loại đặt phòng</label>
+                                        <div class="form-field">
+                                            <div class="select-wrap">
+                                                <div class="icon"><span class="ion-ios-arrow-down"></span></div>
+                                                <select name="booking_type" id="booking_type" class="form-control">
+                                                    <option value="individual">Cá nhân</option>
+                                                    <option value="tour">Tour du lịch</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <!-- Button submit ở dòng riêng và full width -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="form-group text-center">
+                                    <button type="submit" class="btn btn-primary py-3 px-5 w-100" id="searchBtn" style="font-size: 18px; font-weight: 600;">
+                                        <i class="fa fa-search mr-2"></i>Tìm kiếm phòng
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('availabilityForm');
+            const bookingTypeSelect = document.getElementById('booking_type');
+            const searchBtn = document.getElementById('searchBtn');
+
+            form.addEventListener('submit', function(e) {
+                const bookingType = bookingTypeSelect.value;
+                
+                if (bookingType === 'tour') {
+                    e.preventDefault();
+                    
+                    // Lấy dữ liệu từ form
+                    const formData = new FormData(form);
+                    const searchParams = new URLSearchParams();
+                    
+                    // Thêm các tham số cần thiết cho tour booking
+                    searchParams.append('check_in_date', formData.get('check_in_date'));
+                    searchParams.append('check_out_date', formData.get('check_out_date'));
+                    searchParams.append('total_guests', formData.get('guests'));
+                    searchParams.append('tour_name', 'Tour du lịch - ' + new Date().toLocaleDateString('vi-VN'));
+                    
+                    // Chuyển hướng đến trang tour booking
+                    window.location.href = '{{ route("tour-booking.search") }}?' + searchParams.toString();
+                }
+            });
+
+            // Cập nhật label và placeholder dựa trên loại đặt phòng
+            bookingTypeSelect.addEventListener('change', function() {
+                const guestsSelect = document.getElementById('guests');
+                const guestsLabel = document.querySelector('label[for="guests"]');
+                
+                if (this.value === 'tour') {
+                    guestsLabel.textContent = 'Tổng số khách';
+                    guestsSelect.innerHTML = '';
+                    for (let i = 5; i <= 50; i += 5) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i + ' Người';
+                        if (i === 10) option.selected = true;
+                        guestsSelect.appendChild(option);
+                    }
+                } else {
+                    guestsLabel.textContent = 'Số khách';
+                    guestsSelect.innerHTML = '';
+                    for (let i = 1; i <= 6; i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i + ' Người';
+                        if (i === 2) option.selected = true;
+                        guestsSelect.appendChild(option);
+                    }
+                }
+            });
+        });
+    </script>
 
     <section class="ftco-section ftc-no-pb ftc-no-pt">
 			<div class="container">
