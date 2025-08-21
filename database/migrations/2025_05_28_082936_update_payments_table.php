@@ -7,9 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         // Kiểm tra nếu các cột đã tồn tại thì không làm gì
@@ -19,6 +16,8 @@ return new class extends Migration
             return;
         }
 
+        // No-op migration to satisfy sequence; original changes already applied elsewhere.
+        // You can add columns to `payments` here if needed.
         Schema::table('payments', function (Blueprint $table) {
             // Thêm cột payment_method mới nếu chưa có
             if (!Schema::hasColumn('payments', 'payment_method')) {
@@ -55,6 +54,7 @@ return new class extends Migration
             $table->index(['booking_id', 'status']);
             $table->index('transaction_id');
             $table->index('payment_method');
+            // Ensure table exists before running noop to avoid errors
         });
 
         // Cập nhật dữ liệu từ cột method sang payment_method nếu cần
@@ -76,12 +76,10 @@ return new class extends Migration
         }
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        // Không cần rollback vì migration này chỉ thêm cột
-        // Nếu cần rollback, có thể thêm logic ở đây
+        // No rollback necessary for no-op migration
     }
 };
+
+ 

@@ -11,10 +11,12 @@ class Payment extends Model
 
     protected $fillable = [
         'booking_id',
+        'tour_booking_id',
         'promotion_id',
-        'payment_method',
+        'method',
         'amount',
         'discount_amount',
+        'promotion_code',
         'currency',
         'status',
         'transaction_id',
@@ -50,7 +52,7 @@ class Payment extends Model
      */
     public function tourBooking()
     {
-        return $this->belongsTo(TourBooking::class, 'booking_id');
+        return $this->belongsTo(TourBooking::class, 'tour_booking_id');
     }
 
     /**

@@ -27,12 +27,12 @@
     </div>
 
     <div class="row">
+        <!-- Cột trái - Form chỉnh sửa -->
         <div class="col-lg-8">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header bg-warning text-dark">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-edit text-warning me-2"></i>
-                        Chỉnh sửa thông tin Tour Booking
+                        <i class="fas fa-edit"></i> Chỉnh sửa thông tin Tour Booking
                     </h5>
                 </div>
                 <div class="card-body">
@@ -40,6 +40,7 @@
                         @csrf
                         @method('PUT')
                         
+                        <!-- Thông tin cơ bản -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -54,7 +55,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="status" class="form-label">Trạng thái <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
+                                    <select class="form-control @error('status') is-invalid @enderror" id="status" name="status" required>
                                         <option value="pending" {{ old('status', $tourBooking->status) === 'pending' ? 'selected' : '' }}>Chờ xác nhận</option>
                                         <option value="confirmed" {{ old('status', $tourBooking->status) === 'confirmed' ? 'selected' : '' }}>Đã xác nhận</option>
                                         <option value="cancelled" {{ old('status', $tourBooking->status) === 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
@@ -63,6 +64,24 @@
                                     @error('status')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mã Tour Booking -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Mã Tour Booking</label>
+                                    <input type="text" class="form-control bg-light" value="{{ $tourBooking->booking_code }}" readonly>
+                                    <small class="text-muted">Mã này được tạo tự động và không thể thay đổi</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Số đêm</label>
+                                    <input type="text" class="form-control bg-light" value="{{ $tourBooking->nights }} đêm" readonly>
+                                    <small class="text-muted">Số đêm được tính tự động từ ngày check-in và check-out</small>
                                 </div>
                             </div>
                         </div>
@@ -107,7 +126,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Tổng số phòng</label>
-                                    <input type="text" class="form-control" value="{{ $tourBooking->total_rooms }} phòng" readonly>
+                                    <input type="text" class="form-control bg-light" value="{{ $tourBooking->total_rooms }} phòng" readonly>
                                     <small class="text-muted">Số phòng được tính tự động dựa trên room selections</small>
                                 </div>
                             </div>
@@ -118,7 +137,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="payment_status" class="form-label">Trạng thái thanh toán</label>
-                                    <select class="form-select @error('payment_status') is-invalid @enderror" id="payment_status" name="payment_status">
+                                    <select class="form-control @error('payment_status') is-invalid @enderror" id="payment_status" name="payment_status">
                                         <option value="">-- Chọn trạng thái thanh toán --</option>
                                         <option value="completed" {{ old('payment_status', $tourBooking->payment_status) === 'completed' ? 'selected' : '' }}>Hoàn tất thanh toán</option>
                                         <option value="partial" {{ old('payment_status', $tourBooking->payment_status) === 'partial' ? 'selected' : '' }}>Thanh toán một phần</option>
@@ -134,7 +153,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="preferred_payment_method" class="form-label">Phương thức thanh toán ưu tiên</label>
-                                    <select class="form-select @error('preferred_payment_method') is-invalid @enderror" id="preferred_payment_method" name="preferred_payment_method">
+                                    <select class="form-control @error('preferred_payment_method') is-invalid @enderror" id="preferred_payment_method" name="preferred_payment_method">
                                         <option value="">-- Chọn phương thức --</option>
                                         <option value="credit_card" {{ old('preferred_payment_method', $tourBooking->preferred_payment_method ?? '') === 'credit_card' ? 'selected' : '' }}>Thẻ tín dụng</option>
                                         <option value="bank_transfer" {{ old('preferred_payment_method', $tourBooking->preferred_payment_method ?? '') === 'bank_transfer' ? 'selected' : '' }}>Chuyển khoản ngân hàng</option>
@@ -170,162 +189,201 @@
                     </form>
                 </div>
             </div>
-        </div>
 
-        <div class="col-lg-4">
-            <!-- Thông tin hiện tại -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-info-circle text-info me-2"></i>
-                        Thông tin hiện tại
-                    </h5>
+            <!-- Chi tiết phòng hiện tại -->
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-bed"></i> Chi tiết phòng hiện tại</h6>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Mã Booking:</label>
-                        <div><span class="badge bg-info">{{ $tourBooking->booking_id }}</span></div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Khách hàng:</label>
-                        <div>{{ $tourBooking->user->name }}</div>
-                        <small class="text-muted">{{ $tourBooking->user->email }}</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Tổng tiền:</label>
-                        <div class="text-success fs-5">{{ number_format($tourBooking->total_price, 0, ',', '.') }} VNĐ</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Ngày tạo:</label>
-                        <div>{{ $tourBooking->created_at->format('d/m/Y H:i') }}</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Cập nhật lần cuối:</label>
-                        <div>{{ $tourBooking->updated_at->format('d/m/Y H:i') }}</div>
-                    </div>
-                    
-                    @if($tourBooking->payment_status)
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Trạng thái thanh toán hiện tại:</label>
-                            <div>
-                                @switch($tourBooking->payment_status)
-                                    @case('completed')
-                                        <span class="badge bg-success">Hoàn tất thanh toán</span>
-                                        @break
-                                    @case('partial')
-                                        <span class="badge bg-warning">Thanh toán một phần</span>
-                                        @break
-                                    @case('pending')
-                                        <span class="badge bg-light text-dark">Chưa thanh toán</span>
-                                        @break
-                                    @case('overdue')
-                                        <span class="badge bg-danger">Quá hạn thanh toán</span>
-                                        @break
-                                    @default
-                                        <span class="badge bg-secondary">{{ $tourBooking->payment_status }}</span>
-                                @endswitch
-                            </div>
+                    @if($tourBooking->tourBookingRooms->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Loại phòng</th>
+                                        <th>Số lượng</th>
+                                        <th>Số khách</th>
+                                        <th>Giá/phòng</th>
+                                        <th>Tổng tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($tourBooking->tourBookingRooms as $room)
+                                        <tr>
+                                            <td>
+                                                <strong class="text-dark">{{ $room->roomType->name }}</strong><br>
+                                                <small class="text-muted">{{ $room->roomType->description }}</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="bg-primary text-white px-2 py-1 rounded">{{ $room->quantity }} phòng</span>
+                                            </td>
+                                            <td class="text-center text-dark">{{ $room->quantity * 2 }} khách</td>
+                                            <td class="text-right text-dark">{{ number_format($room->price_per_night, 0, ',', '.') }} VNĐ</td>
+                                            <td class="text-right font-weight-bold text-dark">{{ number_format($room->total_price, 0, ',', '.') }} VNĐ</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot class="table-info">
+                                    <tr>
+                                        <td colspan="4" class="text-right"><strong>Tổng tiền phòng:</strong></td>
+                                        <td class="text-right font-weight-bold">{{ number_format($tourBooking->total_rooms_amount, 0, ',', '.') }} VNĐ</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
-                    @endif
-                    
-                    @if($tourBooking->preferred_payment_method)
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Phương thức ưu tiên hiện tại:</label>
-                            <div>
-                                @switch($tourBooking->preferred_payment_method)
-                                    @case('credit_card')
-                                        <i class="fas fa-credit-card text-primary me-2"></i>Thẻ tín dụng
-                                        @break
-                                    @case('bank_transfer')
-                                        <i class="fas fa-university text-success me-2"></i>Chuyển khoản ngân hàng
-                                        @break
-                                    @case('cash')
-                                        <i class="fas fa-money-bill text-warning me-2"></i>Tiền mặt
-                                        @break
-                                    @case('online_payment')
-                                        <i class="fas fa-globe text-info me-2"></i>Thanh toán trực tuyến
-                                        @break
-                                    @default
-                                        {{ $tourBooking->preferred_payment_method }}
-                                @endswitch
-                            </div>
+                        <div class="alert alert-info mt-2">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Lưu ý:</strong> Chi tiết phòng không thể chỉnh sửa từ form này để đảm bảo dữ liệu khớp với bên chi tiết. 
+                            Để thay đổi phòng, vui lòng sử dụng chức năng quản lý phòng riêng biệt.
                         </div>
+                    @else
+                        <p class="text-muted text-center my-3">Không có phòng nào được đặt</p>
                     @endif
                 </div>
             </div>
 
-            <!-- Trạng thái thanh toán -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-credit-card text-warning me-2"></i>
-                        Trạng thái thanh toán
-                    </h5>
+            <!-- Dịch vụ hiện tại -->
+            <div class="card mt-3">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-concierge-bell"></i> Dịch vụ hiện tại</h6>
                 </div>
                 <div class="card-body">
-                    @php
-                        $completedAmount = $tourBooking->payments->where('status', 'completed')->sum('amount');
-                        $totalAmount = $tourBooking->total_price;
-                        $remainingAmount = $totalAmount - $completedAmount;
-                    @endphp
-                    
-                    <div class="text-center mb-3">
-                        @if($completedAmount >= $totalAmount)
-                            <span class="badge bg-success fs-6 px-3 py-2">
-                                <i class="fas fa-check-circle me-2"></i>Hoàn tất
-                            </span>
-                        @elseif($completedAmount > 0)
-                            <span class="badge bg-warning fs-6 px-3 py-2">
-                                <i class="fas fa-clock me-2"></i>Một phần
-                            </span>
-                        @else
-                            <span class="badge bg-light text-dark fs-6 px-3 py-2">
-                                <i class="fas fa-minus me-2"></i>Chưa thanh toán
-                            </span>
-                        @endif
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-muted">Tổng tiền:</span>
-                            <strong>{{ number_format($totalAmount, 0, ',', '.') }} VNĐ</strong>
+                    @if($tourBooking->tourBookingServices->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Dịch vụ</th>
+                                        <th>Loại</th>
+                                        <th>Đơn giá</th>
+                                        <th>SL</th>
+                                        <th>Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($tourBooking->tourBookingServices as $service)
+                                        <tr>
+                                            <td><strong class="text-dark">{{ $service->service_name }}</strong></td>
+                                            <td><span class="bg-info text-white px-2 py-1 rounded">{{ $service->service_type }}</span></td>
+                                            <td class="text-right text-dark">{{ number_format($service->price_per_unit, 0, ',', '.') }} VNĐ</td>
+                                            <td class="text-center text-dark">{{ $service->quantity }}</td>
+                                            <td class="text-right font-weight-bold text-dark">{{ number_format($service->total_price, 0, ',', '.') }} VNĐ</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot class="table-info">
+                                    <tr>
+                                        <td colspan="4" class="text-right"><strong>Tổng tiền dịch vụ:</strong></td>
+                                        <td class="text-right font-weight-bold">{{ number_format($tourBooking->total_services_amount, 0, ',', '.') }} VNĐ</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-muted">Đã thanh toán:</span>
-                            <strong class="text-success">{{ number_format($completedAmount, 0, ',', '.') }} VNĐ</strong>
-                        </div>
-                    </div>
-                    
-                    @if($remainingAmount > 0)
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span class="text-muted">Còn lại:</span>
-                                <strong class="text-warning">{{ number_format($remainingAmount, 0, ',', '.') }} VNĐ</strong>
-                            </div>
-                        </div>
+                    @else
+                        <p class="text-muted text-center my-3">Không có dịch vụ nào được chọn</p>
                     @endif
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải - Thông tin hiện tại -->
+        <div class="col-lg-4">
+            <!-- Thông tin hiện tại -->
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Thông tin hiện tại</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Mã Booking:</label>
+                        <div><span class="text-primary font-weight-bold">{{ $tourBooking->booking_code }}</span></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Khách hàng:</label>
+                        <div>{{ $tourBooking->user->name ?? 'N/A' }}</div>
+                        <small class="text-muted">{{ $tourBooking->user->email ?? 'N/A' }}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Tổng tiền:</label>
+                        <div class="text-success font-weight-bold">{{ number_format($tourBooking->final_amount, 0, ',', '.') }} VNĐ</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Ngày tạo:</label>
+                        <div>{{ $tourBooking->created_at ? $tourBooking->created_at->format('d/m/Y H:i') : 'N/A' }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Cập nhật lần cuối:</label>
+                        <div>{{ $tourBooking->updated_at ? $tourBooking->updated_at->format('d/m/Y H:i') : 'N/A' }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Trạng thái thanh toán hiện tại:</label>
+                        <div>
+                            <span class="bg-{{ $tourBooking->isFullyPaid() ? 'success' : ($tourBooking->total_paid > 0 ? 'warning' : 'secondary') }} text-white px-2 py-1 rounded">
+                                {{ $tourBooking->payment_status_text }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Phương thức ưu tiên hiện tại:</label>
+                        <div>
+                            @switch($tourBooking->preferred_payment_method)
+                                @case('credit_card')
+                                    <i class="fas fa-credit-card text-primary"></i> Thẻ tín dụng
+                                    @break
+                                @case('bank_transfer')
+                                    <i class="fas fa-university text-success"></i> Chuyển khoản ngân hàng
+                                    @break
+                                @case('cash')
+                                    <i class="fas fa-money-bill text-warning"></i> Tiền mặt
+                                    @break
+                                @case('online_payment')
+                                    <i class="fas fa-globe text-info"></i> Thanh toán trực tuyến
+                                    @break
+                                @default
+                                    <span class="text-muted">Chưa chọn</span>
+                            @endswitch
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tóm tắt thanh toán -->
+            <div class="card mb-3">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-credit-card"></i> Tóm tắt thanh toán</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-6">Tổng tiền:</div>
+                        <div class="col-6 text-right font-weight-bold">{{ number_format($tourBooking->final_amount, 0, ',', '.') }} VNĐ</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">Đã thanh toán:</div>
+                        <div class="col-6 text-right text-success">{{ number_format($tourBooking->total_paid, 0, ',', '.') }} VNĐ</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">Còn lại:</div>
+                        <div class="col-6 text-right font-weight-bold {{ $tourBooking->outstanding_amount > 0 ? 'text-danger' : 'text-success' }}">
+                            {{ number_format($tourBooking->outstanding_amount, 0, ',', '.') }} VNĐ
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mb-2">
+                        <small class="text-muted">{{ $tourBooking->payments->count() }} giao dịch thanh toán</small>
+                    </div>
                     
                     @if($tourBooking->payments->count() > 0)
-                        <hr>
-                        <div class="text-center mb-3">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                {{ $tourBooking->payments->count() }} giao dịch thanh toán
-                            </small>
-                        </div>
-                        
-                        <!-- Danh sách giao dịch thanh toán -->
                         <div class="table-responsive">
-                            <table class="table table-sm table-borderless">
-                                <thead>
-                                    <tr class="text-muted small">
+                            <table class="table table-sm">
+                                <thead class="thead-light">
+                                    <tr>
                                         <th>Phương thức</th>
                                         <th>Số tiền</th>
                                         <th>Trạng thái</th>
@@ -333,96 +391,61 @@
                                 </thead>
                                 <tbody>
                                     @foreach($tourBooking->payments->take(3) as $payment)
-                                        <tr class="small">
-                                            <td>
-                                                @switch($payment->payment_method)
+                                        <tr>
+                                            <td class="text-dark">
+                                                @switch($payment->method)
                                                     @case('credit_card')
-                                                        <i class="fas fa-credit-card text-primary"></i>
+                                                        <i class="fas fa-credit-card text-primary"></i> Thẻ tín dụng
                                                         @break
                                                     @case('bank_transfer')
-                                                        <i class="fas fa-university text-success"></i>
+                                                        <i class="fas fa-university text-success"></i> Chuyển khoản
+                                                        @break
+                                                    @case('cash')
+                                                        <i class="fas fa-money-bill-wave text-warning"></i> Tiền mặt
                                                         @break
                                                     @default
-                                                        <i class="fas fa-money-bill text-secondary"></i>
+                                                        <i class="fas fa-question-circle text-secondary"></i> {{ $payment->method }}
                                                 @endswitch
                                             </td>
-                                            <td>{{ number_format($payment->amount, 0, ',', '.') }}</td>
-                                            <td>
-                                                @switch($payment->status)
-                                                    @case('completed')
-                                                        <span class="badge bg-success bg-sm">Hoàn thành</span>
-                                                        @break
-                                                    @case('pending')
-                                                        <span class="badge bg-warning bg-sm">Chờ xử lý</span>
-                                                        @break
-                                                    @case('failed')
-                                                        <span class="badge bg-danger bg-sm">Thất bại</span>
-                                                        @break
-                                                    @default
-                                                        <span class="badge bg-secondary bg-sm">{{ $payment->status }}</span>
-                                                @endswitch
+                                            <td class="text-right text-dark">{{ number_format($payment->amount, 0, ',', '.') }}</td>
+                                            <td class="text-center">
+                                                @if($payment->status === 'completed')
+                                                    <span class="bg-success text-white px-2 py-1 rounded">Hoàn thành</span>
+                                                @elseif($payment->status === 'pending')
+                                                    <span class="bg-warning text-white px-2 py-1 rounded">Chờ xử lý</span>
+                                                @else
+                                                    <span class="bg-danger text-white px-2 py-1 rounded">{{ $payment->status }}</span>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
                             </table>
                         </div>
-                        
-                        @if($tourBooking->payments->count() > 3)
-                            <div class="text-center">
-                                <small class="text-muted">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                    Và {{ $tourBooking->payments->count() - 3 }} giao dịch khác
-                                </small>
-                            </div>
-                        @endif
-                        
-                        <div class="text-center mt-3">
-                            <a href="{{ route('admin.tour-bookings.show', $tourBooking->id) }}" 
-                               class="btn btn-outline-info btn-sm">
-                                <i class="fas fa-eye me-1"></i>Xem chi tiết thanh toán
-                            </a>
-                        </div>
                     @endif
                 </div>
             </div>
 
-            <!-- Chi tiết phòng hiện tại -->
+            <!-- Thống kê nhanh -->
             <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-bed text-success me-2"></i>
-                        Chi tiết phòng hiện tại
-                    </h5>
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Thống kê nhanh</h6>
                 </div>
                 <div class="card-body">
-                    @foreach($tourBooking->tourBookingRooms as $tourBookingRoom)
-                        <div class="border-bottom pb-2 mb-2">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong>{{ $tourBookingRoom->roomType->name }}</strong>
-                                    <br>
-                                    <small class="text-muted">
-                                        {{ $tourBookingRoom->quantity }} phòng × {{ $tourBookingRoom->guests_per_room }} khách
-                                    </small>
-                                </div>
-                                <div class="text-end">
-                                    <div class="text-success fw-bold">
-                                        {{ number_format($tourBookingRoom->total_price, 0, ',', '.') }} VNĐ
-                                    </div>
-                                    <small class="text-muted">
-                                        {{ number_format($tourBookingRoom->price_per_room, 0, ',', '.') }} VNĐ/phòng
-                                    </small>
-                                </div>
-                            </div>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary mb-1">{{ $tourBooking->total_guests }}</h4>
+                            <small class="text-muted">Tổng khách</small>
                         </div>
-                    @endforeach
-                    
-                    <div class="text-center mt-3">
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Chi tiết phòng không thể chỉnh sửa từ form này
-                        </small>
+                        <div class="col-6">
+                            <h4 class="text-success mb-1">{{ $tourBooking->total_rooms }}</h4>
+                            <small class="text-muted">Tổng phòng</small>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="text-center">
+                        <h4 class="text-warning mb-1">{{ $tourBooking->nights }}</h4>
+                        <small class="text-muted">Số đêm</small>
                     </div>
                 </div>
             </div>

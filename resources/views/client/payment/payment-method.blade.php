@@ -16,7 +16,27 @@
                     <!-- Thông tin đặt phòng -->
                     <div class="alert alert-info">
                         <h6 class="mb-2">Thông tin đặt phòng: {{ $booking->booking_id }}</h6>
-                        <p class="mb-1">Tổng tiền: <strong>{{ number_format($booking->total_booking_price, 0, ',', '.') }} VND</strong></p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1">Giá gốc: <strong>{{ number_format($booking->price, 0, ',', '.') }} VND</strong></p>
+                                @if($booking->promotion_discount > 0)
+                                    <p class="mb-1 text-success">Giảm giá: <strong>-{{ number_format($booking->promotion_discount, 0, ',', '.') }} VND</strong></p>
+                                    <p class="mb-1 text-danger">Tổng tiền: <strong>{{ number_format($booking->final_price, 0, ',', '.') }} VND</strong></p>
+                                @else
+                                    <p class="mb-1">Tổng tiền: <strong>{{ number_format($booking->price, 0, ',', '.') }} VND</strong></p>
+                                @endif
+                            </div>
+                            <div class="col-md-6">
+                                @if($booking->promotion_discount > 0)
+                                    <div class="text-center">
+                                        <div class="badge bg-success text-white mb-2">
+                                            <i class="fas fa-gift"></i> {{ $booking->promotion_code }}
+                                        </div>
+                                        <div class="small text-muted">Mã khuyến mại đã áp dụng</div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Danh sách phương thức thanh toán -->

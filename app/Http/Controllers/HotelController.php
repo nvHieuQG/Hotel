@@ -41,10 +41,9 @@ class HotelController extends Controller
 
     public function index()
     {
-        // Lấy tất cả loại phòng để hiển thị ở trang chủ
-        $roomTypes = $this->roomTypeService->getAllRoomTypes()->take(6); // Lấy 6 loại phòng đầu tiên
-
-        // Lấy các đánh giá 5 sao ngẫu nhiên
+        $roomTypes = $this->roomTypeService->getAllRoomTypes();
+        
+        // Lấy 5 đánh giá 5 sao ngẫu nhiên để hiển thị ở trang chủ
         $fiveStarReviews = \App\Models\RoomTypeReview::where('rating', 5)
             ->where('status', 'approved')
             ->with(['user', 'roomType'])
@@ -52,17 +51,49 @@ class HotelController extends Controller
             ->limit(5)
             ->get();
 
-        return view('client.index', compact('roomTypes', 'fiveStarReviews'));
+        // Lấy khuyến mại nổi bật cho trang chủ
+        $promoService = app(\App\Services\RoomPromotionService::class);
+        $featuredPromotions = collect();
+        
+        if ($roomTypes->isNotEmpty()) {
+            $representativeRoomType = $roomTypes->first();
+            $baseAmount = (float) $representativeRoomType->price;
+            $featuredPromotions = $promoService->getTopPromotionsForRoomType($representativeRoomType->id, $baseAmount, 3);
+        }
+
+        return view('client.index', compact('roomTypes', 'fiveStarReviews', 'featuredPromotions'));
     }
 
     public function rooms(Request $request)
     {
         // Lấy thông tin tìm kiếm từ URL
         $searchParams = $request->only(['check_in_date', 'check_out_date', 'guests']);
+        // Tính số đêm nếu có chọn ngày để dùng làm bối cảnh tính khuyến mại
+        $nights = 1;
+        if (!empty($searchParams['check_in_date']) && !empty($searchParams['check_out_date'])) {
+            try {
+                $start = \Carbon\Carbon::parse($searchParams['check_in_date']);
+                $end = \Carbon\Carbon::parse($searchParams['check_out_date']);
+                $diff = $start->diffInDays($end);
+                $nights = max(1, $diff);
+            } catch (\Throwable $e) {
+                $nights = 1;
+            }
+        }
 
         // Lấy tất cả phòng để hiển thị ở trang danh sách phòng
         $rooms = $this->roomRepository->getAll();
         $roomTypes = $this->roomTypeService->getAllRoomTypes();
+
+        // Lấy khuyến mại cho trang danh sách phòng
+        $promoService = app(\App\Services\RoomPromotionService::class);
+        $featuredPromotions = collect();
+        
+        if ($roomTypes->isNotEmpty()) {
+            $representativeRoomType = $roomTypes->first();
+            $baseAmount = (float) $representativeRoomType->price;
+            $featuredPromotions = $promoService->getTopPromotionsForRoomType($representativeRoomType->id, $baseAmount, 3);
+        }
 
         // Nếu có thông tin tìm kiếm, lọc phòng phù hợp
         if (!empty($searchParams['check_in_date']) && !empty($searchParams['check_out_date'])) {
@@ -84,7 +115,7 @@ class HotelController extends Controller
             $searchMessage = null;
         }
 
-        return view('client.rooms.index', compact('rooms', 'roomTypes', 'searchParams', 'searchMessage'));
+        return view('client.rooms.index', compact('rooms', 'roomTypes', 'searchParams', 'searchMessage', 'featuredPromotions', 'nights'));
     }
 
     public function restaurant()
@@ -170,14 +201,14 @@ class HotelController extends Controller
         $representativeRoom = $rooms->first() ?? $roomType->rooms()->where('status', 'available')->first();
         $topPromotions = collect();
         $allPromotions = collect();
-        if ($representativeRoom) {
-            $promoService = app(\App\Services\RoomPromotionService::class);
-            $topPromotions = $promoService->getTopPromotions($representativeRoom, $baseAmount, 3);
-            $allPromotions = $promoService->getAvailablePromotions($representativeRoom)
-                ->filter(function($p) use ($baseAmount) { return $p->canApplyToAmount($baseAmount) && $p->calculateDiscount($baseAmount) > 0; });
-        } else {
-            $allPromotions = collect();
-        }
+        
+        $promoService = app(\App\Services\RoomPromotionService::class);
+        
+        $topPromotions = $promoService->getTopPromotionsForRoomType($roomType->id, $baseAmount, 3);
+        $allPromotions = $promoService->getAvailablePromotionsForRoomType($roomType->id)
+            ->filter(function($promotion) use ($baseAmount) { 
+                return $promotion->canApplyToAmount($baseAmount) && $promotion->calculateDiscount($baseAmount) > 0; 
+            });
 
         $mapPromotion = function($promo) use ($baseAmount) {
             $discount = (float) $promo->calculateDiscount($baseAmount);

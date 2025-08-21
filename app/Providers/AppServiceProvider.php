@@ -20,6 +20,8 @@ use App\Models\RoomTypeReview;
 use App\Observers\RoomTypeReviewObserver;
 use App\Interfaces\Services\RegistrationDocumentServiceInterface;
 use App\Services\RegistrationDocumentService;
+use App\Interfaces\Services\VatInvoiceServiceInterface;
+use App\Services\VatInvoiceService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -291,6 +293,9 @@ class AppServiceProvider extends ServiceProvider
     });
         // Registration Document Service
         $this->app->bind(RegistrationDocumentServiceInterface::class, RegistrationDocumentService::class);
+
+        // VAT Invoice Service
+        $this->app->bind(VatInvoiceServiceInterface::class, VatInvoiceService::class);
     }
 
     /**

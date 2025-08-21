@@ -320,6 +320,7 @@
                         <a class="nav-link" id="profile-password-tab" data-toggle="pill" href="#profile-password" role="tab"><i class="fas fa-key"></i> Đổi mật khẩu</a>
                         <a class="nav-link" id="profile-bookings-tab" data-toggle="pill" href="#profile-bookings" role="tab"><i class="fas fa-calendar-check"></i> Lịch sử đặt phòng</a>
                         <a class="nav-link" id="profile-reviews-tab" data-toggle="pill" href="#profile-reviews" role="tab"><i class="fas fa-star"></i> Đánh giá của tôi</a>
+                        <a class="nav-link" href="{{ route('user.promotions') }}"><i class="fas fa-gift"></i> Mã khuyến mại</a>
                     </nav>
                 </div>
             </div>
@@ -820,6 +821,7 @@ function loadBookingDetail(bookingId) {
         document.getElementById('booking-detail-content').innerHTML = html;
     })
     .catch(error => {
+        console.error('Error loading booking detail:', error);
         document.getElementById('booking-detail-content').innerHTML = 
             '<div class="alert alert-danger">Không thể tải chi tiết đặt phòng: ' + error.message + '</div>';
     });
@@ -1087,8 +1089,9 @@ $(document).on('click', '.btn-view-booking', function() {
     $('#bookingDetailModal').modal('show');
     $.get('/user/bookings/' + bookingId + '/detail', function(html) {
         $('#booking-detail-content').html(html);
-    }).fail(function() {
-        $('#booking-detail-content').html('<div class="alert alert-danger">Không thể tải chi tiết booking.</div>');
+    }).fail(function(xhr, status, error) {
+        console.error('Failed to load booking detail:', status, error);
+        $('#booking-detail-content').html('<div class="alert alert-danger">Không thể tải chi tiết đặt phòng. Vui lòng thử lại sau.</div>');
     });
 });
 

@@ -218,10 +218,10 @@
                                                class="btn btn-sm btn-outline-warning" title="Chỉnh sửa">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            {{-- <button type="button" class="btn btn-sm btn-outline-danger" 
                                                     onclick="deleteTourBooking({{ $tourBooking->id }})" title="Xóa">
                                                 <i class="fas fa-trash"></i>
-                                            </button>
+                                            </button> --}}
                                         </div>
                                     </td>
                                 </tr>
@@ -249,7 +249,7 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+{{-- <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -269,7 +269,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> --}}
 
 @endsection
 

@@ -43,40 +43,6 @@
                                         </div>
                                     </td>
                                 </tr>
-                                @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
-                                    <tr>
-                                        <td><strong>Đánh giá chi tiết:</strong></td>
-                                        <td>
-                                            <div class="row">
-                                                @if($review->cleanliness_rating)
-                                                    <div class="col-md-6 mb-2">
-                                                        <small><strong>Vệ sinh:</strong> {{ $review->cleanliness_rating }}/5</small>
-                                                    </div>
-                                                @endif
-                                                @if($review->comfort_rating)
-                                                    <div class="col-md-6 mb-2">
-                                                        <small><strong>Tiện nghi:</strong> {{ $review->comfort_rating }}/5</small>
-                                                    </div>
-                                                @endif
-                                                @if($review->location_rating)
-                                                    <div class="col-md-6 mb-2">
-                                                        <small><strong>Vị trí:</strong> {{ $review->location_rating }}/5</small>
-                                                    </div>
-                                                @endif
-                                                @if($review->facilities_rating)
-                                                    <div class="col-md-6 mb-2">
-                                                        <small><strong>Cơ sở vật chất:</strong> {{ $review->facilities_rating }}/5</small>
-                                                    </div>
-                                                @endif
-                                                @if($review->value_rating)
-                                                    <div class="col-md-6 mb-2">
-                                                        <small><strong>Giá trị:</strong> {{ $review->value_rating }}/5</small>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endif
                                 <tr>
                                     <td><strong>Trạng thái:</strong></td>
                                     <td>

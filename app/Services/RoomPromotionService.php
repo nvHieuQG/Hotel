@@ -18,9 +18,9 @@ class RoomPromotionService
             ->available()
             ->get();
             
-        // Lọc các khuyến mại có thể áp dụng cho phòng này
+        // Lọc các khuyến mại có thể áp dụng cho loại phòng này
         return $promotions->filter(function($promotion) use ($room) {
-            return $promotion->canApplyToRoom($room->id);
+            return $promotion->canApplyToRoomType($room->room_type_id);
         });
     }
 
@@ -45,7 +45,6 @@ class RoomPromotionService
             ->sortByDesc(function ($promotion) use ($amountContext) {
                 $featuredWeight = $promotion->is_featured ? 1_000_000_000 : 0;
                 $discountWeight = (int) round($promotion->calculateDiscount($amountContext) * 1000);
-                // Có thể cộng thêm ưu tiên sắp hết hạn nếu muốn: $expiryWeight = ...
                 return $featuredWeight + $discountWeight;
             })
             ->take($limit)
@@ -151,5 +150,48 @@ class RoomPromotionService
             'final_price' => $finalPrice,
             'promotion' => $promotion
         ];
+    }
+
+    /**
+     * Lấy tất cả khuyến mại có thể áp dụng cho loại phòng
+     */
+    public function getAvailablePromotionsForRoomType(int $roomTypeId): Collection
+    {
+        // Lấy tất cả khuyến mại đang hoạt động
+        $promotions = Promotion::active()
+            ->available()
+            ->get();
+            
+        // Lọc các khuyến mại có thể áp dụng cho loại phòng này
+        return $promotions->filter(function($promotion) use ($roomTypeId) {
+            return $promotion->canApplyToRoomType($roomTypeId);
+        });
+    }
+
+    /**
+     * Lấy danh sách khuyến mại "hot" nhất cho loại phòng (ưu tiên nổi bật và giảm giá cao)
+     */
+    public function getTopPromotionsForRoomType(int $roomTypeId, float $amountContext, int $limit = 3): Collection
+    {
+        $available = $this->getAvailablePromotionsForRoomType($roomTypeId)
+            // Chỉ lấy khuyến mại thực sự áp dụng được ở mức giá hiện tại
+            ->filter(function ($promotion) use ($amountContext) {
+                return $promotion->canApplyToAmount($amountContext)
+                    && $promotion->calculateDiscount($amountContext) > 0;
+            });
+
+        if ($available->isEmpty()) {
+            return collect();
+        }
+
+        // Tính điểm hotness: ưu tiên is_featured, sau đó theo số tiền giảm được tại mức giá tham chiếu
+        return $available
+            ->sortByDesc(function ($promotion) use ($amountContext) {
+                $featuredWeight = $promotion->is_featured ? 1_000_000_000 : 0;
+                $discountWeight = (int) round($promotion->calculateDiscount($amountContext) * 1000);
+                return $featuredWeight + $discountWeight;
+            })
+            ->take($limit)
+            ->values();
     }
 } 

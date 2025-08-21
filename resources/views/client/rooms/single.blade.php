@@ -27,7 +27,21 @@
                 <div class="col-lg-8">
                     <div class="row">
                         <div class="col-md-12 ftco-animate">
-                            <h2 class="mb-4">{{ $roomType->name }}</h2>
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <h2 class="mb-0">{{ $roomType->name }}</h2>
+                                @php
+                                    $promotionData = \App\Models\Promotion::getBestPromotionForRoomType($roomType->id, (float)$roomType->price);
+                                    $bestPromotion = $promotionData ? $promotionData['promotion'] : null;
+                                @endphp
+                                @if($bestPromotion)
+                                    <div class="promotion-badge">
+                                        <span class="badge badge-danger px-3 py-2" style="font-size: 1rem; background: linear-gradient(45deg, #ff6b6b, #ee5a52);">
+                                            <i class="fas fa-tag mr-1"></i>
+                                            {{ $promotionData['discount_text'] }}
+                                        </span>
+                                    </div>
+                                @endif
+                            </div>
                             <div class="single-slider owl-carousel">
                                 @php
                                     $roomImages = collect();
@@ -62,13 +76,14 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4>Thông tin loại phòng</h4>
                                 <div class="text-right">
-                                    @php $basePrice = (int) $roomType->price; @endphp
+                                    @php $basePrice = (int) $roomType->price; 
+                                        $bestData = \App\Models\Promotion::getBestPromotionForRoomType($roomType->id, $basePrice);
+                                        $initialFinal = $bestData ? (int) $bestData['final_price'] : $basePrice;
+                                        $hasBest = !empty($bestData);
+                                    @endphp
                                     <div>
-                                        <span class="per">Giá mỗi đêm</span>
-                                    </div>
-                                    <div>
-                                        <span id="price_original" class="text-muted" style="text-decoration: line-through; display:none;">{{ number_format($basePrice) }}đ</span>
-                                        <span id="price_final" class="price ml-2">{{ number_format($basePrice) }}đ</span>
+                                        <span id="price_original" class="text-muted" style="text-decoration: line-through; {{ $hasBest ? '' : 'display:none;' }}">{{ number_format($basePrice) }}đ</span>
+                                        <span id="price_final" class="price ml-2">{{ number_format($initialFinal) }}đ</span>
                                     </div>
                                 </div>
                             </div>
@@ -83,68 +98,101 @@
                             </div>
                             <div class="row mb-4">
                                 <div class="col-md-7">
-                                    <div class="card">
-                                        <div class="card-header"><i class="fas fa-gift mr-1"></i> Khuyến mại</div>
-                                        <div class="card-body">
-                                            @php
-                                                $listToShow = !empty($topPromotions) ? $topPromotions : [];
-                                            @endphp
-                                            @if(!empty($listToShow))
-                                                @foreach($listToShow as $promo)
-                                                    <div class="form-check mb-2">
-                                                        <input class="form-check-input" type="radio" name="promotion_id" value="{{ $promo['id'] }}" id="promo_{{ $promo['id'] }}" data-discount="{{ (int) $promo['discount_amount'] }}" data-final="{{ (int) $promo['final_amount'] }}">
-                                                        <label class="form-check-label" for="promo_{{ $promo['id'] }}">
-                                                            <strong>{{ $promo['title'] }}</strong>
-                                                            <span class="badge bg-success ml-2">{{ $promo['discount_text'] }}</span>
-                                                            @if(!empty($promo['code']))
-                                                                <span class="badge bg-secondary ml-1">{{ $promo['code'] }}</span>
-                                                            @endif
-                                                        </label>
-                                                    </div>
-                                                @endforeach
-                                                @if(!empty($allPromotions) && count($allPromotions) > count($listToShow))
-                                                    <details class="mt-2">
-                                                        <summary class="small text-muted">Xem thêm khuyến mại</summary>
-                                                        @foreach($allPromotions as $promo)
-                                                            @if(!in_array($promo['id'], array_column($listToShow, 'id')))
-                                                                <div class="form-check mb-2 mt-2">
-                                                                    <input class="form-check-input" type="radio" name="promotion_id" value="{{ $promo['id'] }}" id="promo_all_{{ $promo['id'] }}" data-discount="{{ (int) $promo['discount_amount'] }}" data-final="{{ (int) $promo['final_amount'] }}">
-                                                                    <label class="form-check-label" for="promo_all_{{ $promo['id'] }}">
-                                                                        <strong>{{ $promo['title'] }}</strong>
-                                                                        <span class="badge bg-success ml-2">{{ $promo['discount_text'] }}</span>
+                                   
+                                    @if(!empty($topPromotions) || !empty($allPromotions))
+                                        <div class="promotion-section mb-4">
+                                            <div class="card border-0 shadow-sm">
+                                                <div class="card-header bg-gradient-primary text-white">
+                                                    <i class="fas fa-gift mr-2"></i> 
+                                                    <strong>Ưu đãi đặc biệt</strong>
+                                                </div>
+                                                <div class="card-body p-3">
+                                                    @php
+                                                        $listToShow = !empty($topPromotions) ? $topPromotions : [];
+                                                    @endphp
+                                                    @if(!empty($listToShow))
+                                                        @foreach($listToShow as $promo)
+                                                            <div class="promotion-item mb-3 p-3 border rounded bg-light">
+                                                                <div class="d-flex justify-content-between align-items-start">
+                                                                    <div class="flex-grow-1">
+                                                                        <div class="fw-bold text-primary mb-1">{{ $promo['title'] }}</div>
+                                                                        <div class="small text-muted">{{ Str::limit($promo['description'] ?? '', 80) }}</div>
+                                                                    </div>
+                                                                    <div class="text-end ms-2">
+                                                                        <div class="badge bg-success mb-1">{{ $promo['discount_text'] }}</div>
                                                                         @if(!empty($promo['code']))
-                                                                            <span class="badge bg-secondary ml-1">{{ $promo['code'] }}</span>
+                                                                            <div class="badge bg-secondary small">{{ $promo['code'] }}</div>
                                                                         @endif
-                                                                    </label>
+                                                                    </div>
                                                                 </div>
-                                                            @endif
+                                                            </div>
                                                         @endforeach
-                                                    </details>
-                                                @endif
-                                            @else
-                                                <div class="text-muted small">Hiện chưa có khuyến mại phù hợp</div>
-                                            @endif
-                                            <div id="promoAlert" class="alert d-none mt-2"></div>
+                                                        @if(!empty($allPromotions) && count($allPromotions) > count($listToShow))
+                                                            <details class="mt-3">
+                                                                <summary class="text-primary small cursor-pointer">
+                                                                    <i class="fas fa-chevron-down"></i> Xem thêm {{ count($allPromotions) - count($listToShow) }} ưu đãi
+                                                                </summary>
+                                                                <div class="mt-2">
+                                                                    @foreach($allPromotions as $promo)
+                                                                        @if(!in_array($promo['id'], array_column($listToShow, 'id')))
+                                                                            <div class="promotion-item mb-2 p-2 border rounded bg-light">
+                                                                                <div class="d-flex justify-content-between align-items-start">
+                                                                                    <div class="flex-grow-1">
+                                                                                        <div class="fw-bold text-primary mb-1">{{ $promo['title'] }}</div>
+                                                                                        <div class="small text-muted">{{ Str::limit($promo['description'] ?? '', 60) }}</div>
+                                                                                    </div>
+                                                                                    <div class="text-end ms-2">
+                                                                                        <div class="badge bg-success mb-1">{{ $promo['discount_text'] }}</div>
+                                                                                        @if(!empty($promo['code']))
+                                                                                            <div class="badge bg-secondary small">{{ $promo['code'] }}</div>
+                                                                                        @endif
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        @endif
+                                                                    @endforeach
+                                                                </div>
+                                                            </details>
+                                                        @endif
+                                                    @else
+                                                        <div class="text-center text-muted py-3">
+                                                            <i class="fas fa-gift fa-2x mb-2"></i>
+                                                            <div>Hiện chưa có khuyến mại phù hợp</div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </div>
+                                    @endif
+
+                                    <!-- Thông tin phòng -->
+                                    <div class="room-info">
+                                        <h4 class="mb-3">Thông tin phòng</h4>
+                                        <ul class="list ml-md-5">
+                                            <li><span>Mô tả:</span> {{ Str::limit($roomType->description, 100) }}</li>
+                                        </ul>
                                     </div>
                                 </div>
                                 <div class="col-md-5">
-                                    <div class="card">
-                                        <div class="card-header"><i class="fas fa-receipt mr-1"></i> Tóm tắt giá</div>
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-header bg-gradient-success text-white">
+                                            <i class="fas fa-receipt mr-2"></i> 
+                                            <strong>Tóm tắt giá</strong>
+                                        </div>
                                         <div class="card-body">
-                                            @php $nights = isset($nights) ? (int)$nights : 1; @endphp
-                                            <div class="d-flex justify-content-between mb-1">
+                                            @php $nights = isset($nights) ? (int)$nights : 1; $sumBase = $basePrice * $nights; $sumFinal = $initialFinal * $nights; $sumDiscount = $sumBase - $sumFinal; @endphp
+                                            <div class="d-flex justify-content-between mb-2">
                                                 <span>Giá gốc ({{ $nights }} đêm)</span>
-                                                <span id="sum_original">{{ number_format($roomType->price * $nights) }} đ</span>
+                                                <span id="sum_original" class="fw-bold">{{ number_format($sumBase) }} đ</span>
                                             </div>
-                                            <div class="d-flex justify-content-between mb-1 text-success">
+                                            <div class="d-flex justify-content-between mb-2 text-success">
                                                 <span>Khuyến mại</span>
-                                                <span id="sum_discount">- 0 đ</span>
+                                                <span id="sum_discount" class="fw-bold">- {{ number_format(max(0,$sumDiscount)) }} đ</span>
                                             </div>
-                                            <hr class="my-2">
-                                            <div class="d-flex justify-content-between fw-bold">
+                                            <hr class="my-3">
+                                            <div class="d-flex justify-content-between fw-bold fs-5">
                                                 <span>Giá sau giảm</span>
-                                                <span id="sum_final">{{ number_format($roomType->price * $nights) }} đ</span>
+                                                <span id="sum_final" class="text-primary">{{ number_format($sumFinal) }} đ</span>
                                             </div>
                                         </div>
                                     </div>
@@ -211,9 +259,9 @@
                             </div>
                         </div>
 
-                        <!-- Phần đánh giá và bình luận -->
+                        <!-- Phần đánh giá -->
                         <div class="col-md-12 room-single ftco-animate mb-5 reviews-section">
-                            <h4 class="mb-4">Đánh giá và bình luận</h4>
+                            <h4 class="mb-4">Đánh giá</h4>
                             
                             <!-- Thống kê đánh giá -->
                             <div class="row mb-4">
@@ -324,100 +372,10 @@
                                                         </div>
                                                     </div>
 
-                                                    <!-- Đánh giá chi tiết -->
-                                                    <div class="detailed-ratings mb-4">
-                                                        <h6 class="font-weight-bold text-dark mb-3">
-                                                            <i class="fas fa-chart-bar text-primary mr-2"></i>Đánh giá chi tiết
-                                                            <small class="text-muted font-weight-normal">(không bắt buộc)</small>
-                                                        </h6>
-                                                        
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-broom text-success mr-2"></i>Vệ sinh
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="cleanliness_rating" value="{{ $i }}" id="cleanliness_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="cleanliness_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-couch text-info mr-2"></i>Thoải mái
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="comfort_rating" value="{{ $i }}" id="comfort_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="comfort_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-map-marker-alt text-warning mr-2"></i>Vị trí
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="location_rating" value="{{ $i }}" id="location_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="location_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-wifi text-primary mr-2"></i>Tiện nghi
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="facilities_rating" value="{{ $i }}" id="facilities_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="facilities_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div class="col-md-6">
-                                                                <div class="rating-item mb-3">
-                                                                    <label class="rating-label">
-                                                                        <i class="fas fa-dollar-sign text-success mr-2"></i>Giá trị
-                                                                    </label>
-                                                                    <div class="rating-stars-sm" data-rating="0">
-                                                                        @for ($i = 5; $i >= 1; $i--)
-                                                                            <input type="radio" name="value_rating" value="{{ $i }}" id="value_star{{ $i }}" class="rating-input-sm">
-                                                                            <label for="value_star{{ $i }}" class="rating-star-sm" data-value="{{ $i }}">
-                                                                                <i class="fas fa-star"></i>
-                                                                            </label>
-                                                                        @endfor
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Bình luận -->
+                                                    <!-- Nội dung đánh giá -->
                                                     <div class="form-group mb-4">
                                                         <label for="comment" class="form-label font-weight-bold text-dark mb-2">
-                                                            <i class="fas fa-comment text-primary mr-2"></i>Bình luận của bạn
+                                                            <i class="fas fa-comment text-primary mr-2"></i>Nội dung đánh giá của bạn
                                                             <span class="text-danger">*</span>
                                                         </label>
                                                         <textarea name="comment" id="comment" class="form-control border-0 bg-light" rows="4" 
@@ -425,7 +383,7 @@
                                                         <div class="form-text">
                                                             <small class="text-muted">
                                                                 <i class="fas fa-info-circle mr-1"></i>
-                                                                Bình luận sẽ giúp khách hàng khác hiểu rõ hơn về chất lượng phòng
+                                                                Nội dung đánh giá sẽ giúp khách hàng khác hiểu rõ hơn về chất lượng phòng
                                                             </small>
                                                         </div>
                                                     </div>
@@ -493,30 +451,7 @@
                                                     @if($review->comment)
                                                         <p class="mb-2">{{ $review->comment }}</p>
                                                     @else
-                                                        <p class="mb-2 text-muted"><em>Không có bình luận</em></p>
-                                                    @endif
-                                                    
-                                                    <!-- Hiển thị đánh giá chi tiết -->
-                                                    @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
-                                                        <div class="detailed-ratings">
-                                                            <small class="text-muted">
-                                                                @if($review->cleanliness_rating)
-                                                                    <span class="mr-3">Vệ sinh: {{ $review->cleanliness_rating }}/5</span>
-                                                                @endif
-                                                                @if($review->comfort_rating)
-                                                                    <span class="mr-3">Tiện nghi: {{ $review->comfort_rating }}/5</span>
-                                                                @endif
-                                                                @if($review->location_rating)
-                                                                    <span class="mr-3">Vị trí: {{ $review->location_rating }}/5</span>
-                                                                @endif
-                                                                @if($review->facilities_rating)
-                                                                    <span class="mr-3">Cơ sở vật chất: {{ $review->facilities_rating }}/5</span>
-                                                                @endif
-                                                                @if($review->value_rating)
-                                                                    <span>Giá trị: {{ $review->value_rating }}/5</span>
-                                                                @endif
-                                                            </small>
-                                                        </div>
+                                                        <p class="mb-2 text-muted"><em>Không có nội dung đánh giá</em></p>
                                                     @endif
                                                 </div>
                                             </div>
@@ -649,17 +584,12 @@
 <style>
 /* CSS cho rating stars */
 .rating-input {
-    display: inline-block;
-    direction: rtl;
-}
-
-.rating-input input[type="radio"] {
     display: none;
 }
 
 .rating-star {
-    font-size: 1.5rem;
-    color: #ccc;
+    font-size: 2.5rem;
+    color: #e0e0e0;
     cursor: pointer;
     transition: color 0.2s ease;
 }
@@ -919,17 +849,17 @@ $(document).ready(function() {
         
         // Enable/disable form dựa trên việc chọn booking
         if (selectedBookingId) {
-            $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', false);
+            $('#reviewForm .form-control, #reviewForm .rating-input').prop('disabled', false);
             $('#reviewForm button[type="submit"]').prop('disabled', false);
         } else {
-            $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', true);
+            $('#reviewForm .form-control, #reviewForm .rating-input').prop('disabled', true);
             $('#reviewForm button[type="submit"]').prop('disabled', true);
         }
     });
     
     // Tự động enable form nếu chỉ có 1 booking (đã được chọn tự động)
     if ($('#booking_select').length && $('#booking_select').val()) {
-        $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', false);
+        $('#reviewForm .form-control, #reviewForm .rating-input').prop('disabled', false);
         $('#reviewForm button[type="submit"]').prop('disabled', false);
     }
     
@@ -960,7 +890,7 @@ $(document).ready(function() {
         // Kiểm tra comment
         const comment = form.find('#comment').val().trim();
         if (comment.length < 10) {
-            showToast('Bình luận phải có ít nhất 10 ký tự!', 'warning');
+            showToast('Nội dung đánh giá phải có ít nhất 10 ký tự!', 'warning');
             return;
         }
         
@@ -996,12 +926,11 @@ $(document).ready(function() {
                     $('#booking_select').val('');
                     $('#selected_booking_id').val('');
                     $('.rating-stars').attr('data-rating', '0');
-                    $('.rating-stars-sm').attr('data-rating', '0');
-                    $('.rating-star i, .rating-star-sm i').removeClass('text-warning').addClass('text-muted');
+                    $('.rating-star i').removeClass('text-warning').addClass('text-muted');
                     $('.rating-text').text('Chọn số sao để đánh giá');
                     
                     // Disable form
-                    $('#reviewForm .form-control, #reviewForm .rating-input, #reviewForm .rating-input-sm').prop('disabled', true);
+                    $('#reviewForm .form-control, #reviewForm .rating-input').prop('disabled', true);
                     $('#reviewForm button[type="submit"]').prop('disabled', true);
                     
                     // Tự động load danh sách đánh giá mới
@@ -1350,6 +1279,70 @@ function showToast(message, type = 'info') {
         padding: 10px 20px;
         font-size: 1rem;
     }
+}
+
+/* Card improvements */
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Badge improvements */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Form check improvements */
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Promotion badge styles */
+.promotion-badge .badge {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border: 2px solid #fff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.promotion-badge {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 </style>
 @endsection

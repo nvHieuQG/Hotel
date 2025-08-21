@@ -287,21 +287,15 @@ class AdminPromotionService implements \App\Interfaces\Services\Admin\AdminPromo
         
         // 4. Xử lý discount value
         if ($data['discount_type'] === 'percentage') {
-            $data['discount_value'] = min((float)$data['discount_value'], 100);
+            $data['discount_value'] = min((float)$data['discount_value'], 80);
         }
         
         // 5. Xử lý apply_scope dựa trên dữ liệu gửi lên
-        if (!empty($data['room_type_ids'])) {
+        if (!empty($data['room_type_ids']) && is_array($data['room_type_ids'])) {
             $data['apply_scope'] = 'room_types';
         } else {
             $data['apply_scope'] = 'all';
         }
-        
-        // Log để debug
-        Log::info('Processed promotion data', [
-            'apply_scope' => $data['apply_scope'],
-            'has_room_types' => !empty($data['room_type_ids'])
-        ]);
         
         return $data;
     }
@@ -329,12 +323,6 @@ class AdminPromotionService implements \App\Interfaces\Services\Admin\AdminPromo
         try {
             $applyScope = $data['apply_scope'] ?? 'all';
             
-            Log::info('Syncing promotion scope', [
-                'promotion_id' => $promotion->id,
-                'apply_scope' => $applyScope,
-                'room_type_ids' => $data['room_type_ids'] ?? []
-            ]);
-            
             switch ($applyScope) {
                 case 'room_types':
                     // Validate room type IDs
@@ -348,14 +336,12 @@ class AdminPromotionService implements \App\Interfaces\Services\Admin\AdminPromo
                     
                     // Sync room types
                     $promotion->roomTypes()->sync($roomTypeIds);
-                    Log::info('Synced room types', ['room_type_ids' => $roomTypeIds]);
                     break;
                     
                 case 'all':
                 default:
                     // Clear room types for "all" scope
                     $promotion->roomTypes()->sync([]);
-                    Log::info('Applying to all rooms - no specific restrictions');
                     break;
             }
             

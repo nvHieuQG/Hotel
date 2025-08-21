@@ -28,6 +28,9 @@ class Booking extends Model
         'adults_count',
         'children_count',
         'infants_count',
+        'promotion_id',
+        'promotion_discount',
+        'promotion_code',
         'guest_full_name',
         'guest_id_number',
         'guest_birth_date',
@@ -47,7 +50,13 @@ class Booking extends Model
         'booker_relationship',
         'registration_status',
         'registration_generated_at',
-        'registration_sent_at'
+        'registration_sent_at',
+        // VAT invoice fields
+        'vat_invoice_info',
+        'vat_invoice_status',
+        'vat_invoice_generated_at',
+        'vat_invoice_sent_at',
+        'vat_invoice_file_path'
     ];
 
     /**
@@ -63,6 +72,9 @@ class Booking extends Model
         'extra_services_total' => 'decimal:2',
         'registration_generated_at' => 'datetime',
         'registration_sent_at' => 'datetime',
+        'vat_invoice_info' => 'array',
+        'vat_invoice_generated_at' => 'datetime',
+        'vat_invoice_sent_at' => 'datetime',
     ];
 
     /**
@@ -87,6 +99,30 @@ class Booking extends Model
     public function review()
     {
         return $this->hasOne(RoomTypeReview::class);
+    }
+
+    /**
+     * Get the promotion applied to this booking.
+     */
+    public function promotion()
+    {
+        return $this->belongsTo(Promotion::class);
+    }
+
+    /**
+     * Get the final price after applying promotion discount.
+     */
+    public function getFinalPriceAttribute()
+    {
+        return $this->price - $this->promotion_discount;
+    }
+
+    /**
+     * Get the total amount including surcharge and promotion discount.
+     */
+    public function getTotalAmountAttribute()
+    {
+        return $this->price + $this->surcharge - $this->promotion_discount;
     }
 
     /**
@@ -308,11 +344,6 @@ class Booking extends Model
             'no_show' => 'Khách không đến',
             default => 'Không xác định'
         };
-    }
-
-    public function getTotalAmountAttribute()
-    {
-        return $this->price + $this->surcharge;
     }
 
     /**

@@ -213,11 +213,39 @@
 
                                     <!-- Tab: Tất cả phòng -->
                                     <div class="tab-pane fade {{ $currentScope === 'all' ? 'show active' : '' }}" id="all-rooms" role="tabpanel">
-                                        <div class="alert alert-info">
-                                            <i class="fas fa-info-circle"></i>
-                                            <strong>Khuyến mại này sẽ áp dụng cho tất cả phòng trong khách sạn.</strong>
-                                            <br>
-                                            <small class="text-muted">Không cần chọn loại phòng cụ thể.</small>
+                                        <div class="alert alert-success">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-globe fa-2x text-success me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-1"><strong>Áp dụng cho tất cả loại phòng</strong></h6>
+                                                    <p class="mb-0">Khuyến mại này sẽ hiển thị trên tất cả các loại phòng trong khách sạn.</p>
+                                                    <small class="text-muted">✓ Không cần chọn loại phòng cụ thể</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-primary">
+                                                    <i class="fas fa-chart-bar"></i> Thống kê áp dụng
+                                                </h6>
+                                                @php
+                                                    $totalRoomTypes = \App\Models\RoomType::count();
+                                                    $totalRooms = \App\Models\Room::count();
+                                                @endphp
+                                                <div class="row text-center">
+                                                    <div class="col-6">
+                                                        <div class="border-end">
+                                                            <h4 class="text-primary mb-0">{{ $totalRoomTypes }}</h4>
+                                                            <small class="text-muted">Loại phòng</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <h4 class="text-success mb-0">{{ $totalRooms }}</h4>
+                                                        <small class="text-muted">Tổng số phòng</small>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -229,7 +257,7 @@
                                         <div class="row g-3">
                                             @foreach(\App\Models\RoomType::withCount('rooms')->get() as $roomType)
                                                 <div class="col-sm-6 col-md-4">
-                                                    <div class="form-check border rounded-3 p-3 text-center room-type-card">
+                                                    <div class="form-check border rounded-3 p-3 text-center room-type-card" data-room-type-id="{{ $roomType->id }}">
                                                         <input type="checkbox" 
                                                                class="form-check-input room-type-checkbox" 
                                                                name="room_type_ids[]" 
@@ -366,12 +394,129 @@
 @push('scripts')
 <style>
 .room-type-card {
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    border: 2px solid #e9ecef;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
 .room-type-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
+.room-type-card .form-check-input:checked + .form-check-label {
+    color: #007bff;
+}
+
+.room-type-card .form-check-input:checked ~ .room-type-card {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+}
+
+.room-type-card .form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.room-type-card .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+}
+
+.badge.bg-info {
+    background-color: #17a2b8 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Quick action buttons */
+.btn-outline-primary:hover {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+/* Tab improvements */
+.nav-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.nav-tabs .nav-link.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background-color: transparent;
+}
+
+/* Card improvements */
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.25rem;
+    background-color: #f8f9fa;
+}
+
+/* Form improvements */
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 </style>
 
@@ -403,7 +548,50 @@ $(document).ready(function() {
     function setupCheckboxEvents() {
         $('.room-type-checkbox').on('change', function() {
             updateApplyScope();
+            updateRoomTypeSummary();
         });
+    }
+
+    // Quick actions for room type selection
+    function setupQuickActions() {
+        $('#selectAllRoomTypes').on('click', function() {
+            $('.room-type-checkbox').prop('checked', true);
+            updateApplyScope();
+            updateRoomTypeSummary();
+        });
+        
+        $('#clearAllRoomTypes').on('click', function() {
+            $('.room-type-checkbox').prop('checked', false);
+            updateApplyScope();
+            updateRoomTypeSummary();
+        });
+    }
+
+    // Update room type selection summary
+    function updateRoomTypeSummary() {
+        const checkedCount = $('.room-type-checkbox:checked').length;
+        const totalCount = $('.room-type-checkbox').length;
+        
+        let totalRooms = 0;
+        $('.room-type-checkbox:checked').each(function() {
+            const roomTypeId = $(this).val();
+            const roomTypeCard = $(`.room-type-card[data-room-type-id="${roomTypeId}"]`);
+            const roomCountText = roomTypeCard.find('.badge.bg-info').text();
+            const roomCount = parseInt(roomCountText.match(/\d+/)[0]);
+            totalRooms += roomCount;
+        });
+        
+        $('#selectedCount').text(checkedCount);
+        $('#totalRooms').text(totalRooms);
+        
+        // Update button states
+        if (checkedCount === 0) {
+            $('#selectAllRoomTypes').removeClass('btn-outline-primary').addClass('btn-outline-secondary');
+        } else if (checkedCount === totalCount) {
+            $('#selectAllRoomTypes').removeClass('btn-outline-secondary').addClass('btn-outline-primary');
+        } else {
+            $('#selectAllRoomTypes').removeClass('btn-outline-secondary').addClass('btn-outline-primary');
+        }
     }
 
     // Form validation
@@ -469,10 +657,12 @@ $(document).ready(function() {
     // Initialize on page load
     function initializeForm() {
         setupCheckboxEvents();
+        setupQuickActions(); // Initialize quick actions
         setupFormValidation();
         
         // Set initial apply_scope based on current selections
         updateApplyScope();
+        updateRoomTypeSummary(); // Initialize summary on load
     }
 
     // Initialize

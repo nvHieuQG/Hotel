@@ -18,6 +18,7 @@ use Illuminate\Validation\ValidationException;
 use App\Interfaces\Services\RegistrationDocumentServiceInterface;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
+use App\Interfaces\Services\VatInvoiceServiceInterface;
 
 class AdminBookingController extends Controller
 {
@@ -26,6 +27,7 @@ class AdminBookingController extends Controller
     protected $bookingServiceService;
     protected $paymentService;
     protected $registrationDocumentService;
+    protected $vatInvoiceService;
 
     /**
      * Khởi tạo controller
@@ -35,13 +37,15 @@ class AdminBookingController extends Controller
         NotificationDataFormatterService $dataFormatterService,
         AdminBookingServiceServiceInterface $bookingServiceService,
         PaymentService $paymentService,
-        RegistrationDocumentServiceInterface $registrationDocumentService
+        RegistrationDocumentServiceInterface $registrationDocumentService,
+        VatInvoiceServiceInterface $vatInvoiceService
     ) {
         $this->bookingService = $bookingService;
         $this->dataFormatterService = $dataFormatterService;
         $this->bookingServiceService = $bookingServiceService;
         $this->paymentService = $paymentService;
         $this->registrationDocumentService = $registrationDocumentService;
+        $this->vatInvoiceService = $vatInvoiceService;
     }
 
     // ==================== BOOKING METHODS ====================
@@ -371,6 +375,81 @@ class AdminBookingController extends Controller
         } catch (\Exception $e) {
             Log::error('Error downloading registration: ' . $e->getMessage());
             abort(500, 'Có lỗi xảy ra khi tải xuống');
+        }
+    }
+
+    // ======= VAT Invoice (Admin) =======
+    public function generateVatInvoice($id)
+    {
+        $booking = $this->bookingService->getBookingDetails($id);
+        $this->vatInvoiceService->generateVatInvoice($booking);
+        return back()->with('success', 'Đã tạo hóa đơn VAT');
+    }
+
+    public function sendVatInvoice($id)
+    {
+        $booking = $this->bookingService->getBookingDetails($id);
+        $ok = $this->vatInvoiceService->sendVatInvoiceEmail($booking);
+        return back()->with($ok ? 'success' : 'error', $ok ? 'Đã gửi email hóa đơn VAT' : 'Không thể gửi email hóa đơn VAT');
+    }
+
+    public function previewVatInvoice($id)
+    {
+        try {
+            $booking = $this->bookingService->getBookingDetails($id);
+            
+            if (!$booking) {
+                abort(404, 'Không tìm thấy đặt phòng');
+            }
+
+            // Tạo hóa đơn VAT nếu chưa có
+            if (empty($booking->vat_invoice_file_path)) {
+                $this->vatInvoiceService->generateVatInvoice($booking);
+                $booking->refresh();
+            }
+
+            if (empty($booking->vat_invoice_file_path)) {
+                abort(500, 'Không thể tạo hóa đơn VAT');
+            }
+
+            $fullPath = storage_path('app/' . $booking->vat_invoice_file_path);
+            
+            if (!file_exists($fullPath)) {
+                abort(404, 'File hóa đơn VAT không tồn tại');
+            }
+
+            return response()->file($fullPath);
+        } catch (\Exception $e) {
+            Log::error('Error previewing VAT invoice: ' . $e->getMessage());
+            abort(500, 'Có lỗi xảy ra khi xem trước hóa đơn VAT');
+        }
+    }
+
+    public function downloadVatInvoice($id)
+    {
+        try {
+            $booking = $this->bookingService->getBookingDetails($id);
+            
+            if (!$booking) {
+                abort(404, 'Không tìm thấy đặt phòng');
+            }
+
+            if (empty($booking->vat_invoice_file_path)) {
+                abort(404, 'Hóa đơn VAT chưa được tạo');
+            }
+
+            $fullPath = storage_path('app/' . $booking->vat_invoice_file_path);
+            
+            if (!file_exists($fullPath)) {
+                abort(404, 'File hóa đơn VAT không tồn tại');
+            }
+
+            $filename = 'vat_invoice_' . $booking->booking_id . '_' . date('Y-m-d_H-i-s') . '.pdf';
+            
+            return response()->download($fullPath, $filename);
+        } catch (\Exception $e) {
+            Log::error('Error downloading VAT invoice: ' . $e->getMessage());
+            abort(500, 'Có lỗi xảy ra khi tải xuống hóa đơn VAT');
         }
     }
 
@@ -917,7 +996,7 @@ class AdminBookingController extends Controller
 
             // Tạo giao dịch COD hoàn tất ngay
             $payment = $this->paymentService->createPayment($booking, [
-                'payment_method' => 'cod',
+                'method' => 'cod',
                 'amount' => $amount,
                 'currency' => 'VND',
                 'status' => 'completed',

@@ -100,7 +100,57 @@ class PromotionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], 400);
+            ], 500);
+        }
+    }
+
+    /**
+     * Kiểm tra mã promotion cho tour booking (Ajax)
+     */
+    public function checkPromotion(Request $request)
+    {
+        try {
+            $request->validate([
+                'code' => 'required|string|max:50',
+                'amount' => 'required|numeric|min:0'
+            ]);
+
+            $result = $this->promotionService->applyPromotion(
+                $request->code, 
+                $request->amount
+            );
+
+            if ($result) {
+                $discountAmount = $result['discount_amount'] ?? 0;
+                $finalPrice = $request->amount - $discountAmount;
+                
+                return response()->json([
+                    'success' => true,
+                    'discount_amount' => $discountAmount,
+                    'discount_formatted' => number_format($discountAmount, 0, ',', '.') . ' VNĐ',
+                    'final_price' => $finalPrice,
+                    'final_price_formatted' => number_format($finalPrice, 0, ',', '.'),
+                    'message' => 'Mã giảm giá hợp lệ!'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mã giảm giá không hợp lệ hoặc đã hết hạn.'
+                ]);
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu không hợp lệ.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error in PromotionController@checkPromotion: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -127,7 +177,7 @@ class PromotionController extends Controller
     /**
      * Kiểm tra và áp dụng mã giảm giá cho booking
      */
-    public function checkPromotion(Request $request)
+    public function checkAndApplyPromotion(Request $request)
     {
         try {
             $request->validate([
@@ -154,7 +204,7 @@ class PromotionController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error in PromotionController@checkPromotion: ' . $e->getMessage());
+            Log::error('Error in PromotionController@checkAndApplyPromotion: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()

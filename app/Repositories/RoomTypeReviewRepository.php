@@ -140,23 +140,13 @@ class RoomTypeReviewRepository implements RoomTypeReviewRepositoryInterface
         ->limit(5)
         ->get();
 
-        // Thống kê đánh giá chi tiết
+        // Thống kê đánh giá chi tiết (đã loại bỏ vì không còn cột chi tiết)
         $detailedStats = [
-            'cleanliness' => RoomTypeReview::where('status', 'approved')
-                ->whereNotNull('cleanliness_rating')
-                ->avg('cleanliness_rating'),
-            'comfort' => RoomTypeReview::where('status', 'approved')
-                ->whereNotNull('comfort_rating')
-                ->avg('comfort_rating'),
-            'location' => RoomTypeReview::where('status', 'approved')
-                ->whereNotNull('location_rating')
-                ->avg('location_rating'),
-            'facilities' => RoomTypeReview::where('status', 'approved')
-                ->whereNotNull('facilities_rating')
-                ->avg('facilities_rating'),
-            'value' => RoomTypeReview::where('status', 'approved')
-                ->whereNotNull('value_rating')
-                ->avg('value_rating'),
+            'cleanliness' => 0,
+            'comfort' => 0,
+            'location' => 0,
+            'facilities' => 0,
+            'value' => 0,
         ];
 
         // Làm tròn các giá trị

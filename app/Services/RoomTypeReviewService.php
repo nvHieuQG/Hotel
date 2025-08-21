@@ -28,11 +28,6 @@ class RoomTypeReviewService implements RoomTypeReviewServiceInterface
             'room_type_id' => $roomTypeId ?? $data['room_type_id'],
             'rating' => $data['rating'],
             'comment' => $data['comment'] ?? null,
-            'cleanliness_rating' => $data['cleanliness_rating'] ?? null,
-            'comfort_rating' => $data['comfort_rating'] ?? null,
-            'location_rating' => $data['location_rating'] ?? null,
-            'facilities_rating' => $data['facilities_rating'] ?? null,
-            'value_rating' => $data['value_rating'] ?? null,
             'is_anonymous' => $data['is_anonymous'] ?? false,
             'status' => $data['status'] ?? 'pending',
         ];
@@ -78,11 +73,6 @@ class RoomTypeReviewService implements RoomTypeReviewServiceInterface
             'booking_id' => $bookingId,
             'rating' => $data['rating'],
             'comment' => $data['comment'] ?? null,
-            'cleanliness_rating' => $data['cleanliness_rating'] ?? null,
-            'comfort_rating' => $data['comfort_rating'] ?? null,
-            'location_rating' => $data['location_rating'] ?? null,
-            'facilities_rating' => $data['facilities_rating'] ?? null,
-            'value_rating' => $data['value_rating'] ?? null,
             'is_anonymous' => isset($data['is_anonymous']) && ($data['is_anonymous'] == '1' || $data['is_anonymous'] === true),
             'status' => 'approved',
         ];
@@ -278,11 +268,6 @@ class RoomTypeReviewService implements RoomTypeReviewServiceInterface
             'booking_id' => ['required', 'integer', 'exists:bookings,id'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:1000'],
-            'cleanliness_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'comfort_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'location_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'facilities_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'value_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'is_anonymous' => ['boolean'],
         ];
 
@@ -295,16 +280,6 @@ class RoomTypeReviewService implements RoomTypeReviewServiceInterface
             'rating.min' => 'Điểm đánh giá phải từ 1-5.',
             'rating.max' => 'Điểm đánh giá phải từ 1-5.',
             'comment.max' => 'Bình luận không được quá 1000 ký tự.',
-            'cleanliness_rating.min' => 'Điểm đánh giá vệ sinh phải từ 1-5.',
-            'cleanliness_rating.max' => 'Điểm đánh giá vệ sinh phải từ 1-5.',
-            'comfort_rating.min' => 'Điểm đánh giá tiện nghi phải từ 1-5.',
-            'comfort_rating.max' => 'Điểm đánh giá tiện nghi phải từ 1-5.',
-            'location_rating.min' => 'Điểm đánh giá vị trí phải từ 1-5.',
-            'location_rating.max' => 'Điểm đánh giá vị trí phải từ 1-5.',
-            'facilities_rating.min' => 'Điểm đánh giá cơ sở vật chất phải từ 1-5.',
-            'facilities_rating.max' => 'Điểm đánh giá cơ sở vật chất phải từ 1-5.',
-            'value_rating.min' => 'Điểm đánh giá giá trị phải từ 1-5.',
-            'value_rating.max' => 'Điểm đánh giá giá trị phải từ 1-5.',
         ];
 
         $validator = \Illuminate\Support\Facades\Validator::make($data, $rules, $messages);

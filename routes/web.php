@@ -18,6 +18,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingPromotionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\RoomChangeController;
@@ -25,9 +26,14 @@ use App\Http\Controllers\TourBookingController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\RoomTypeReviewController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\ClientVatInvoiceController;
+use App\Http\Controllers\ClientTourVatInvoiceController;
 
 use App\Http\Controllers\Admin\AdminRoomChangeController;
 use App\Http\Controllers\Admin\AdminExtraServiceController;
+use App\Http\Controllers\Admin\AdminTourVatInvoiceController;
+use App\Http\Controllers\Admin\TourBookingServiceController;
+use App\Http\Controllers\Admin\TourBookingNoteController;
 
 
 // Route::get('/', function () {
@@ -119,10 +125,22 @@ Route::get('/tour-booking/payment/{bookingId}', [TourBookingController::class, '
 Route::get('/tour-booking', [TourBookingController::class, 'index'])->name('tour-booking.index');
 Route::get('/tour-booking/{id}', [TourBookingController::class, 'show'])->name('tour-booking.show');
 
-// Tour Booking Payment Routes - Cần auth
+// Tour Booking Payment Routes
 Route::middleware(['auth'])->group(function () {
-    Route::post('/tour-booking/credit-card-payment', [TourBookingController::class, 'processCreditCardPayment'])->name('tour-booking.credit-card-payment');
-    Route::post('/tour-booking/bank-transfer-payment', [TourBookingController::class, 'processBankTransferPayment'])->name('tour-booking.bank-transfer-payment');
+    Route::get('/tour-booking/{tourBooking}/credit-card', [TourBookingController::class, 'processCreditCardPayment'])->name('tour-booking.credit-card');
+    Route::get('/tour-booking/{tourBooking}/bank-transfer', [TourBookingController::class, 'processBankTransferPayment'])->name('tour-booking.bank-transfer');
+    
+    Route::post('/tour-booking/{tourBooking}/credit-card/confirm', [TourBookingController::class, 'confirmCreditCardPayment'])->name('tour-booking.credit-card.confirm');
+    Route::post('/tour-booking/{tourBooking}/bank-transfer/confirm', [TourBookingController::class, 'confirmBankTransferPayment'])->name('tour-booking.bank-transfer.confirm');
+
+    // Client Tour VAT invoice routes
+    Route::get('/tour-booking/{id}/vat-invoice', [ClientTourVatInvoiceController::class, 'showVatForm'])->name('tour-booking.vat-invoice');
+    Route::post('/tour-booking/{id}/vat-invoice', [ClientTourVatInvoiceController::class, 'requestVatInvoice'])->name('tour-booking.vat-invoice.request');
+    Route::get('/tour-booking/{id}/vat-invoice/download', [ClientTourVatInvoiceController::class, 'downloadVatInvoice'])->name('tour-booking.vat-invoice.download');
+    
+    // Tour booking promotion routes
+    Route::post('/tour-booking/{id}/apply-promotion', [TourBookingController::class, 'applyPromotion'])->name('tour-booking.apply-promotion');
+    Route::post('/tour-booking/{id}/remove-promotion', [TourBookingController::class, 'removePromotion'])->name('tour-booking.remove-promotion');
 });
 
 // Booking notes: KHÔNG lồng group auth bên ngoài nữa
@@ -137,6 +155,13 @@ Route::middleware(['auth', 'check.booking.access'])->group(function () {
     Route::get('/booking-notes/{bookingId}/{id}', [BookingController::class, 'notesShow'])->name('booking-notes.show');
     Route::post('/booking-notes/{bookingId}/request', [BookingController::class, 'notesStoreRequest'])->name('booking-notes.store-request');
     Route::post('/booking-notes/{bookingId}/response', [BookingController::class, 'notesStoreResponse'])->name('booking-notes.store-response');
+});
+
+// Client VAT invoice
+Route::middleware(['auth'])->group(function () {
+    Route::post('profile/bookings/{booking}/vat/request', [ClientVatInvoiceController::class, 'request'])->name('client.vat-invoice.request');
+    Route::post('profile/bookings/{booking}/vat/generate', [ClientVatInvoiceController::class, 'generate'])->name('client.vat-invoice.generate');
+    Route::post('profile/bookings/{booking}/vat/send', [ClientVatInvoiceController::class, 'send'])->name('client.vat-invoice.send');
 });
 
 // Routes công khai cho room type reviews (chỉ hiển thị)
@@ -162,6 +187,12 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('bookings/{id}/download-registration', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-registration');
     Route::get('bookings/{id}/download-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-word');
     Route::get('bookings/{id}/view-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.view-word');
+
+    // VAT invoice
+    Route::post('bookings/{id}/vat/generate', [AdminBookingController::class, 'generateVatInvoice'])->name('bookings.vat.generate');
+    Route::post('bookings/{id}/vat/send', [AdminBookingController::class, 'sendVatInvoice'])->name('bookings.vat.send');
+    Route::get('bookings/{id}/vat/preview', [AdminBookingController::class, 'previewVatInvoice'])->name('bookings.vat.preview');
+    Route::get('bookings/{id}/vat/download', [AdminBookingController::class, 'downloadVatInvoice'])->name('bookings.vat.download');
     
 
 
@@ -169,7 +200,27 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('tour-bookings/report', [AdminTourBookingController::class, 'report'])->name('tour-bookings.report');
     Route::patch('tour-bookings/{id}/status', [AdminTourBookingController::class, 'updateStatus'])->name('tour-bookings.update-status');
     Route::patch('tour-bookings/{id}/payments/{paymentId}', [AdminTourBookingController::class, 'updatePaymentStatus'])->name('tour-bookings.payments.update-status');
+    Route::post('tour-bookings/{id}/collect-payment', [AdminTourBookingController::class, 'collectPayment'])->name('tour-bookings.collect-payment');
     Route::resource('tour-bookings', AdminTourBookingController::class);
+
+    // Quản lý VAT Invoice Tour Booking
+    Route::get('tour-vat-invoices', [AdminTourVatInvoiceController::class, 'index'])->name('tour-vat-invoices.index');
+    Route::get('tour-vat-invoices/{id}', [AdminTourVatInvoiceController::class, 'show'])->name('tour-vat-invoices.show');
+            Route::post('tour-vat-invoices/{id}/generate', [AdminTourVatInvoiceController::class, 'generateVatInvoice'])->name('tour-vat-invoices.generate');
+        Route::post('tour-vat-invoices/{id}/reject', [AdminTourVatInvoiceController::class, 'rejectVatRequest'])->name('tour-vat-invoices.reject');
+        Route::get('tour-vat-invoices/{id}/download', [AdminTourVatInvoiceController::class, 'downloadVatInvoice'])->name('tour-vat-invoices.download');
+        Route::get('tour-vat-invoices/{id}/preview', [AdminTourVatInvoiceController::class, 'previewVatInvoice'])->name('tour-vat-invoices.preview');
+        Route::post('tour-vat-invoices/{id}/send', [AdminTourVatInvoiceController::class, 'sendVatInvoice'])->name('tour-vat-invoices.send');
+        Route::post('tour-vat-invoices/{id}/regenerate', [AdminTourVatInvoiceController::class, 'regenerateVatInvoice'])->name('tour-vat-invoices.regenerate');
+        Route::get('tour-vat-invoices/statistics', [AdminTourVatInvoiceController::class, 'statistics'])->name('tour-vat-invoices.statistics');
+
+    // Tour Booking Services routes
+    Route::post('tour-bookings/{id}/services', [TourBookingServiceController::class, 'store'])->name('tour-bookings.services.store');
+    Route::delete('tour-bookings/{id}/services/{serviceId}', [TourBookingServiceController::class, 'destroy'])->name('tour-bookings.services.destroy');
+
+    // Tour Booking Notes routes
+    Route::post('tour-bookings/{id}/notes', [TourBookingNoteController::class, 'store'])->name('tour-bookings.notes.store');
+    Route::delete('tour-bookings/{id}/notes/{noteId}', [TourBookingNoteController::class, 'destroy'])->name('tour-bookings.notes.destroy');
 
     // Quản lý thông báo
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
@@ -281,6 +332,7 @@ Route::get('/room-type-reviews/{roomTypeId}/ajax', [RoomTypeReviewController::cl
 // Promotions - client
 Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
 Route::get('/promotions/{promotion}', [PromotionController::class, 'show'])->name('promotions.show');
+Route::post('/promotion/check', [PromotionController::class, 'checkPromotion'])->name('promotion.check');
 
 // Password reset routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
@@ -325,7 +377,7 @@ Route::get('/payment/success/{booking}', [PaymentController::class, 'success'])-
 Route::get('/payment/failed', [PaymentController::class, 'failed'])->name('payment.failed');
 Route::get('/payment/history/{booking}', [PaymentController::class, 'history'])->name('payment.history');
 
-// User Profile Routes (chỉ cần đăng nhập, không cần xác minh email)
+// User Profile Routes
 Route::middleware('auth')->group(function () {
     Route::get('/user/profile', [UserProfileController::class, 'showUserProfile'])->name('user.profile');
     Route::post('/user/profile/update', [UserProfileController::class, 'updateUserProfile'])->name('user.profile.update');
@@ -337,6 +389,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/user/reviews', [UserProfileController::class, 'showUserReviews'])->name('user.reviews');
     Route::get('/user/reviews/partial', [UserProfileController::class, 'partialReviews'])->name('user.reviews.partial');
     Route::get('/user/reviews/{id}/detail', [UserProfileController::class, 'reviewDetail'])->name('user.reviews.detail');
+    Route::get('/user/reviews/{id}/data', [UserProfileController::class, 'getReviewData'])->name('user.reviews.data');
+    Route::post('/user/reviews', [UserProfileController::class, 'storeReview'])->name('user.reviews.store');
+    Route::put('/user/reviews/{id}', [UserProfileController::class, 'updateReview'])->name('user.reviews.update');
+    Route::delete('/user/reviews/{id}', [UserProfileController::class, 'deleteReview'])->name('user.reviews.delete');
+    Route::get('/user/promotions', [UserProfileController::class, 'promotions'])->name('user.promotions');
+
+    // Booking Promotion Routes
+    Route::prefix('bookings/{booking}/promotions')->name('bookings.promotions.')->group(function () {
+        Route::post('/apply', [BookingPromotionController::class, 'applyPromotion'])->name('apply');
+        Route::delete('/remove', [BookingPromotionController::class, 'removePromotion'])->name('remove');
+        Route::get('/available', [BookingPromotionController::class, 'getAvailablePromotions'])->name('available');
+        Route::get('/applied', [BookingPromotionController::class, 'getAppliedPromotion'])->name('applied');
+    });
 
     // Room Change Routes
     Route::get('/booking/{booking}/room-change/request', [RoomChangeController::class, 'showRequestForm'])->name('room-change.request');

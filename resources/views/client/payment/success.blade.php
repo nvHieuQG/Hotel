@@ -128,15 +128,17 @@
                                                         <tr>
                                                             <td><strong>Phương thức:</strong></td>
                                                             <td>
-                                                                @if($latestPayment->payment_method === 'credit_card')
-                                                                    <i class="fas fa-credit-card text-primary"></i> Thẻ tín dụng/ghi nợ
+                                                                @if($latestPayment->method === 'credit_card')
+                                                                    <i class="fas fa-credit-card text-primary"></i>
+                                                                    <span class="text-primary">Thẻ tín dụng</span>
                                                                     @if(isset($latestPayment->gateway_response['card_info']['last4']))
                                                                         <br><small class="text-muted">Thẻ {{ $latestPayment->gateway_response['card_info']['brand'] }} ****{{ $latestPayment->gateway_response['card_info']['last4'] }}</small>
                                                                     @endif
-                                                                @elseif($latestPayment->payment_method === 'bank_transfer')
-                                                                    <i class="fas fa-university text-primary"></i> Chuyển khoản ngân hàng
+                                                                @elseif($latestPayment->method === 'bank_transfer')
+                                                                    <i class="fas fa-university text-success"></i>
+                                                                    <span class="text-success">Chuyển khoản ngân hàng</span>
                                                                 @else
-                                                                    {{ ucfirst($latestPayment->payment_method ?? 'Không xác định') }}
+                                                                    {{ ucfirst($latestPayment->method ?? 'Không xác định') }}
                                                                 @endif
                                                             </td>
                                                         </tr>

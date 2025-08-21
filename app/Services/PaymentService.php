@@ -11,6 +11,7 @@ use App\Mail\BookingConfirmationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class PaymentService implements PaymentServiceInterface
@@ -30,7 +31,7 @@ class PaymentService implements PaymentServiceInterface
         $calc = $this->calculateFinalAmountWithPromotion($booking, $promotionId, $code);
 
         return $this->createPayment($booking, [
-            'payment_method' => 'bank_transfer',
+            'method' => 'bank_transfer',
             'amount' => $calc['final_amount'],
             'discount_amount' => $calc['discount_amount'],
             'currency' => 'VND',
@@ -59,7 +60,7 @@ class PaymentService implements PaymentServiceInterface
         $calc = $this->calculateFinalAmountWithPromotion($booking, $promotionId, $code);
 
         return $this->createPayment($booking, [
-            'payment_method' => 'credit_card',
+            'method' => 'credit_card',
             'amount' => $calc['final_amount'],
             'discount_amount' => $calc['discount_amount'],
             'currency' => 'VND',
@@ -638,18 +639,24 @@ class PaymentService implements PaymentServiceInterface
      */
     public function createPayment(Booking $booking, array $data): Payment
     {
-        return Payment::create([
+        $paymentData = [
             'booking_id' => $booking->id,
             'promotion_id' => $data['promotion_id'] ?? null,
-            'payment_method' => $data['payment_method'],
+            'method' => $data['method'],
             'amount' => $data['amount'],
             'discount_amount' => $data['discount_amount'] ?? 0,
             'currency' => $data['currency'] ?? 'VND',
             'status' => $data['status'],
             'transaction_id' => $data['transaction_id'],
             'gateway_name' => $data['gateway_name'],
-            'gateway_response' => $data['gateway_response'] ?? [],
-        ]);
+            'gateway_response' => is_array($data['gateway_response'] ?? []) ? json_encode($data['gateway_response']) : ($data['gateway_response'] ?? '{}'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $id = DB::table('payments')->insertGetId($paymentData);
+        
+        return Payment::find($id);
     }
 
     /**
@@ -703,7 +710,7 @@ class PaymentService implements PaymentServiceInterface
      */
     public function getPaymentHistory(Booking $booking): \Illuminate\Database\Eloquent\Collection
     {
-        return $booking->payments()->orderBy('created_at', 'desc')->get();
+        return $booking->payments()->orderBy('id', 'desc')->get();
     }
 
     /**

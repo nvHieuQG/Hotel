@@ -72,7 +72,7 @@
                                 <th style="width: 200px;">Người đánh giá</th>
                                 <th style="width: 150px;">Loại phòng</th>
                                 <th style="width: 200px;">Điểm</th>
-                                <th>Bình luận</th>
+                                <th>Nội dung đánh giá</th>
                                 <th style="width: 100px;">Trạng thái</th>
                                 <th style="width: 120px;">Ngày tạo</th>
                                 <th style="width: 150px;">Thao tác</th>
@@ -105,27 +105,6 @@
                                         @endfor
                                     </div>
                                     <small class="text-muted">{{ $review->rating }}/5</small>
-                                    @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
-                                        <div class="mt-1">
-                                            <small class="text-muted">
-                                                @if($review->cleanliness_rating)
-                                                    <span class="d-block">Vệ sinh: {{ $review->cleanliness_rating }}/5</span>
-                                                @endif
-                                                @if($review->comfort_rating)
-                                                    <span class="d-block">Tiện nghi: {{ $review->comfort_rating }}/5</span>
-                                                @endif
-                                                @if($review->location_rating)
-                                                    <span class="d-block">Vị trí: {{ $review->location_rating }}/5</span>
-                                                @endif
-                                                @if($review->facilities_rating)
-                                                    <span class="d-block">CSVC: {{ $review->facilities_rating }}/5</span>
-                                                @endif
-                                                @if($review->value_rating)
-                                                    <span class="d-block">Giá trị: {{ $review->value_rating }}/5</span>
-                                                @endif
-                                            </small>
-                                        </div>
-                                    @endif
                                 </td>
                                 <td>
                                     @if($review->comment)
@@ -133,7 +112,7 @@
                                             {{ Str::limit($review->comment, 100) }}
                                         </div>
                                     @else
-                                        <span class="text-muted fst-italic">Không có bình luận</span>
+                                        <span class="text-muted fst-italic">Không có nội dung đánh giá</span>
                                     @endif
                                 </td>
                                 <td>
@@ -192,7 +171,7 @@
                                 <th style="width: 150px;">Người đánh giá</th>
                                 <th style="width: 120px;">Loại phòng</th>
                                 <th style="width: 120px;">Điểm</th>
-                                <th style="width: 150px;">Bình luận</th>
+                                <th style="width: 150px;">Nội dung đánh giá</th>
                                 <th style="width: 80px;">Trạng thái</th>
                                 <th style="width: 100px;">Ngày tạo</th>
                                 <th style="width: 120px;">Thao tác</th>
@@ -232,7 +211,7 @@
                                             {{ Str::limit($review->comment, 50) }}
                                         </div>
                                     @else
-                                        <span class="text-muted fst-italic small">Không có bình luận</span>
+                                        <span class="text-muted fst-italic small">Không có nội dung đánh giá</span>
                                     @endif
                                 </td>
                                 <td>
@@ -314,35 +293,13 @@
                             <small class="text-muted">{{ $review->rating }}/5</small>
                         </div>
                         
-                        @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
-                        <div class="mb-2">
-                            <small class="text-muted">
-                                @if($review->cleanliness_rating)
-                                    <span class="d-block">Vệ sinh: {{ $review->cleanliness_rating }}/5</span>
-                                @endif
-                                @if($review->comfort_rating)
-                                    <span class="d-block">Tiện nghi: {{ $review->comfort_rating }}/5</span>
-                                @endif
-                                @if($review->location_rating)
-                                    <span class="d-block">Vị trí: {{ $review->location_rating }}/5</span>
-                                @endif
-                                @if($review->facilities_rating)
-                                    <span class="d-block">CSVC: {{ $review->facilities_rating }}/5</span>
-                                @endif
-                                @if($review->value_rating)
-                                    <span class="d-block">Giá trị: {{ $review->value_rating }}/5</span>
-                                @endif
-                            </small>
-                        </div>
-                        @endif
-                        
                         @if($review->comment)
                         <div class="mb-2">
                             <small class="text-muted">{{ Str::limit($review->comment, 150) }}</small>
                         </div>
                         @else
                         <div class="mb-2">
-                            <small class="text-muted fst-italic">Không có bình luận</small>
+                            <small class="text-muted fst-italic">Không có nội dung đánh giá</small>
                         </div>
                         @endif
                         

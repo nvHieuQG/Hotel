@@ -15,20 +15,27 @@
             </thead>
             <tbody>
                 @foreach ($bookings as $booking)
-                    @php
-                        $roomType = $booking->room->roomType;
-                        $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
-                            ->where('booking_id', $booking->id)
-                            ->first();
-                        $hasReviewed = !!$review;
-                        $canReview = $booking->status === 'completed' && !$hasReviewed;
-                    @endphp
+                                            @php
+                            $roomType = $booking->room && $booking->room->roomType ? $booking->room->roomType : null;
+                            $review = \App\Models\RoomTypeReview::where('user_id', auth()->id())
+                                ->where('booking_id', $booking->id)
+                                ->first();
+                            $hasReviewed = !!$review;
+                            $canReview = $booking->status === 'completed' && !$hasReviewed;
+                            
+                            // Tính giá cuối cùng sau khi trừ khuyến mại (giống logic admin)
+                            $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
+                            if ($totalDiscount <= 0 && (float)($booking->promotion_discount ?? 0) > 0) {
+                                $totalDiscount = (float) $booking->promotion_discount;
+                            }
+                            $finalPrice = $booking->price - ($totalDiscount ?? 0);
+                        @endphp
                     <tr>
                         <td>{{ $booking->booking_id }}</td>
-                        <td>{{ $booking->room->roomType->name }}</td>
+                        <td>{{ $booking->room && $booking->room->roomType ? $booking->room->roomType->name : 'Không xác định' }}</td>
                         <td>{{ $booking->check_in_date->format('d/m/Y') }}</td>
                         <td>{{ $booking->check_out_date->format('d/m/Y') }}</td>
-                        <td>{{ number_format($booking->price) }}đ</td>
+                        <td>{{ number_format($finalPrice) }} VNĐ</td>
                         <td>
                             <span class="badge badge-{{ $booking->status == 'pending' ? 'warning' : ($booking->status == 'confirmed' ? 'success' : ($booking->status == 'cancelled' ? 'danger' : 'primary')) }}">
                                 {{ $booking->status_text }}
@@ -44,7 +51,7 @@
                                 @if ($review->status === 'rejected')
                                     <div class="text-danger small mt-1">Đánh giá bị từ chối. Bạn có thể gửi lại.</div>
                                 @endif
-                            @elseif ($canReview)
+                            @elseif ($canReview && $roomType)
                                 <button class="btn btn-sm btn-success create-review-btn" data-room-type-id="{{ $roomType->id }}" data-booking-id="{{ $booking->id }}">Đánh giá</button>
                             @else
                                 <span class="text-muted">Không thể đánh giá</span>

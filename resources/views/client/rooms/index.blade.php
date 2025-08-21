@@ -41,6 +41,40 @@
             @endif
 
             <div class="row">
+                {{-- Khuyến mại nổi bật --}}
+                @if($featuredPromotions && $featuredPromotions->count() > 0)
+                    <div class="col-12 mb-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-gradient-primary text-white">
+                                <i class="fas fa-gift mr-2"></i> 
+                                <strong>Ưu đãi đặc biệt hôm nay</strong>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="row">
+                                    @foreach($featuredPromotions->take(3) as $promo)
+                                        <div class="col-md-4 mb-3">
+                                            <div class="promotion-item p-3 border rounded bg-light h-100">
+                                                <div class="d-flex flex-column h-100">
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-bold text-primary mb-2">{{ $promo->title }}</div>
+                                                        <div class="small text-muted mb-2">{{ Str::limit($promo->description ?? '', 80) }}</div>
+                                                    </div>
+                                                    <div class="mt-auto">
+                                                        <div class="badge bg-success mb-2">{{ $promo->discount_text }}</div>
+                                                        @if(!empty($promo->code))
+                                                            <div class="badge bg-secondary small">{{ $promo->code }}</div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Danh sách phòng được tìm thấy --}}
                 <div class="col-lg-9">
                     <div class="row">
@@ -48,7 +82,26 @@
                             {{-- Duyệt qua từng loại phòng nếu có kết quả --}}
                             @foreach ($roomTypes as $type)
                                 <div class="col-sm col-md-6 col-lg-4 ftco-animate">
-                                    <div class="room">
+                                    <div class="room position-relative">
+                                        <!-- Khuyến mãi badge -->
+                                        @php
+                                            // Lấy khuyến mãi tốt nhất theo tổng tiền (giá x số đêm)
+                                            $n = isset($nights) && $nights > 0 ? (int)$nights : 1;
+                                            $amountContext = (float)$type->price * $n;
+                                            $promotionData = \App\Models\Promotion::getBestPromotionForRoomType($type->id, $amountContext);
+                                            $bestPromotion = $promotionData ? $promotionData['promotion'] : null;
+                                            $maxDiscountValue = $promotionData ? $promotionData['discount_amount'] : 0;
+                                            // Giá hiển thị theo mỗi đêm
+                                            $finalPrice = $promotionData ? max(0, (int)round($promotionData['final_price'] / $n)) : $type->price;
+                                        @endphp
+                                        @if($bestPromotion)
+                                            <div class="promotion-badge position-absolute" style="top: 10px; left: 10px; z-index: 10;">
+                                                <span class="badge badge-danger px-3 py-2" style="font-size: 0.8rem; background: linear-gradient(45deg, #ff6b6b, #ee5a52);">
+                                                    <i class="fas fa-tag mr-1"></i>
+                                                    {{ $promotionData['discount_text'] }}
+                                                </span>
+                                            </div>
+                                        @endif
                                         {{-- Đường dẫn và hình ảnh loại phòng --}}
                                         <a href="{{ route('rooms-single', $type->id) }}"
                                             class="img d-flex justify-content-center align-items-center"
@@ -78,60 +131,16 @@
                                             </h3>
                                             @php
                                                 $representativeRoom = $type->rooms()->where('status', 'available')->first();
-                                                $promotions = collect();
-                                                if ($representativeRoom) {
-                                                    // Tính số đêm từ bộ lọc nếu có
-                                                    $nights = 1;
-                                                    try {
-                                                        $ci = request()->get('check_in_date');
-                                                        $co = request()->get('check_out_date');
-                                                        if ($ci && $co) {
-                                                            $nights = max(1, \Carbon\Carbon::parse($ci)->diffInDays(\Carbon\Carbon::parse($co)));
-                                                        }
-                                                    } catch (\Exception $e) {}
-                                                    $amountContext = (float)($type->price ?? 0) * $nights;
-                                                    $promotions = app(\App\Services\RoomPromotionService::class)->getTopPromotions($representativeRoom, $amountContext, 3);
-                                                }
                                             @endphp
-                                @if($promotions && $promotions->count() > 0)
-                                                @php
-                                                    $topList = $promotions->take(3);
-                                                    $extraCount = max(0, $promotions->count() - $topList->count());
-                                                @endphp
-                                                @if($loop->first)
-                                                    <style>
-                                                        .promo-box{background:#F9F5EF;border-radius:8px;padding:12px;text-align:left;margin-top:8px;margin-bottom:8px}
-                                                        .promo-title{font-weight:700;font-size:15px;margin-bottom:6px;color:#8E713D;display:flex;align-items:center;gap:6px}
-                                                        .promo-list{list-style:none;margin:0;padding:0}
-                                                        .promo-item{display:flex;align-items:center;gap:8px;margin:5px 0;line-height:1.2}
-                                                        .promo-code-badge{background:#8E713D;color:#fff;border-radius:5px;font-weight:700;font-size:12px;padding:2px 6px;white-space:nowrap}
-                                                        .promo-desc{font-size:13px;color:#333;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-                                                        .promo-extra{font-size:12px;color:#555;margin-top:6px}
-                                                    </style>
-                                                @endif
-                                                <div class="promo-box">
-                                                    <div class="promo-title">🎯 Ưu đãi hôm nay</div>
-                                                    <ul class="promo-list">
-                                                        @foreach($topList as $promo)
-                                                            @php
-                                                                $icon = '💸';
-                                                                if (strtolower($promo->discount_type ?? '') === 'percentage') { $icon = '🎁'; }
-                                                                if (Str::contains(strtolower($promo->title), ['flash','sale','hot'])) { $icon = '⏳'; }
-                                                            @endphp
-                                                            <li class="promo-item" title="{{ $promo->discount_text }}">
-                                                                <span class="promo-code-badge">{{ $promo->code }}</span>
-                                                                <span class="promo-desc">{{ $icon }} {{ $promo->title }}</span>
-                                                            </li>
-                                                        @endforeach
-                                                    </ul>
-                                                    @if($extraCount > 0)
-                                                        <div class="promo-extra">+{{ $extraCount }} ưu đãi khác</div>
-                                                    @endif
-                                                </div>
-                                            @endif
                                             <p>
-                                                <span class="price mr-2">{{ number_format($type->price) }}đ</span>
-                                                <span class="per">mỗi đêm</span>
+                                                @if($bestPromotion)
+                                                    <span class="price mr-2 text-decoration-line-through text-muted" style="font-size: 0.9em;">{{ number_format($type->price) }}đ</span>
+                                                    <span class="price mr-2 text-danger font-weight-bold">{{ number_format($finalPrice) }}đ</span>
+                                                    <span class="per">mỗi đêm</span>
+                                                @else
+                                                    <span class="price mr-2">{{ number_format($type->price) }}đ</span>
+                                                    <span class="per">mỗi đêm</span>
+                                                @endif
                                             </p>
                                             <ul class="list">
                                                 <li><span>Sức chứa:</span> {{ $type->capacity }} Người</li>
@@ -273,4 +282,75 @@
             </div>
         </div>
     </section>
+@endsection
+
+@section('styles')
+<style>
+/* Promotion styles */
+.promotion-section { margin-bottom: 2rem; }
+.promotion-item { transition: all 0.3s ease; border: 1px solid #e9ecef !important; }
+.promotion-item:hover { border-color: #007bff !important; box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15); transform: translateY(-1px); }
+.bg-gradient-primary { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); }
+.bg-gradient-success { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); }
+.cursor-pointer { cursor: pointer; }
+.cursor-pointer:hover { color: #0056b3 !important; }
+
+/* Card improvements */
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Badge improvements */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Promotion badge styles */
+.promotion-badge .badge {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border: 2px solid #fff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.room .position-relative {
+    overflow: hidden;
+}
+
+.room .promotion-badge {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+</style>
 @endsection

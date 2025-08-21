@@ -19,6 +19,7 @@ return new class extends Migration
                 $table->decimal('amount', 10, 2);
                 $table->enum('status', ['pending', 'paid', 'failed'])->default('pending');
                 $table->timestamp('created_at')->nullable();
+                $table->timestamp('updated_at')->nullable();
             });
         }
     }

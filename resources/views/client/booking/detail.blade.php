@@ -114,7 +114,7 @@
                                         </tr>
                                         <tr>
                                             <td><strong>Tổng tiền:</strong></td>
-                                            <td class="text-success"><strong>{{ number_format($booking->total_booking_price, 0, ',', '.') }} VND</strong></td>
+                                            <td class="text-success"><strong>{{ number_format($booking->total_booking_price, 0, ',', '.') }} VNĐ</strong></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -175,17 +175,17 @@
                                                 <tr>
                                                     <td>{{ $payment->created_at->format('d/m/Y H:i') }}</td>
                                                     <td>
-                    	                                @if($payment->payment_method === 'credit_card')
+                    	                                @if($payment->method === 'credit_card')
                                                             <i class="fas fa-credit-card text-primary"></i> Thẻ tín dụng
-                                                        @elseif($payment->payment_method === 'bank_transfer')
-                                                            <i class="fas fa-university text-primary"></i> Chuyển khoản
+                                                        @elseif($payment->method === 'bank_transfer')
+                                                            <i class="fas fa-university text-success"></i> Chuyển khoản
                                                         @else
-                                                            {{ ucfirst($payment->payment_method) }}
+                                                            {{ ucfirst($payment->method) }}
                                                         @endif
                                                     </td>
-                                                    <td>{{ number_format($booking->total_booking_price) }} VND</td>
+                                                    <td>{{ number_format($booking->total_booking_price) }} VNĐ</td>
                                                     <td class="text-success">
-                                                        -{{ number_format((float)($payment->discount_amount ?? 0)) }} VND
+                                                        -{{ number_format((float)($payment->discount_amount ?? 0)) }} VNĐ
                                                         @if(($payment->discount_amount ?? 0) > 0 && $payment->promotion)
                                                             <div class="mt-1">
                                                                 <span class="badge bg-success">
@@ -198,7 +198,7 @@
                                                             </div>
                                                         @endif
                                                     </td>
-                                                    <td class="text-primary"><strong>{{ number_format((float)$payment->amount) }} VND</strong></td>
+                                                    <td class="text-primary"><strong>{{ number_format((float)$payment->amount) }} VNĐ</strong></td>
                                                     <td>
                                                         <span class="badge bg-{{ $payment->status_color }}">
                                                             {{ $payment->status_text }}

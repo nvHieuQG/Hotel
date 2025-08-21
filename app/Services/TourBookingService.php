@@ -51,10 +51,14 @@ class TourBookingService implements TourBookingServiceInterface
                 'total_rooms' => $data['total_rooms'],
                 'check_in_date' => $data['check_in_date'],
                 'check_out_date' => $data['check_out_date'],
-                'total_price' => $calculatedData['total_price'],
+                'total_price' => $data['total_price'] ?? $calculatedData['total_price'], // Sử dụng giá sau giảm giá nếu có
                 'status' => 'pending',
                 'special_requests' => $data['special_requests'] ?? null,
                 'tour_details' => $data['tour_details'] ?? null,
+                'promotion_code' => $data['promotion_code'] ?? null,
+                'promotion_discount' => $data['promotion_discount'] ?? 0,
+                'promotion_id' => $data['promotion_id'] ?? null,
+                'final_price' => $data['final_price'] ?? $calculatedData['total_price'],
             ]);
 
             // Tạo tour booking rooms với giá đã tính toán
@@ -231,8 +235,10 @@ class TourBookingService implements TourBookingServiceInterface
         try {
             // Tạo payment record
             $payment = $this->createTourBookingPayment($tourBooking, [
-                'payment_method' => 'credit_card',
-                'amount' => $tourBooking->total_price,
+                'promotion_id' => $request->input('promotion_id'),
+                'method' => 'credit_card',
+                'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
+                'discount_amount' => $tourBooking->promotion_discount ?? 0,
                 'currency' => 'VND',
                 'status' => 'pending',
                 'gateway_name' => 'Credit Card',
@@ -297,8 +303,10 @@ class TourBookingService implements TourBookingServiceInterface
         try {
             // Tạo payment record
             $payment = $this->createTourBookingPayment($tourBooking, [
-                'payment_method' => 'bank_transfer',
-                'amount' => $tourBooking->total_price,
+                'promotion_id' => $request->input('promotion_id'),
+                'method' => 'bank_transfer',
+                'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
+                'discount_amount' => $tourBooking->promotion_discount ?? 0,
                 'currency' => 'VND',
                 'status' => 'pending',
                 'gateway_name' => 'Bank Transfer',
@@ -331,16 +339,25 @@ class TourBookingService implements TourBookingServiceInterface
     {
         $transactionId = 'TOUR_' . $tourBooking->booking_id . '_' . time();
 
-        return \App\Models\Payment::create([
-            'booking_id' => $tourBooking->id,
-            'payment_method' => $data['payment_method'],
+        $paymentData = [
+            'booking_id' => null, // Tour booking không có trong bảng bookings
+            'tour_booking_id' => $tourBooking->id, // Sử dụng tour_booking_id
+            'promotion_id' => $data['promotion_id'] ?? null,
+            'method' => $data['method'],
             'amount' => $data['amount'],
+            'discount_amount' => $data['discount_amount'] ?? 0,
             'currency' => $data['currency'],
             'status' => $data['status'],
             'transaction_id' => $transactionId,
             'gateway_name' => $data['gateway_name'],
-            'gateway_response' => $data['gateway_response'] ?? [],
-        ]);
+            'gateway_response' => is_array($data['gateway_response'] ?? []) ? json_encode($data['gateway_response']) : ($data['gateway_response'] ?? '{}'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $id = DB::table('payments')->insertGetId($paymentData);
+        
+        return \App\Models\Payment::find($id);
     }
 
     /**
@@ -414,7 +431,7 @@ class TourBookingService implements TourBookingServiceInterface
                 'mail_driver' => config('mail.default')
             ]);
             
-            \Mail::to($user->email)->send(new \App\Mail\TourBookingConfirmationMail($tourBooking));
+            Mail::to($user->email)->send(new \App\Mail\TourBookingConfirmationMail($tourBooking));
             
             Log::info('Tour booking confirmation email sent successfully from service', [
                 'tour_booking_id' => $tourBooking->id,
@@ -470,5 +487,53 @@ class TourBookingService implements TourBookingServiceInterface
         $prefix = substr($cardNumber, 0, 4);
 
         return in_array($prefix, $testPrefixes);
+    }
+
+    /**
+     * Tạo payment record cho thẻ tín dụng
+     */
+    public function createCreditCardPayment(Request $request, TourBooking $tourBooking): \App\Models\Payment
+    {
+        $transactionId = 'CC_TOUR_' . $tourBooking->booking_id . '_' . time();
+
+        return $this->createTourBookingPayment($tourBooking, [
+            'promotion_id' => $request->input('promotion_id'),
+            'method' => 'credit_card',
+            'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
+            'discount_amount' => $tourBooking->promotion_discount ?? 0,
+            'currency' => 'VND',
+            'status' => 'pending',
+            'gateway_name' => 'Credit Card',
+            'gateway_response' => [
+                'card_info' => [
+                    'last4' => substr($request->card_number ?? '', -4),
+                    'brand' => $this->getCardBrand($request->card_number ?? ''),
+                    'exp_month' => $request->expiry_month,
+                    'exp_year' => $request->expiry_year
+                ],
+                'cardholder_name' => $request->cardholder_name
+            ]
+        ]);
+    }
+
+    /**
+     * Tạo payment record cho chuyển khoản
+     */
+    public function createBankTransferPayment(Request $request, TourBooking $tourBooking): \App\Models\Payment
+    {
+        $transactionId = 'BANK_TOUR_' . $tourBooking->booking_id . '_' . time();
+
+        return $this->createTourBookingPayment($tourBooking, [
+            'promotion_id' => $request->input('promotion_id'),
+            'method' => 'bank_transfer',
+            'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
+            'discount_amount' => $tourBooking->promotion_discount ?? 0,
+            'currency' => 'VND',
+            'status' => 'pending',
+            'gateway_name' => 'Bank Transfer',
+            'gateway_response' => [
+                'customer_note' => $request->customer_note
+            ]
+        ]);
     }
 }

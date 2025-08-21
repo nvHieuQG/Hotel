@@ -28,30 +28,7 @@
                     @if($review->comment)
                         <p class="mb-2">{{ $review->comment }}</p>
                     @else
-                        <p class="mb-2 text-muted"><em>Không có bình luận</em></p>
-                    @endif
-                    
-                    <!-- Hiển thị đánh giá chi tiết -->
-                    @if($review->cleanliness_rating || $review->comfort_rating || $review->location_rating || $review->facilities_rating || $review->value_rating)
-                        <div class="detailed-ratings">
-                            <small class="text-muted">
-                                @if($review->cleanliness_rating)
-                                    <span class="mr-3">Vệ sinh: {{ $review->cleanliness_rating }}/5</span>
-                                @endif
-                                @if($review->comfort_rating)
-                                    <span class="mr-3">Tiện nghi: {{ $review->comfort_rating }}/5</span>
-                                @endif
-                                @if($review->location_rating)
-                                    <span class="mr-3">Vị trí: {{ $review->location_rating }}/5</span>
-                                @endif
-                                @if($review->facilities_rating)
-                                    <span class="mr-3">Cơ sở vật chất: {{ $review->facilities_rating }}/5</span>
-                                @endif
-                                @if($review->value_rating)
-                                    <span>Giá trị: {{ $review->value_rating }}/5</span>
-                                @endif
-                            </small>
-                        </div>
+                        <p class="mb-2 text-muted"><em>Không có nội dung đánh giá</em></p>
                     @endif
                 </div>
             </div>

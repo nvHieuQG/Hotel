@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 
 class AdminTourBookingController extends Controller
 {
@@ -62,12 +63,37 @@ class AdminTourBookingController extends Controller
      */
     public function show($id)
     {
-        $tourBooking = TourBooking::with(['user', 'tourBookingRooms.roomType', 'payments'])
+        $tourBooking = TourBooking::with(['user', 'tourBookingRooms.roomType', 'payments', 'tourBookingServices', 'tourBookingNotes.user'])
             ->findOrFail($id);
 
         $validNextStatuses = $this->getValidNextStatuses($tourBooking->status);
 
-        return view('admin.tour-bookings.show', compact('tourBooking', 'validNextStatuses'));
+        // Tính toán các giá trị cần thiết theo thực tế
+        $totalRoomsAmount = $tourBooking->total_rooms_amount;
+        $totalServicesAmount = $tourBooking->total_services_amount;
+        $totalAmountBeforeDiscount = $tourBooking->total_amount_before_discount;
+        $totalPaid = $tourBooking->total_paid;
+        $totalDiscount = $tourBooking->total_discount;
+        $finalAmount = $tourBooking->final_amount;
+        $outstandingAmount = $tourBooking->outstanding_amount;
+
+        // Lấy dịch vụ và ghi chú
+        $tourBookingServices = $tourBooking->tourBookingServices;
+        $tourBookingNotes = $tourBooking->tourBookingNotes;
+
+        return view('admin.tour-bookings.show', compact(
+            'tourBooking', 
+            'validNextStatuses',
+            'totalRoomsAmount',
+            'totalServicesAmount',
+            'totalAmountBeforeDiscount',
+            'totalPaid',
+            'totalDiscount', 
+            'outstandingAmount',
+            'finalAmount',
+            'tourBookingServices',
+            'tourBookingNotes'
+        ));
     }
 
     /**
@@ -247,15 +273,29 @@ class AdminTourBookingController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,confirmed,cancelled,completed'
+            'status' => 'required|in:pending,pending_payment,confirmed,checked_in,checked_out,completed,cancelled,no_show'
         ]);
 
         $tourBooking = TourBooking::findOrFail($id);
         $oldStatus = $tourBooking->status;
         $newStatus = $request->status;
 
+        // Kiểm tra logic chuyển trạng thái
+        if (!$this->isValidStatusTransition($oldStatus, $newStatus)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể chuyển từ trạng thái "' . $this->getStatusText($oldStatus) . '" sang "' . $this->getStatusText($newStatus) . '"'
+            ], 400);
+        }
+
         try {
+            DB::beginTransaction();
+
+            // Cập nhật trạng thái
             $tourBooking->update(['status' => $newStatus]);
+
+            // Xử lý logic đặc biệt cho từng trạng thái
+            $this->handleStatusChangeLogic($tourBooking, $oldStatus, $newStatus);
 
             // Gửi email xác nhận nếu trạng thái mới là 'confirmed'
             if ($newStatus === 'confirmed' && $oldStatus !== 'confirmed') {
@@ -265,14 +305,27 @@ class AdminTourBookingController extends Controller
             // Tạo thông báo cho user
             $this->createStatusChangeNotification($tourBooking, $oldStatus, $newStatus);
 
+            DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Trạng thái tour booking đã được cập nhật thành công!',
-                'new_status' => $newStatus
+                'new_status' => $newStatus,
+                'new_status_text' => $this->getStatusText($newStatus)
             ]);
 
         } catch (\Exception $e) {
+            DB::rollback();
             Log::error('Error updating tour booking status: ' . $e->getMessage());
+            
+            // Kiểm tra lỗi cụ thể
+            if (str_contains($e->getMessage(), 'Data truncated for column \'status\'')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lỗi: Cột status trong database chưa được cập nhật để hỗ trợ trạng thái mới. Vui lòng chạy migration trước.'
+                ], 500);
+            }
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Có lỗi xảy ra khi cập nhật trạng thái: ' . $e->getMessage()
@@ -391,13 +444,84 @@ class AdminTourBookingController extends Controller
     private function getValidNextStatuses($currentStatus): array
     {
         $statusFlow = [
-            'pending' => ['confirmed', 'cancelled'],
-            'confirmed' => ['completed', 'cancelled'],
+            'pending' => ['pending_payment', 'confirmed', 'cancelled', 'no_show'],
+            'pending_payment' => ['confirmed', 'cancelled', 'no_show'],
+            'confirmed' => ['checked_in', 'cancelled', 'no_show'],
+            'checked_in' => ['checked_out', 'cancelled'],
+            'checked_out' => ['completed'],
+            'completed' => [],
             'cancelled' => [],
-            'completed' => []
+            'no_show' => []
         ];
 
         return $statusFlow[$currentStatus] ?? [];
+    }
+
+    /**
+     * Kiểm tra chuyển trạng thái có hợp lệ không
+     */
+    private function isValidStatusTransition($oldStatus, $newStatus): bool
+    {
+        $validNextStatuses = $this->getValidNextStatuses($oldStatus);
+        return in_array($newStatus, $validNextStatuses);
+    }
+
+    /**
+     * Lấy text hiển thị cho trạng thái
+     */
+    private function getStatusText($status): string
+    {
+        $statusMap = [
+            'pending' => 'Chờ xác nhận',
+            'pending_payment' => 'Chờ thanh toán',
+            'confirmed' => 'Đã xác nhận',
+            'checked_in' => 'Đã check-in',
+            'checked_out' => 'Đã check-out',
+            'completed' => 'Hoàn thành',
+            'cancelled' => 'Đã hủy',
+            'no_show' => 'Không đến'
+        ];
+
+        return $statusMap[$status] ?? $status;
+    }
+
+    /**
+     * Xử lý logic đặc biệt khi thay đổi trạng thái
+     */
+    private function handleStatusChangeLogic(TourBooking $tourBooking, $oldStatus, $newStatus): void
+    {
+        // Logic cho từng trạng thái
+        switch ($newStatus) {
+            case 'pending_payment':
+                // Chuyển sang chờ thanh toán - có thể gửi email nhắc nhở
+                break;
+                
+            case 'confirmed':
+                // Đã xác nhận - có thể gửi email xác nhận
+                break;
+                
+            case 'checked_in':
+                // Đã check-in - ghi lại thời gian check-in
+                $tourBooking->update(['check_in_time' => now()]);
+                break;
+                
+            case 'checked_out':
+                // Đã check-out - ghi lại thời gian check-out
+                $tourBooking->update(['check_out_time' => now()]);
+                break;
+                
+            case 'completed':
+                // Hoàn thành - có thể gửi email feedback
+                break;
+                
+            case 'cancelled':
+                // Đã hủy - có thể gửi email thông báo hủy
+                break;
+                
+            case 'no_show':
+                // Không đến - có thể gửi email thông báo
+                break;
+        }
     }
 
     /**
@@ -415,7 +539,7 @@ class AdminTourBookingController extends Controller
                 'mail_driver' => config('mail.default')
             ]);
             
-            \Mail::to($user->email)->send(new \App\Mail\TourBookingConfirmationMail($tourBooking));
+            Mail::to($user->email)->send(new \App\Mail\TourBookingConfirmationMail($tourBooking));
             
             Log::info('Tour booking confirmation email sent successfully by admin', [
                 'tour_booking_id' => $tourBooking->id,
@@ -437,23 +561,67 @@ class AdminTourBookingController extends Controller
     private function createStatusChangeNotification(TourBooking $tourBooking, $oldStatus, $newStatus): void
     {
         $statusMessages = [
+            'pending_payment' => 'Tour booking của bạn đang chờ thanh toán.',
             'confirmed' => 'Tour booking của bạn đã được xác nhận!',
+            'checked_in' => 'Bạn đã check-in thành công!',
+            'checked_out' => 'Bạn đã check-out thành công!',
+            'completed' => 'Tour booking của bạn đã hoàn thành!',
             'cancelled' => 'Tour booking của bạn đã bị hủy.',
-            'completed' => 'Tour booking của bạn đã hoàn thành!'
+            'no_show' => 'Tour booking của bạn đã bị đánh dấu là không đến.'
         ];
 
         if (isset($statusMessages[$newStatus])) {
-            $tourBooking->user->notifications()->create([
-                'type' => 'App\Notifications\TourBookingStatusChanged',
-                'data' => [
-                    'tour_booking_id' => $tourBooking->id,
-                    'tour_name' => $tourBooking->tour_name,
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus,
-                    'message' => $statusMessages[$newStatus]
-                ],
-                'read_at' => null
+            // Sử dụng bảng notifications đúng với cấu trúc hiện tại
+            \App\Models\Notification::create([
+                'user_id' => $tourBooking->user_id,
+                'message' => $statusMessages[$newStatus],
+                'is_read' => false
             ]);
+            
+            // Log thông báo thay đổi trạng thái
+            Log::info('Tour booking status changed notification created', [
+                'tour_booking_id' => $tourBooking->id,
+                'user_id' => $tourBooking->user_id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'message' => $statusMessages[$newStatus]
+            ]);
+        }
+    }
+
+    /**
+     * Thu tiền bổ sung cho tour booking
+     */
+    public function collectPayment(Request $request, $id)
+    {
+        $tourBooking = TourBooking::findOrFail($id);
+        $amount = $request->amount;
+
+        // Kiểm tra số tiền
+        if ($amount <= 0 || $amount > $tourBooking->outstanding_amount) {
+            return back()->withErrors(['message' => 'Số tiền không hợp lệ.']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Tạo payment mới
+            $payment = Payment::create([
+                'tour_booking_id' => $tourBooking->id,
+                'amount' => $amount,
+                'method' => 'cash', // Mặc định là tiền mặt
+                'status' => 'completed',
+                'notes' => 'Thu tiền bổ sung bởi admin',
+                'admin_id' => Auth::id(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Đã thu tiền thành công: ' . number_format($amount, 0, ',', '.') . ' VNĐ');
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Tour booking collect payment error: ' . $e->getMessage());
+            return back()->withErrors(['message' => 'Có lỗi xảy ra khi thu tiền. Vui lòng thử lại.']);
         }
     }
 }
