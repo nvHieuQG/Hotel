@@ -11,8 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('tour_bookings')) return;
+
         Schema::table('tour_bookings', function (Blueprint $table) {
-            $table->foreignId('promotion_id')->nullable()->after('promotion_code')->constrained('promotions')->onDelete('set null');
+            if (!Schema::hasColumn('tour_bookings', 'promotion_id')) {
+                // Place after promotion_code only if the column exists
+                if (Schema::hasColumn('tour_bookings', 'promotion_code')) {
+                    $table->foreignId('promotion_id')->nullable()->after('promotion_code')
+                        ->constrained('promotions')->onDelete('set null');
+                } else {
+                    $table->foreignId('promotion_id')->nullable()
+                        ->constrained('promotions')->onDelete('set null');
+                }
+            }
         });
     }
 
@@ -21,9 +32,13 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (!Schema::hasTable('tour_bookings')) return;
+
         Schema::table('tour_bookings', function (Blueprint $table) {
-            $table->dropForeign(['promotion_id']);
-            $table->dropColumn('promotion_id');
+            if (Schema::hasColumn('tour_bookings', 'promotion_id')) {
+                try { $table->dropForeign(['promotion_id']); } catch (\Throwable $e) {}
+                try { $table->dropColumn('promotion_id'); } catch (\Throwable $e) {}
+            }
         });
     }
 };

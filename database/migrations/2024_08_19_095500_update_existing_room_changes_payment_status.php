@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -10,6 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('room_changes')) {
+            return;
+        }
+        // Ensure the columns exist before running raw updates
+        $needed = ['payment_status', 'price_difference', 'status'];
+        foreach ($needed as $col) {
+            if (!Schema::hasColumn('room_changes', $col)) {
+                return;
+            }
+        }
+
         // Cập nhật payment_status cho các room changes có chênh lệch giá > 0
         DB::statement("
             UPDATE room_changes 
@@ -31,6 +43,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (!Schema::hasTable('room_changes') || !Schema::hasColumn('room_changes', 'payment_status')) {
+            return;
+        }
         DB::statement("UPDATE room_changes SET payment_status = 'not_required'");
     }
 };

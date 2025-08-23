@@ -75,6 +75,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             PromotionSeeder::class,
             ExtraServiceSeeder::class,
+            RoomImageSeeder::class
         ]);
     }
 }
