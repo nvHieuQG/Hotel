@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('payments')) {
+            return; // Skip if payments table not created yet
+        }
+
         Schema::table('payments', function (Blueprint $table) {
             if (!Schema::hasColumn('payments', 'promotion_id')) {
                 $table->foreignId('promotion_id')->nullable()->after('booking_id')
@@ -20,7 +24,8 @@ return new class extends Migration
                 $table->decimal('discount_amount', 10, 2)->default(0)->after('amount');
             }
 
-            $table->index('promotion_id');
+            // Add index if not present (safe to try)
+            try { $table->index('promotion_id'); } catch (\Throwable $e) {}
         });
     }
 
@@ -29,9 +34,14 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (!Schema::hasTable('payments')) {
+            return;
+        }
+
         Schema::table('payments', function (Blueprint $table) {
             if (Schema::hasColumn('payments', 'promotion_id')) {
-                $table->dropConstrainedForeignId('promotion_id');
+                // Drop FK and column safely
+                try { $table->dropConstrainedForeignId('promotion_id'); } catch (\Throwable $e) {}
             }
             if (Schema::hasColumn('payments', 'discount_amount')) {
                 $table->dropColumn('discount_amount');
@@ -39,5 +49,3 @@ return new class extends Migration
         });
     }
 };
-
-

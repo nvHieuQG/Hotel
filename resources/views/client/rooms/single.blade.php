@@ -3,7 +3,7 @@
 @section('title', $roomType->name)
 
 @section('content')
-    <div class="hero-wrap" style="background-image: url('/client/images/bg_1.jpg');">
+    <div class="hero-wrap" style="background-image: url('{{ asset('client/images/bg_1.jpg') }}');">
         <div class="overlay"></div>
         <div class="container">
             <div class="row no-gutters slider-text d-flex align-itemd-end justify-content-center">
@@ -49,18 +49,18 @@
                                     
                                     foreach ($rooms as $room) {
                                         if ($room->primaryImage) {
-                                            $roomImages->push(asset('storage/' . $room->primaryImage->image_url));
+                                            $roomImages->push($room->primaryImage->full_image_url);
                                         } elseif ($room->firstImage) {
-                                            $roomImages->push(asset('storage/' . $room->firstImage->image_url));
+                                            $roomImages->push($room->firstImage->full_image_url);
                                         }
                                     }
                                     
                                     // Nếu không có ảnh thực tế, sử dụng ảnh mẫu
                                     if ($roomImages->isEmpty()) {
                                         $roomImages = collect([
-                                            '/client/images/room-1.jpg',
-                                            '/client/images/room-2.jpg',
-                                            '/client/images/room-3.jpg'
+                                            asset('client/images/room-1.jpg'),
+                                            asset('client/images/room-2.jpg'),
+                                            asset('client/images/room-3.jpg')
                                         ]);
                                     }
                                 @endphp
@@ -494,7 +494,7 @@
                                         <div class="room">
                                             <a href="{{ route('rooms-single', $otherType->id) }}"
                                                 class="img img-2 d-flex justify-content-center align-items-center"
-                                                style="background-image: url('/client/images/room-{{ $loop->iteration + 3 }}.jpg');">
+                                                style="background-image: url('{{ asset('client/images/room-' . ($loop->iteration + 3) . '.jpg') }}');">
                                                 <div class="icon d-flex justify-content-center align-items-center">
                                                     <span class="icon-search2"></span>
                                                 </div>
@@ -564,7 +564,7 @@
                             <h3>Loại phòng</h3>
                             @foreach ($roomTypes as $type)
                                 <li>
-                                    <a href="{{ route('rooms-single', ['id' => $type->id]) }}">
+                                    <a href="{{ route('rooms-single', $type->id) }}">
                                         {{ $type->name }}
                                     </a>
                                 </li>
@@ -595,11 +595,8 @@
 }
 
 .rating-star:hover,
-.rating-star:hover ~ .rating-star {
-    color: #ffc107;
-}
-
-.rating-input input[type="radio"]:checked ~ .rating-star {
+.rating-star:hover ~ .rating-star,
+.rating-input:checked ~ .rating-star {
     color: #ffc107;
 }
 
@@ -1192,7 +1189,7 @@ function showToast(message, type = 'info') {
 
 .form-control:focus {
     border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     background-color: #ffffff;
 }
 

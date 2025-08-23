@@ -188,25 +188,21 @@
                                 
                                 <!-- Ảnh phòng -->
                                 <div class="mb-3">
-                                    @if($booking->room->primaryImage)
-                                        <img src="{{ asset('storage/' . $booking->room->primaryImage->image_url) }}" 
-                                             alt="Ảnh phòng {{ $booking->room->name }}" 
-                                             class="img-fluid rounded shadow-sm" 
-                                             style="max-height: 200px; width: 100%; object-fit: cover;">
-                                    @elseif($booking->room->firstImage)
-                                        <img src="{{ asset('storage/' . $booking->room->firstImage->image_url) }}" 
-                                             alt="Ảnh phòng {{ $booking->room->name }}" 
-                                             class="img-fluid rounded shadow-sm" 
-                                             style="max-height: 200px; width: 100%; object-fit: cover;">
-                                    @else
-                                        <div class="bg-light rounded d-flex justify-content-center align-items-center" 
-                                             style="height: 200px;">
-                                            <div class="text-center text-muted">
-                                                <i class="fas fa-image fa-2x mb-2"></i>
-                                                <p class="small">Chưa có ảnh phòng</p>
-                                            </div>
-                                        </div>
-                                    @endif
+                                    @php
+                                        $imageUrl = null;
+                                        if (isset($booking->room) && $booking->room && $booking->room->primaryImage) {
+                                            $imageUrl = $booking->room->primaryImage->full_image_url;
+                                        } elseif (isset($booking->room) && $booking->room && $booking->room->firstImage) {
+                                            $imageUrl = $booking->room->firstImage->full_image_url;
+                                        }
+                                        if (!$imageUrl) {
+                                            $imageUrl = asset('client/images/image_1.jpg'); // neutral placeholder
+                                        }
+                                    @endphp
+                                    <img src="{{ $imageUrl }}" 
+                                         alt="Ảnh phòng {{ $booking->room->roomType->name ?? 'Phòng' }}" 
+                                         class="img-fluid rounded shadow-sm" 
+                                         style="max-height: 200px; width: 100%; object-fit: cover;">
                                 </div>
                                 <div>Dịch vụ & phụ phí: <strong>{{ number_format($booking->surcharge + $booking->extra_services_total + $booking->total_services_price) }} VNĐ</strong></div>
                                 <div class="mb-3"><strong>{{ $booking->room->roomType->name }}</strong></div>

@@ -32,12 +32,12 @@
                             <h6 class="text-primary mb-3"><i class="fas fa-image mr-2"></i>Ảnh phòng</h6>
                             <div class="room-image-container">
                                 @if($room->primaryImage)
-                                    <img src="{{ asset('storage/' . $room->primaryImage->image_url) }}" 
+                                    <img src="{{ $room->primaryImage->full_image_url }}" 
                                          alt="Ảnh phòng {{ $room->name }}" 
                                          class="img-fluid rounded shadow-sm" 
                                          style="max-height: 300px; width: 100%; object-fit: cover;">
                                 @elseif($room->firstImage)
-                                    <img src="{{ asset('storage/' . $room->firstImage->image_url) }}" 
+                                    <img src="{{ $room->firstImage->full_image_url }}" 
                                          alt="Ảnh phòng {{ $room->name }}" 
                                          class="img-fluid rounded shadow-sm" 
                                          style="max-height: 300px; width: 100%; object-fit: cover;">

@@ -9,15 +9,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Kiểm tra nếu các cột đã tồn tại thì không làm gì
-        if (Schema::hasColumn('payments', 'payment_method') && 
-            Schema::hasColumn('payments', 'currency') && 
-            Schema::hasColumn('payments', 'transaction_id')) {
+        // Skip entirely if payments table doesn't exist yet (due to timestamp order)
+        if (!Schema::hasTable('payments')) {
             return;
         }
 
-        // No-op migration to satisfy sequence; original changes already applied elsewhere.
-        // You can add columns to `payments` here if needed.
+        // Kiểm tra nếu các cột đã tồn tại thì không làm gì
+        if (
+            Schema::hasColumn('payments', 'payment_method') && 
+            Schema::hasColumn('payments', 'currency') && 
+            Schema::hasColumn('payments', 'transaction_id')
+        ) {
+            // vẫn có thể cần đảm bảo index tồn tại nhưng tránh lỗi nếu đã có
+            // Tiếp tục xuống để thêm index an toàn hoặc return sớm
+            // return; // uncomment nếu muốn no-op hoàn toàn khi đủ cột
+        }
+
         Schema::table('payments', function (Blueprint $table) {
             // Thêm cột payment_method mới nếu chưa có
             if (!Schema::hasColumn('payments', 'payment_method')) {
@@ -50,11 +57,11 @@ return new class extends Migration
                 $table->timestamp('updated_at')->nullable()->after('created_at');
             }
 
-            // Thêm indexes nếu chưa có
-            $table->index(['booking_id', 'status']);
-            $table->index('transaction_id');
-            $table->index('payment_method');
-            // Ensure table exists before running noop to avoid errors
+            // Thêm indexes nếu chưa có (Laravel không có API check index dễ dàng; 
+            // thêm lại thường an toàn nếu tên index khác nhau. Ở đây ta giữ nguyên.)
+            try { $table->index(['booking_id', 'status']); } catch (\Throwable $e) {}
+            try { $table->index('transaction_id'); } catch (\Throwable $e) {}
+            try { $table->index('payment_method'); } catch (\Throwable $e) {}
         });
 
         // Cập nhật dữ liệu từ cột method sang payment_method nếu cần
@@ -70,9 +77,14 @@ return new class extends Migration
         }
 
         // Cập nhật enum status nếu cần
-        $currentStatus = DB::select("SHOW COLUMNS FROM payments LIKE 'status'")[0];
-        if (strpos($currentStatus->Type, 'pending,processing,completed,failed,cancelled,refunded') === false) {
-            DB::statement("ALTER TABLE payments MODIFY COLUMN status ENUM('pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded') DEFAULT 'pending'");
+        if (Schema::hasColumn('payments', 'status')) {
+            $columns = DB::select("SHOW COLUMNS FROM payments LIKE 'status'");
+            if (!empty($columns)) {
+                $currentStatus = $columns[0];
+                if (strpos($currentStatus->Type, 'pending,processing,completed,failed,cancelled,refunded') === false) {
+                    DB::statement("ALTER TABLE payments MODIFY COLUMN status ENUM('pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded') DEFAULT 'pending'");
+                }
+            }
         }
     }
 
@@ -81,5 +93,3 @@ return new class extends Migration
         // No rollback necessary for no-op migration
     }
 };
-
- 

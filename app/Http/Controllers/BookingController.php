@@ -176,9 +176,9 @@ class BookingController extends Controller
             // Lấy URL ảnh phòng
             $roomImage = null;
             if ($booking->room->primaryImage) {
-                $roomImage = asset('storage/' . $booking->room->primaryImage->image_url);
+                $roomImage = $booking->room->primaryImage->full_image_url;
             } elseif ($booking->room->firstImage) {
-                $roomImage = asset('storage/' . $booking->room->firstImage->image_url);
+                $roomImage = $booking->room->firstImage->full_image_url;
             }
 
             return response()->json([
@@ -212,9 +212,9 @@ class BookingController extends Controller
             $imageUrl = null;
             if ($representativeRoom) {
                 if ($representativeRoom->primaryImage) {
-                    $imageUrl = asset('storage/' . $representativeRoom->primaryImage->image_url);
+                    $imageUrl = $representativeRoom->primaryImage->full_image_url;
                 } elseif ($representativeRoom->firstImage) {
-                    $imageUrl = asset('storage/' . $representativeRoom->firstImage->image_url);
+                    $imageUrl = $representativeRoom->firstImage->full_image_url;
                 }
             }
 

@@ -6,7 +6,7 @@
 @section('content')
 
     {{-- Banner đầu trang --}}
-    <div class="hero-wrap" style="background-image: url('client/images/bg_1.jpg');">
+    <div class="hero-wrap" style="background-image: url('{{ asset('client/images/bg_1.jpg') }}');">
         <div class="overlay"></div>
         <div class="container">
             <div class="row no-gutters slider-text d-flex align-itemd-end justify-content-center">
@@ -107,16 +107,16 @@
                                             class="img d-flex justify-content-center align-items-center"
                                             style="background-image: url(
                                                 @php
-                                                    $representativeRoom = $type->rooms()->first();
+                                                    $representativeRoom = $type->rooms()->with(['primaryImage','firstImage'])->first();
                                                     $roomImage = null;
                                                     if ($representativeRoom) {
                                                         if ($representativeRoom->primaryImage) {
-                                                            $roomImage = asset('storage/' . $representativeRoom->primaryImage->image_url);
+                                                            $roomImage = $representativeRoom->primaryImage->full_image_url;
                                                         } elseif ($representativeRoom->firstImage) {
-                                                            $roomImage = asset('storage/' . $representativeRoom->firstImage->image_url);
+                                                            $roomImage = $representativeRoom->firstImage->full_image_url;
                                                         }
                                                     }
-                                                    echo $roomImage ?: 'client/images/room-' . (($loop->iteration % 6) + 1) . '.jpg';
+                                                    echo $roomImage ?: asset('client/images/room-' . (($loop->iteration % 6) + 1) . '.jpg');
                                                 @endphp
                                             );">
                                             <div class="icon d-flex justify-content-center align-items-center">

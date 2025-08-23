@@ -83,10 +83,8 @@ class NewRoomSeeder extends Seeder
                 // Tạo số phòng theo format: Tầng + Số phòng (VD: 101, 102, 201, 202...)
                 $formattedRoomNumber = $floor . str_pad($roomNumber, 2, '0', STR_PAD_LEFT);
                 
-                // Random trạng thái (chủ yếu available, một số ít booked/repair)
-                $statuses = ['available', 'available', 'available', 'available', 'available', 
-                           'available', 'available', 'available', 'booked', 'repair'];
-                $status = $statuses[array_rand($statuses)];
+                // Set all rooms to available for clean testing/demo
+                $status = 'available';
                 
                 Room::create([
                     'room_type_id' => $roomType->id,
