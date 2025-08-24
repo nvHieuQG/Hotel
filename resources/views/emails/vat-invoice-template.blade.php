@@ -60,20 +60,20 @@
                 <td class="right">{{ number_format($services) }}</td>
             </tr>
             @endif
-            @if($surcharge > 0)
+            @if($guestSurcharge > 0)
             <tr>
                 <td>3</td>
-                <td>Phụ phí</td>
+                <td>Phụ phí khách</td>
                 <td class="right">1</td>
-                <td class="right">{{ number_format($surcharge) }}</td>
-                <td class="right">{{ number_format($surcharge) }}</td>
+                <td class="right">{{ number_format($guestSurcharge) }}</td>
+                <td class="right">{{ number_format($guestSurcharge) }}</td>
             </tr>
             @endif
         </tbody>
         <tfoot>
             <tr>
                 <th colspan="4" class="right">Giảm giá/khuyến mại</th>
-                <th class="right">-{{ number_format($discount) }}</th>
+                <th class="right">-{{ number_format($totalDiscount) }}</th>
             </tr>
             <tr>
                 <th colspan="4" class="right">Tổng tiền hàng (đã bao gồm VAT)</th>

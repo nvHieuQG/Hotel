@@ -155,9 +155,21 @@
                                 <div class="col-12">
                                     <h5 class="border-bottom pb-2">Mã giảm giá</h5>
                                     
+                                    <!-- Thông báo quy tắc -->
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Quy tắc sử dụng mã giảm giá:</strong>
+                                        <ul class="mb-0 mt-2">
+                                            <li>Chỉ được áp dụng <strong>1 mã giảm giá duy nhất</strong> cho mỗi đơn hàng</li>
+                                            <li>Khi chọn mã mới, mã cũ sẽ bị thay thế</li>
+                                            <li>Mã giảm giá tùy chỉnh cũng sẽ thay thế mã đã chọn từ danh sách</li>
+                                            <li>Bạn có thể thay đổi mã giảm giá bất cứ lúc nào trước khi xác nhận đặt phòng</li>
+                                        </ul>
+                                    </div>
+                                    
                                     @if($availablePromotions->count() > 0)
                                         <div class="form-group">
-                                            <label>Chọn mã giảm giá:</label>
+                                            <label>Chọn mã giảm giá: <small class="text-muted">(Chỉ được chọn 1 mã duy nhất)</small></label>
                                             <div class="row">
                                                 @foreach($availablePromotions as $promotion)
                                                     <div class="col-md-6 mb-2">
@@ -198,16 +210,25 @@
                                         </div>
                                         
                                         <div id="selectedPromotionInfo" class="alert alert-success" style="display: none;">
-                                            <i class="fas fa-check-circle"></i>
-                                            <strong>Đã chọn mã giảm giá:</strong> <span id="selectedPromotionTitle"></span>
-                                            <br>
-                                            <strong>Giảm giá:</strong> <span id="selectedPromotionDiscount"></span>
-                                            <br>
-                                            <strong>Giá cuối:</strong> <span id="selectedPromotionFinalPrice"></span>
-                                            <br>
-                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removePromotion()">
-                                                <i class="fas fa-times"></i> Xóa mã giảm giá
-                                            </button>
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <i class="fas fa-check-circle"></i>
+                                                    <strong>Đã chọn mã giảm giá:</strong> <span id="selectedPromotionTitle"></span>
+                                                    <br>
+                                                    <strong>Giảm giá:</strong> <span id="selectedPromotionDiscount"></span>
+                                                    <br>
+                                                    <strong>Giá cuối:</strong> <span id="selectedPromotionFinalPrice"></span>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePromotion()">
+                                                    <i class="fas fa-times"></i> Xóa mã giảm giá
+                                                </button>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    Bạn có thể thay đổi mã giảm giá bằng cách chọn mã khác từ danh sách bên trên.
+                                                </small>
+                                            </div>
                                         </div>
                                     @else
                                         <div class="alert alert-info">
@@ -216,12 +237,12 @@
                                         </div>
                                     @endif
                                     
-                                    <!-- Vẫn giữ input nhập mã tùy chỉnh -->
+                                    <!-- Input nhập mã tùy chỉnh -->
                                     <div class="form-group mt-3">
-                                        <label>Hoặc nhập mã giảm giá tùy chỉnh:</label>
+                                        <label>Hoặc nhập mã giảm giá tùy chỉnh: <small class="text-muted">(Sẽ thay thế mã đã chọn từ danh sách)</small></label>
                                         <div class="input-group">
                                             <input type="text" name="promotion_code" id="promotion_code" class="form-control" 
-                                                   placeholder="Nhập mã giảm giá (nếu có)" value="{{ old('promotion_code') }}">
+                                                   placeholder="Nhập mã giảm giá tùy chỉnh (nếu có)" value="{{ old('promotion_code') }}">
                                             <div class="input-group-append">
                                                 <button type="button" class="btn btn-outline-primary" id="applyPromotionBtn">
                                                     <i class="fas fa-gift"></i> Áp dụng
@@ -318,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalPrice = {{ $totalPrice }};
     let selectedPromotion = null;
     
-    // Xử lý chọn promotion từ danh sách
+    // Xử lý chọn promotion từ danh sách - CHỈ CHO PHÉP CHỌN 1 MÃ DUY NHẤT
     document.querySelectorAll('.select-promotion-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const promotionCard = this.closest('.promotion-card');
@@ -333,6 +354,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Nếu đã có mã giảm giá được chọn, hỏi xác nhận thay thế
+            if (selectedPromotion) {
+                const confirmReplace = confirm(`Bạn đã chọn mã giảm giá "${selectedPromotion.title}". Bạn có muốn thay thế bằng mã "${promotionCard.querySelector('h6').textContent}" không?`);
+                if (!confirmReplace) {
+                    return;
+                }
+            }
+            
             // Tính toán giảm giá trực tiếp (không cần gọi API vì chưa có tour booking)
             let discountValue = 0;
             if (discountType === 'percentage') {
@@ -342,6 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const finalPrice = totalPrice - discountValue;
+            
             // Cập nhật UI với dữ liệu đã tính toán
             selectedPromotion = {
                 id: promotionId,
@@ -373,8 +403,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Cập nhật tóm tắt
             summaryTotalPrice.textContent = `${finalPrice.toLocaleString('vi-VN')} VNĐ`;
             
-            // Đổi trạng thái nút
-            document.querySelectorAll('.select-promotion-btn').forEach(b => b.textContent = 'Chọn');
+            // Đổi trạng thái nút - CHỈ CÓ 1 NÚT "ĐÃ CHỌN"
+            document.querySelectorAll('.select-promotion-btn').forEach(b => {
+                b.textContent = 'Chọn';
+                b.classList.remove('btn-success');
+                b.classList.add('btn-outline-primary');
+            });
             this.textContent = 'Đã chọn';
             this.classList.remove('btn-outline-primary');
             this.classList.add('btn-success');
@@ -384,7 +418,11 @@ document.addEventListener('DOMContentLoaded', function() {
             promotionResult.style.display = 'none';
             
             // Hiển thị thông báo thành công
-            alert('Áp dụng mã giảm giá thành công!');
+            if (selectedPromotion && selectedPromotion.id !== promotionId) {
+                alert('Đã thay thế mã giảm giá thành công!');
+            } else {
+                alert('Áp dụng mã giảm giá thành công!');
+            }
         });
     });
     
@@ -427,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
         promotionCodeInput.value = '';
         promotionResult.style.display = 'none';
         
-        alert('Đã xóa mã giảm giá!');
+        alert('Đã xóa mã giảm giá! Bạn có thể chọn mã khác từ danh sách hoặc nhập mã tùy chỉnh.');
     };
     
     // Xử lý áp dụng mã giảm giá tùy chỉnh
@@ -440,6 +478,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset promotion đã chọn
         if (selectedPromotion) {
+            const confirmReplace = confirm(`Bạn đã chọn mã giảm giá "${selectedPromotion.title}". Bạn có muốn thay thế bằng mã tùy chỉnh "${code}" không?`);
+            if (!confirmReplace) {
+                return;
+            }
+            
             selectedPromotion = null;
             selectedPromotionInfo.style.display = 'none';
             document.querySelectorAll('.select-promotion-btn').forEach(btn => {

@@ -12,15 +12,15 @@ use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\TourVatInvoiceGeneratedMail;
 use App\Mail\TourVatInvoiceRejectedMail;
-use App\Services\TourVatInvoiceService;
+use App\Services\VatInvoiceService;
 
 class AdminTourVatInvoiceController extends Controller
 {
-    protected $tourVatInvoiceService;
+    protected $vatInvoiceService;
 
-    public function __construct(TourVatInvoiceService $tourVatInvoiceService)
+    public function __construct(VatInvoiceService $vatInvoiceService)
     {
-        $this->tourVatInvoiceService = $tourVatInvoiceService;
+        $this->vatInvoiceService = $vatInvoiceService;
     }
 
     /**
@@ -42,10 +42,14 @@ class AdminTourVatInvoiceController extends Controller
     public function show($id)
     {
         $tourBooking = TourBooking::where('need_vat_invoice', true)
-            ->with(['user', 'tourBookingRooms.roomType'])
+            ->with(['user', 'tourBookingRooms.roomType', 'tourBookingServices'])
             ->findOrFail($id);
-
-        return view('admin.tour-vat-invoices.show', compact('tourBooking'));
+            
+        // Sử dụng service để lấy thông tin thanh toán
+        $paymentInfo = $this->vatInvoiceService->getTourPaymentStatusInfo($tourBooking);
+        
+        // Truyền các biến cần thiết cho view
+        return view('admin.tour-vat-invoices.show', compact('tourBooking', 'paymentInfo'));
     }
 
     /**
@@ -53,11 +57,6 @@ class AdminTourVatInvoiceController extends Controller
      */
     public function generateVatInvoice(Request $request, $id)
     {
-        $request->validate([
-            'vat_invoice_number' => 'required|string|max:100|unique:tour_bookings,vat_invoice_number',
-            'notes' => 'nullable|string|max:500'
-        ]);
-
         $tourBooking = TourBooking::where('need_vat_invoice', true)
             ->findOrFail($id);
 
@@ -65,26 +64,52 @@ class AdminTourVatInvoiceController extends Controller
         if (!$tourBooking->company_name || !$tourBooking->company_tax_code || !$tourBooking->company_email) {
             return back()->with('error', 'Thông tin công ty chưa đầy đủ để tạo hóa đơn VAT.');
         }
-
+        
+        // Ghi chú: Không kiểm tra điều kiện thanh toán để cho phép tạo hóa đơn VAT ngay cả khi chưa thanh toán đủ tiền
+        // Chỉ ghi log thông báo về trạng thái thanh toán
+        try {
+            $this->vatInvoiceService->ensureTourLegalPaymentCompliance($tourBooking);
+            Log::info('Tour VAT invoice payment compliance check passed', [
+                'tour_booking_id' => $tourBooking->id,
+                'message' => 'Thanh toán đủ tiền - có thể tạo hóa đơn VAT'
+            ]);
+        } catch (\RuntimeException $e) {
+            Log::warning('Tour VAT invoice payment compliance check failed, but continuing', [
+                'tour_booking_id' => $tourBooking->id,
+                'error' => $e->getMessage(),
+                'message' => 'Vẫn tiếp tục tạo hóa đơn VAT dù chưa thanh toán đủ tiền'
+            ]);
+            // Không return error, tiếp tục tạo hóa đơn VAT
+        }
+        
         try {
             DB::beginTransaction();
 
-            // Cập nhật thông tin VAT invoice
-            $tourBooking->update([
-                'vat_invoice_number' => $request->vat_invoice_number,
-                'vat_invoice_created_at' => now()
-            ]);
+            // Tự động tạo số hóa đơn VAT
+            $vatInvoiceNumber = 'TOUR-VAT-' . date('Y') . '-' . str_pad($tourBooking->id, 6, '0', STR_PAD_LEFT);
+            
+            // Kiểm tra số hóa đơn đã tồn tại chưa
+            $existingInvoice = TourBooking::where('vat_invoice_number', $vatInvoiceNumber)->first();
+            if ($existingInvoice) {
+                $vatInvoiceNumber = 'TOUR-VAT-' . date('Y') . '-' . str_pad($tourBooking->id, 6, '0', STR_PAD_LEFT) . '-' . time();
+            }
 
-            // Tạo file hóa đơn VAT sử dụng service
+            // Tạo file hóa đơn VAT sử dụng service trước
             try {
-                $filePath = $this->tourVatInvoiceService->generateVatInvoice($tourBooking);
+                $filePath = $this->vatInvoiceService->generateTourVatInvoice($tourBooking);
                 if (!$filePath) {
                     throw new \Exception('Không thể tạo file hóa đơn VAT');
                 }
+                
+                // Refresh dữ liệu để lấy thông tin mới nhất từ service
+                $tourBooking->refresh();
+                
                 Log::info('VAT invoice file created successfully', [
                     'tour_booking_id' => $tourBooking->id,
-                    'vat_invoice_number' => $request->vat_invoice_number,
-                    'file_path' => $filePath
+                    'vat_invoice_number' => $vatInvoiceNumber,
+                    'file_path' => $filePath,
+                    'db_file_path' => $tourBooking->vat_invoice_file_path,
+                    'file_exists' => file_exists(public_path('storage/' . str_replace('public/', '', $filePath)))
                 ]);
             } catch (\Exception $e) {
                 Log::error('Failed to create VAT invoice file', [
@@ -94,32 +119,61 @@ class AdminTourVatInvoiceController extends Controller
                 throw new \Exception('Không thể tạo file hóa đơn VAT: ' . $e->getMessage());
             }
 
-            // Gửi email thông báo cho khách hàng
+            // Cập nhật thông tin VAT invoice sau khi tạo file thành công
+            $updateResult = $tourBooking->update([
+                'vat_invoice_number' => $vatInvoiceNumber,
+                'vat_invoice_created_at' => now()
+            ]);
+            
+            // Refresh dữ liệu để lấy thông tin mới nhất từ database
+            $tourBooking->refresh();
+            
+            // Log thông tin sau khi refresh
+            Log::info('Tour booking data after refresh', [
+                'tour_booking_id' => $tourBooking->id,
+                'vat_invoice_number' => $tourBooking->vat_invoice_number,
+                'vat_invoice_file_path' => $tourBooking->vat_invoice_file_path,
+                'vat_invoice_created_at' => $tourBooking->vat_invoice_created_at,
+                'update_result' => $updateResult
+            ]);
+
+            // Gửi email thông báo cho khách hàng sử dụng service (giống regular booking)
             $emailSent = false;
             try {
-                Mail::to($tourBooking->company_email)
-                    ->send(new TourVatInvoiceGeneratedMail($tourBooking));
-                
-                $emailSent = true;
-                Log::info('Tour VAT invoice generated email sent', [
-                    'tour_booking_id' => $tourBooking->id,
-                    'vat_invoice_number' => $request->vat_invoice_number,
-                    'company_email' => $tourBooking->company_email
-                ]);
+                $emailSent = $this->vatInvoiceService->sendTourVatInvoiceEmail($tourBooking);
+                if ($emailSent) {
+                    Log::info('Tour VAT invoice email sent successfully', [
+                        'tour_booking_id' => $tourBooking->id,
+                        'vat_invoice_number' => $vatInvoiceNumber,
+                        'company_email' => $tourBooking->company_email
+                    ]);
+                } else {
+                    Log::warning('Tour VAT invoice email failed to send', [
+                        'tour_booking_id' => $tourBooking->id,
+                        'company_email' => $tourBooking->company_email
+                    ]);
+                }
             } catch (\Exception $e) {
-                Log::error('Failed to send tour VAT invoice generated email', [
+                Log::error('Failed to send tour VAT invoice email', [
                     'tour_booking_id' => $tourBooking->id,
                     'company_email' => $tourBooking->company_email,
-                    'error' => $e->getMessage(),
-                    'mail_config' => [
-                        'driver' => config('mail.default'),
-                        'from_address' => config('mail.from.address'),
-                        'from_name' => config('mail.from.name')
-                    ]
+                    'error' => $e->getMessage()
                 ]);
             }
 
             DB::commit();
+
+            // Refresh dữ liệu một lần nữa sau khi commit để đảm bảo có thông tin mới nhất
+            $tourBooking->refresh();
+            
+            // Log thông tin cuối cùng sau khi commit
+            Log::info('Tour VAT invoice creation completed', [
+                'tour_booking_id' => $tourBooking->id,
+                'vat_invoice_number' => $tourBooking->vat_invoice_number,
+                'vat_invoice_file_path' => $tourBooking->vat_invoice_file_path,
+                'vat_invoice_status' => $tourBooking->vat_invoice_status,
+                'vat_invoice_generated_at' => $tourBooking->vat_invoice_generated_at
+            ]);
 
             if ($emailSent) {
                 return redirect()->route('admin.tour-bookings.show', $tourBooking->id)
@@ -220,12 +274,12 @@ class AdminTourVatInvoiceController extends Controller
                 ->with('error', 'Hóa đơn VAT chưa có file. Vui lòng tạo lại file.');
         }
         
-        $filePath = storage_path('app/' . $tourBooking->vat_invoice_file_path);
+        $filePath = public_path('storage/' . str_replace('public/', '', $tourBooking->vat_invoice_file_path));
         
         if (!file_exists($filePath)) {
             try {
                 // Tạo file mẫu nếu không tồn tại
-                $this->tourVatInvoiceService->generateVatInvoice($tourBooking);
+                $this->vatInvoiceService->generateTourVatInvoice($tourBooking);
                 $tourBooking->refresh(); // Refresh để lấy file path mới
                 
                 if (empty($tourBooking->vat_invoice_file_path)) {
@@ -233,7 +287,7 @@ class AdminTourVatInvoiceController extends Controller
                         ->with('error', 'Không thể tạo file hóa đơn VAT. Vui lòng liên hệ quản trị viên.');
                 }
                 
-                $filePath = storage_path('app/' . $tourBooking->vat_invoice_file_path);
+                $filePath = public_path('storage/' . str_replace('public/', '', $tourBooking->vat_invoice_file_path));
                 if (!file_exists($filePath)) {
                     return redirect()->route('admin.tour-bookings.show', $tourBooking->id)
                         ->with('error', 'File hóa đơn VAT không tồn tại sau khi tạo. Vui lòng liên hệ quản trị viên.');
@@ -294,32 +348,37 @@ class AdminTourVatInvoiceController extends Controller
         }
 
         try {
-            // Xóa file cũ nếu tồn tại
-            $oldFilePath = storage_path("app/vat-invoices/tour-{$tourBooking->vat_invoice_number}.pdf");
-            if (file_exists($oldFilePath)) {
-                unlink($oldFilePath);
-                Log::info('Old VAT invoice file deleted', [
-                    'tour_booking_id' => $tourBooking->id,
-                    'file_path' => $oldFilePath
-                ]);
+            // Xóa file cũ nếu tồn tại (sử dụng pattern đúng)
+            $vatInvoicesDir = public_path('storage/vat_invoices');
+            if (is_dir($vatInvoicesDir)) {
+                $oldFiles = glob($vatInvoicesDir . '/tour_vat_invoice_' . $tourBooking->id . '_*.pdf');
+                foreach ($oldFiles as $oldFile) {
+                    if (file_exists($oldFile)) {
+                        unlink($oldFile);
+                        Log::info('Old VAT invoice file deleted', [
+                            'tour_booking_id' => $tourBooking->id,
+                            'file_path' => $oldFile
+                        ]);
+                    }
+                }
             }
 
             // Tạo file mới
-            $filePath = $this->tourVatInvoiceService->generateVatInvoice($tourBooking);
+            $filePath = $this->vatInvoiceService->generateTourVatInvoice($tourBooking);
             
             if ($filePath) {
-                // Kiểm tra file đã được tạo trong storage public
-                $fullPath = storage_path('app/' . $filePath);
-                if (file_exists($fullPath)) {
-                    return redirect()->route('admin.tour-bookings.show', $tourBooking->id)
-                        ->with('success', 'File hóa đơn VAT đã được tạo lại thành công!');
-                } else {
-                    return redirect()->route('admin.tour-bookings.show', $tourBooking->id)
-                        ->with('error', 'File đã được tạo nhưng không tìm thấy trong hệ thống.');
-                }
+                $tourBooking->refresh(); // Refresh để lấy file path mới
+                
+                Log::info('Tour VAT invoice regenerated successfully', [
+                    'tour_booking_id' => $tourBooking->id,
+                    'file_path' => $filePath
+                ]);
+                
+                return redirect()->route('admin.tour-bookings.show', $tourBooking->id)
+                    ->with('success', 'Hóa đơn VAT đã được tạo lại thành công!');
             } else {
                 return redirect()->route('admin.tour-bookings.show', $tourBooking->id)
-                    ->with('error', 'Không thể tạo lại file hóa đơn VAT.');
+                    ->with('error', 'Không thể tạo lại hóa đơn VAT');
             }
             
         } catch (\Exception $e) {
@@ -335,7 +394,7 @@ class AdminTourVatInvoiceController extends Controller
     private function createSampleVatInvoice(TourBooking $tourBooking)
     {
         try {
-            $directory = storage_path('app/vat-invoices');
+            $directory = public_path('storage/vat_invoices');
             
             // Tạo thư mục nếu không tồn tại
             if (!is_dir($directory)) {
@@ -349,7 +408,7 @@ class AdminTourVatInvoiceController extends Controller
                 throw new \Exception("Thư mục không có quyền ghi: {$directory}");
             }
 
-            $filePath = storage_path("app/vat-invoices/tour-{$tourBooking->vat_invoice_number}.pdf");
+            $filePath = public_path("storage/vat_invoices/tour-{$tourBooking->vat_invoice_number}.pdf");
             
             // Tạo PDF từ template HTML
             $html = view('emails.tour-vat-invoice-template', compact('tourBooking'))->render();
@@ -385,10 +444,10 @@ class AdminTourVatInvoiceController extends Controller
             Log::error('Failed to create VAT invoice PDF', [
                 'tour_booking_id' => $tourBooking->id,
                 'error' => $e->getMessage(),
-                'directory' => storage_path('app/vat-invoices'),
-                'directory_exists' => is_dir(storage_path('app/vat-invoices')),
-                'directory_writable' => is_writable(storage_path('app/vat-invoices')),
-                'storage_path' => storage_path('app/vat-invoices'),
+                'directory' => public_path('storage/vat_invoices'),
+                'directory_exists' => is_dir(public_path('storage/vat_invoices')),
+                'directory_writable' => is_writable(public_path('storage/vat_invoices')),
+                'storage_path' => public_path('storage/vat_invoices'),
                 'current_working_dir' => getcwd()
             ]);
             throw $e;
@@ -463,7 +522,7 @@ class AdminTourVatInvoiceController extends Controller
 
             // Tạo hóa đơn VAT nếu chưa có
             if (empty($tourBooking->vat_invoice_file_path)) {
-                $filePath = $this->tourVatInvoiceService->generateVatInvoice($tourBooking);
+                $filePath = $this->vatInvoiceService->generateTourVatInvoice($tourBooking);
                 if (!$filePath) {
                     abort(500, 'Không thể tạo hóa đơn VAT');
                 }
@@ -474,7 +533,7 @@ class AdminTourVatInvoiceController extends Controller
                 abort(500, 'Không thể tạo hóa đơn VAT');
             }
 
-            $fullPath = storage_path('app/' . $tourBooking->vat_invoice_file_path);
+            $fullPath = public_path('storage/' . str_replace('public/', '', $tourBooking->vat_invoice_file_path));
             
             if (!file_exists($fullPath)) {
                 abort(404, 'File hóa đơn VAT không tồn tại');
@@ -494,7 +553,7 @@ class AdminTourVatInvoiceController extends Controller
     {
         try {
             $tourBooking = TourBooking::findOrFail($id);
-            $ok = $this->tourVatInvoiceService->sendVatInvoiceEmail($tourBooking);
+            $ok = $this->vatInvoiceService->sendTourVatInvoiceEmail($tourBooking);
             return back()->with($ok ? 'success' : 'error', $ok ? 'Đã gửi email hóa đơn VAT' : 'Không thể gửi email hóa đơn VAT');
         } catch (\Exception $e) {
             Log::error('Error sending Tour VAT invoice: ' . $e->getMessage());
@@ -513,10 +572,61 @@ class AdminTourVatInvoiceController extends Controller
                 ->whereNull('vat_invoice_number')
                 ->count(),
             'generated_invoices' => TourBooking::whereNotNull('vat_invoice_number')->count(),
-            'total_revenue' => TourBooking::whereNotNull('vat_invoice_number')
-                ->sum('final_amount')
+            'total_revenue' => TourBooking::with(['tourBookingRooms', 'tourBookingServices'])
+                ->whereNotNull('vat_invoice_number')
+                ->get()
+                ->sum(function($tourBooking) {
+                    $paymentInfo = $this->vatInvoiceService->getTourPaymentStatusInfo($tourBooking);
+                    return $paymentInfo['totalDue'];
+                })
         ];
 
         return view('admin.tour-vat-invoices.statistics', compact('stats'));
+    }
+
+    /**
+     * Sửa lỗi dữ liệu VAT invoice (debug purpose)
+     */
+    public function fixVatInvoiceData($id)
+    {
+        try {
+            $tourBooking = TourBooking::findOrFail($id);
+            
+            // Kiểm tra xem có file PDF nào trong thư mục không
+            $vatInvoicesDir = public_path('storage/vat_invoices');
+            $files = glob($vatInvoicesDir . '/tour_vat_invoice_' . $tourBooking->id . '_*.pdf');
+            
+            if (!empty($files)) {
+                $latestFile = end($files); // Lấy file mới nhất
+                $relativePath = 'public/vat_invoices/' . basename($latestFile);
+                
+                // Cập nhật database với file path đúng
+                $tourBooking->update([
+                    'vat_invoice_file_path' => $relativePath,
+                    'vat_invoice_status' => 'generated',
+                    'vat_invoice_generated_at' => now(),
+                ]);
+                
+                $tourBooking->refresh();
+                
+                Log::info('VAT invoice data fixed successfully', [
+                    'tour_booking_id' => $tourBooking->id,
+                    'old_file_path' => $tourBooking->getOriginal('vat_invoice_file_path'),
+                    'new_file_path' => $tourBooking->vat_invoice_file_path,
+                    'files_found' => $files
+                ]);
+                
+                return redirect()->route('admin.tour-bookings.show', $tourBooking->id)
+                    ->with('success', 'Đã sửa dữ liệu hóa đơn VAT thành công!');
+            } else {
+                return redirect()->route('admin.tour-bookings.show', $tourBooking->id)
+                    ->with('error', 'Không tìm thấy file PDF hóa đơn VAT.');
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error fixing VAT invoice data: ' . $e->getMessage());
+            return redirect()->route('admin.tour-bookings.show', $tourBooking->id)
+                ->with('error', 'Có lỗi xảy ra khi sửa dữ liệu: ' . $e->getMessage());
+        }
     }
 }

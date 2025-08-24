@@ -179,17 +179,36 @@
                                         <div class="col-md-6">
                                             <table class="table table-borderless">
                                                 <tr>
-                                                    <td><strong>Tổng tiền:</strong></td>
-                                                    <td>{{ number_format($tourBooking->total_price, 0, ',', '.') }} VNĐ</td>
+                                                    <td><strong>Tiền phòng:</strong></td>
+                                                    <td>{{ number_format($paymentInfo['roomCost'], 0, ',', '.') }} VNĐ</td>
                                                 </tr>
-                                                @if($tourBooking->promotion_discount > 0)
+                                                <tr>
+                                                    <td><strong>Tiền dịch vụ:</strong></td>
+                                                    <td>{{ number_format($paymentInfo['services'], 0, ',', '.') }} VNĐ</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Tổng cộng:</strong></td>
+                                                    <td class="text-warning">{{ number_format($paymentInfo['roomCost'] + $paymentInfo['services'], 0, ',', '.') }} VNĐ</td>
+                                                </tr>
+                                                @if($paymentInfo['discount'] > 0)
                                                     <tr>
                                                         <td><strong>Giảm giá:</strong></td>
-                                                        <td class="text-success">-{{ number_format($tourBooking->promotion_discount, 0, ',', '.') }} VNĐ</td>
+                                                        <td class="text-success">-{{ number_format($paymentInfo['discount'], 0, ',', '.') }} VNĐ</td>
                                                     </tr>
+                                                    @if($tourBooking->promotion_code)
+                                                        <tr>
+                                                            <td><strong>Mã giảm giá:</strong></td>
+                                                            <td class="text-muted small">{{ $tourBooking->promotion_code }}</td>
+                                                        </tr>
+                                                    @endif
                                                     <tr>
                                                         <td><strong>Giá cuối:</strong></td>
-                                                        <td class="text-danger font-weight-bold">{{ number_format($tourBooking->final_price, 0, ',', '.') }} VNĐ</td>
+                                                        <td class="text-danger font-weight-bold">{{ number_format($paymentInfo['totalDue'], 0, ',', '.') }} VNĐ</td>
+                                                    </tr>
+                                                @else
+                                                    <tr>
+                                                        <td><strong>Giá cuối:</strong></td>
+                                                        <td class="text-danger font-weight-bold">{{ number_format($paymentInfo['totalDue'], 0, ',', '.') }} VNĐ</td>
                                                     </tr>
                                                 @endif
                                             </table>
@@ -261,6 +280,12 @@
                                                     </tr>
                                                 @endforeach
                                             </tbody>
+                                            <tfoot class="table-info">
+                                                <tr>
+                                                    <td colspan="4" class="text-right"><strong>Tổng tiền phòng:</strong></td>
+                                                    <td class="text-right font-weight-bold">{{ number_format($paymentInfo['roomCost'], 0, ',', '.') }} VNĐ</td>
+                                                </tr>
+                                            </tfoot>
                                         </table>
                                     </div>
                                 </div>

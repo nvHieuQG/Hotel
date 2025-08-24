@@ -532,7 +532,14 @@
                                         <div class="mt-3 d-flex gap-2 flex-wrap">
                                             <form action="{{ route('admin.bookings.vat.generate', $booking->id) }}" method="POST" class="me-2 mb-1">
                                                 @csrf
-                                                <button class="btn btn-outline-primary btn-sm"><i class="fas fa-file-pdf"></i> Tạo hóa đơn PDF</button>
+                                                <button class="btn btn-outline-primary btn-sm" 
+                                                        {{ !$paymentInfo['isFullyPaid'] ? 'disabled' : '' }}
+                                                        title="{{ !$paymentInfo['isFullyPaid'] ? 'Khách chưa thanh toán đủ tiền' : 'Tạo hóa đơn VAT PDF' }}">
+                                                    <i class="fas fa-file-pdf"></i> Tạo hóa đơn PDF
+                                                </button>
+                                                @if(!$paymentInfo['isFullyPaid'])
+                                                    <small class="text-warning d-block mt-1">Khách chưa thanh toán đủ tiền</small>
+                                                @endif
                                             </form>
                                             
                                             @if($booking->vat_invoice_file_path)
@@ -542,42 +549,85 @@
                                                 <a class="btn btn-secondary btn-sm me-2 mb-1" href="{{ route('admin.bookings.vat.download', $booking->id) }}">
                                                     <i class="fas fa-download"></i> Tải xuống
                                                 </a>
+                                                <form action="{{ route('admin.bookings.vat.regenerate', $booking->id) }}" method="POST" class="d-inline me-2 mb-1">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-warning btn-sm" 
+                                                            {{ !$paymentInfo['isFullyPaid'] ? 'disabled' : '' }}
+                                                            onclick="return confirm('Bạn có chắc muốn tạo lại file hóa đơn VAT? File cũ sẽ bị xóa.')"
+                                                            title="{{ !$paymentInfo['isFullyPaid'] ? 'Khách chưa thanh toán đủ tiền' : 'Tạo lại hóa đơn VAT' }}">
+                                                        <i class="fas fa-sync-alt"></i> Tạo lại
+                                                    </button>
+                                                    @if(!$paymentInfo['isFullyPaid'])
+                                                        <small class="text-warning d-block mt-1">Khách chưa thanh toán đủ tiền</small>
+                                                    @endif
+                                                </form>
                                             @endif
                                             
                                             <form action="{{ route('admin.bookings.vat.send', $booking->id) }}" method="POST" class="mb-1">
                                                 @csrf
-                                                <button class="btn btn-primary btn-sm" {{ empty($booking->vat_invoice_file_path) ? 'disabled' : '' }}>
+                                                <button class="btn btn-primary btn-sm" 
+                                                        {{ empty($booking->vat_invoice_file_path) || !$paymentInfo['isFullyPaid'] ? 'disabled' : '' }}
+                                                        title="{{ empty($booking->vat_invoice_file_path) ? 'Cần tạo hóa đơn PDF trước' : (!$paymentInfo['isFullyPaid'] ? 'Khách chưa thanh toán đủ tiền' : 'Gửi email hóa đơn VAT') }}">
                                                     <i class="fas fa-envelope"></i> Gửi email hóa đơn
                                                 </button>
                                                 @if(empty($booking->vat_invoice_file_path))
                                                     <small class="text-muted d-block mt-1">Cần tạo hóa đơn PDF trước</small>
+                                                @elseif(!$paymentInfo['isFullyPaid'])
+                                                    <small class="text-warning d-block mt-1">Khách chưa thanh toán đủ tiền</small>
                                                 @endif
                                             </form>
                                         </div>
                                         @php
-                                            $ci = $booking->check_in_date;
-                                            $co = $booking->check_out_date;
-                                            $nights = $ci && $co ? $ci->copy()->startOfDay()->diffInDays($co->copy()->startOfDay()) : 0;
-                                            $nightly = (int)($booking->room->roomType->price ?? $booking->room->price ?? 0);
-                                            $roomCost = max(0, $nights) * $nightly;
-                                            $services = (float)($booking->extra_services_total ?? 0) + (float)($booking->total_services_price ?? 0);
-                                            $surcharge = (float)($booking->surcharge ?? 0);
-                                            $discount = (float) $booking->payments()->where('status','!=','failed')->sum('discount_amount');
-                                            $subtotal = $roomCost + $services + $surcharge - $discount;
+                                            // Sử dụng VatInvoiceService để lấy thông tin thanh toán
+                                            $vatService = app(\App\Services\VatInvoiceService::class);
+                                            $paymentInfo = $vatService->getPaymentStatusInfo($booking);
+                                            
+                                            // Sử dụng BookingPriceCalculationService để tính toán nhất quán với admin
+                                            $priceService = app(\App\Services\BookingPriceCalculationService::class);
+                                            $priceData = $priceService->calculateRegularBookingTotal($booking);
+                                            
+                                            // Lấy các thành phần giá từ service
+                                            $nights = $priceData['nights'];
+                                            $nightly = $priceData['nightly'];
+                                            $roomCost = $priceData['finalRoomCost'];
+                                            $services = $priceData['svcTotal'];
+                                            $guestSurcharge = $priceData['guestSurcharge'];
+                                            $totalDiscount = $priceData['totalDiscount'];
+                                            
+                                            // Tổng cộng đã bao gồm VAT 10%
+                                            $grandTotal = $priceData['fullTotal'];
+                                            
+                                            // Tính ngược lại: giá trước VAT = tổng cộng / (1 + VAT rate)
                                             $vatRate = 0.1;
-                                            $vatAmount = max(0, round($subtotal * $vatRate));
-                                            $grandTotal = $subtotal + $vatAmount;
+                                            $subtotal = round($grandTotal / (1 + $vatRate));
+                                            $vatAmount = $grandTotal - $subtotal;
                                         @endphp
                                         
                                         <div class="alert alert-light mt-3 mb-0">
                                             <i class="fas fa-info-circle"></i>
                                             <strong>Thông tin VAT:</strong> Giá tiền đã bao gồm VAT 10%, không thu thêm phí. Hóa đơn chỉ để khách kê khai thuế.
+                                            <br><small class="text-muted">Sử dụng logic tính toán mới nhất quán với client</small>
+                                            <br><small class="text-muted">Điều kiện: Khách phải thanh toán đủ tiền trước khi xuất hóa đơn VAT</small>
+                                        </div>
+                                        
+                                        <!-- Thông tin trạng thái thanh toán -->
+                                        <div class="alert alert-{{ $paymentInfo['isFullyPaid'] ? 'success' : 'warning' }} mt-3 mb-0">
+                                            <i class="fas fa-{{ $paymentInfo['isFullyPaid'] ? 'check-circle' : 'exclamation-triangle' }}"></i>
+                                            <strong>Trạng thái thanh toán:</strong>
+                                            @if($paymentInfo['isFullyPaid'])
+                                                <span class="text-success">✅ Đã thanh toán đủ tiền</span>
+                                                <br><small class="text-muted">Có thể xuất hóa đơn VAT</small>
+                                            @else
+                                                <span class="text-warning">⚠️ Chưa thanh toán đủ tiền</span>
+                                                <br><small class="text-muted">Tổng tiền: {{ number_format($paymentInfo['totalDue']) }} VNĐ | Đã thanh toán: {{ number_format($paymentInfo['totalPaid']) }} VNĐ | Còn thiếu: {{ number_format($paymentInfo['remainingAmount']) }} VNĐ</small>
+                                            @endif
                                         </div>
                                         
                                         @if($grandTotal >= 5000000)
                                             <div class="alert alert-warning mt-3 mb-0">
                                                 <i class="fas fa-exclamation-triangle"></i>
-                                                <strong>Lưu ý quan trọng:</strong> Hóa đơn từ 5.000.000đ ({{ number_format($grandTotal) }} VNĐ) phải thanh toán bằng thẻ/tài khoản công ty hoặc chuyển khoản công ty theo quy định pháp luật.
+                                                <strong>Lưu ý quan trọng:</strong> Hóa đơn từ 5.000.000đ ({{ number_format($grandTotal) }} VNĐ) theo quy định pháp luật nên thanh toán bằng thẻ/tài khoản công ty hoặc chuyển khoản công ty.
+                                                <br><small class="text-muted">Tuy nhiên, vẫn có thể tạo hóa đơn VAT nếu khách đã thanh toán đủ tiền.</small>
                                             </div>
                                         @else
                                             <div class="alert alert-info mt-3 mb-0">

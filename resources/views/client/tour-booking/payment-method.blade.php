@@ -64,11 +64,16 @@
                                                 <td><strong>Giảm giá:</strong></td>
                                                 <td class="text-right">-{{ number_format($tourBooking->promotion_discount, 0, ',', '.') }} VNĐ</td>
                                             </tr>
+                                            <tr class="table-info">
+                                                <td><strong>Tổng cộng:</strong></td>
+                                                <td class="text-right"><strong>{{ number_format($tourBooking->final_price, 0, ',', '.') }} VNĐ</strong></td>
+                                            </tr>
+                                        @else
+                                            <tr class="table-info">
+                                                <td><strong>Tổng cộng:</strong></td>
+                                                <td class="text-right"><strong>{{ number_format($tourBooking->total_price, 0, ',', '.') }} VNĐ</strong></td>
+                                            </tr>
                                         @endif
-                                               <tr class="table-info">
-                                                   <td><strong>Tổng cộng:</strong></td>
-                                                   <td class="text-right"><strong>{{ number_format($tourBooking->final_price, 0, ',', '.') }} VNĐ</strong></td>
-                                               </tr>
                                     </table>
                                 </div>
                             </div>

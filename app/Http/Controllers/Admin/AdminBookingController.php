@@ -412,7 +412,7 @@ class AdminBookingController extends Controller
                 abort(500, 'Không thể tạo hóa đơn VAT');
             }
 
-            $fullPath = storage_path('app/' . $booking->vat_invoice_file_path);
+            $fullPath = storage_path('app/public/' . str_replace('public/', '', $booking->vat_invoice_file_path));
             
             if (!file_exists($fullPath)) {
                 abort(404, 'File hóa đơn VAT không tồn tại');
@@ -438,7 +438,7 @@ class AdminBookingController extends Controller
                 abort(404, 'Hóa đơn VAT chưa được tạo');
             }
 
-            $fullPath = storage_path('app/' . $booking->vat_invoice_file_path);
+            $fullPath = storage_path('app/public/' . str_replace('public/', '', $booking->vat_invoice_file_path));
             
             if (!file_exists($fullPath)) {
                 abort(404, 'File hóa đơn VAT không tồn tại');
@@ -450,6 +450,41 @@ class AdminBookingController extends Controller
         } catch (\Exception $e) {
             Log::error('Error downloading VAT invoice: ' . $e->getMessage());
             abort(500, 'Có lỗi xảy ra khi tải xuống hóa đơn VAT');
+        }
+    }
+
+    /**
+     * Tạo lại hóa đơn VAT
+     */
+    public function regenerateVatInvoice($id)
+    {
+        try {
+            $booking = $this->bookingService->getBookingDetails($id);
+            
+            if (!$booking) {
+                abort(404, 'Không tìm thấy đặt phòng');
+            }
+
+            if (!$booking->vat_invoice_file_path) {
+                return redirect()->route('admin.bookings.show', $booking->id)
+                    ->with('error', 'Hóa đơn VAT chưa được tạo.');
+            }
+
+            // Tạo lại hóa đơn VAT
+            $filePath = $this->vatInvoiceService->generateVatInvoice($booking);
+            
+            if ($filePath) {
+                return redirect()->route('admin.bookings.show', $booking->id)
+                    ->with('success', 'Hóa đơn VAT đã được tạo lại thành công!');
+            } else {
+                return redirect()->route('admin.bookings.show', $booking->id)
+                    ->with('error', 'Không thể tạo lại hóa đơn VAT.');
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error regenerating VAT invoice: ' . $e->getMessage());
+            return redirect()->route('admin.bookings.show', $booking->id)
+                ->with('error', 'Có lỗi xảy ra khi tạo lại hóa đơn VAT: ' . $e->getMessage());
         }
     }
 

@@ -187,7 +187,7 @@
                                                 <span class="text-primary">{{ number_format($tourBooking->total_services_amount ?? 0, 0, ',', '.') }} VNĐ</span><br>
                                                 <span class="text-warning">{{ number_format($tourBooking->total_amount_before_discount ?? $tourBooking->total_price, 0, ',', '.') }} VNĐ</span><br>
                                                 <span class="text-success">-{{ number_format($tourBooking->promotion_discount ?? 0, 0, ',', '.') }} VNĐ</span><br>
-                                                <span class="text-danger">{{ number_format($tourBooking->final_price ?? ($tourBooking->total_price - ($tourBooking->promotion_discount ?? 0)), 0, ',', '.') }} VNĐ</span>
+                                                <span class="text-danger">{{ number_format($tourBooking->final_price ?? $tourBooking->total_price, 0, ',', '.') }} VNĐ</span>
                                             </div>
                                         </div>
                                     </div>
