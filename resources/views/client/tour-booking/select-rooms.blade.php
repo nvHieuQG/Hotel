@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Cập nhật hiển thị
-        totalPriceDisplay.textContent = totalPrice.toLocaleString('vi-VN') + ' VNĐ';
+        totalPriceDisplay.textContent = Math.round(totalPrice).toLocaleString('vi-VN') + ' VNĐ';
         totalRoomsDisplay.textContent = totalRooms;
         totalGuestsDisplay.textContent = totalGuests;
         totalPriceInput.value = totalPrice;
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 summaryHtml += `
                     <div class="mb-2">
                         <small>${room.quantity} phòng × ${room.guestsPerRoom} khách</small><br>
-                        <small class="text-muted">${room.pricePerRoom.toLocaleString('vi-VN')} VNĐ/phòng</small>
+                        <small class="text-muted">${Math.round(room.pricePerRoom).toLocaleString('vi-VN')} VNĐ/phòng</small>
                     </div>
                 `;
             });

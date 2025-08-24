@@ -108,6 +108,8 @@
                                             <input type="hidden" name="extra_services_total" id="extra_services_total" value="0">
                                         </div>
 
+                                        
+                                        
                                         @if(isset($extraServices) && count($extraServices) > 0)
                                         <div class="form-group mb-3">
                                             <label class="d-block mb-2">Lựa chọn thêm cho kỳ nghỉ của bạn</label>
@@ -132,14 +134,6 @@
                                                                 </div>
                                                             </div>
                                                             <div class="d-flex align-items-center">
-                                                                <div class="custom-control custom-checkbox mr-2">
-                                                                    <input type="checkbox" class="custom-control-input svc-apply" id="svc_apply_all_{{ $svc->id }}"
-                                                                           data-service-id="{{ $svc->id }}"
-                                                                           title="Áp dụng cho tất cả khách">
-                                                                    <label class="custom-control-label small" for="svc_apply_all_{{ $svc->id }}" title="Áp dụng cho tất cả khách">
-                                                                        <i class="fas fa-users"></i>
-                                                                    </label>
-                                                                </div>
                                                                 <div class="custom-control custom-checkbox">
                                                                     <input type="checkbox" class="custom-control-input svc-check" id="svc_chk_{{ $svc->id }}"
                                                                            data-service-id="{{ $svc->id }}"
@@ -309,7 +303,7 @@
         let lastChanged = null; // 'adults' | 'children' | 'infants'
 
         function formatCurrency(num) {
-            try { return new Intl.NumberFormat('vi-VN').format(num); } catch (e) { return num; }
+            try { return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(num); } catch (e) { return num; }
         }
 
         // Populate per-service adults/children dropdowns according to current main selection
@@ -341,6 +335,25 @@
                 const id = el.getAttribute('data-service-id');
                 if (id) populateServicePeopleOptionsFor(id);
             });
+        }
+
+        // Tự động điền số lượng khách cho dịch vụ
+        function autoFillServicePeopleFor(id) {
+            const list = document.getElementById('extra-services-list');
+            if (!list) return;
+            
+            const adultsInput = list.querySelector(`.svc-adults[data-service-id="${id}"]`);
+            const childrenInput = list.querySelector(`.svc-children[data-service-id="${id}"]`);
+            
+            if (adultsInput) {
+                const maxAdults = parseInt(document.getElementById('adults')?.value) || 0;
+                adultsInput.value = String(maxAdults);
+            }
+            
+            if (childrenInput) {
+                const maxChildren = parseInt(document.getElementById('children')?.value) || 0;
+                childrenInput.value = String(maxChildren);
+            }
         }
 
         function formatDateVN(isoDate) {
@@ -409,8 +422,7 @@
                 const pa = Math.max(0, parseInt(chk.getAttribute('data-price-adult')) || 0);
                 const pc = Math.max(0, parseInt(chk.getAttribute('data-price-child')) || 0);
 
-                // Determine selected adults/children for this service
-                const applyAll = list.querySelector(`#svc_apply_all_${id}`)?.checked;
+                // Tự động áp dụng dịch vụ cho tất cả khách khi được chọn
                 let selAdults = 0, selChildren = 0;
                 // For per_person and per_service, require explicit selection via per-service inputs
                 if (charge === 'per_person' || charge === 'per_service') {
@@ -473,7 +485,7 @@
                         break;
                 }
                 total += sub;
-                items.push({ id, apply: applyAll ? 'all' : 'custom', adults_used: selAdults, children_used: selChildren, quantity: (charge==='per_service'||charge==='per_day'||charge==='per_hour')?quantity:null, days: (charge==='per_day'||charge==='per_hour')?daysVal:null, charge_type: charge, price_adult: pa, price_child: pc, subtotal: sub });
+                items.push({ id, apply: 'all', adults_used: selAdults, children_used: selChildren, quantity: (charge==='per_service'||charge==='per_day'||charge==='per_hour')?quantity:null, days: (charge==='per_day'||charge==='per_hour')?daysVal:null, charge_type: charge, price_adult: pa, price_child: pc, subtotal: sub });
             });
             return { total, items };
         }
@@ -689,20 +701,7 @@
         checkOutInput.addEventListener('change', updateGuestsAndFees);
         // Extra services listeners & behaviors
         const svcList = document.getElementById('extra-services-list');
-        function syncServiceApplyControls(id) {
-            const applyAll = document.getElementById(`svc_apply_all_${id}`);
-            const inputA = svcList.querySelector(`.svc-adults[data-service-id="${id}"]`);
-            const inputC = svcList.querySelector(`.svc-children[data-service-id="${id}"]`);
-            const maxA = Math.max(0, parseInt(document.getElementById('adults')?.value) || 0);
-            const maxC = Math.max(0, parseInt(document.getElementById('children')?.value) || 0);
-            if (applyAll?.checked) {
-                if (inputA) { inputA.value = String(maxA); inputA.disabled = true; inputA.max = String(maxA); }
-                if (inputC) { inputC.value = String(maxC); inputC.disabled = true; inputC.max = String(maxC); }
-            } else {
-                if (inputA) { inputA.disabled = false; inputA.max = String(maxA); if ((parseInt(inputA.value)||0) > maxA) inputA.value = String(maxA); }
-                if (inputC) { inputC.disabled = false; inputC.max = String(maxC); if ((parseInt(inputC.value)||0) > maxC) inputC.value = String(maxC); }
-            }
-        }
+        // Hàm này không còn cần thiết vì đã xóa checkbox svc-apply
 
         if (svcList) {
             // Toggle config visibility when checking a service
@@ -720,7 +719,8 @@
                         populateServicePeopleOptionsFor(id);
                         // Sync per-day days max on show
                         syncPerDayMaxDays();
-                        syncServiceApplyControls(id);
+                        // Tự động điền số lượng khách bằng với số khách đã chọn
+                        autoFillServicePeopleFor(id);
                     } else {
                         if (cfg) cfg.style.display = 'none';
                         if (qtyWrap) {
@@ -733,11 +733,7 @@
                     }
                     updateGuestsAndFees();
                 }
-                if (t && t.classList.contains('svc-apply')) {
-                    const id = t.getAttribute('data-service-id');
-                    syncServiceApplyControls(id);
-                    updateGuestsAndFees();
-                }
+                // Bỏ logic xử lý svc-apply vì đã xóa checkbox này
                 // Handle per-service people dropdown changes
                 if (t && (t.classList.contains('svc-adults') || t.classList.contains('svc-children'))) {
                     const id = t.getAttribute('data-service-id');

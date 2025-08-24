@@ -984,8 +984,10 @@ class AdminBookingController extends Controller
                 'note' => 'nullable|string|max:500'
             ]);
 
-            // Tính công nợ còn thiếu
-            $outstanding = max(0, (float)($booking->total_booking_price ?? 0) - (float)($booking->total_paid ?? 0));
+            // Sử dụng helper function để tính toán tổng tiền một cách nhất quán
+            $totalData = $this->calculateTotalAmount($booking);
+            $totalAmount = $totalData['fullTotal']; // Sử dụng fullTotal từ service
+            $outstanding = max(0, $totalAmount - (float)($booking->total_paid ?? 0));
             $amount = $request->filled('amount') ? (float)$request->input('amount') : $outstanding;
             // Không cho thu vượt công nợ
             $amount = min($amount, $outstanding);
@@ -1018,8 +1020,17 @@ class AdminBookingController extends Controller
 
             return redirect()->back()->with('success', 'Đã thu ' . number_format($amount) . ' VND cho phần phát sinh.');
         } catch (\Throwable $e) {
-            \Log::error('collectAdditionalPayment error: ' . $e->getMessage());
+            Log::error('collectAdditionalPayment error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Có lỗi xảy ra khi thu tiền: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Helper method để tính toán tổng tiền một cách nhất quán
+     */
+    private function calculateTotalAmount($booking)
+    {
+        $priceService = app(\App\Services\BookingPriceCalculationService::class);
+        return $priceService->calculateRegularBookingTotal($booking);
     }
 }

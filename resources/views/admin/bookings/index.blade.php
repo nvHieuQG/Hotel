@@ -95,14 +95,16 @@
                                 <td>{{ $booking->check_in_date }}</td>    
                                 <td>{{ $booking->check_out_date }}</td>
                             @php
-                                // Do not add roomChangeSurcharge here; surcharge was already added at approve step
-                                $servicesAndSurcharge = $booking->surcharge + $booking->extra_services_total + $booking->total_services_price;
-                                $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
-                                if ($totalDiscount <= 0 && (float)($booking->promotion_discount ?? 0) > 0) {
-                                    $totalDiscount = (float) $booking->promotion_discount;
-                                }
+                                // Sử dụng service tính toán giá thống nhất
+                                $priceService = app(\App\Services\BookingPriceCalculationService::class);
+                                $priceData = $priceService->calculateRegularBookingTotal($booking);
+                                
+                                // Lấy giá phòng đã bao gồm phụ thu đổi phòng
+                                $finalRoomCost = $priceData['finalRoomCost'];
+                                $servicesAndSurcharge = $priceData['svcTotal'] + $priceData['guestSurcharge'];
+                                $totalDiscount = $priceData['totalDiscount'];
                             @endphp
-                                <td>{{ number_format($booking->base_room_price, 0, ',', '.') }} VNĐ</td>
+                                <td>{{ number_format($finalRoomCost, 0, ',', '.') }} VNĐ</td>
                             <td>{{ number_format($servicesAndSurcharge, 0, ',', '.') }} VNĐ</td>
                             <td>
                                 @if($totalDiscount > 0)
@@ -111,7 +113,7 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
-                            <td>{{ number_format($booking->base_room_price + $servicesAndSurcharge - $totalDiscount, 0, ',', '.') }} VNĐ</td>
+                            <td>{{ number_format($finalRoomCost + $servicesAndSurcharge - $totalDiscount, 0, ',', '.') }} VNĐ</td>
                                 <td>
                                     <span class="badge bg-{{ 
                                         $booking->status == 'pending' ? 'warning' : 
@@ -159,6 +161,12 @@
             <!-- Mobile/Tablet Card View -->
             <div class="d-lg-none">
                 @foreach($bookings as $booking)
+                @php
+                    // Sử dụng service tính toán giá thống nhất cho mobile view
+                    $priceService = app(\App\Services\BookingPriceCalculationService::class);
+                    $priceData = $priceService->calculateRegularBookingTotal($booking);
+                    $finalRoomCost = $priceData['finalRoomCost'];
+                @endphp
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -186,7 +194,7 @@
                             </div>
                             <div class="col-6">
                                 <small class="text-muted d-block">Giá phòng:</small>
-                                <strong>{{ number_format($booking->base_room_price) }} VNĐ</strong>
+                                <strong>{{ number_format($finalRoomCost) }} VNĐ</strong>
                             </div>
                         </div>
                         
@@ -198,6 +206,17 @@
                             <div class="col-6">
                                 <small class="text-muted d-block">Check-out:</small>
                                 <strong>{{ $booking->check_out_date }}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Phụ thu & DV:</small>
+                                <strong>{{ number_format($priceData['svcTotal'] + $priceData['guestSurcharge']) }} VNĐ</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Tổng tiền:</small>
+                                <strong class="text-primary">{{ number_format($finalRoomCost + ($priceData['svcTotal'] + $priceData['guestSurcharge']) - $priceData['totalDiscount']) }} VNĐ</strong>
                             </div>
                         </div>
                         

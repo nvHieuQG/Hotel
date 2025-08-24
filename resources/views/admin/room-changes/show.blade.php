@@ -189,21 +189,7 @@
                             </div>
                         </div>
                     </div>
-                    @elseif($roomChange->status === 'approved')
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">Thao tác</h5>
-                                </div>
-                                <div class="card-body">
-                                    <button type="button" class="btn btn-primary" onclick="completeRoomChange()">
-                                        <i class="fa fa-check-circle"></i> Hoàn thành đổi phòng
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
                     @endif
                 </div>
             </div>
@@ -277,11 +263,7 @@ function rejectRoomChange() {
     $('#rejectModal').modal('show');
 }
 
-function completeRoomChange() {
-    if (confirm('Bạn có chắc chắn muốn hoàn thành đổi phòng này?')) {
-        window.location.href = '{{ route("admin.room-changes.complete", $roomChange->id) }}';
-    }
-}
+
 </script>
 @endpush
 @endsection 
