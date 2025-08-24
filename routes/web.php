@@ -28,6 +28,7 @@ use App\Http\Controllers\RoomTypeReviewController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ClientVatInvoiceController;
 use App\Http\Controllers\ClientTourVatInvoiceController;
+use App\Http\Controllers\ChatbotController;
 
 use App\Http\Controllers\Admin\AdminRoomChangeController;
 use App\Http\Controllers\Admin\AdminExtraServiceController;
@@ -52,6 +53,12 @@ Route::get('/about', [HotelController::class, 'about'])->name('about');
 
 Route::get('/contact', [HotelController::class, 'contact'])->name('contact');
 Route::post('/contact', [HotelController::class, 'sendContact'])->name('contact.send');
+
+// Chatbot routes
+Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot.index');
+Route::post('/chatbot/send-message', [ChatbotController::class, 'sendMessage'])->name('chatbot.sendMessage');
+Route::get('/chatbot/history', [ChatbotController::class, 'getChatHistory'])->name('chatbot.history');
+Route::post('/chatbot/clear-history', [ChatbotController::class, 'clearChatHistory'])->name('chatbot.clearHistory');
 
 Route::get('/rooms-single/{id}', [HotelController::class, 'roomsSingle'])->name('rooms-single');
 

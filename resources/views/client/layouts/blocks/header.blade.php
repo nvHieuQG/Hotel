@@ -18,6 +18,11 @@
                 </li>
                 <li class="nav-item"><a href="{{ route('blog') }}" class="nav-link">Blog</a></li>
                 <li class="nav-item"><a href="{{ route('contact') }}" class="nav-link">Contact</a></li>
+                <li class="nav-item">
+                    <a href="{{ route('chatbot.index') }}" class="nav-link">
+                        <i class="icon-cog"></i> Chat AI
+                    </a>
+                </li>
                 
                 @guest
                     <li class="nav-item"><a href="{{ route('login') }}" class="nav-link">Đăng nhập</a></li>

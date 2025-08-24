@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY', 'AIzaSyACpbVqBRE4WNqNbsyqqsRQDMmrHqlNd7Q'),
+        'api_key_2' => env('GEMINI_API_KEY_2', 'AIzaSyAG12llaY-UyA7DBesa6xolsTt0UeMjz_w'),
+        'api_key_3' => env('GEMINI_API_KEY_3', ''),
+        'api_key_4' => env('GEMINI_API_KEY_4', ''),
+        'api_key_5' => env('GEMINI_API_KEY_5', ''),
+    ],
+
 ];
