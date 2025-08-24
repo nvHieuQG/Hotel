@@ -217,6 +217,15 @@ class BookingController extends Controller
                     $imageUrl = $representativeRoom->firstImage->full_image_url;
                 }
             }
+            
+            // Nếu không tìm thấy ảnh trong database, sử dụng ảnh mặc định theo room_type_id
+            if ($imageUrl === null) {
+                // Kiểm tra xem file có tồn tại không
+                $defaultImagePath = "client/images/room-{$id}.jpg";
+                if (file_exists(public_path($defaultImagePath))) {
+                    $imageUrl = asset($defaultImagePath);
+                }
+            }
 
             return response()->json([
                 'success' => true,

@@ -123,8 +123,8 @@
                                                 <span class="icon-search2"></span>
                                             </div>
                                         </a>
-                                        <div class="text p-2 text-center">
-                                            <h3 class="mb-3">
+                                        <div class="text p-2 text-center" style="height: 300px;">
+                                            <h3 class="mb-3" style="min-height: 50px;">
                                                 <a href="{{ route('rooms-single', $type->id) }}">
                                                     {{ $type->name }}
                                                 </a>
@@ -132,17 +132,23 @@
                                             @php
                                                 $representativeRoom = $type->rooms()->where('status', 'available')->first();
                                             @endphp
-                                            <p>
+                                            <div class="price-container" style="min-height: 60px;">
                                                 @if($bestPromotion)
-                                                    <span class="price mr-2 text-decoration-line-through text-muted" style="font-size: 0.9em;">{{ number_format($type->price) }}đ</span>
-                                                    <span class="price mr-2 text-danger font-weight-bold">{{ number_format($finalPrice) }}đ</span>
-                                                    <span class="per">mỗi đêm</span>
+                                                    <div>
+                                                        <span class="price mr-2 text-decoration-line-through text-muted" style="font-size: 0.9em;">{{ number_format($type->price) }}đ</span>
+                                                        <span class="per text-muted">/đêm</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="price mr-2 text-danger font-weight-bold">{{ number_format($finalPrice) }}đ</span>
+                                                    </div>
                                                 @else
-                                                    <span class="price mr-2">{{ number_format($type->price) }}đ</span>
-                                                    <span class="per">mỗi đêm</span>
+                                                    <div style="padding-top: 15px;">
+                                                        <span class="price mr-2">{{ number_format($type->price) }}đ</span>
+                                                        <span class="per">mỗi đêm</span>
+                                                    </div>
                                                 @endif
-                                            </p>
-                                            <ul class="list">
+                                            </div>
+                                            <ul class="list" style="margin-bottom: 15px;">
                                                 <li><span>Sức chứa:</span> {{ $type->capacity }} Người</li>
                                             </ul>
                                             <hr>
@@ -294,6 +300,11 @@
 .bg-gradient-success { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); }
 .cursor-pointer { cursor: pointer; }
 .cursor-pointer:hover { color: #0056b3 !important; }
+
+/* Price container styles */
+.price-container { display: flex; flex-direction: column; justify-content: center; }
+.room .text { display: flex; flex-direction: column; height: 100%; }
+.room .text h3 { flex-grow: 0; }
 
 /* Card improvements */
 .card {

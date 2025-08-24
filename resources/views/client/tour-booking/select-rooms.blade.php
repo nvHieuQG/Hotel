@@ -53,7 +53,8 @@
             <input type="hidden" name="tour_name" value="{{ $tourName }}">
             <input type="hidden" name="check_in_date" value="{{ $checkInDate }}">
             <input type="hidden" name="check_out_date" value="{{ $checkOutDate }}">
-            <input type="hidden" name="total_guests" value="{{ $totalGuests }}">
+            <input type="hidden" name="total_guests" id="actualTotalGuests" value="{{ $totalGuests }}">
+            <input type="hidden" name="original_guests" value="{{ $totalGuests }}">
             <input type="hidden" name="total_price" id="totalPrice" value="0">
 
             <div class="row">
@@ -71,8 +72,29 @@
                                         <div class="room-type-item mb-4 p-3 border rounded">
                                             <div class="row align-items-center">
                                                 <div class="col-md-3">
-                                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 150px;">
-                                                        <i class="fas fa-bed fa-3x text-muted"></i>
+                                                    @php
+                                                        $representativeRoom = \App\Models\Room::where('room_type_id', $roomType->id)->with(['primaryImage','firstImage'])->first();
+                                                        $roomImage = null;
+                                                        if ($representativeRoom) {
+                                                            if ($representativeRoom->primaryImage) {
+                                                                $roomImage = $representativeRoom->primaryImage->full_image_url;
+                                                            } elseif ($representativeRoom->firstImage) {
+                                                                $roomImage = $representativeRoom->firstImage->full_image_url;
+                                                            }
+                                                        }
+                                                        // Fallback to default image
+                                                        if (!$roomImage && file_exists(public_path('client/images/room-' . $roomType->id . '.jpg'))) {
+                                                            $roomImage = asset('client/images/room-' . $roomType->id . '.jpg');
+                                                        }
+                                                    @endphp
+                                                    <div class="bg-light rounded" style="height: 150px; overflow: hidden;">
+                                                        @if($roomImage)
+                                                            <img src="{{ $roomImage }}" alt="{{ $roomType->name }}" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+                                                        @else
+                                                            <div class="d-flex align-items-center justify-content-center h-100">
+                                                                <i class="fas fa-bed fa-3x text-muted"></i>
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
@@ -163,6 +185,7 @@
                                 </div>
                             </div>
 
+                            <div id="guestWarning"></div>
                             <div class="mt-4">
                                 <button type="submit" class="btn btn-primary btn-block" id="confirmBtn" disabled>
                                     Tiếp tục
@@ -224,6 +247,9 @@ document.addEventListener('DOMContentLoaded', function() {
         totalRoomsDisplay.textContent = totalRooms;
         totalGuestsDisplay.textContent = totalGuests;
         totalPriceInput.value = totalPrice;
+        
+        // Cập nhật giá trị thực tế cho total_guests trong form
+        document.getElementById('actualTotalGuests').value = totalGuests;
 
         // Cập nhật tóm tắt
         if (selectedRooms.length > 0) {
@@ -246,8 +272,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (totalRooms > 0 && totalGuests >= expectedGuests) {
             confirmBtn.disabled = false;
             confirmBtn.textContent = 'Tiếp tục';
+            // Hiển thị thông báo nếu chọn nhiều hơn số người ban đầu
+            if (totalGuests > expectedGuests) {
+                document.getElementById('guestWarning').innerHTML = `<div class="alert alert-info mt-2"><i class="fas fa-info-circle"></i> Bạn đã chọn ${totalGuests} khách, nhiều hơn số lượng ban đầu (${expectedGuests} khách).</div>`;
+            } else {
+                document.getElementById('guestWarning').innerHTML = '';
+            }
         } else {
             confirmBtn.disabled = true;
+            document.getElementById('guestWarning').innerHTML = '';
             if (totalRooms === 0) {
                 confirmBtn.textContent = 'Chọn phòng';
             } else if (totalGuests < expectedGuests) {

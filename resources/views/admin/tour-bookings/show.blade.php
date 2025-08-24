@@ -587,12 +587,14 @@
                                     <textarea name="notes" class="form-control form-control-sm" rows="2" 
                                               placeholder="Ghi chú về hóa đơn..."></textarea>
                                 </div>
+                                <br>
                                 <button type="submit" class="btn btn-success btn-sm btn-block">
                                     <i class="fas fa-file-invoice"></i> Tạo hóa đơn
                                 </button>
                             </form>
                             
                             <!-- Form từ chối yêu cầu -->
+                             <br>
                             <form action="{{ route('admin.tour-vat-invoices.reject', $tourBooking->id) }}" method="POST">
                                 @csrf
                                 <div class="form-group">
@@ -600,6 +602,7 @@
                                     <textarea name="rejection_reason" class="form-control form-control-sm" rows="2" 
                                               placeholder="Nhập lý do từ chối..." required></textarea>
                                 </div>
+                                <br>
                                 <button type="submit" class="btn btn-danger btn-sm btn-block">
                                     <i class="fas fa-times"></i> Từ chối yêu cầu
                                 </button>
