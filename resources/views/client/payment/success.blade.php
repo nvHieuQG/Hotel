@@ -59,17 +59,14 @@
                                 <div class="col-md-8">
                                     <div class="card border-0 bg-light">
                                         <div class="card-body">
-                                            <h6 class="card-title text-primary mb-3">
-                                                <i class="fas fa-image mr-2"></i>Ảnh phòng
-                                            </h6>
                                             <div class="room-image-container">
                                                 @if($booking->room->primaryImage)
-                                                    <img src="{{ asset('storage/' . $booking->room->primaryImage->image_url) }}" 
+                                                    <img src="{{ $booking->room->primaryImage->full_image_url }}" 
                                                          alt="Ảnh phòng {{ $booking->room->name }}" 
                                                          class="img-fluid rounded shadow-sm" 
                                                          style="max-height: 300px; width: 100%; object-fit: cover;">
                                                 @elseif($booking->room->firstImage)
-                                                    <img src="{{ asset('storage/' . $booking->room->firstImage->image_url) }}" 
+                                                    <img src="{{ $booking->room->firstImage->full_image_url }}" 
                                                          alt="Ảnh phòng {{ $booking->room->name }}" 
                                                          class="img-fluid rounded shadow-sm" 
                                                          style="max-height: 300px; width: 100%; object-fit: cover;">
@@ -178,7 +175,7 @@
                             </div>
 
                             <!-- Thông tin check-in -->
-                            <div class="alert alert-info">
+                            <div class="alert alert-info text-dark">
                                 <h6 class="mb-3">
                                     <i class="fas fa-info-circle mr-2"></i>Thông tin quan trọng
                                 </h6>
