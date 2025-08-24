@@ -102,7 +102,7 @@
                                     @if(!empty($topPromotions) || !empty($allPromotions))
                                         <div class="promotion-section mb-4">
                                             <div class="card border-0 shadow-sm">
-                                                <div class="card-header bg-gradient-primary text-white">
+                                                <div class="card-header bg-gradient-primary text-danger">
                                                     <i class="fas fa-gift mr-2"></i> 
                                                     <strong>Ưu đãi đặc biệt</strong>
                                                 </div>
@@ -119,9 +119,9 @@
                                                                         <div class="small text-muted">{{ Str::limit($promo['description'] ?? '', 80) }}</div>
                                                                     </div>
                                                                     <div class="text-end ms-2">
-                                                                        <div class="badge bg-success mb-1">{{ $promo['discount_text'] }}</div>
+                                                                        <div class="badge bg-success mb-1 text-white">{{ $promo['discount_text'] }}</div>
                                                                         @if(!empty($promo['code']))
-                                                                            <div class="badge bg-secondary small">{{ $promo['code'] }}</div>
+                                                                            <div class="badge bg-secondary small text-white">{{ $promo['code'] }}</div>
                                                                         @endif
                                                                     </div>
                                                                 </div>
@@ -175,7 +175,7 @@
                                 </div>
                                 <div class="col-md-5">
                                     <div class="card border-0 shadow-sm">
-                                        <div class="card-header bg-gradient-success text-white">
+                                        <div class="card-header bg-gradient-success text-danger">
                                             <i class="fas fa-receipt mr-2"></i> 
                                             <strong>Tóm tắt giá</strong>
                                         </div>
