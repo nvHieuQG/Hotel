@@ -10,16 +10,25 @@ use Illuminate\Support\Facades\Log;
 
 class SupportService implements SupportServiceInterface
 {
-    public function sendMessage($conversationId, $senderId, $senderType, $message, $subject = null)
+    public function sendMessage($conversationId, $senderId, $senderType, $message, $subject = null, array $attachment = null)
     {
-        return SupportMessage::create([
+        $payload = [
             'sender_id' => $senderId,
             'sender_type' => $senderType,
             'subject' => $subject,
             'conversation_id' => $conversationId,
             'message' => $message,
             'is_read' => $senderType === 'admin' ? true : false,
-        ]);
+        ];
+
+        if ($attachment) {
+            $payload['attachment_path'] = $attachment['path'] ?? null;
+            $payload['attachment_name'] = $attachment['name'] ?? null;
+            $payload['attachment_type'] = $attachment['type'] ?? null;
+            $payload['attachment_size'] = $attachment['size'] ?? null;
+        }
+
+        return SupportMessage::create($payload);
     }
 
     public function getNewMessages($conversationId, $lastId)
@@ -31,7 +40,7 @@ class SupportService implements SupportServiceInterface
             ->get();
     }
 
-    public function createFirstMessage($userId, $subject, $firstMessage)
+    public function createFirstMessage($userId, $subject, $firstMessage, array $attachment = null)
     {
         // Kiểm tra xem user đã có conversation chưa
         $existingConversation = SupportMessage::where('sender_id', $userId)
@@ -42,16 +51,25 @@ class SupportService implements SupportServiceInterface
         if ($existingConversation) {
             // Nếu user đã có conversation, sử dụng conversation đó
             $conversationId = $existingConversation->conversation_id;
-            
+
             // Gửi tin nhắn mới vào conversation hiện có
-            $message = SupportMessage::create([
+            $payload = [
                 'sender_id' => $userId,
                 'sender_type' => 'user',
                 'subject' => $subject,
                 'conversation_id' => $conversationId,
                 'message' => $firstMessage,
                 'is_read' => false,
-            ]);
+            ];
+
+            if ($attachment) {
+                $payload['attachment_path'] = $attachment['path'] ?? null;
+                $payload['attachment_name'] = $attachment['name'] ?? null;
+                $payload['attachment_type'] = $attachment['type'] ?? null;
+                $payload['attachment_size'] = $attachment['size'] ?? null;
+            }
+
+            $message = SupportMessage::create($payload);
 
             return [
                 'conversation_id' => $conversationId,
@@ -62,15 +80,24 @@ class SupportService implements SupportServiceInterface
         // Nếu user chưa có conversation, tạo mới
         $conversationId = SupportMessage::generateConversationId();
 
-        return DB::transaction(function () use ($userId, $subject, $firstMessage, $conversationId) {
-            $message = SupportMessage::create([
+        return DB::transaction(function () use ($userId, $subject, $firstMessage, $conversationId, $attachment) {
+            $payload = [
                 'sender_id' => $userId,
                 'sender_type' => 'user',
                 'subject' => $subject,
                 'conversation_id' => $conversationId,
                 'message' => $firstMessage,
                 'is_read' => false,
-            ]);
+            ];
+
+            if ($attachment) {
+                $payload['attachment_path'] = $attachment['path'] ?? null;
+                $payload['attachment_name'] = $attachment['name'] ?? null;
+                $payload['attachment_type'] = $attachment['type'] ?? null;
+                $payload['attachment_size'] = $attachment['size'] ?? null;
+            }
+
+            $message = SupportMessage::create($payload);
 
             return [
                 'conversation_id' => $conversationId,
