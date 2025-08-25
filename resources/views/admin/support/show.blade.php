@@ -6,18 +6,18 @@
 <style>
 /* Admin Chat Styles */
 :root {
-    --primary-color: #D2691E;
-    --primary-hover: #B8860B;
-    --secondary-color: #FDF5E6;
-    --success-color: #228B22;
-    --danger-color: #DC143C;
-    --warning-color: #FF8C00;
-    --info-color: #CD853F;
-    --text-dark: #2F1B14;
-    --text-light: #8B4513;
-    --border-color: #DEB887;
-    --hover-color: #F5F5DC;
-    --bg-light: #FAF0E6;
+    --primary-color: #8d703b;
+    --primary-hover: #7b6233;
+    --secondary-color: #f9f6f1;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #8d703b;
+    --text-dark: #2c2416;
+    --text-light: #6c5a3d;
+    --border-color: #d4c4a8;
+    --hover-color: #f5f2ed;
+    --bg-light: #faf8f5;
 }
 
 /* Ẩn page header chỉ trong trang chat */
@@ -478,8 +478,8 @@ html, body {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: #e3f2fd;
-    border: 1px solid #bbdefb;
+    background: #f9f6f1;
+    border: 1px solid #d4c4a8;
     border-radius: 8px;
     margin: 8px 0;
     max-width: 100%;
@@ -491,13 +491,13 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #1976d2;
+    color: var(--primary-color);
 }
 
 .file-preview-name {
     flex: 1;
     font-size: 12px;
-    color: #1976d2;
+    color: var(--primary-color);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -507,8 +507,8 @@ html, body {
     width: 20px;
     height: 20px;
     border: none;
-    background: #ffebee;
-    color: #d32f2f;
+    background: #fff2f2;
+    color: var(--danger-color);
     border-radius: 50%;
     cursor: pointer;
     display: flex;
@@ -519,7 +519,7 @@ html, body {
 }
 
 .file-preview-remove:hover {
-    background: #ffcdd2;
+    background: #ffe6e6;
     transform: scale(1.1);
 }
 
@@ -1027,21 +1027,12 @@ html, body {
             <div class="customer-avatar">{{ substr($conversation['user']->name ?? 'U', 0, 1) }}</div>
             <div class="customer-name">{{ $conversation['user']->name ?? 'Khách hàng' }}</div>
             <div class="customer-email">{{ $conversation['user']->email ?? 'N/A' }}</div>
-            <div class="customer-phone">{{ $conversation['user']->phone ?? 'N/A' }}</div>
         </div>
 
         <div class="customer-details">
             <div class="detail-item">
-                <span class="detail-label">Conversation ID:</span>
-                <span class="detail-value">#{{ $conversation['id'] }}</span>
-            </div>
-            <div class="detail-item">
                 <span class="detail-label">Chủ đề:</span>
                 <span class="detail-value">{{ $conversation['subject'] }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Tạo lúc:</span>
-                <span class="detail-value">{{ $conversation['created_at']->format('d/m/Y H:i') }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Tổng số đơn đặt:</span>
