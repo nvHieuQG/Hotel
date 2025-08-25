@@ -16,19 +16,18 @@
                 <li class="nav-item">
                     <a href="{{ route('about') }}" class="nav-link">Giới thiệu</a>
                 </li>
-                <li class="nav-item"><a href="{{ route('blog') }}" class="nav-link">Blog</a></li>
                 <li class="nav-item"><a href="{{ route('contact') }}" class="nav-link">Contact</a></li>
-                <li class="nav-item">
-                    <a href="{{ route('chatbot.index') }}" class="nav-link">
-                        <i class="icon-cog"></i> Chat AI
-                    </a>
-                </li>
                 
                 @guest
                     <li class="nav-item"><a href="{{ route('login') }}" class="nav-link">Đăng nhập</a></li>
                     <li class="nav-item"><a href="{{ route('register') }}" class="nav-link">Đăng ký</a></li>
                 @else
                     <li class="nav-item"><a href="{{ route('tour-booking.search') }}" class="nav-link">Đặt Tour</a></li>
+                    <li class="nav-item">
+                        <a href="{{ route('chatbot.index') }}" class="nav-link">
+                            <i class="icon-cog"></i> Marron AI
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             {{ Auth::user()->name }}

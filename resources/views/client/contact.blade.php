@@ -59,28 +59,28 @@
                             <span class="icon-map-marker display-4 mr-3"></span>
                             <div>
                                 <div class="font-weight-bold">Địa chỉ</div>
-                                198 West 21th Street, Suite 721 New York NY 10016
+                                Số 9 Đường Nguyễn Trãi, Phường Hòa An, Quận Thanh Xuân, Hà Nội, Việt Nam
                             </div>
                         </div>
                         <div class="mb-3 d-flex align-items-center">
                             <span class="icon-phone display-4 mr-3"></span>
                             <div>
                                 <div class="font-weight-bold">Điện thoại</div>
-                                <a href="tel://1234567920" class="text-white">+ 1235 2355 98</a>
+                                <a href="tel://1234567920" class="text-white">+84 979833135</a>
                             </div>
                         </div>
                         <div class="mb-3 d-flex align-items-center">
                             <span class="icon-envelope display-4 mr-3"></span>
                             <div>
                                 <div class="font-weight-bold">Email</div>
-                                <a href="mailto:info@yoursite.com" class="text-white">info@yoursite.com</a>
+                                <a href="mailto:info@yoursite.com" class="text-white">marronhotel@gmail.com</a>
                             </div>
                         </div>
                         <div class="mb-3 d-flex align-items-center">
                             <span class="icon-globe display-4 mr-3"></span>
                             <div>
                                 <div class="font-weight-bold">Website</div>
-                                <a href="#" class="text-white">yoursite.com</a>
+                                <a href="#" class="text-white">marronhotel.com</a>
                             </div>
                         </div>
                     </div>
