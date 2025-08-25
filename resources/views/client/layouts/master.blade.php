@@ -104,12 +104,12 @@
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1E88E5 0%, #1976D2 100%);
+    background: linear-gradient(135deg, #D2691E 0%, #B8860B 100%);
     border: none;
     color: white;
     font-size: 24px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+    box-shadow: 0 4px 12px rgba(210, 105, 30, 0.3);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -119,7 +119,7 @@
 
 .chat-button:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(30, 136, 229, 0.4);
+    box-shadow: 0 6px 20px rgba(210, 105, 30, 0.4);
 }
 
 .chat-button .notification-badge {
@@ -167,7 +167,7 @@
 }
 
 .chat-header {
-    background: linear-gradient(135deg, #1E88E5 0%, #1976D2 100%);
+    background: linear-gradient(135deg, #D2691E 0%, #B8860B 100%);
     color: white;
     padding: 20px;
     display: flex;
@@ -306,7 +306,7 @@
 }
 
 .message.sent .message-bubble {
-    background: linear-gradient(135deg, #1E88E5 0%, #1976D2 100%);
+    background: linear-gradient(135deg, #D2691E 0%, #B8860B 100%);
     color: white;
     border-bottom-right-radius: 6px;
 }
@@ -335,7 +335,7 @@
 
 .welcome-message .welcome-icon {
     font-size: 48px;
-    color: #1E88E5;
+    color: #D2691E;
     margin-bottom: 12px;
     opacity: 0.7;
 }
@@ -347,20 +347,131 @@
     border-radius: 0 0 16px 16px;
 }
 
+/* File preview styles */
+.file-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    margin: 8px 20px;
+    max-width: calc(100% - 40px);
+}
+
+.file-preview-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1976d2;
+}
+
+.file-preview-name {
+    flex: 1;
+    font-size: 12px;
+    color: #1976d2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-preview-remove {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: #ffebee;
+    color: #d32f2f;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.file-preview-remove:hover {
+    background: #ffcdd2;
+    transform: scale(1.1);
+}
+
+/* Image display in chat */
+.message-bubble img {
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.message-bubble img:hover {
+    transform: scale(1.05);
+}
+
+/* Modal popup cho ảnh */
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.image-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90%;
+    text-align: center;
+}
+
+.image-modal img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.image-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10000;
+}
+
+.image-modal-close:hover {
+    color: #ccc;
+}
+
 .chat-input-wrapper {
     display: flex;
-    align-items: flex-end;
-    gap: 12px;
-    background: #F5F5F5;
-    border-radius: 24px;
-    padding: 10px 16px;
-    border: 1px solid #E0E0E0;
+    align-items: center;
+    gap: 8px;
+    background: #FDF5E6;
+    border-radius: 18px;
+    padding: 4px 10px;
+    border: 1px solid #DEB887;
     transition: border-color 0.2s;
 }
 
 .chat-input-wrapper:focus-within {
-    border-color: #1E88E5;
-    box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
+    border-color: #D2691E;
+    box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.1);
 }
 
 .chat-input {
@@ -370,10 +481,11 @@
     outline: none;
     font-size: 14px;
     resize: none;
-    max-height: 100px;
-    min-height: 20px;
-    padding: 6px 0;
+    max-height: 60px;
+    min-height: 16px;
+    padding: 4px 0;
     line-height: 1.4;
+    transition: all 0.3s ease;
 }
 
 .chat-input::placeholder {
@@ -386,8 +498,8 @@
 }
 
 .attachment-btn {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border: none;
     border-radius: 50%;
     background: transparent;
@@ -396,35 +508,35 @@
     justify-content: center;
     cursor: pointer;
     transition: background 0.2s;
-    color: #9E9E9E;
-    font-size: 14px;
+    color: #8B4513;
+    font-size: 13px;
 }
 
 .attachment-btn:hover {
     background: rgba(0, 0, 0, 0.1);
-    color: #1E88E5;
+    color: #D2691E;
 }
 
 .send-btn {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
     border: none;
     border-radius: 50%;
-    background: #1E88E5;
+    background: #D2691E;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 16px;
-    box-shadow: 0 2px 8px rgba(30, 136, 229, 0.3);
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(210, 105, 30, 0.3);
 }
 
 .send-btn:hover {
-    background: #1976D2;
+    background: #B8860B;
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(30, 136, 229, 0.4);
+    box-shadow: 0 4px 12px rgba(210, 105, 30, 0.4);
 }
 
 .send-btn:disabled {
@@ -450,6 +562,13 @@
     box-shadow: 0 4px 12px rgba(197, 48, 48, 0.1);
     position: relative;
     overflow: hidden;
+}
+
+/* Drag & Drop visual feedback */
+.chat-input.dragover {
+    border: 2px dashed #007bff !important;
+    background-color: #f8f9fa !important;
+    border-radius: 8px;
 }
 
 .chat-error::before {
@@ -1173,12 +1292,21 @@
             @endphp
             @if($messages && $messages->count() > 0)
                 @foreach($messages as $msg)
-                    @if(!empty(trim($msg->message)))
-                        <div class="message {{ $msg->sender_type == 'user' ? 'sent' : 'received' }}" data-message-id="{{ $msg->id }}">
+                    <div class="message {{ $msg->sender_type == 'user' ? 'sent' : 'received' }}" data-message-id="{{ $msg->id }}">
+                        @if(!empty(trim($msg->message)))
                             <div class="message-bubble">{{ $msg->message }}</div>
-                            <div class="message-time">{{ $msg->created_at->format('H:i') }}</div>
-                        </div>
-                    @endif
+                        @endif
+                        @if(!empty($msg->attachment_path) && \Illuminate\Support\Str::startsWith((string)$msg->attachment_type, 'image'))
+                            <div class="message-bubble" onclick="openImageModal('{{ asset('storage/'.$msg->attachment_path) }}')" style="cursor: pointer;">
+                                <img src="{{ asset('storage/'.$msg->attachment_path) }}" alt="attachment" style="max-width:200px; max-height:150px; border-radius:8px;" />
+                            </div>
+                        @elseif(!empty($msg->attachment_path))
+                            <div class="message-bubble">
+                                <a href="{{ asset('storage/'.$msg->attachment_path) }}" target="_blank" rel="noopener">{{ $msg->attachment_name ?? 'Tệp đính kèm' }}</a>
+                            </div>
+                        @endif
+                        <div class="message-time">{{ $msg->created_at->format('H:i') }}</div>
+                    </div>
                 @endforeach
             @else
                 <div class="welcome-message">
@@ -1192,27 +1320,44 @@
         </div>
 
         <div class="chat-input-container">
-            <form id="chatForm">
+            <form id="chatForm" enctype="multipart/form-data">
                 @csrf
                 <div class="chat-input-wrapper">
-                    <textarea id="chatInput" name="message" class="chat-input" placeholder="Nhập tin nhắn..." required></textarea>
+                    <textarea id="chatInput" name="message" class="chat-input" placeholder="Nhập tin nhắn..."></textarea>
                     <div class="chat-attachments">
-                        <button type="button" class="attachment-btn" title="Đính kèm ảnh">
-                            <i class="fas fa-image"></i>
-                        </button>
-                        <button type="button" class="attachment-btn" title="Đính kèm file">
+                        <label for="attachmentInput" class="attachment-btn" title="Đính kèm file" style="cursor: pointer;">
                             <i class="fas fa-paperclip"></i>
-                        </button>
+                        </label>
+                        <input type="file" id="attachmentInput" name="attachment" accept="image/*,application/pdf,application/zip,text/plain" style="display: none;" />
                     </div>
                     <button type="submit" id="sendChatBtn" class="send-btn" title="Gửi tin nhắn">
                         <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+
+                <!-- File preview area -->
+                <div id="filePreview" class="file-preview" style="display: none;">
+                    <div class="file-preview-icon">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="file-preview-name" id="fileName"></div>
+                    <button type="button" class="file-preview-remove" id="removeFile" title="Xóa tệp">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-                            <input type="hidden" id="conversationIdInput" value="{{ $conversationId ?? '' }}">
+     <input type="hidden" id="conversationIdInput" value="{{ $conversationId ?? '' }}">
+</div>
+
+<!-- Modal popup cho ảnh -->
+<div id="imageModal" class="image-modal">
+    <span class="image-modal-close">&times;</span>
+    <div class="image-modal-content">
+        <img id="modalImage" src="" alt="Ảnh lớn" />
+    </div>
 </div>
 <script>
   const openBtn = document.getElementById('openChatModal');
@@ -1222,6 +1367,17 @@
   const chatForm = document.getElementById('chatForm');
   const chatMessages = document.querySelector('#chatMessages');
   const conversationIdInput = document.getElementById('conversationIdInput');
+
+  // File upload elements
+  const attachmentInput = document.getElementById('attachmentInput');
+  const filePreview = document.getElementById('filePreview');
+  const fileName = document.getElementById('fileName');
+  const removeFile = document.getElementById('removeFile');
+
+  // Modal elements
+  const imageModal = document.getElementById('imageModal');
+  const modalImage = document.getElementById('modalImage');
+  const modalClose = document.querySelector('.image-modal-close');
 
   // Debug info
   console.log('Chat initialized for user:', {{ Auth::id() }});
@@ -1260,7 +1416,7 @@
   };
 
   // Hàm gửi tin nhắn
-  function sendMessage(message) {
+  function sendMessage(message, attachment = null) {
     if(isSending) return;
 
     isSending = true;
@@ -1270,7 +1426,33 @@
 
     const conversationId = conversationIdInput.value;
     let url = '';
-    let data = { message: message, _token: '{{ csrf_token() }}' };
+
+    // Tạo FormData nếu có file, JSON nếu không có file
+    let requestData;
+    let headers;
+
+    if (attachment) {
+      // Gửi file với FormData
+      requestData = new FormData();
+      requestData.append('message', message);
+      requestData.append('attachment', attachment);
+      requestData.append('_token', '{{ csrf_token() }}');
+      headers = {
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'Accept': 'application/json'
+      };
+    } else {
+      // Gửi text với JSON
+      requestData = JSON.stringify({
+        message: message,
+        _token: '{{ csrf_token() }}'
+      });
+      headers = {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'Accept': 'application/json'
+      };
+    }
 
     if(conversationId) {
       url = '/support/conversation/' + conversationId + '/message';
@@ -1282,12 +1464,8 @@
 
     fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(data)
+      headers: headers,
+      body: requestData
     })
     .then(res => {
       if (!res.ok) {
@@ -1305,10 +1483,22 @@
           showChatSuccess('Cuộc trò chuyện đã được tạo!');
         }
 
-        // Thêm tin nhắn vào UI
-        addMessageToUI(message, 'user', data.message_id);
+                // Thêm tin nhắn vào UI
+        addMessageToUI(message, 'user', data.message_id, data.attachment);
         chatInput.value = '';
         chatInput.style.height = 'auto';
+
+        // Xóa file preview nếu có
+        if (attachment) {
+          clearFilePreview();
+        }
+
+        // Cập nhật conversation ID nếu là tin nhắn đầu tiên
+        if(!conversationId && data.conversation_id) {
+          conversationIdInput.value = data.conversation_id;
+          console.log('New conversation created:', data.conversation_id);
+          showChatSuccess('Cuộc trò chuyện đã được tạo!');
+        }
 
         // Bắt đầu realtime sau khi gửi tin nhắn đầu tiên
         if(!isRealtimeEnabled) {
@@ -1391,8 +1581,9 @@
   });
 
   // Hàm thêm tin nhắn vào UI
-  function addMessageToUI(message, senderType, messageId = null) {
-    if(!message || message.trim() === '') return;
+  function addMessageToUI(message, senderType, messageId = null, attachment = null) {
+    // Cho phép gửi chỉ attachment (không cần text)
+    if((!message || message.trim() === '') && !attachment) return;
 
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${senderType === 'user' ? 'sent' : 'received'}`;
@@ -1401,15 +1592,52 @@
       messageDiv.setAttribute('data-message-id', messageId);
     }
 
-    const messageBubble = document.createElement('div');
-    messageBubble.className = 'message-bubble';
-    messageBubble.textContent = message.trim();
+    // Thêm tin nhắn text nếu có
+    if (message && message.trim()) {
+      const messageBubble = document.createElement('div');
+      messageBubble.className = 'message-bubble';
+      messageBubble.textContent = message.trim();
+      messageDiv.appendChild(messageBubble);
+    }
+
+    // Thêm file đính kèm nếu có
+    if (attachment) {
+      if (attachment.type && attachment.type.startsWith('image/')) {
+        // Hiển thị ảnh
+        const imageBubble = document.createElement('div');
+        imageBubble.className = 'message-bubble';
+        imageBubble.style.cursor = 'pointer';
+        imageBubble.onclick = () => openImageModal(attachment.url);
+
+        const img = document.createElement('img');
+        img.src = attachment.url;
+        img.alt = 'attachment';
+        img.style.maxWidth = '200px';
+        img.style.maxHeight = '150px';
+        img.style.borderRadius = '8px';
+
+        imageBubble.appendChild(img);
+        messageDiv.appendChild(imageBubble);
+      } else {
+        // Hiển thị file khác
+        const fileBubble = document.createElement('div');
+        fileBubble.className = 'message-bubble';
+
+        const fileLink = document.createElement('a');
+        fileLink.href = attachment.url;
+        fileLink.target = '_blank';
+        fileLink.rel = 'noopener';
+        fileLink.textContent = attachment.name || 'Tệp đính kèm';
+
+        fileBubble.appendChild(fileLink);
+        messageDiv.appendChild(fileBubble);
+      }
+    }
 
     const messageTime = document.createElement('div');
     messageTime.className = 'message-time';
     messageTime.textContent = new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
 
-    messageDiv.appendChild(messageBubble);
     messageDiv.appendChild(messageTime);
     chatMessages.appendChild(messageDiv);
 
@@ -1471,7 +1699,17 @@
           // Kiểm tra xem tin nhắn đã tồn tại chưa để tránh duplicate
           const existingMessage = chatMessages.querySelector(`[data-message-id="${msg.id}"]`);
           if(!existingMessage && msg.id > lastMessageId) {
-            addMessageToUI(msg.message, msg.sender_type, msg.id);
+            // Tạo attachment object nếu có
+            let attachment = null;
+            if (msg.attachment) {
+              attachment = {
+                url: msg.attachment.url,
+                name: msg.attachment.name,
+                type: msg.attachment.type
+              };
+            }
+
+            addMessageToUI(msg.message, msg.sender_type, msg.id, attachment);
             lastMessageId = Math.max(lastMessageId, msg.id);
 
             // Thông báo khi nhận tin nhắn từ admin
@@ -1493,12 +1731,21 @@
     });
   }
 
-  // Form submit handler
+    // Form submit handler
   chatForm.onsubmit = function(e) {
     e.preventDefault();
     const msg = chatInput.value.trim();
-    if (!msg || isSending) return;
-    sendMessage(msg);
+    const attachment = attachmentInput.files[0];
+
+    if ((!msg || msg.trim() === '') && !attachment) {
+      showChatError('Vui lòng nhập tin nhắn hoặc chọn tệp đính kèm');
+      return;
+    }
+
+    if (isSending) return;
+
+    // Gửi tin nhắn với attachment (có thể chỉ có attachment)
+    sendMessage(msg || '', attachment);
   };
 
   // Enter key handler
@@ -1506,16 +1753,113 @@
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const msg = this.value.trim();
-      if (!msg || isSending) return;
-      sendMessage(msg);
+      const attachment = attachmentInput.files[0];
+      if ((!msg || msg.trim() === '') && !attachment) return;
+      if (isSending) return;
+      sendMessage(msg || '', attachment);
     }
   });
 
-  // Xử lý đính kèm file
-  document.querySelectorAll('.attachment-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      showChatInfo('Tính năng đính kèm file đang được phát triển!');
-    });
+  // Paste image handler - cho phép copy & paste ảnh trực tiếp
+  chatInput.addEventListener('paste', function(e) {
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+
+    for (let item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault();
+
+        const file = item.getAsFile();
+        if (file) {
+          // Tạo FileList object để gán vào input
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          attachmentInput.files = dataTransfer.files;
+
+          // Hiển thị preview
+          showFilePreview(file);
+
+          // Bỏ required cho message input
+          chatInput.removeAttribute('required');
+
+          showChatSuccess('Đã paste ảnh! Bạn có thể gửi ngay hoặc thêm tin nhắn.');
+        }
+        break;
+      }
+    }
+  });
+
+    // File input event listeners
+  attachmentInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      showFilePreview(file);
+      // Bỏ required cho message input nếu có file
+      chatInput.removeAttribute('required');
+    }
+  });
+
+  // Remove file button
+  removeFile.addEventListener('click', function() {
+    clearFilePreview();
+    // Khôi phục required cho message input
+    chatInput.setAttribute('required', 'required');
+  });
+
+  // Drag and drop ảnh trực tiếp vào input text
+  chatInput.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#007bff';
+    this.style.backgroundColor = '#f8f9fa';
+  });
+
+  chatInput.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '';
+    this.style.backgroundColor = '';
+  });
+
+  chatInput.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '';
+    this.style.backgroundColor = '';
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        // Tạo FileList object để gán vào input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        attachmentInput.files = dataTransfer.files;
+
+        // Hiển thị preview
+        showFilePreview(file);
+
+        // Bỏ required cho message input
+        chatInput.removeAttribute('required');
+
+        showChatSuccess('Đã kéo thả ảnh! Bạn có thể gửi ngay hoặc thêm tin nhắn.');
+      }
+    }
+  });
+
+  // Modal event listeners
+  modalClose.addEventListener('click', function() {
+    imageModal.style.display = 'none';
+  });
+
+  // Đóng modal khi click bên ngoài
+  imageModal.addEventListener('click', function(e) {
+    if (e.target === imageModal) {
+      imageModal.style.display = 'none';
+    }
+  });
+
+  // Đóng modal bằng ESC key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && imageModal.style.display === 'block') {
+      imageModal.style.display = 'none';
+    }
   });
 
   // Dừng realtime khi tab không active
@@ -1529,6 +1873,40 @@
       }
     }
   });
+
+  // Hàm hiển thị file preview
+  function showFilePreview(file) {
+    fileName.textContent = file.name;
+
+    // Thay đổi icon tùy theo loại file
+    const iconElement = filePreview.querySelector('.file-preview-icon i');
+    if (file.type.startsWith('image/')) {
+      iconElement.className = 'fas fa-image';
+    } else if (file.type === 'application/pdf') {
+      iconElement.className = 'fas fa-file-pdf';
+    } else if (file.type === 'application/zip') {
+      iconElement.className = 'fas fa-file-archive';
+    } else if (file.type === 'text/plain') {
+      iconElement.className = 'fas fa-file-alt';
+    } else {
+      iconElement.className = 'fas fa-file';
+    }
+
+    filePreview.style.display = 'flex';
+  }
+
+  // Hàm xóa file preview
+  function clearFilePreview() {
+    attachmentInput.value = '';
+    filePreview.style.display = 'none';
+    fileName.textContent = '';
+  }
+
+  // Hàm mở modal ảnh
+  function openImageModal(imageSrc) {
+    modalImage.src = imageSrc;
+    imageModal.style.display = 'block';
+  }
 </script>
 @endauth
 
