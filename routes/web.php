@@ -62,7 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/chatbot/clear-history', [ChatbotController::class, 'clearChatHistory'])->name('chatbot.clearHistory');
     Route::post('/chatbot/save-to-session', [ChatbotController::class, 'saveToSession'])->name('chatbot.saveToSession');
     Route::get('/chatbot/user-info', [ChatbotController::class, 'getUserInfo'])->name('chatbot.userInfo');
-    
+
 
 });
 
@@ -142,7 +142,7 @@ Route::get('/tour-booking/{id}', [TourBookingController::class, 'show'])->name('
 Route::middleware(['auth'])->group(function () {
     Route::get('/tour-booking/{tourBooking}/credit-card', [TourBookingController::class, 'processCreditCardPayment'])->name('tour-booking.credit-card');
     Route::get('/tour-booking/{tourBooking}/bank-transfer', [TourBookingController::class, 'processBankTransferPayment'])->name('tour-booking.bank-transfer');
-    
+
     Route::post('/tour-booking/{tourBooking}/credit-card/confirm', [TourBookingController::class, 'confirmCreditCardPayment'])->name('tour-booking.credit-card.confirm');
     Route::post('/tour-booking/{tourBooking}/bank-transfer/confirm', [TourBookingController::class, 'confirmBankTransferPayment'])->name('tour-booking.bank-transfer.confirm');
 
@@ -150,7 +150,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tour-booking/{id}/vat-invoice', [ClientTourVatInvoiceController::class, 'showVatForm'])->name('tour-booking.vat-invoice');
     Route::post('/tour-booking/{id}/vat-invoice', [ClientTourVatInvoiceController::class, 'requestVatInvoice'])->name('tour-booking.vat-invoice.request');
     Route::get('/tour-booking/{id}/vat-invoice/download', [ClientTourVatInvoiceController::class, 'downloadVatInvoice'])->name('tour-booking.vat-invoice.download');
-    
+
     // Tour booking promotion routes
     Route::post('/tour-booking/{id}/apply-promotion', [TourBookingController::class, 'applyPromotion'])->name('tour-booking.apply-promotion');
     Route::post('/tour-booking/{id}/remove-promotion', [TourBookingController::class, 'removePromotion'])->name('tour-booking.remove-promotion');
@@ -189,7 +189,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
     Route::patch('bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
     Route::resource('bookings', AdminBookingController::class)->except(['destroy']);
-    
+
     // Giấy đăng ký tạm chú tạm vắng
     Route::get('bookings/{booking}/registration/preview', [AdminBookingController::class, 'previewRegistration'])->name('bookings.registration.preview');
 
@@ -206,7 +206,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('bookings/{id}/vat/preview', [AdminBookingController::class, 'previewVatInvoice'])->name('bookings.vat.preview');
     Route::get('bookings/{id}/vat/download', [AdminBookingController::class, 'downloadVatInvoice'])->name('bookings.vat.download');
     Route::post('bookings/{id}/vat/regenerate', [AdminBookingController::class, 'regenerateVatInvoice'])->name('bookings.vat.regenerate');
-    
+
 
 
     // Quản lý Tour Booking
