@@ -35,11 +35,21 @@ class GeminiChatbotService
         // Lọc bỏ các API key rỗng
         $this->apiKeys = array_filter($this->apiKeys);
         
+        // Kiểm tra xem có API key nào không
+        if (empty($this->apiKeys)) {
+            Log::error('No valid API keys found in configuration');
+            throw new \Exception('Không có API key nào được cấu hình');
+        }
+        
         // Khởi tạo index API key hiện tại
         $this->currentApiKeyIndex = 0;
         
         // Log số lượng API key có sẵn
-        Log::info('GeminiChatbotService initialized with ' . count($this->apiKeys) . ' API keys');
+        Log::info('GeminiChatbotService initialized with ' . count($this->apiKeys) . ' API keys', [
+            'total_keys' => count($this->apiKeys),
+            'current_key_index' => $this->currentApiKeyIndex,
+            'first_key_preview' => substr($this->apiKeys[0], 0, 10) . '...'
+        ]);
     }
 
     /**
@@ -55,16 +65,31 @@ class GeminiChatbotService
      */
     private function switchToNextApiKey()
     {
+        $oldIndex = $this->currentApiKeyIndex;
         $this->currentApiKeyIndex++;
         
         // Nếu đã hết API key, quay về API key đầu tiên
         if ($this->currentApiKeyIndex >= count($this->apiKeys)) {
             $this->currentApiKeyIndex = 0;
-            Log::warning('All API keys have been tried, returning to first API key');
+            Log::warning('All API keys have been tried, returning to first API key', [
+                'old_index' => $oldIndex,
+                'new_index' => $this->currentApiKeyIndex,
+                'total_keys' => count($this->apiKeys)
+            ]);
+        } else {
+            Log::info('Switched to next API key', [
+                'old_index' => $oldIndex,
+                'new_index' => $this->currentApiKeyIndex,
+                'total_keys' => count($this->apiKeys)
+            ]);
         }
         
         $currentKey = $this->getCurrentApiKey();
-        Log::info('Switched to API key index: ' . $this->currentApiKeyIndex . ', Key: ' . substr($currentKey, 0, 10) . '...');
+        Log::info('Current API key info', [
+            'index' => $this->currentApiKeyIndex,
+            'key_preview' => substr($currentKey, 0, 10) . '...',
+            'key_length' => strlen($currentKey)
+        ]);
         
         return $currentKey;
     }
@@ -354,10 +379,23 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
                     ]
                 ]
             ];
-
-            // Thêm lịch sử hội thoại nếu có
+            
+            // Validate conversation history trước khi thêm
             if (!empty($conversationHistory)) {
+                // Kiểm tra xem conversation history có hợp lệ không
+                $validHistory = [];
                 foreach ($conversationHistory as $message) {
+                    if (isset($message['role']) && isset($message['content']) && 
+                        in_array($message['role'], ['user', 'assistant']) &&
+                        strlen($message['content']) < 1000) { // Giới hạn độ dài tin nhắn
+                        $validHistory[] = $message;
+                    }
+                }
+                
+                // Chỉ lấy 3 tin nhắn gần nhất để tránh quá dài
+                $recentHistory = array_slice($validHistory, -3);
+                
+                foreach ($recentHistory as $message) {
                     $messages[] = [
                         'role' => $message['role'],
                         'parts' => [
@@ -365,9 +403,16 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
                         ]
                     ];
                 }
+                
+                Log::info('Conversation history added', [
+                    'total_history' => count($conversationHistory),
+                    'valid_history' => count($validHistory),
+                    'recent_history' => count($recentHistory),
+                    'total_messages' => count($messages)
+                ]);
             }
 
-                            $requestData = [
+            $requestData = [
                     'contents' => $messages,
                     'generationConfig' => [
                         'temperature' => config('chatbot.token_settings.temperature', 0.7),
@@ -427,10 +472,28 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
                     'error' => $response->body()
                 ]);
                 
+                // Chuyển sang API key tiếp theo
                 $this->switchToNextApiKey();
                 $attempt++;
                 
             } while ($attempt < $maxRetries);
+
+            // Nếu tất cả API keys đều thất bại, log và trả về lỗi
+            if ($attempt >= $maxRetries) {
+                Log::error('All API keys failed after ' . $maxRetries . ' attempts');
+                
+                // Kiểm tra response cuối cùng để đưa ra thông báo phù hợp
+                $lastResponse = $response;
+                if ($lastResponse->status() === 400) {
+                    return 'Xin lỗi, câu hỏi của bạn quá dài hoặc không phù hợp. Vui lòng thử lại với câu hỏi ngắn gọn hơn.';
+                } elseif ($lastResponse->status() === 429) {
+                    return 'Xin lỗi, tất cả API keys đều đang quá tải. Vui lòng thử lại sau vài phút hoặc liên hệ trực tiếp với chúng tôi.';
+                } elseif (strpos($lastResponse->body(), 'quota') !== false || strpos($lastResponse->body(), 'QuotaFailure') !== false) {
+                    return 'Xin lỗi, tất cả API keys đều đã hết quota. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi để được hỗ trợ.';
+                } else {
+                    return 'Xin lỗi, tôi gặp vấn đề kỹ thuật với tất cả API keys. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi.';
+                }
+            }
 
             Log::info('Gemini API response', [
                 'status' => $response->status(),
@@ -442,10 +505,26 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
                 if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
                     return $data['candidates'][0]['content']['parts'][0]['text'];
                 }
+                
+                // Log response structure để debug
+                Log::warning('Unexpected API response structure', [
+                    'response_keys' => array_keys($data),
+                    'candidates_count' => isset($data['candidates']) ? count($data['candidates']) : 0,
+                    'response_body' => $response->body()
+                ]);
             }
 
+            // Nếu response không thành công nhưng vẫn có data, log để debug
             Log::error('Gemini API error: ' . $response->body());
-            return 'Xin lỗi, tôi gặp vấn đề kỹ thuật. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi.';
+            
+            // Trả về lỗi cụ thể hơn
+            if ($response->status() === 400) {
+                return 'Xin lỗi, câu hỏi của bạn quá dài hoặc không phù hợp. Vui lòng thử lại với câu hỏi ngắn gọn hơn.';
+            } elseif ($response->status() === 429) {
+                return 'Xin lỗi, hệ thống đang quá tải. Vui lòng thử lại sau vài giây.';
+            } else {
+                return 'Xin lỗi, tôi gặp vấn đề kỹ thuật. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi.';
+            }
 
         } catch (\Exception $e) {
             Log::error('Error calling Gemini API: ' . $e->getMessage());
@@ -453,4 +532,8 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
             return 'Xin lỗi, tôi gặp vấn đề kỹ thuật. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi.';
         }
     }
+
+
+
+
 }

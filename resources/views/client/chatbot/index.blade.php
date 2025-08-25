@@ -7,9 +7,9 @@
 @endpush
 
 @section('content')
-                            <!-- Banner đã được xóa - chỉ giữ menu và nền menu -->
+    <!-- Banner đã được xóa - chỉ giữ menu và nền menu -->
 
-            <!-- Chat Interface -->
+    <!-- Chat Interface -->
     <div class="chat-wrapper">
         <div class="container">
             <div class="chat-container">
@@ -111,6 +111,14 @@
                                         <span class="faq-text">Liên hệ</span>
                                     </button>
                                 </div>
+                                
+                                <!-- Nút xóa lịch sử chat -->
+                                <div class="clear-history-section">
+                                    <button class="btn-clear-history" onclick="clearChatHistory()" title="Xóa lịch sử chat">
+                                        <i class="fas fa-trash"></i>
+                                        <span>Xóa lịch sử chat</span>
+                                    </button>
+                                </div>
                     </div>
                 </div>
             </div>
@@ -120,10 +128,39 @@
 
 @push('scripts')
 <script>
+// Biến global cho authentication và storage
+let isAuthenticated = {{ Auth::check() ? 'true' : 'false' }};
+let userId = {{ Auth::id() ?? 'null' }};
+let chatStorage = null;
+
 // Khởi tạo chatbot
 document.addEventListener('DOMContentLoaded', function() {
-    addWelcomeMessage();
+    if (isAuthenticated) {
+        initializeChatStorage();
+        addWelcomeMessage();
+        loadChatHistory();
+    } else {
+        showAuthRequiredMessage();
+    }
 });
+
+// Khởi tạo ChatStorage
+function initializeChatStorage() {
+    chatStorage = new ChatStorage(userId);
+}
+
+// Hiển thị thông báo yêu cầu đăng nhập
+function showAuthRequiredMessage() {
+    const chatHistory = document.getElementById('chat-history');
+    chatHistory.innerHTML = `
+        <div class="auth-required-message">
+            <h3>🔒 Yêu cầu đăng nhập</h3>
+            <p>Vui lòng đăng nhập để sử dụng chatbot MARRON AI</p>
+            <a href="/login" class="btn btn-primary">Đăng nhập</a>
+            <p class="mt-2">Hoặc <a href="/register">đăng ký tài khoản mới</a></p>
+        </div>
+    `;
+}
 
 // Kiểm tra phím Enter
 function checkEnter(event) {
@@ -134,9 +171,18 @@ function checkEnter(event) {
 
 // Gửi tin nhắn
 function sendMessage() {
+    if (!isAuthenticated) {
+        showAuthRequiredMessage();
+        return;
+    }
+
     var userMessage = document.getElementById("user-input").value;
     if (userMessage.trim() !== "") {
         addMessageToChat(userMessage, 'user');
+        
+        // Lưu vào localStorage
+        chatStorage.addMessage('user', userMessage);
+        
         document.getElementById("user-input").value = "";
         fetchMarronAIResponse(userMessage);
     }
@@ -177,7 +223,16 @@ function sendMessage() {
 
 // Gửi tin nhắn nhanh
 function sendQuickMessage(message) {
+    if (!isAuthenticated) {
+        showAuthRequiredMessage();
+        return;
+    }
+    
     addMessageToChat(message, 'user');
+    
+    // Lưu vào localStorage
+    chatStorage.addMessage('user', message);
+    
     fetchMarronAIResponse(message);
 }
 
@@ -204,6 +259,12 @@ function fetchMarronAIResponse(userMessage) {
             botReply = data.reply;
         }
         addMessageToChat(botReply, 'bot');
+        
+        // Lưu bot response vào localStorage
+        chatStorage.addMessage('bot', botReply);
+        
+        // Đồng bộ với session
+        chatStorage.syncWithSession();
     })
     .catch(error => {
         // Ẩn typing indicator
@@ -265,6 +326,206 @@ function addWelcomeMessage() {
     
     const chatHistory = document.getElementById('chat-history');
     chatHistory.innerHTML = welcomeMessage;
+}
+
+// Class ChatStorage để quản lý localStorage và session
+class ChatStorage {
+    constructor(userId) {
+        this.userId = userId;
+        this.storageKey = `chat_history_${userId}`;
+        this.maxMessages = 20;
+    }
+
+    // Lấy lịch sử chat từ localStorage
+    getHistory() {
+        try {
+            const history = localStorage.getItem(this.storageKey);
+            return history ? JSON.parse(history) : [];
+        } catch (error) {
+            console.error('Error reading from localStorage:', error);
+            return [];
+        }
+    }
+
+    // Lưu lịch sử chat vào localStorage
+    saveHistory(history) {
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(history));
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+        }
+    }
+
+    // Thêm tin nhắn mới
+    addMessage(role, content) {
+        const history = this.getHistory();
+        const message = {
+            role: role,
+            content: content,
+            timestamp: new Date().toISOString(),
+            userId: this.userId
+        };
+        
+        history.push(message);
+        
+        // Giữ tối đa maxMessages tin nhắn
+        if (history.length > this.maxMessages) {
+            history.splice(0, history.length - this.maxMessages);
+        }
+        
+        this.saveHistory(history);
+    }
+
+    // Xóa lịch sử chat
+    clearHistory() {
+        try {
+            // Xóa từ localStorage
+            localStorage.removeItem(this.storageKey);
+            
+            // Xóa từ session
+            fetch('/chatbot/clear-history', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Chat history cleared from session via ChatStorage');
+                } else {
+                    console.error('Failed to clear session via ChatStorage:', data);
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing session via ChatStorage:', error);
+            });
+            
+            console.log('Chat history cleared from localStorage');
+        } catch (error) {
+            console.error('Error clearing localStorage:', error);
+        }
+    }
+
+    // Đồng bộ với session
+    syncWithSession() {
+        const history = this.getHistory();
+        
+        fetch('/chatbot/save-to-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ history: history })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Chat history synced with session');
+            }
+        })
+        .catch(error => {
+            console.error('Error syncing with session:', error);
+        });
+    }
+
+    // Load lịch sử chat từ session
+    loadFromSession() {
+        fetch('/chatbot/history')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.history.length > 0) {
+                // Cập nhật localStorage với dữ liệu từ session
+                this.saveHistory(data.history);
+                
+                // Hiển thị lịch sử chat
+                this.displayHistory(data.history);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading from session:', error);
+        });
+    }
+
+    // Hiển thị lịch sử chat
+    displayHistory(history) {
+        const chatHistory = document.getElementById('chat-history');
+        chatHistory.innerHTML = '';
+        
+        history.forEach(message => {
+            addMessageToChat(message.content, message.role);
+        });
+    }
+}
+
+// Load lịch sử chat khi khởi tạo
+function loadChatHistory() {
+    if (chatStorage) {
+        chatStorage.loadFromSession();
+    }
+}
+
+// Clear lịch sử chat
+function clearChatHistory() {
+    if (!isAuthenticated) {
+        showAuthRequiredMessage();
+        return;
+    }
+    
+    // Hiển thị xác nhận trước khi xóa
+    if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử chat? Hành động này không thể hoàn tác.')) {
+        if (chatStorage) {
+            // Xóa từ localStorage
+            chatStorage.clearHistory();
+            
+            // Xóa từ session
+            fetch('/chatbot/clear-history', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Chat history cleared from session');
+                    
+                    // Cập nhật UI
+                    const chatHistory = document.getElementById('chat-history');
+                    chatHistory.innerHTML = '';
+                    addWelcomeMessage();
+                    
+                    // Hiển thị thông báo thành công
+                    showNotification('Đã xóa lịch sử chat thành công!', 'success');
+                    
+                    // Force reload để đảm bảo dữ liệu được xóa hoàn toàn
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    console.error('Failed to clear session:', data);
+                    showNotification('Có lỗi khi xóa lịch sử chat!', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing session:', error);
+                showNotification('Có lỗi khi xóa lịch sử chat!', 'error');
+                
+                // Vẫn xóa UI nếu có lỗi session
+                const chatHistory = document.getElementById('chat-history');
+                chatHistory.innerHTML = '';
+                addWelcomeMessage();
+                
+                // Force reload để đảm bảo dữ liệu được xóa hoàn toàn
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            });
+        }
+    }
 }
 </script>
 @endpush

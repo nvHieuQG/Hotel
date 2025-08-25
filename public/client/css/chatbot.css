@@ -84,6 +84,49 @@ body {
     min-width: 0;
 }
 
+
+
+/* Nút xóa lịch sử chat */
+.btn-clear-history {
+    background: #dc3545;
+    color: var(--bg-white);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.btn-clear-history:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-clear-history i {
+    font-size: 14px;
+}
+
+.btn-clear-history span {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Clear history section */
+.clear-history-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
 /* FAQ Sidebar - Cột phải */
 .chat-sidebar {
     width: 280px;
@@ -661,5 +704,105 @@ body {
     
     .chatbot-footer p {
         font-size: 12px;
+    }
+}
+
+/* Authentication required message */
+.auth-required-message {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--bg-white);
+    border-radius: 15px;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 10px 30px var(--shadow-light);
+}
+
+.auth-required-message h3 {
+    color: var(--primary-color);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.auth-required-message p {
+    color: var(--text-light);
+    font-size: 16px;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.auth-required-message .btn {
+    background: var(--primary-color);
+    color: var(--bg-white);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    margin: 0 10px;
+}
+
+.auth-required-message .btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow-medium);
+}
+
+.auth-required-message a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-required-message a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Responsive auth message */
+@media (max-width: 768px) {
+    .auth-required-message {
+        padding: 30px 15px;
+        margin: 10px;
+    }
+    
+    .auth-required-message h3 {
+        font-size: 20px;
+    }
+    
+    .auth-required-message p {
+        font-size: 14px;
+    }
+    
+    .auth-required-message .btn {
+        padding: 10px 25px;
+        font-size: 14px;
+        margin: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-required-message {
+        padding: 25px 10px;
+    }
+    
+    .auth-required-message h3 {
+        font-size: 18px;
+    }
+    
+    .auth-required-message p {
+        font-size: 13px;
+    }
+    
+    .auth-required-message .btn {
+        padding: 8px 20px;
+        font-size: 13px;
+        display: block;
+        margin: 10px auto;
+        max-width: 200px;
     }
 }

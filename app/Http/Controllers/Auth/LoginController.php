@@ -87,6 +87,12 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
+        // Xóa chat history của user khi logout
+        $userId = auth()->id();
+        if ($userId && $request->session()->has('chat_history_' . $userId)) {
+            $request->session()->forget('chat_history_' . $userId);
+        }
+        
         $this->authService->logout();
         
         return redirect()->route('index');
