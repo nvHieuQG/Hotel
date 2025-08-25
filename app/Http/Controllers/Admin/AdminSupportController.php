@@ -51,22 +51,39 @@ class AdminSupportController extends Controller
     {
         try {
             $request->validate([
-                'message' => 'required|string|min:1|max:1000',
+                'message' => 'required_without:attachment|nullable|string|min:1|max:1000',
+                'attachment' => 'nullable|file|max:5120|mimetypes:image/jpeg,image/png,application/pdf,application/zip,text/plain',
             ], [
-                'message.required' => 'Vui lòng nhập tin nhắn',
+                'message.required_without' => 'Vui lòng nhập tin nhắn hoặc chọn tệp đính kèm',
                 'message.min' => 'Tin nhắn phải có ít nhất 1 ký tự',
-                'message.max' => 'Tin nhắn không được quá 1000 ký tự'
+                'message.max' => 'Tin nhắn không được quá 1000 ký tự',
+                'attachment.file' => 'Tệp đính kèm không hợp lệ',
+                'attachment.max' => 'Tệp đính kèm tối đa 5MB',
+                'attachment.mimetypes' => 'Định dạng tệp không được hỗ trợ',
             ]);
 
-            $messageText = trim($request->input('message'));
-            if(empty($messageText)) {
+            $messageText = trim((string)$request->input('message'));
+            $attachmentMeta = null;
+
+            if ($request->hasFile('attachment')) {
+                $file = $request->file('attachment');
+                $storedPath = $file->store('support_attachments', 'public');
+                $attachmentMeta = [
+                    'path' => $storedPath,
+                    'name' => $file->getClientOriginalName(),
+                    'type' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                ];
+            }
+
+            if (empty($messageText) && !$attachmentMeta) {
                 if ($request->wantsJson()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Tin nhắn không được để trống'
+                        'message' => 'Vui lòng nhập tin nhắn hoặc chọn tệp đính kèm'
                     ], 400);
                 }
-                return redirect()->back()->withErrors(['message' => 'Tin nhắn không được để trống']);
+                return redirect()->back()->withErrors(['message' => 'Vui lòng nhập tin nhắn hoặc chọn tệp đính kèm']);
             }
 
             // Kiểm tra conversation tồn tại
@@ -81,13 +98,35 @@ class AdminSupportController extends Controller
                 return redirect()->back()->withErrors(['message' => 'Cuộc trò chuyện không tồn tại!']);
             }
 
+            // Chống gửi trùng trong khoảng thời gian ngắn
+            $recentExisting = SupportMessage::where('conversation_id', $conversationId)
+                ->where('sender_id', Auth::id())
+                ->where('sender_type', 'admin')
+                ->when($messageText, function($q) use ($messageText) { return $q->where('message', $messageText); })
+                ->where('created_at', '>=', now()->subSeconds(5))
+                ->orderByDesc('id')
+                ->first();
+
+            if ($recentExisting) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message_id' => $recentExisting->id,
+                        'message' => 'Tin nhắn đã tồn tại (gửi gần đây)'
+                    ]);
+                }
+                return redirect()->route('admin.support.showConversation', $conversationId)->with('success', 'Đã gửi tin nhắn');
+            }
+
             // Gửi tin nhắn từ admin
             try {
                 $message = $this->supportService->sendMessage(
                     $conversationId,
                     Auth::id(),
                     'admin',
-                    $messageText
+                    $messageText,
+                    null,
+                    $attachmentMeta
                 );
             } catch (\Exception $e) {
                 Log::error('Error sending admin support message: ' . $e->getMessage());
@@ -105,7 +144,13 @@ class AdminSupportController extends Controller
                 return response()->json([
                     'success' => true,
                     'message_id' => $message->id,
-                    'message' => 'Tin nhắn đã được gửi'
+                    'message' => 'Tin nhắn đã được gửi',
+                    'attachment' => $message->attachment_path ? [
+                        'url' => asset('storage/'.$message->attachment_path),
+                        'name' => $message->attachment_name,
+                        'type' => $message->attachment_type,
+                        'size' => $message->attachment_size,
+                    ] : null,
                 ]);
             }
 
@@ -156,6 +201,12 @@ class AdminSupportController extends Controller
                         'message' => $msg->message,
                         'sender_type' => $msg->sender_type,
                         'created_at' => $msg->created_at,
+                        'attachment' => $msg->attachment_path ? [
+                            'url' => asset('storage/'.$msg->attachment_path),
+                            'name' => $msg->attachment_name,
+                            'type' => $msg->attachment_type,
+                            'size' => $msg->attachment_size,
+                        ] : null,
                         'user' => $msg->user ? [
                             'name' => $msg->user->name,
                             'email' => $msg->user->email
