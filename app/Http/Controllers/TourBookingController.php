@@ -302,6 +302,21 @@ class TourBookingController extends Controller
             abort(403, 'Bạn không có quyền truy cập tour booking này.');
         }
 
+        // Kiểm tra xem có giao dịch thanh toán đang chờ xác nhận không
+        $hasPendingPayment = $tourBooking->payments()->where('status', 'pending')->exists();
+        if ($hasPendingPayment) {
+            return redirect()->route('tour-booking.payment', $tourBooking->booking_id)
+                ->with('error', 'Bạn đã có giao dịch thanh toán đang chờ xác nhận. Vui lòng chờ xác nhận hoặc liên hệ admin để được hỗ trợ.');
+        }
+
+        // Kiểm tra xem đã thanh toán đủ tiền chưa
+        $totalCompletedAmount = $tourBooking->payments()->where('status', 'completed')->sum('amount');
+        $finalAmount = $tourBooking->final_price ?? $tourBooking->total_price;
+        if ($totalCompletedAmount >= $finalAmount) {
+            return redirect()->route('tour-booking.payment', $tourBooking->booking_id)
+                ->with('error', 'Tour booking của bạn đã được thanh toán đủ tiền. Không cần thanh toán thêm.');
+        }
+
         try {
             // Tạo payment record cho credit card
             $payment = $this->tourBookingService->createCreditCardPayment($request, $tourBooking);
@@ -431,6 +446,21 @@ class TourBookingController extends Controller
         // Kiểm tra quyền truy cập
         if ($tourBooking->user_id !== Auth::id()) {
             abort(403, 'Bạn không có quyền truy cập tour booking này.');
+        }
+
+        // Kiểm tra xem có giao dịch thanh toán đang chờ xác nhận không
+        $hasPendingPayment = $tourBooking->payments()->where('status', 'pending')->exists();
+        if ($hasPendingPayment) {
+            return redirect()->route('tour-booking.payment', $tourBooking->booking_id)
+                ->with('error', 'Bạn đã có giao dịch thanh toán đang chờ xác nhận. Vui lòng chờ xác nhận hoặc liên hệ admin để được hỗ trợ.');
+        }
+
+        // Kiểm tra xem đã thanh toán đủ tiền chưa
+        $totalCompletedAmount = $tourBooking->payments()->where('status', 'completed')->sum('amount');
+        $finalAmount = $tourBooking->final_price ?? $tourBooking->total_price;
+        if ($totalCompletedAmount >= $finalAmount) {
+            return redirect()->route('tour-booking.payment', $tourBooking->booking_id)
+                ->with('error', 'Tour booking của bạn đã được thanh toán đủ tiền. Không cần thanh toán thêm.');
         }
 
         try {

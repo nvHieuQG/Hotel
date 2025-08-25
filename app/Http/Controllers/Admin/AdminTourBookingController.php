@@ -660,7 +660,20 @@ class AdminTourBookingController extends Controller
 
         // Tính toán số tiền còn thiếu
         $totalCompletedPayments = $tourBooking->payments->where('status', 'completed')->sum('amount');
-        $finalAmount = $tourBooking->final_price ?? $tourBooking->total_price;
+        
+        // Tính tổng tiền bao gồm cả phòng và dịch vụ
+        $totalRoomsAmount = $tourBooking->tourBookingRooms->sum('total_price');
+        $totalServicesAmount = $tourBooking->tourBookingServices->sum('total_price');
+        $finalAmountWithServices = $totalRoomsAmount + $totalServicesAmount;
+        
+        // Sử dụng final_price nếu có, nếu không thì tính từ phòng + dịch vụ
+        $finalAmount = $tourBooking->final_price ?? $finalAmountWithServices;
+        
+        // Nếu final_price chỉ chứa giá phòng, cộng thêm dịch vụ
+        if ($tourBooking->final_price && $tourBooking->final_price == $totalRoomsAmount) {
+            $finalAmount = $finalAmountWithServices;
+        }
+        
         $remainingAmount = max(0, $finalAmount - $totalCompletedPayments);
 
         if ($amount > $remainingAmount) {
@@ -864,6 +877,75 @@ class AdminTourBookingController extends Controller
     }
 
     /**
+     * Xác nhận thanh toán bằng thẻ tín dụng cho tour booking
+     */
+    public function confirmCreditCardPayment(Request $request, $id)
+    {
+        $tourBooking = TourBooking::with(['tourBookingRooms', 'tourBookingServices', 'payments'])->findOrFail($id);
+        $paymentId = $request->payment_id;
+
+        // Tìm payment cần xác nhận
+        $payment = Payment::where('id', $paymentId)
+            ->where('tour_booking_id', $tourBooking->id)
+            ->where('method', 'credit_card')
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$payment) {
+            return back()->withErrors(['message' => 'Không tìm thấy giao dịch thanh toán bằng thẻ cần xác nhận.']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Cập nhật trạng thái payment thành completed
+            $payment->update([
+                'status' => 'completed',
+                'gateway_code' => 'ADMIN_CONFIRMED',
+                'gateway_message' => 'Được xác nhận bởi admin: ' . Auth::user()->name,
+                'gateway_response' => array_merge($payment->gateway_response ?? [], [
+                    'admin_confirmed_at' => now()->toISOString(),
+                    'admin_id' => Auth::id(),
+                    'admin_name' => Auth::user()->name
+                ])
+            ]);
+
+            // Tính toán tổng tiền đã thanh toán
+            $totalCompletedPayments = $tourBooking->payments->where('status', 'completed')->sum('amount');
+            $finalAmount = $tourBooking->final_price ?? $tourBooking->total_price;
+
+            // Cập nhật trạng thái tour booking
+            if ($totalCompletedPayments >= $finalAmount) {
+                $tourBooking->update([
+                    'payment_status' => 'completed',
+                    'status' => 'confirmed'
+                ]);
+            } else {
+                $tourBooking->update([
+                    'payment_status' => 'partial',
+                    'status' => 'confirmed'
+                ]);
+            }
+
+            // Tạo thông báo
+            $this->createStatusChangeNotification($tourBooking, $tourBooking->getOriginal('status'), $tourBooking->status);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Đã xác nhận thanh toán bằng thẻ thành công.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error confirming credit card payment for tour booking: ' . $e->getMessage(), [
+                'tour_booking_id' => $tourBooking->id,
+                'payment_id' => $paymentId,
+                'admin_id' => Auth::id()
+            ]);
+            return back()->withErrors(['message' => 'Có lỗi xảy ra khi xác nhận thanh toán bằng thẻ: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Từ chối chuyển khoản cho tour booking
      */
     public function rejectBankTransfer(Request $request, $id)
@@ -927,6 +1009,69 @@ class AdminTourBookingController extends Controller
     }
 
     /**
+     * Từ chối thanh toán bằng thẻ tín dụng cho tour booking
+     */
+    public function rejectCreditCardPayment(Request $request, $id)
+    {
+        $tourBooking = TourBooking::with(['tourBookingRooms', 'tourBookingServices', 'payments'])->findOrFail($id);
+        $paymentId = $request->payment_id;
+        $rejectionReason = $request->rejection_reason ?? 'Không xác nhận được giao dịch thanh toán bằng thẻ';
+
+        // Tìm payment cần từ chối
+        $payment = Payment::where('id', $paymentId)
+            ->where('tour_booking_id', $tourBooking->id)
+            ->where('method', 'credit_card')
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$payment) {
+            return back()->withErrors(['message' => 'Không tìm thấy giao dịch thanh toán bằng thẻ cần từ chối.']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Cập nhật trạng thái payment thành failed
+            $payment->update([
+                'status' => 'failed',
+                'gateway_code' => 'ADMIN_REJECTED',
+                'gateway_message' => 'Bị từ chối bởi admin: ' . $rejectionReason,
+                'gateway_response' => array_merge($payment->gateway_response ?? [], [
+                    'admin_rejected_at' => now()->toISOString(),
+                    'admin_id' => Auth::id(),
+                    'admin_name' => Auth::user()->name,
+                    'rejection_reason' => $rejectionReason
+                ])
+            ]);
+
+            // Cập nhật trạng thái tour booking
+            $tourBooking->update([
+                'payment_status' => 'pending',
+                'status' => 'pending'
+            ]);
+
+            // Gửi email thông báo từ chối cho khách hàng
+            $this->sendCreditCardRejectionEmail($tourBooking, $payment, $rejectionReason);
+
+            // Tạo thông báo
+            $this->createStatusChangeNotification($tourBooking, $tourBooking->getOriginal('status'), 'pending');
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Đã từ chối thanh toán bằng thẻ thành công. Khách hàng sẽ nhận được thông báo và có thể thanh toán lại.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error rejecting credit card payment for tour booking: ' . $e->getMessage(), [
+                'tour_booking_id' => $tourBooking->id,
+                'payment_id' => $paymentId,
+                'admin_id' => Auth::id()
+            ]);
+            return back()->withErrors(['message' => 'Có lỗi xảy ra khi từ chối thanh toán bằng thẻ: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Gửi email thông báo từ chối chuyển khoản
      */
     private function sendBankTransferRejectionEmail(TourBooking $tourBooking, Payment $payment, string $reason): void
@@ -943,6 +1088,29 @@ class AdminTourBookingController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send bank transfer rejection email: ' . $e->getMessage(), [
+                'tour_booking_id' => $tourBooking->id,
+                'payment_id' => $payment->id
+            ]);
+        }
+    }
+
+    /**
+     * Gửi email thông báo từ chối thanh toán bằng thẻ
+     */
+    private function sendCreditCardRejectionEmail(TourBooking $tourBooking, Payment $payment, string $reason): void
+    {
+        try {
+            $user = $tourBooking->user;
+            
+            Mail::to($user->email)->send(new \App\Mail\CreditCardRejectionMail($tourBooking, $payment, $reason));
+            
+            Log::info('Credit card rejection email sent successfully', [
+                'tour_booking_id' => $tourBooking->id,
+                'user_email' => $user->email,
+                'payment_id' => $payment->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send credit card rejection email: ' . $e->getMessage(), [
                 'tour_booking_id' => $tourBooking->id,
                 'payment_id' => $payment->id
             ]);
