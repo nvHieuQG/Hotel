@@ -127,7 +127,7 @@
                         <button type="submit" class="btn btn-success btn-lg px-5" id="confirmTransfer">
                             <i class="fas fa-university"></i> Xác nhận chuyển khoản
                         </button>
-                        <a href="{{ route('tour-booking.payment-method', $tourBooking->id) }}" class="btn btn-secondary btn-lg px-5 ml-2">
+                        <a href="{{ route('tour-booking.payment', $tourBooking->booking_id) }}" class="btn btn-secondary btn-lg px-5 ml-2">
                             <i class="fas fa-arrow-left"></i> Quay lại
                         </a>
                     </div>

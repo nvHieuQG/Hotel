@@ -883,8 +883,11 @@ class AdminBookingService implements AdminBookingServiceInterface
         $noteContent = "Thay đổi trạng thái từ '{$oldStatusText}' sang '{$statusText}'";
         $this->createSystemNote($booking->id, $noteContent, 'system');
 
-        // Tạo thông báo admin
-        $this->createStatusChangeNotification($booking->toArray(), $oldStatus, $newStatus);
+        // Ngừng tạo thông báo admin cho thay đổi trạng thái booking theo yêu cầu
+        // $this->createStatusChangeNotification($booking->toArray(), $oldStatus, $newStatus);
+
+        // Tự động xử lý các giao dịch pending quá hạn
+        $this->cleanExpiredPendingPayments($booking);
 
         // Gọi các event handler tương ứng
         switch ($newStatus) {
@@ -906,6 +909,59 @@ class AdminBookingService implements AdminBookingServiceInterface
             case 'no_show':
                 $this->onBookingNoShow($booking);
                 break;
+        }
+    }
+
+    /**
+     * Xóa các giao dịch pending quá 30 phút cho regular booking
+     */
+    private function cleanExpiredPendingPayments(Booking $booking): void
+    {
+        $thirtyMinutesAgo = now()->subMinutes(30);
+        
+        $expiredPayments = \App\Models\Payment::where('booking_id', $booking->id)
+            ->where('status', 'pending')
+            ->where('created_at', '<', $thirtyMinutesAgo)
+            ->get();
+
+        foreach ($expiredPayments as $expiredPayment) {
+            $expiredPayment->delete();
+        }
+
+        if ($expiredPayments->count() > 0) {
+            Log::info('Cleaned expired pending payments for regular booking', [
+                'booking_id' => $booking->id,
+                'count' => $expiredPayments->count()
+            ]);
+        }
+    }
+
+    /**
+     * Tự động xử lý các giao dịch chờ xác nhận khi đã có payment completed
+     */
+    public function processPendingPayments(Booking $booking): void
+    {
+        // Kiểm tra xem có payment completed nào không
+        $hasCompletedPayment = $booking->payments->where('status', 'completed')->count() > 0;
+        
+        if ($hasCompletedPayment) {
+            // Tự động xử lý các giao dịch chuyển khoản chờ xác nhận
+            $pendingBankTransfers = \App\Models\Payment::where('booking_id', $booking->id)
+                ->where('method', 'bank_transfer')
+                ->where('status', 'pending')
+                ->get();
+
+            foreach ($pendingBankTransfers as $pendingPayment) {
+                $pendingPayment->update([
+                    'status' => 'completed',
+                    'notes' => 'Tự động xác nhận khi admin thu tiền bổ sung',
+                    'admin_id' => Auth::id(),
+                    'completed_at' => now(),
+                ]);
+            }
+
+            // Xóa các giao dịch pending quá 30 phút
+            $this->cleanExpiredPendingPayments($booking);
         }
     }
 }
