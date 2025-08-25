@@ -1,27 +1,45 @@
 {
   "hotel_info": {
     "name": "Khách sạn MARRON",
-    "address": "123 Đường ABC, Quận 1, TP.HCM",
-    "phone": "+84 28 1234 5678",
-    "email": "info@marronhotel.com",
+    "address": "Hà Nội, Việt Nam",
+    "phone": "+84394841229",
+    "email": "marronhotel@gmail.com",
     "website": "www.marronhotel.com",
-    "description": "Khách sạn 5 sao sang trọng với dịch vụ đẳng cấp quốc tế, tọa lạc tại trung tâm TP.HCM."
+    "description": "🏨 MARRON Hotel - Viên ngọc quý giữa lòng Hà Nội thơ mộng! ✨ Khách sạn 5 sao đẳng cấp quốc tế với thiết kế sang trọng, tinh tế từng chi tiết. Nơi đây, mỗi khoảnh khắc đều trở thành kỷ niệm đáng nhớ với dịch vụ tận tâm, ẩm thực đỉnh cao và không gian nghỉ dưỡng hoàn hảo. Từ view tuyệt đẹp ngắm nhìn thủ đô ngàn năm văn hiến đến những trải nghiệm luxury không thể nào quên - MARRON là điểm đến lý tưởng cho mọi chuyến du lịch. 🌟"
   },
   "room_types": [
     {
       "name": "Phòng Standard",
-      "description": "Phòng tiêu chuẩn với đầy đủ tiện nghi cơ bản, view thành phố.",
-      "price_range": "800,000 - 1,000,000 VNĐ/đêm"
+      "description": "🛏️ Không gian ấm cúng và tinh tế với thiết kế hiện đại, mang đến cảm giác như ở nhà nhưng đầy đủ tiện nghi 5 sao. Thức dậy mỗi sáng với tầm nhìn tuyệt đẹp ra phố phường Hà Nội sôi động, nơi bạn có thể cảm nhận nhịp sống đặc trưng của thủ đô.",
+      "price_range": "800,000 - 1,000,000 VNĐ/đêm",
+      "capacity": "2 người lớn",
+      "size": "25m²",
+      "bed_type": "1 giường đôi King size",
+      "amenities": ["WiFi miễn phí", "TV LCD 43 inch", "Minibar", "Két an toàn", "Điều hòa", "Máy sấy tóc", "Bàn làm việc"],
+      "view": "View thành phố",
+      "floor": "Tầng 3-8"
     },
     {
       "name": "Phòng Deluxe",
-      "description": "Phòng cao cấp với không gian rộng rãi hơn, view hồ bơi hoặc thành phố.",
-      "price_range": "1,200,000 - 1,500,000 VNĐ/đêm"
+      "description": "🌟 Nâng tầm trải nghiệm lưu trú với không gian rộng rãi và đẳng cấp! Thưởng thức view hồ bơi infinity lãng mạn hoặc toàn cảnh thành phố từ ban công riêng. Nội thất cao cấp kết hợp hoàn hảo giữa phong cách cổ điển và hiện đại, tạo nên bầu không khí thư giãn và sang trọng.",
+      "price_range": "1,200,000 - 1,500,000 VNĐ/đêm",
+      "capacity": "2-3 người lớn + 1 trẻ em",
+      "size": "35m²",
+      "bed_type": "1 giường đôi King size + 1 ghế sofa giường",
+      "amenities": ["WiFi miễn phí", "TV LCD 50 inch", "Minibar cao cấp", "Két an toàn", "Điều hòa", "Máy sấy tóc", "Bàn làm việc", "Máy pha cà phê", "Ban công"],
+      "view": "View hồ bơi hoặc thành phố",
+      "floor": "Tầng 5-12"
     },
     {
       "name": "Phòng Suite",
-      "description": "Phòng suite sang trọng với phòng khách riêng biệt, view toàn cảnh thành phố.",
-      "price_range": "2,500,000 - 3,500,000 VNĐ/đêm"
+      "description": "👑 Đỉnh cao của sự xa hoa và tinh tế! Không gian sống hoàng gia với phòng khách riêng biệt, phòng ngủ master sang trọng và bồn tắm jacuzzi đẳng cấp. Từ tầng cao, bạn sẽ được chiêm ngưỡng toàn cảnh Hà Nội 360 độ - từ Hồ Tây thơ mộng đến những tòa nhà chọc trời hiện đại. Đây chính là lựa chọn hoàn hảo cho những dịp đặc biệt và kỷ niệm đáng nhớ.",
+      "price_range": "2,500,000 - 3,500,000 VNĐ/đêm",
+      "capacity": "4 người lớn + 2 trẻ em",
+      "size": "65m²",
+      "bed_type": "1 giường đôi King size + 1 phòng khách với sofa giường",
+      "amenities": ["WiFi miễn phí", "TV LCD 65 inch", "Minibar VIP", "Két an toàn lớn", "Điều hòa", "Máy sấy tóc", "Bàn làm việc", "Máy pha cà phê cao cấp", "Ban công lớn", "Bồn tắm jacuzzi", "Máy giặt mini"],
+      "view": "View toàn cảnh thành phố Hà Nội",
+      "floor": "Tầng 15-20 (tầng cao)"
     }
   ],
   "services": [
@@ -30,11 +48,35 @@
       "items": [
         {
           "name": "Nhà hàng Fine Dining",
-          "description": "Phục vụ ẩm thực quốc tế và Việt Nam cao cấp."
+          "description": "🍽️ Hành trình ẩm thực đẳng cấp Michelin! Thưởng thức những kiệt tác ẩm thực được chế biến bởi Chef quốc tế, nơi hương vị truyền thống Việt Nam hòa quyện cùng tinh hoa ẩm thực thế giới. Không gian elegant với ánh nến lung linh, tạo nên bữa tối lãng mạn không thể nào quên.",
+          "location": "Tầng 2 khách sạn",
+          "capacity": "120 khách",
+          "opening_hours": "6:00 - 23:00 hàng ngày",
+          "cuisine_types": ["Ẩm thực Việt Nam", "Châu Âu", "Châu Á"],
+          "specialties": ["Phở bò Wagyu", "Tôm hùm nướng", "Bò beef Wellington"],
+          "chef": "Chef Michelin Star",
+          "price_range": "500,000 - 2,000,000 VNĐ/người",
+          "dress_code": "Smart casual",
+          "reservation": "Khuyến khích đặt bàn trước"
         },
         {
           "name": "Bar Rooftop",
-          "description": "Thưởng thức cocktail và ngắm cảnh thành phố."
+          "description": "🍸 Sky Bar độc nhất Hà Nội! Lơ lửng trên tầng 21, nơi bạn có thể chạm tay vào những vì sao và ngắm nhìn toàn cảnh thủ đô lung linh về đêm. Những ly cocktail signature được pha chế bởi mixologist hàng đầu, kết hợp cùng không khí jazz sôi động - đây chính là thiên đường cho những tâm hồn yêu thích sự tinh tế.",
+          "location": "Tầng 21 - Rooftop",
+          "capacity": "80 khách",
+          "opening_hours": "17:00 - 02:00 (T2-CN)",
+          "specialties": ["Signature cocktails", "Whiskey collection", "Wine selection"],
+          "view": "360° toàn cảnh Hà Nội",
+          "price_range": "150,000 - 500,000 VNĐ/ly",
+          "live_music": "Thứ 6, 7, CN"
+        },
+        {
+          "name": "Café Lobby",
+          "description": "Café phong cách hiện đại tại sảnh chính.",
+          "location": "Tầng 1 - Sảnh chính",
+          "opening_hours": "24/7",
+          "specialties": ["Coffee specialty", "Bánh ngọt", "Light meals"],
+          "price_range": "50,000 - 300,000 VNĐ"
         }
       ]
     },
@@ -43,15 +85,33 @@
       "items": [
         {
           "name": "Spa & Massage",
-          "description": "Các liệu pháp thư giãn và chăm sóc sức khỏe."
+          "description": "🧘‍♀️ Sanctuary của sự thư giãn và tái tạo năng lượng! Đắm mình trong không gian zen tuyệt đối với hương thơm tinh dầu thiên nhiên, âm nhạc meditation nhẹ nhàng. Các liệu pháp massage được thực hiện bởi chuyên viên quốc tế, giúp giải tỏa mọi căng thẳng và mang lại cảm giác hồi sinh hoàn toàn.",
+          "location": "Tầng 3",
+          "opening_hours": "9:00 - 22:00",
+          "services": ["Massage toàn thân", "Facial treatment", "Body wrap", "Aromatherapy"],
+          "therapists": "Chuyên viên được đào tạo quốc tế",
+          "price_range": "800,000 - 3,500,000 VNĐ/buổi",
+          "booking": "Đặt lịch trước 24h"
         },
         {
           "name": "Phòng Gym",
-          "description": "Trang thiết bị hiện đại, mở cửa 24/7."
+          "description": "Trang thiết bị hiện đại, mở cửa 24/7.",
+          "location": "Tầng 4",
+          "opening_hours": "24/7",
+          "equipment": ["Cardio machines", "Weight training", "Functional training area"],
+          "services": ["Personal trainer", "Group classes", "Yoga sessions"],
+          "price": "Miễn phí cho khách lưu trú"
         },
         {
           "name": "Hồ bơi vô cực",
-          "description": "Tận hưởng không gian thư giãn với view đẹp."
+          "description": "🏊‍♀️ Thiên đường nghỉ dưỡng giữa lòng thủ đô! Hồ bơi infinity tuyệt đẹp tạo cảm giác như bạn đang bơi giữa bầu trời xanh thẳm. Nước ấm dịu nhẹ, view 360 độ ra toàn cảnh Hà Nội, cùng với pool bar phục vụ cocktail tươi mát - đây chính là nơi lý tưởng để thư giãn và tận hưởng những khoảnh khắc yên bình.",
+          "location": "Tầng 19 - Rooftop",
+          "opening_hours": "6:00 - 22:00",
+          "size": "25m x 12m",
+          "depth": "1.2m - 2.0m",
+          "view": "Toàn cảnh thành phố Hà Nội",
+          "features": ["Infinity pool", "Pool bar", "Jacuzzi", "Kids area"],
+          "price": "Miễn phí cho khách lưu trú"
         }
       ]
     },
@@ -60,15 +120,41 @@
       "items": [
         {
           "name": "Dịch vụ đưa đón sân bay",
-          "description": "Xe sang trọng đưa đón khách từ/đến sân bay."
+          "description": "Xe sang trọng đưa đón khách từ/đến sân bay.",
+          "vehicles": ["Mercedes S-Class", "BMW 7 Series", "Lexus LS"],
+          "schedule": "24/7 theo yêu cầu",
+          "advance_booking": "Đặt trước 2 tiếng",
+          "price": "800,000 - 1,500,000 VNĐ/chuyến",
+          "includes": ["Tài xế chuyên nghiệp", "Nước uống", "WiFi", "Báo chí"]
         },
         {
           "name": "Dịch vụ giặt ủi",
-          "description": "Giặt là nhanh chóng và chuyên nghiệp."
+          "description": "Giặt là nhanh chóng và chuyên nghiệp.",
+          "services": ["Giặt khô", "Giặt thường", "Ủi phẳng", "Sửa chữa nhỏ"],
+          "express_service": "3 tiếng (phụ phí 50%)",
+          "standard_service": "24 tiếng",
+          "pickup_delivery": "Tại phòng theo giờ",
+          "price_range": "20,000 - 200,000 VNĐ/món"
         },
         {
           "name": "Phòng họp & Sự kiện",
-          "description": "Không gian đa năng cho các cuộc họp và sự kiện."
+          "description": "Không gian đa năng cho các cuộc họp và sự kiện.",
+          "rooms": [
+            {"name": "Grand Ballroom", "capacity": "300 khách", "size": "400m²"},
+            {"name": "Meeting Room A", "capacity": "50 khách", "size": "80m²"},
+            {"name": "Meeting Room B", "capacity": "20 khách", "size": "40m²"}
+          ],
+          "equipment": ["Projector 4K", "Sound system", "Microphone", "Video conference", "WiFi"],
+          "catering": "Menu đa dạng từ coffee break đến tiệc buffet",
+          "price": "2,000,000 - 15,000,000 VNĐ/ngày"
+        },
+        {
+          "name": "Business Center",
+          "description": "Trung tâm dịch vụ văn phòng 24/7.",
+          "location": "Tầng 1",
+          "opening_hours": "24/7",
+          "services": ["In ấn", "Photocopy", "Fax", "Scan", "Máy tính", "Internet"],
+          "price": "Miễn phí cơ bản, phụ phí cho dịch vụ cao cấp"
         }
       ]
     }
