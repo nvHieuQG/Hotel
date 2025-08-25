@@ -10,7 +10,8 @@ class SupportMessage extends Model
     use HasFactory;
 
     protected $fillable = [
-        'sender_id', 'sender_type', 'subject', 'conversation_id', 'message', 'is_read'
+        'sender_id', 'sender_type', 'subject', 'conversation_id', 'message', 'is_read',
+        'attachment_path', 'attachment_name', 'attachment_type', 'attachment_size'
     ];
 
     protected $casts = [
