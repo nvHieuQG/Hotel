@@ -57,7 +57,10 @@ class GeminiChatbotService
      */
     private function getCurrentApiKey()
     {
-        return $this->apiKeys[$this->currentApiKeyIndex] ?? null;
+        if (isset($this->apiKeys[$this->currentApiKeyIndex])) {
+            return $this->apiKeys[$this->currentApiKeyIndex];
+        }
+        return null;
     }
 
     /**
@@ -85,11 +88,13 @@ class GeminiChatbotService
         }
         
         $currentKey = $this->getCurrentApiKey();
-        Log::info('Current API key info', [
-            'index' => $this->currentApiKeyIndex,
-            'key_preview' => substr($currentKey, 0, 10) . '...',
-            'key_length' => strlen($currentKey)
-        ]);
+        if ($currentKey) {
+            Log::info('Current API key info', [
+                'index' => $this->currentApiKeyIndex,
+                'key_preview' => substr($currentKey, 0, 10) . '...',
+                'key_length' => strlen($currentKey)
+            ]);
+        }
         
         return $currentKey;
     }
@@ -188,6 +193,10 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
      */
     private function formatRoomTypes($roomTypes)
     {
+        if (empty($roomTypes)) {
+            return "Không có thông tin loại phòng";
+        }
+        
         $formatted = '';
         foreach ($roomTypes as $room) {
             $formatted .= "- {$room['name']}: {$room['description']} - {$room['price_range']}\n";
@@ -200,6 +209,10 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
      */
     private function formatServices($services)
     {
+        if (empty($services)) {
+            return "Không có thông tin dịch vụ";
+        }
+        
         $formatted = '';
         foreach ($services as $category) {
             $formatted .= "{$category['category']}:\n";
@@ -215,6 +228,10 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
      */
     private function formatPolicies($policies)
     {
+        if (empty($policies)) {
+            return "Không có thông tin chính sách";
+        }
+        
         $formatted = '';
         foreach ($policies as $policy) {
             $formatted .= "{$policy['category']}:\n";
@@ -230,6 +247,10 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
      */
     private function formatNearbyAttractions($attractions)
     {
+        if (empty($attractions)) {
+            return "Không có thông tin địa điểm gần đó";
+        }
+        
         $formatted = '';
         foreach ($attractions as $attraction) {
             $formatted .= "- {$attraction['name']} ({$attraction['distance']}): {$attraction['description']}\n";
@@ -242,6 +263,10 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
      */
     private function formatFAQ($faq)
     {
+        if (empty($faq)) {
+            return "Không có câu hỏi thường gặp";
+        }
+        
         $formatted = '';
         foreach ($faq as $item) {
             $formatted .= "Q: {$item['question']}\nA: {$item['answer']}\n\n";
@@ -254,6 +279,10 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
      */
     private function formatBookingGuide($bookingGuide)
     {
+        if (empty($bookingGuide)) {
+            return "Không có hướng dẫn đặt phòng";
+        }
+        
         $formatted = '';
         foreach ($bookingGuide as $step) {
             $formatted .= "{$step['step']}: {$step['description']}\n";
@@ -266,6 +295,10 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
      */
     private function formatPaymentMethods($paymentMethods)
     {
+        if (empty($paymentMethods)) {
+            return "Không có thông tin phương thức thanh toán";
+        }
+        
         $formatted = '';
         foreach ($paymentMethods as $method) {
             $formatted .= "- {$method['method']}: {$method['description']}\n";
@@ -278,6 +311,10 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
      */
     private function formatDetailedFeatures($detailedFeatures)
     {
+        if (empty($detailedFeatures)) {
+            return "Không có thông tin tính năng chi tiết";
+        }
+        
         $formatted = '';
         foreach ($detailedFeatures as $key => $feature) {
             $formatted .= "{$feature['title']}:\n";
@@ -413,14 +450,14 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
             }
 
             $requestData = [
-                    'contents' => $messages,
-                    'generationConfig' => [
-                        'temperature' => config('chatbot.token_settings.temperature', 0.7),
-                        'topK' => config('chatbot.token_settings.top_k', 40),
-                        'topP' => config('chatbot.token_settings.top_p', 0.95),
-                        'maxOutputTokens' => config('chatbot.token_settings.max_output_tokens', 200),
-                    ],
-                    'safetySettings' => [
+                'contents' => $messages,
+                'generationConfig' => [
+                    'temperature' => config('chatbot.token_settings.temperature', 0.7),
+                    'topK' => config('chatbot.token_settings.top_k', 40),
+                    'topP' => config('chatbot.token_settings.top_p', 0.95),
+                    'maxOutputTokens' => config('chatbot.token_settings.max_output_tokens', 200),
+                ],
+                'safetySettings' => [
                     [
                         'category' => 'HARM_CATEGORY_HARASSMENT',
                         'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
@@ -442,6 +479,7 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
 
             $maxRetries = count($this->apiKeys);
             $attempt = 0;
+            $response = null;
             
             do {
                 $currentApiKey = $this->getCurrentApiKey();
@@ -483,12 +521,11 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
                 Log::error('All API keys failed after ' . $maxRetries . ' attempts');
                 
                 // Kiểm tra response cuối cùng để đưa ra thông báo phù hợp
-                $lastResponse = $response;
-                if ($lastResponse->status() === 400) {
+                if ($response && $response->status() === 400) {
                     return 'Xin lỗi, câu hỏi của bạn quá dài hoặc không phù hợp. Vui lòng thử lại với câu hỏi ngắn gọn hơn.';
-                } elseif ($lastResponse->status() === 429) {
+                } elseif ($response && $response->status() === 429) {
                     return 'Xin lỗi, tất cả API keys đều đang quá tải. Vui lòng thử lại sau vài phút hoặc liên hệ trực tiếp với chúng tôi.';
-                } elseif (strpos($lastResponse->body(), 'quota') !== false || strpos($lastResponse->body(), 'QuotaFailure') !== false) {
+                } elseif ($response && (strpos($response->body(), 'quota') !== false || strpos($response->body(), 'QuotaFailure') !== false)) {
                     return 'Xin lỗi, tất cả API keys đều đã hết quota. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi để được hỗ trợ.';
                 } else {
                     return 'Xin lỗi, tôi gặp vấn đề kỹ thuật với tất cả API keys. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi.';
@@ -532,8 +569,4 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
             return 'Xin lỗi, tôi gặp vấn đề kỹ thuật. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi.';
         }
     }
-
-
-
-
 }
