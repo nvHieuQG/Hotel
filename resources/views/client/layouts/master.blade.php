@@ -104,12 +104,12 @@
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #D2691E 0%, #B8860B 100%);
+    background: linear-gradient(135deg, #8d703b 0%, #7b6233 100%);
     border: none;
     color: white;
     font-size: 24px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(210, 105, 30, 0.3);
+    box-shadow: 0 4px 12px rgba(141, 112, 59, 0.3);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -119,7 +119,7 @@
 
 .chat-button:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(210, 105, 30, 0.4);
+    box-shadow: 0 6px 20px rgba(141, 112, 59, 0.4);
 }
 
 .chat-button .notification-badge {
@@ -167,7 +167,7 @@
 }
 
 .chat-header {
-    background: linear-gradient(135deg, #D2691E 0%, #B8860B 100%);
+    background: linear-gradient(135deg, #8d703b 0%, #7b6233 100%);
     color: white;
     padding: 20px;
     display: flex;
@@ -306,7 +306,7 @@
 }
 
 .message.sent .message-bubble {
-    background: linear-gradient(135deg, #D2691E 0%, #B8860B 100%);
+    background: linear-gradient(135deg, #8d703b 0%, #7b6233 100%);
     color: white;
     border-bottom-right-radius: 6px;
 }
@@ -335,7 +335,7 @@
 
 .welcome-message .welcome-icon {
     font-size: 48px;
-    color: #D2691E;
+    color: #8d703b;
     margin-bottom: 12px;
     opacity: 0.7;
 }
@@ -461,17 +461,18 @@
 .chat-input-wrapper {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: #FDF5E6;
-    border-radius: 18px;
-    padding: 4px 10px;
-    border: 1px solid #DEB887;
+    gap: 6px;
+    background: #f9f6f1;
+    border-radius: 16px;
+    padding: 3px 8px;
+    border: 1px solid #d4c4a8;
     transition: border-color 0.2s;
+    min-height: 32px;
 }
 
 .chat-input-wrapper:focus-within {
-    border-color: #D2691E;
-    box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.1);
+    border-color: #8d703b;
+    box-shadow: 0 0 0 3px rgba(141, 112, 59, 0.1);
 }
 
 .chat-input {
@@ -481,10 +482,10 @@
     outline: none;
     font-size: 14px;
     resize: none;
-    max-height: 60px;
-    min-height: 16px;
-    padding: 4px 0;
-    line-height: 1.4;
+    max-height: 50px;
+    min-height: 14px;
+    padding: 2px 0;
+    line-height: 1.3;
     transition: all 0.3s ease;
 }
 
@@ -498,8 +499,8 @@
 }
 
 .attachment-btn {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     border: none;
     border-radius: 50%;
     background: transparent;
@@ -508,35 +509,35 @@
     justify-content: center;
     cursor: pointer;
     transition: background 0.2s;
-    color: #8B4513;
-    font-size: 13px;
+    color: #6c5a3d;
+    font-size: 12px;
 }
 
 .attachment-btn:hover {
     background: rgba(0, 0, 0, 0.1);
-    color: #D2691E;
+    color: #8d703b;
 }
 
 .send-btn {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border: none;
     border-radius: 50%;
-    background: #D2691E;
+    background: #8d703b;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 13px;
-    box-shadow: 0 2px 8px rgba(210, 105, 30, 0.3);
+    font-size: 12px;
+    box-shadow: 0 2px 8px rgba(141, 112, 59, 0.3);
 }
 
 .send-btn:hover {
-    background: #B8860B;
+    background: #7b6233;
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(210, 105, 30, 0.4);
+    box-shadow: 0 4px 12px rgba(141, 112, 59, 0.4);
 }
 
 .send-btn:disabled {
@@ -1397,7 +1398,11 @@
 
   openBtn.onclick = function() {
     chatBox.style.display = 'flex';
-    setTimeout(() => { chatInput.focus(); }, 200);
+    setTimeout(() => { 
+      chatInput.focus(); 
+      // Scroll xuống cuối tin nhắn khi mở modal
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }, 200);
 
     // Bắt đầu realtime nếu đã có conversation
     const conversationId = conversationIdInput.value;
