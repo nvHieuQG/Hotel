@@ -62,7 +62,13 @@ class UserService implements UserServiceInterface
         if (!$user) {
             return false;
         }
-        return $this->userRepository->update($user, $data);
+        // Repository returns a User model, but this service must return bool
+        try {
+            $this->userRepository->update($user, $data);
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /**
