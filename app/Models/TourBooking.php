@@ -40,6 +40,10 @@ class TourBooking extends Model
         'company_phone',
         'vat_invoice_number',
         'vat_invoice_created_at',
+        'vat_invoice_file_path',
+        'vat_invoice_status',
+        'vat_invoice_generated_at',
+        'vat_invoice_sent_at',
         'guest_identity_info'
     ];
 
@@ -56,6 +60,8 @@ class TourBooking extends Model
         'tour_details' => 'array',
         'guest_identity_info' => 'array',
         'vat_invoice_created_at' => 'datetime',
+        'vat_invoice_generated_at' => 'datetime',
+        'vat_invoice_sent_at' => 'datetime',
     ];
 
     /**

@@ -191,6 +191,109 @@
                     </div>
 
                     @endif
+
+                    <!-- Trạng thái thanh toán và thông báo -->
+                    @if($roomChange->status === 'approved' || $roomChange->status === 'completed')
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Trạng thái thanh toán</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Trạng thái:</h6>
+                                            <span class="badge badge-{{ $roomChange->getPaymentStatusColor() }}">
+                                                {{ $roomChange->getPaymentStatusText() }}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Chênh lệch giá:</h6>
+                                            @if($roomChange->price_difference > 0)
+                                                <span class="text-danger h5">+{{ number_format($roomChange->price_difference, 0, ',', '.') }} VNĐ</span>
+                                                <small class="text-muted d-block">Cần thu tiền tại quầy lễ tân</small>
+                                            @elseif($roomChange->price_difference < 0)
+                                                <span class="text-success h5">{{ number_format($roomChange->price_difference, 0, ',', '.') }} VNĐ</span>
+                                                <small class="text-muted d-block">Cần hoàn tiền tại quầy lễ tân</small>
+                                            @else
+                                                <span class="text-muted h5">Không có chênh lệch</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <!-- Thông báo hoàn tiền -->
+                                    @if($roomChange->price_difference < 0 && $roomChange->status === 'completed')
+                                        <div class="alert alert-info mt-3">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Thông báo quan trọng:</strong>
+                                            <br>Khách hàng đã đổi xuống phòng rẻ hơn với số tiền chênh lệch: 
+                                            <strong>{{ number_format(abs($roomChange->price_difference), 0, ',', '.') }} VNĐ</strong>
+                                            <br>Vui lòng thông báo khách hàng xuống quầy lễ tân để nhận tiền thừa.
+                                        </div>
+                                    @endif
+
+                                    <!-- Thông báo thu tiền -->
+                                    @if($roomChange->price_difference > 0 && $roomChange->status === 'completed')
+                                        <div class="alert alert-warning mt-3">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Thông báo:</strong>
+                                            <br>Khách hàng đã đổi lên phòng đắt hơn với số tiền chênh lệch: 
+                                            <strong>{{ number_format($roomChange->price_difference, 0, ',', '.') }} VNĐ</strong>
+                                            <br>Vui lòng thu tiền tại quầy lễ tân.
+                                        </div>
+                                    @endif
+
+                                    <!-- Nút thao tác thanh toán -->
+                                    @if($roomChange->status === 'completed')
+                                        <div class="mt-3">
+                                            @if($roomChange->price_difference > 0 && $roomChange->payment_status === 'pending')
+                                                <form action="{{ route('admin.room-changes.mark-paid', $roomChange->id) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-success" onclick="return confirm('Xác nhận đã thu tiền tại quầy lễ tân?')">
+                                                        <i class="fas fa-money-bill-wave"></i> Đã thu tiền
+                                                    </button>
+                                                </form>
+                                            @elseif($roomChange->price_difference < 0 && $roomChange->payment_status === 'refund_pending')
+                                                <form action="{{ route('admin.room-changes.mark-refunded', $roomChange->id) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-info" onclick="return confirm('Xác nhận đã hoàn tiền tại quầy lễ tân?')">
+                                                        <i class="fas fa-hand-holding-usd"></i> Đã hoàn tiền
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Nút hoàn thành đổi phòng -->
+                    @if($roomChange->status === 'approved')
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Hoàn thành đổi phòng</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form action="{{ route('admin.room-changes.complete', $roomChange->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-primary" onclick="return confirm('Xác nhận hoàn thành đổi phòng? Hành động này sẽ cập nhật booking và trạng thái phòng.')">
+                                            <i class="fas fa-check-double"></i> Hoàn thành đổi phòng
+                                        </button>
+                                    </form>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="fas fa-info-circle"></i>
+                                        Sau khi hoàn thành, hệ thống sẽ tự động cập nhật trạng thái thanh toán dựa trên chênh lệch giá.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

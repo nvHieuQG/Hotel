@@ -694,7 +694,7 @@ class AdminTourBookingController extends Controller
                 'gateway_message' => 'Thu tiền bổ sung bởi admin: ' . Auth::user()->name,
                 'paid_at' => now(),
                 'gateway_response' => [
-                    'admin_id' => Auth::id(),
+                'admin_id' => Auth::id(),
                     'admin_name' => Auth::user()->name,
                     'collection_method' => 'cash',
                     'notes' => 'Thu tiền bổ sung tại quầy'
@@ -826,7 +826,7 @@ class AdminTourBookingController extends Controller
                 'paid_at' => now(),
                 'gateway_response' => array_merge($payment->gateway_response ?? [], [
                     'admin_confirmed_at' => now()->toISOString(),
-                    'admin_id' => Auth::id(),
+                'admin_id' => Auth::id(),
                     'admin_name' => Auth::user()->name
                 ])
             ]);

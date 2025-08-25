@@ -89,26 +89,27 @@ class RoomChangeService implements RoomChangeServiceInterface
             'admin_note' => $data['admin_note'] ?? null,
         ];
 
-        // Set payment status based on price difference (collect at reception after completion)
-        if ($roomChange->price_difference > 0) {
-            $updateData['payment_status'] = 'pending';
-        } elseif ($roomChange->price_difference < 0) {
-            $updateData['payment_status'] = 'refund_pending';
-        } else {
-            $updateData['payment_status'] = 'not_required';
-        }
+        // Không set payment_status ở đây, để completeRoomChange xử lý sau khi hoàn thành
+        // Payment status sẽ được set dựa trên chênh lệch giá thực tế khi hoàn thành
 
-        // Do NOT change booking amounts at approve. Only move status to approved.
-        return DB::transaction(function () use ($roomChangeId, $updateData) {
-            $result = $this->roomChangeRepository->updateStatus($roomChangeId, 'approved', $updateData);
-
-            Log::info('RoomChangeService: Update status result', [
-                'room_change_id' => $roomChangeId,
-                'result' => $result
+        $result = DB::transaction(function () use ($roomChange, $updateData) {
+            // Cập nhật trạng thái thành approved
+            $roomChange->update([
+                'status' => 'approved',
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+                ...$updateData
             ]);
 
-            return $result;
+            return true;
         });
+
+        Log::info('RoomChangeService: Update status result', [
+            'room_change_id' => $roomChangeId,
+            'result' => $result
+        ]);
+
+        return $result;
     }
 
     /**
@@ -151,6 +152,18 @@ class RoomChangeService implements RoomChangeServiceInterface
             // Cập nhật trạng thái phòng cũ và mới
             $roomChange->oldRoom->update(['status' => 'available']);
             $roomChange->newRoom->update(['status' => 'booked']);
+
+            // Cập nhật payment_status dựa trên chênh lệch giá
+            if ($roomChange->price_difference > 0) {
+                // Đổi lên phòng đắt hơn - cần thu tiền
+                $roomChange->update(['payment_status' => 'pending']);
+            } elseif ($roomChange->price_difference < 0) {
+                // Đổi xuống phòng rẻ hơn - cần hoàn tiền
+                $roomChange->update(['payment_status' => 'refund_pending']);
+            } else {
+                // Không có chênh lệch giá
+                $roomChange->update(['payment_status' => 'not_required']);
+            }
         });
 
         return $this->roomChangeRepository->updateStatus($roomChangeId, 'completed');

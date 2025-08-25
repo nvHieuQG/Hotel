@@ -34,7 +34,18 @@ class BookingPriceCalculationService
         $roomChangeSurcharge = (float) $booking->roomChanges()
             ->whereIn('status', ['approved', 'completed'])
             ->sum('price_difference');
-        $finalRoomCost = ($roomChangeSurcharge > 0) ? ($roomCost + $roomChangeSurcharge) : $roomCost;
+        
+        // Tính tiền phòng cuối cùng sau khi đổi phòng
+        if ($roomChangeSurcharge > 0) {
+            // Đổi lên phòng đắt hơn - cộng thêm phụ thu
+            $finalRoomCost = $roomCost + $roomChangeSurcharge;
+        } elseif ($roomChangeSurcharge < 0) {
+            // Đổi xuống phòng rẻ hơn - trừ đi số tiền hoàn
+            $finalRoomCost = $roomCost + $roomChangeSurcharge; // roomChangeSurcharge âm nên sẽ trừ
+        } else {
+            // Không đổi phòng
+            $finalRoomCost = $roomCost;
+        }
 
         // 3) Phụ phí người lớn/trẻ em (KHÔNG bao gồm phụ thu đổi phòng)
         $guestSurcharge = (float)($booking->surcharge ?? 0);

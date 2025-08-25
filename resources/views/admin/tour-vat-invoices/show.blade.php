@@ -218,9 +218,17 @@
                                                 <tr>
                                                     <td><strong>Trạng thái VAT:</strong></td>
                                                     <td>
-                                                        @if($tourBooking->vat_invoice_number)
+                                                        @if($tourBooking->vat_invoice_status === 'sent')
                                                             <span class="badge badge-success">
-                                                                <i class="fas fa-check"></i> Đã xuất
+                                                                <i class="fas fa-check"></i> Đã hoàn thành
+                                                            </span>
+                                                        @elseif($tourBooking->vat_invoice_status === 'generated')
+                                                            <span class="badge badge-info">
+                                                                <i class="fas fa-file-pdf"></i> Đã tạo file
+                                                            </span>
+                                                        @elseif($tourBooking->vat_invoice_number)
+                                                            <span class="badge badge-warning">
+                                                                <i class="fas fa-clock"></i> Đã xuất hóa đơn
                                                             </span>
                                                         @else
                                                             <span class="badge badge-warning">
@@ -238,6 +246,51 @@
                                                         <td><strong>Ngày xuất:</strong></td>
                                                         <td>{{ $tourBooking->vat_invoice_created_at->format('d/m/Y H:i') }}</td>
                                                     </tr>
+                                                    <tr>
+                                                        <td><strong>Trạng thái:</strong></td>
+                                                        <td>
+                                                            @if($tourBooking->vat_invoice_status === 'generated')
+                                                                <span class="badge badge-info">
+                                                                    <i class="fas fa-file-pdf"></i> Đã tạo file
+                                                                </span>
+                                                            @elseif($tourBooking->vat_invoice_status === 'sent')
+                                                                <span class="badge badge-success">
+                                                                    <i class="fas fa-envelope"></i> Đã gửi email
+                                                                </span>
+                                                            @else
+                                                                <span class="badge badge-warning">
+                                                                    <i class="fas fa-clock"></i> {{ $tourBooking->vat_invoice_status ?? 'pending' }}
+                                                                </span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                    @if($tourBooking->vat_invoice_file_path)
+                                                        <tr>
+                                                            <td><strong>File PDF:</strong></td>
+                                                            <td>
+                                                                <a href="{{ asset(str_starts_with($tourBooking->vat_invoice_file_path,'public/') ? Storage::url(str_replace('public/','',$tourBooking->vat_invoice_file_path)) : $tourBooking->vat_invoice_file_path) }}" 
+                                                                   target="_blank" class="btn btn-info btn-sm">
+                                                                    <i class="fas fa-eye"></i> Xem file
+                                                                </a>
+                                                                <a href="{{ route('admin.tour-vat-invoices.download', $tourBooking->id) }}" 
+                                                                   class="btn btn-success btn-sm">
+                                                                    <i class="fas fa-download"></i> Tải xuống
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    @endif
+                                                    @if($tourBooking->vat_invoice_generated_at)
+                                                        <tr>
+                                                            <td><strong>Ngày tạo file:</strong></td>
+                                                            <td>{{ $tourBooking->vat_invoice_generated_at->format('d/m/Y H:i') }}</td>
+                                                        </tr>
+                                                    @endif
+                                                    @if($tourBooking->vat_invoice_sent_at)
+                                                        <tr>
+                                                            <td><strong>Ngày gửi email:</strong></td>
+                                                            <td>{{ $tourBooking->vat_invoice_sent_at->format('d/m/Y H:i') }}</td>
+                                                        </tr>
+                                                    @endif
                                                 @endif
                                             </table>
                                         </div>
@@ -332,6 +385,18 @@
                                             <h5>Hóa đơn VAT đã được tạo!</h5>
                                             <p>Mã hóa đơn: <strong>{{ $tourBooking->vat_invoice_number }}</strong></p>
                                             <p>Ngày xuất: {{ $tourBooking->vat_invoice_created_at->format('d/m/Y H:i') }}</p>
+                                            @if($tourBooking->vat_invoice_file_path)
+                                                <p>File PDF: <strong>Đã tạo thành công</strong></p>
+                                            @endif
+                                            @if($tourBooking->vat_invoice_status === 'sent')
+                                                <p>Email: <strong>Đã gửi thành công</strong></p>
+                                            @else
+                                                <p>Email: <strong>Chưa gửi</strong></p>
+                                                <a href="{{ route('admin.tour-vat-invoices.send', $tourBooking->id) }}" 
+                                                   class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-envelope"></i> Gửi email hóa đơn
+                                                </a>
+                                            @endif
                                         </div>
                                     @endif
                                 </div>

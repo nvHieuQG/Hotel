@@ -65,8 +65,7 @@ class AdminTourVatInvoiceController extends Controller
             return back()->with('error', 'Thông tin công ty chưa đầy đủ để tạo hóa đơn VAT.');
         }
         
-        // Ghi chú: Không kiểm tra điều kiện thanh toán để cho phép tạo hóa đơn VAT ngay cả khi chưa thanh toán đủ tiền
-        // Chỉ ghi log thông báo về trạng thái thanh toán
+        // Kiểm tra điều kiện thanh toán (chỉ để thông báo, không chặn)
         try {
             $this->vatInvoiceService->ensureTourLegalPaymentCompliance($tourBooking);
             Log::info('Tour VAT invoice payment compliance check passed', [
@@ -122,6 +121,9 @@ class AdminTourVatInvoiceController extends Controller
             // Cập nhật thông tin VAT invoice sau khi tạo file thành công
             $updateResult = $tourBooking->update([
                 'vat_invoice_number' => $vatInvoiceNumber,
+                'vat_invoice_file_path' => $filePath,
+                'vat_invoice_status' => 'generated',
+                'vat_invoice_generated_at' => now(),
                 'vat_invoice_created_at' => now()
             ]);
             
@@ -142,6 +144,12 @@ class AdminTourVatInvoiceController extends Controller
             try {
                 $emailSent = $this->vatInvoiceService->sendTourVatInvoiceEmail($tourBooking);
                 if ($emailSent) {
+                    // Cập nhật trạng thái email đã gửi
+                    $tourBooking->update([
+                        'vat_invoice_status' => 'sent',
+                        'vat_invoice_sent_at' => now()
+                    ]);
+                    
                     Log::info('Tour VAT invoice email sent successfully', [
                         'tour_booking_id' => $tourBooking->id,
                         'vat_invoice_number' => $vatInvoiceNumber,

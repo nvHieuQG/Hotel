@@ -84,7 +84,7 @@ class VatInvoiceService implements VatInvoiceServiceInterface
 
     /**
      * Kiểm tra điều kiện xuất hóa đơn VAT cho tour booking
-     * Ghi chú: Không chặn việc tạo hóa đơn VAT khi chưa thanh toán đủ tiền
+     * Chặn việc tạo hóa đơn VAT khi chưa thanh toán đủ tiền
      */
     public function ensureTourLegalPaymentCompliance(TourBooking $tourBooking): void
     {
@@ -100,29 +100,14 @@ class VatInvoiceService implements VatInvoiceServiceInterface
             $totalDue = $roomCost + $services - $discount;
         }
 
-        // Kiểm tra xem khách đã thanh toán hết chưa (chỉ để thông báo, không chặn)
+        // Kiểm tra xem khách đã thanh toán hết chưa
         $totalPaid = $tourBooking->payments()
             ->where('status', 'completed')
             ->sum('amount');
         
         if ($totalPaid < $totalDue) {
-            // Chỉ ghi log thông báo, không throw exception
-            Log::warning('Tour VAT invoice payment notice', [
-                'tour_booking_id' => $tourBooking->id,
-                'total_due' => $totalDue,
-                'total_paid' => $totalPaid,
-                'remaining' => $totalDue - $totalPaid,
-                'message' => 'Khách hàng chưa thanh toán đủ tiền, nhưng vẫn cho phép tạo hóa đơn VAT'
-            ]);
-            
-            // Không throw exception, tiếp tục tạo hóa đơn VAT
-        } else {
-            Log::info('Tour VAT invoice payment compliance check passed', [
-                'tour_booking_id' => $tourBooking->id,
-                'total_due' => $totalDue,
-                'total_paid' => $totalPaid,
-                'message' => 'Khách hàng đã thanh toán đủ tiền'
-            ]);
+            // Chặn việc tạo hóa đơn VAT khi chưa thanh toán đủ tiền
+            throw new \RuntimeException('Khách hàng chưa thanh toán đủ tiền. Tổng tiền: ' . number_format($totalDue) . ' VNĐ, Đã thanh toán: ' . number_format($totalPaid) . ' VNĐ. Vui lòng thanh toán đủ trước khi xuất hóa đơn VAT.');
         }
 
         // Nếu từ 5 triệu trở lên, chỉ thông báo (không chặn)
@@ -138,7 +123,7 @@ class VatInvoiceService implements VatInvoiceServiceInterface
             // Admin vẫn có thể tạo hóa đơn VAT bình thường
         }
         
-        // Luôn cho phép tạo hóa đơn VAT, không chặn
+        // Chỉ cho phép tạo hóa đơn VAT khi đã thanh toán đủ tiền
     }
 
     /**
@@ -429,6 +414,7 @@ class VatInvoiceService implements VatInvoiceServiceInterface
 
             // Cập nhật trạng thái đã gửi email
             $booking->update([
+                'vat_invoice_status' => 'sent',
                 'vat_invoice_sent_at' => now(),
             ]);
 
@@ -537,6 +523,7 @@ class VatInvoiceService implements VatInvoiceServiceInterface
 
             // Cập nhật trạng thái đã gửi email (giống regular booking)
             $tourBooking->update([
+                'vat_invoice_status' => 'sent',
                 'vat_invoice_sent_at' => now(),
             ]);
 

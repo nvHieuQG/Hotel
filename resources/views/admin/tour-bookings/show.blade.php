@@ -896,161 +896,326 @@
 
                 <!-- VAT Invoice -->
         <div class="col-lg-6">
-            <div class="card">
-                <div class="card-header">
-                    <i class="fas fa-file-invoice-dollar me-1"></i>
-                    Hóa đơn VAT
-                    @if($tourBooking->vat_invoice_number)
-                        <small class="text-muted">(Số HĐ: {{ $tourBooking->vat_invoice_number }})</small>
-                    @endif
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-file-invoice-dollar me-2 fs-4"></i>
+                        <h6 class="mb-0 fw-bold">Hóa đơn VAT</h6>
+                        @if($tourBooking->vat_invoice_number)
+                            <span class="badge bg-light text-dark ms-auto fs-6">{{ $tourBooking->vat_invoice_number }}</span>
+                        @endif
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     @if($tourBooking->need_vat_invoice)
                         <!-- Thông tin công ty -->
-                        <div class="row small">
-                            <div class="col-md-4"><strong>Công ty:</strong> {{ $tourBooking->company_name ?? 'N/A' }}</div>
-                            <div class="col-md-4"><strong>MST:</strong> {{ $tourBooking->company_tax_code ?? 'N/A' }}</div>
-                            <div class="col-md-4"><strong>Email nhận HĐ:</strong> {{ $tourBooking->company_email ?? 'N/A' }}</div>
-                            <div class="col-12 mt-1"><strong>Địa chỉ:</strong> {{ $tourBooking->company_address ?? 'N/A' }}</div>
-                            @if($tourBooking->company_phone)
-                                <div class="col-12 mt-1"><strong>Điện thoại:</strong> {{ $tourBooking->company_phone }}</div>
-                            @endif
+                        <div class="bg-light rounded p-3 mb-4">
+                            <h6 class="text-primary fw-bold mb-3">
+                                <i class="fas fa-building me-2"></i>Thông tin công ty
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-building text-muted me-2"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Tên công ty</small>
+                                            <strong>{{ $tourBooking->company_name ?? 'N/A' }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-id-card text-muted me-2"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Mã số thuế</small>
+                                            <strong>{{ $tourBooking->company_tax_code ?? 'N/A' }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-envelope text-muted me-2"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Email nhận HĐ</small>
+                                            <strong>{{ $tourBooking->company_email ?? 'N/A' }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Địa chỉ</small>
+                                            <strong>{{ $tourBooking->company_address ?? 'N/A' }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                @if($tourBooking->company_phone)
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-phone text-muted me-2"></i>
+                                            <div>
+                                                <small class="text-muted d-block">Điện thoại</small>
+                                                <strong>{{ $tourBooking->company_phone }}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                         
-                        <!-- Các nút chức năng VAT -->
-                        <div class="mt-3">
-                            <h6 class="text-muted mb-2">
-                                <i class="fas fa-cogs"></i> Chức năng hóa đơn VAT
-                            </h6>
-                            <div class="d-flex gap-2 flex-wrap">
-                            @if(!$tourBooking->vat_invoice_file_path)
-                                <form action="{{ route('admin.tour-vat-invoices.generate', $tourBooking->id) }}" method="POST" class="me-2 mb-1">
-                                    @csrf
-                                    <button class="btn btn-outline-primary btn-sm" 
-                                            title="Tạo hóa đơn VAT PDF">
-                                        <i class="fas fa-file-pdf"></i> Tạo hóa đơn PDF
-                                    </button>
-                                    <small class="text-info d-block mt-1">Có thể tạo hóa đơn VAT ngay cả khi chưa thanh toán đủ tiền</small>
-                                </form>
-                            @endif
-                            
-                            @if($tourBooking->vat_invoice_file_path)
-                                
-                                <!-- Nút Xem hóa đơn -->
-                                <a class="btn btn-info btn-sm me-2 mb-1" href="{{ route('admin.tour-vat-invoices.preview', $tourBooking->id) }}" target="_blank"
-                                   title="Xem trước hóa đơn VAT">
-                                    <i class="fas fa-eye"></i> Xem hóa đơn
-                                </a>
-                                
-                                <!-- Nút Tải xuống -->
-                                <a class="btn btn-secondary btn-sm me-2 mb-1" href="{{ route('admin.tour-vat-invoices.download', $tourBooking->id) }}"
-                                   title="Tải xuống file PDF hóa đơn VAT">
-                                    <i class="fas fa-download"></i> Tải xuống
-                                </a>
-                                
-                                <!-- Nút Sửa hóa đơn (Tạo lại) -->
-                                <form action="{{ route('admin.tour-vat-invoices.regenerate', $tourBooking->id) }}" method="POST" class="d-inline me-2 mb-1">
-                                    @csrf
-                                    <button type="submit" class="btn btn-warning btn-sm" 
-                                            onclick="return confirm('Bạn có chắc muốn tạo lại file hóa đơn VAT? File cũ sẽ bị xóa.')"
-                                            title="Tạo lại hóa đơn VAT">
-                                        <i class="fas fa-edit"></i> Sửa hóa đơn
-                                    </button>
-                                    <small class="text-info d-block mt-1">Có thể tạo lại hóa đơn VAT</small>
-                                </form>
-                                
-                                <!-- Thông tin file đã tạo -->
-                                <div class="w-100 mt-2">
-                                    <small class="text-success">
-                                        <i class="fas fa-check-circle"></i> 
-                                        <strong>Hóa đơn đã được tạo:</strong> 
-                                        {{ $tourBooking->vat_invoice_number ?? 'N/A' }}
-                                        <br>
-                                        <span class="text-muted">
-                                            <i class="fas fa-clock"></i> 
-                                            {{ $tourBooking->vat_invoice_generated_at ? $tourBooking->vat_invoice_generated_at->format('d/m/Y H:i') : 'N/A' }}
-                                        </span>
-                                        @if($tourBooking->vat_invoice_sent_at)
-                                            <br>
-                                            <span class="text-info">
-                                                <i class="fas fa-envelope-open"></i> 
-                                                Đã gửi email: {{ $tourBooking->vat_invoice_sent_at->format('d/m/Y H:i') }}
-                                            </span>
-                                        @endif
-                                    </small>
+                        <!-- Trạng thái VAT -->
+                        @if($tourBooking->vat_invoice_number)
+                            <div class="bg-white border rounded p-3 mb-4">
+                                <h6 class="text-success fw-bold mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Trạng thái hóa đơn
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            @if($tourBooking->vat_invoice_status === 'sent')
+                                                <span class="badge bg-success rounded-pill me-2">
+                                                    <i class="fas fa-check"></i>
+                                                </span>
+                                                <div>
+                                                    <small class="text-muted d-block">Trạng thái</small>
+                                                    <strong class="text-success">Đã hoàn thành</strong>
+                                                </div>
+                                            @elseif($tourBooking->vat_invoice_status === 'generated')
+                                                <span class="badge bg-info rounded-pill me-2">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </span>
+                                                <div>
+                                                    <small class="text-muted d-block">Trạng thái</small>
+                                                    <strong class="text-info">Đã tạo file</strong>
+                                                </div>
+                                            @else
+                                                <span class="badge bg-warning rounded-pill me-2">
+                                                    <i class="fas fa-clock"></i>
+                                                </span>
+                                                <div>
+                                                    <small class="text-muted d-block">Trạng thái</small>
+                                                    <strong class="text-warning">{{ $tourBooking->vat_invoice_status ?? 'pending' }}</strong>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Thông tin file -->
+                                    @if($tourBooking->vat_invoice_file_path)
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-success rounded-pill me-2">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </span>
+                                                <div>
+                                                    <small class="text-muted d-block">File PDF</small>
+                                                    <strong class="text-success">Đã tạo</strong>
+                                                    @if($tourBooking->vat_invoice_generated_at)
+                                                        <br><small class="text-muted">{{ $tourBooking->vat_invoice_generated_at->format('d/m/Y H:i') }}</small>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
+                                    <!-- Thông tin email -->
+                                    @if($tourBooking->vat_invoice_sent_at)
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-success rounded-pill me-2">
+                                                    <i class="fas fa-envelope"></i>
+                                                </span>
+                                                <div>
+                                                    <small class="text-muted d-block">Email</small>
+                                                    <strong class="text-success">Đã gửi</strong>
+                                                    <br><small class="text-muted">{{ $tourBooking->vat_invoice_sent_at->format('d/m/Y H:i') }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
-                            
-                            <!-- Nút Gửi email hóa đơn -->
-                            <form action="{{ route('admin.tour-vat-invoices.send', $tourBooking->id) }}" method="POST" class="mb-1">
-                                @csrf
-                                <button class="btn btn-primary btn-sm" 
-                                        {{ empty($tourBooking->vat_invoice_file_path) ? 'disabled' : '' }}
-                                        title="{{ empty($tourBooking->vat_invoice_file_path) ? 'Cần tạo hóa đơn PDF trước' : 'Gửi email hóa đơn VAT' }}">
-                                    <i class="fas fa-envelope"></i> Gửi email hóa đơn
-                                </button>
-                                @if(empty($tourBooking->vat_invoice_file_path))
-                                    <small class="text-muted d-block mt-1">Cần tạo hóa đơn PDF trước</small>
-                                @else
-                                    <small class="text-info d-block mt-1">Có thể gửi email hóa đơn VAT</small>
+                            </div>
+                        @endif
+                        
+                        <!-- Các nút chức năng VAT -->
+                        <div class="bg-light rounded p-3">
+                            <h6 class="text-primary fw-bold mb-3">
+                                <i class="fas fa-cogs me-2"></i>Chức năng hóa đơn VAT
+                            </h6>
+                            <div class="d-grid gap-2">
+                                @if(!$tourBooking->vat_invoice_file_path)
+                                    <form action="{{ route('admin.tour-vat-invoices.generate', $tourBooking->id) }}" method="POST">
+                                        @csrf
+                                        <button class="btn btn-primary btn-lg w-100" 
+                                                title="Tạo hóa đơn VAT PDF">
+                                            <i class="fas fa-file-pdf me-2"></i>Tạo hóa đơn PDF
+                                        </button>
+                                        <small class="text-info d-block text-center mt-2">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Có thể tạo hóa đơn VAT ngay cả khi chưa thanh toán đủ tiền
+                                        </small>
+                                    </form>
                                 @endif
-                            </form>
+                                
+                                @if($tourBooking->vat_invoice_file_path)
+                                    <div class="row g-2 mb-3">
+                                        <!-- Nút Xem hóa đơn -->
+                                        <div class="col-md-4">
+                                            <a class="btn btn-info w-100" href="{{ route('admin.tour-vat-invoices.preview', $tourBooking->id) }}" target="_blank"
+                                               title="Xem trước hóa đơn VAT">
+                                                <i class="fas fa-eye me-2"></i>Xem
+                                            </a>
+                                        </div>
+                                        
+                                        <!-- Nút Tải xuống -->
+                                        <div class="col-md-4">
+                                            <a class="btn btn-secondary w-100" href="{{ route('admin.tour-vat-invoices.download', $tourBooking->id) }}"
+                                               title="Tải xuống file PDF hóa đơn VAT">
+                                                <i class="fas fa-download me-2"></i>Tải xuống
+                                            </a>
+                                        </div>
+                                        
+                                        <!-- Nút Sửa hóa đơn (Tạo lại) -->
+                                        <div class="col-md-4">
+                                            <form action="{{ route('admin.tour-vat-invoices.regenerate', $tourBooking->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-warning w-100" 
+                                                        onclick="return confirm('Bạn có chắc muốn tạo lại file hóa đơn VAT? File cũ sẽ bị xóa.')"
+                                                        title="Tạo lại hóa đơn VAT">
+                                                    <i class="fas fa-edit me-2"></i>Sửa
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Thông tin file đã tạo -->
+                                    <div class="alert alert-success border-0 rounded-3 mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-check-circle text-success me-2 fs-4"></i>
+                                            <div>
+                                                <strong>Hóa đơn đã được tạo:</strong> 
+                                                <span class="text-primary fw-bold">{{ $tourBooking->vat_invoice_number ?? 'N/A' }}</span>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock me-1"></i> 
+                                                    {{ $tourBooking->vat_invoice_generated_at ? $tourBooking->vat_invoice_generated_at->format('d/m/Y H:i') : 'N/A' }}
+                                                </small>
+                                                @if($tourBooking->vat_invoice_status === 'sent')
+                                                    <br>
+                                                    <span class="text-info">
+                                                        <i class="fas fa-envelope-open me-1"></i> 
+                                                        Đã gửi email: {{ $tourBooking->vat_invoice_sent_at->format('d/m/Y H:i') }}
+                                                    </span>
+                                                @elseif($tourBooking->vat_invoice_status === 'generated')
+                                                    <br>
+                                                    <span class="text-warning">
+                                                        <i class="fas fa-envelope me-1"></i> 
+                                                        Chưa gửi email
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                                
+                                <!-- Nút Gửi email hóa đơn -->
+                                <form action="{{ route('admin.tour-vat-invoices.send', $tourBooking->id) }}" method="POST">
+                                    @csrf
+                                    <button class="btn btn-success btn-lg w-100" 
+                                            {{ empty($tourBooking->vat_invoice_file_path) ? 'disabled' : '' }}
+                                            title="{{ empty($tourBooking->vat_invoice_file_path) ? 'Cần tạo hóa đơn PDF trước' : 'Gửi email hóa đơn VAT' }}">
+                                        <i class="fas fa-envelope me-2"></i>Gửi email hóa đơn
+                                    </button>
+                                    @if(empty($tourBooking->vat_invoice_file_path))
+                                        <small class="text-muted d-block text-center mt-2">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Cần tạo hóa đơn PDF trước
+                                        </small>
+                                    @else
+                                        <small class="text-info d-block text-center mt-2">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Có thể gửi email hóa đơn VAT
+                                        </small>
+                                    @endif
+                                </form>
                             </div>
                         </div>
                         
                         <!-- Thông tin VAT -->
-                        <div class="alert alert-light mt-3 mb-0">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Thông tin VAT:</strong> Giá cuối đã bao gồm VAT 10%, không thu thêm phí. Hóa đơn chỉ để khách kê khai thuế.
-                            <br><small class="text-muted">Sử dụng logic tính toán mới nhất quán với regular booking</small>
-                            <br><small class="text-muted">Điều kiện: Có thể tạo và gửi hóa đơn VAT ngay cả khi chưa thanh toán đủ tiền</small>
-                            <br><small class="text-muted">Hệ thống hoạt động giống hệt như regular booking</small>
+                        <div class="alert alert-info border-0 rounded-3 mt-4 mb-0">
+                            <div class="d-flex">
+                                <i class="fas fa-info-circle text-info me-2 fs-4"></i>
+                                <div>
+                                    <strong>Thông tin VAT:</strong> Giá cuối đã bao gồm VAT 10%, không thu thêm phí. Hóa đơn chỉ để khách kê khai thuế.
+                                    <br><small class="text-muted">Sử dụng logic tính toán mới nhất quán với regular booking</small>
+                                    <br><small class="text-muted">Điều kiện: Có thể tạo và gửi hóa đơn VAT ngay cả khi chưa thanh toán đủ tiền</small>
+                                    <br><small class="text-muted">Hệ thống hoạt động giống hệt như regular booking</small>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Thông tin trạng thái thanh toán -->
-                        <div class="alert alert-info mt-3 mb-0">
-                            <strong>Trạng thái thanh toán:</strong>
-                            @if($totalCompletedPayments >= $finalPriceWithServices && $totalPendingPayments == 0)
-                                <i class="fas fa-check-circle"></i> Đã thanh toán đủ tiền
-                                <br><small class="text-success">Có thể xuất hóa đơn VAT</small>
-                            @else
-                                <i class="fas fa-info-circle"></i> Chưa thanh toán đủ tiền
-                                @if($totalPendingPayments > 0)
-                                    <br><small class="text-warning">Có {{ number_format($totalPendingPayments, 0, ',', '.') }} VNĐ đang chờ xác nhận</small>
-                                @endif
-                                <br><small class="text-info">Còn thiếu: {{ number_format($remainingAmountForCollection, 0, ',', '.') }} VNĐ</small>
-                                <br><small class="text-info">Tuy nhiên, vẫn có thể tạo và gửi hóa đơn VAT</small>
-                            @endif
+                        <div class="alert alert-{{ $totalCompletedPayments >= $finalPriceWithServices && $totalPendingPayments == 0 ? 'success' : 'warning' }} border-0 rounded-3 mt-3 mb-0">
+                            <div class="d-flex">
+                                <i class="fas fa-{{ $totalCompletedPayments >= $finalPriceWithServices && $totalPendingPayments == 0 ? 'check-circle' : 'exclamation-triangle' }} text-{{ $totalCompletedPayments >= $finalPriceWithServices && $totalPendingPayments == 0 ? 'success' : 'warning' }} me-2 fs-4"></i>
+                                <div>
+                                    <strong>Trạng thái thanh toán:</strong>
+                                    @if($totalCompletedPayments >= $finalPriceWithServices && $totalPendingPayments == 0)
+                                        <span class="text-success">✅ Đã thanh toán đủ tiền</span>
+                                        <br><small class="text-success">Có thể xuất hóa đơn VAT</small>
+                                    @else
+                                        <span class="text-warning">⚠️ Chưa thanh toán đủ tiền</span>
+                                        @if($totalPendingPayments > 0)
+                                            <br><small class="text-warning">Có {{ number_format($totalPendingPayments, 0, ',', '.') }} VNĐ đang chờ xác nhận</small>
+                                        @endif
+                                        <br><small class="text-info">Còn thiếu: {{ number_format($remainingAmountForCollection, 0, ',', '.') }} VNĐ</small>
+                                        <br><small class="text-info">Tuy nhiên, vẫn có thể tạo và gửi hóa đơn VAT</small>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Cảnh báo hóa đơn lớn -->
                         @if($paymentInfo['isHighValue'])
-                            <div class="alert alert-warning mt-3 mb-0">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <strong>Lưu ý quan trọng:</strong> Hóa đơn từ {{ number_format(5000000) }}₫ ({{ number_format($paymentInfo['totalDue']) }} VNĐ) theo quy định pháp luật nên thanh toán bằng thẻ/tài khoản công ty hoặc chuyển khoản công ty.
-                                <br><small class="text-muted">Tuy nhiên, vẫn có thể tạo hóa đơn VAT nếu khách đã thanh toán đủ tiền.</small>
-                                <br><small class="text-muted">Giá hiển thị đã bao gồm VAT 10%, không thu thêm phí.</small>
+                            <div class="alert alert-warning border-0 rounded-3 mt-3 mb-0">
+                                <div class="d-flex">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2 fs-4"></i>
+                                    <div>
+                                        <strong>Lưu ý quan trọng:</strong> Hóa đơn từ {{ number_format(5000000) }}₫ ({{ number_format($paymentInfo['totalDue']) }} VNĐ) theo quy định pháp luật nên thanh toán bằng thẻ/tài khoản công ty hoặc chuyển khoản công ty.
+                                        <br><small class="text-muted">Tuy nhiên, vẫn có thể tạo hóa đơn VAT nếu khách đã thanh toán đủ tiền.</small>
+                                        <br><small class="text-muted">Giá hiển thị đã bao gồm VAT 10%, không thu thêm phí.</small>
+                                    </div>
+                                </div>
                             </div>
                         @endif
                         
                         <!-- Form từ chối yêu cầu -->
                         @if(!$tourBooking->vat_invoice_file_path)
-                            <hr class="my-3">
-                            <form action="{{ route('admin.tour-vat-invoices.reject', $tourBooking->id) }}" method="POST">
-                                @csrf
-                                <div class="form-group">
-                                    <label class="small">Lý do từ chối:</label>
-                                    <textarea name="rejection_reason" class="form-control form-control-sm" rows="2" 
-                                              placeholder="Nhập lý do từ chối..." required></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-danger btn-sm btn-block">
-                                    <i class="fas fa-times"></i> Từ chối yêu cầu
-                                </button>
-                            </form>
+                            <hr class="my-4">
+                            <div class="bg-light rounded p-3">
+                                <h6 class="text-danger fw-bold mb-3">
+                                    <i class="fas fa-times-circle me-2"></i>Từ chối yêu cầu
+                                </h6>
+                                <form action="{{ route('admin.tour-vat-invoices.reject', $tourBooking->id) }}" method="POST">
+                                    @csrf
+                                    <div class="form-group mb-3">
+                                        <label class="form-label fw-bold">Lý do từ chối:</label>
+                                        <textarea name="rejection_reason" class="form-control" rows="3" 
+                                                  placeholder="Nhập lý do từ chối..." required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="fas fa-times me-2"></i>Từ chối yêu cầu
+                                    </button>
+                                </form>
+                            </div>
                         @endif
                         
                     @else
-                        <p class="text-muted text-center my-3">Không yêu cầu hóa đơn VAT</p>
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle text-muted fs-1 mb-3"></i>
+                            <p class="text-muted mb-0">Không yêu cầu hóa đơn VAT</p>
+                        </div>
                     @endif
                 </div>
             </div>

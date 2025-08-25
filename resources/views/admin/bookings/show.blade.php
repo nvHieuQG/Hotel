@@ -91,29 +91,42 @@
                                     @endphp
                                     <p><strong>Số đêm:</strong> {{ $nights }}</p>
                                     <hr>
-                                    @if($roomChangeSurcharge > 0)
-                                        @php
-                                            // Lấy thông tin đổi phòng để hiển thị chi tiết
-                                            $roomChanges = $booking->roomChanges()->whereIn('status', ['approved', 'completed'])->get();
-                                        @endphp
+                                    @php
+                                        // Lấy thông tin đổi phòng để hiển thị chi tiết
+                                        $roomChanges = $booking->roomChanges()->whereIn('status', ['approved', 'completed'])->get();
+                                    @endphp
+                                    @if($roomChanges->count() > 0)
                                         <p><strong>Tiền phòng cũ ({{ number_format($nightly) }} VNĐ/đêm × {{ (int)$nights }} đêm):</strong> {{ number_format($roomCost) }} VNĐ</p>
-                                        <p><strong>Phụ thu đổi phòng:</strong> {{ number_format($roomChangeSurcharge) }} VNĐ</p>
+                                        @if($roomChangeSurcharge > 0)
+                                            <p><strong>Phụ thu đổi phòng:</strong> <span class="text-danger">{{ number_format($roomChangeSurcharge) }} VNĐ</span></p>
+                                        @elseif($roomChangeSurcharge < 0)
+                                            <p><strong>Hoàn tiền đổi phòng:</strong> <span class="text-success">{{ number_format(abs($roomChangeSurcharge)) }} VNĐ</span></p>
+                                        @endif
                                         <p><strong>Tiền phòng mới:</strong> <span class="text-primary font-weight-bold">{{ number_format($finalRoomCost) }} VNĐ</span></p>
-                                        @if($roomChanges->count() > 0)
-                                            <div class="small text-muted mb-2">
-                                                <i class="fas fa-info-circle mr-1"></i>
-                                                <strong>Chi tiết đổi phòng:</strong>
-                                                @foreach($roomChanges as $change)
-                                                    <br>• <strong>{{ $change->oldRoom->roomType->name ?? 'Phòng cũ' }}</strong> 
-                                                    <i class="fas fa-arrow-right mx-1"></i> 
-                                                    <strong>{{ $change->newRoom->roomType->name ?? 'Phòng mới' }}</strong>
-                                                    @if($change->price_difference > 0)
-                                                        <span class="text-danger fw-bold">(+{{ number_format($change->price_difference) }} VNĐ)</span>
-                                                    @elseif($change->price_difference < 0)
-                                                        <span class="text-success fw-bold">({{ number_format($change->price_difference) }} VNĐ)</span>
-                                                    @endif
-                                                    <br><small class="text-muted">Trạng thái: {{ ucfirst($change->status) }} | Ngày yêu cầu: {{ $change->created_at->format('d/m/Y H:i') }}</small>
-                                                @endforeach
+                                        <div class="small text-muted mb-2">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            <strong>Chi tiết đổi phòng:</strong>
+                                            @foreach($roomChanges as $change)
+                                                <br>• <strong>{{ $change->oldRoom->roomType->name ?? 'Phòng cũ' }}</strong> 
+                                                <i class="fas fa-arrow-right mx-1"></i> 
+                                                <strong>{{ $change->newRoom->roomType->name ?? 'Phòng mới' }}</strong>
+                                                @if($change->price_difference > 0)
+                                                    <span class="text-danger fw-bold">(+{{ number_format($change->price_difference) }} VNĐ)</span>
+                                                @elseif($change->price_difference < 0)
+                                                    <span class="text-success fw-bold">({{ number_format($change->price_difference) }} VNĐ)</span>
+                                                @endif
+                                                <br><small class="text-muted">Trạng thái: {{ ucfirst($change->status) }} | Ngày yêu cầu: {{ $change->created_at->format('d/m/Y H:i') }}</small>
+                                            @endforeach
+                                        </div>
+                                        
+                                        <!-- Thông báo hoàn tiền cho khách -->
+                                        @if($roomChangeSurcharge < 0)
+                                            <div class="alert alert-info mt-3">
+                                                <i class="fas fa-info-circle"></i>
+                                                <strong>Thông báo quan trọng:</strong>
+                                                <br>Khách hàng đã đổi xuống phòng rẻ hơn với số tiền chênh lệch: 
+                                                <strong>{{ number_format(abs($roomChangeSurcharge), 0, ',', '.') }} VNĐ</strong>
+                                                <br>Vui lòng thông báo khách hàng xuống quầy lễ tân để nhận tiền thừa.
                                             </div>
                                         @endif
                                     @else
@@ -473,10 +486,18 @@
                                                                 <small class="text-success">💡 Khuyến mại: {{ number_format($totalDiscount) }} VNĐ ({{ $booking->promotion_code ?? 'Mã không xác định' }})</small>
                                                             </div>
                                                         @endif
-                                                        @if($roomChangeSurcharge > 0)
-                                                            <div class="mt-2 small text-info">
+                                                        @if($roomChanges->count() > 0)
+                                                            <div class="mt-2 small">
                                                                 <i class="fas fa-exchange-alt mr-1"></i>
-                                                                <strong>Bao gồm phụ thu đổi phòng:</strong> {{ number_format($roomChangeSurcharge) }} VNĐ
+                                                                @if($roomChangeSurcharge > 0)
+                                                                    <span class="text-info">
+                                                                        <strong>Bao gồm phụ thu đổi phòng:</strong> {{ number_format($roomChangeSurcharge) }} VNĐ
+                                                                    </span>
+                                                                @elseif($roomChangeSurcharge < 0)
+                                                                    <span class="text-success">
+                                                                        <strong>Bao gồm hoàn tiền đổi phòng:</strong> {{ number_format(abs($roomChangeSurcharge)) }} VNĐ
+                                                                    </span>
+                                                                @endif
                                                             </div>
                                                         @endif
                                                     </div>
