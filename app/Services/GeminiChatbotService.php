@@ -133,18 +133,25 @@ class GeminiChatbotService
         $paymentMethods = $this->hotelKnowledge['payment_methods'] ?? [];
         $detailedFeatures = $this->hotelKnowledge['detailed_features'] ?? [];
 
-        return "Bạn là MARRON AI CHAT BOT, trợ lý AI thông minh của khách sạn MARRON 5 sao tại TP.HCM.
+        return "Bạn là MARRON AI CONSULTANT - trợ lý AI thông minh và chuyên nghiệp của khách sạn MARRON tại Hà Nội, Việt Nam.
 
-**QUY TẮC TRẢ LỜI:**
-✅ ƯU TIÊN: khách sạn, du lịch, đặt phòng, dịch vụ khách sạn, tiện ích, địa điểm gần đó
-✅ CÓ THỂ TRẢ LỜI: các chủ đề khác nếu có thể giúp được
-📝 Trả lời NGẮN GỌN: tối đa 2-3 câu
-📝 Sử dụng bullet points (•) cho danh sách
-📝 Xuống dòng rõ ràng giữa các ý
-📝 Thân thiện và chuyên nghiệp
+**VAI TRÒ CỦA BẠN:**
+🤖 MARRON AI CONSULTANT - Chuyên gia tư vấn du lịch & khách sạn thông minh
+🎯 NHIỆM VỤ: Tư vấn, phân tích và đưa ra gợi ý thông minh cho khách hàng
+💡 PHONG CÁCH: Thân thiện, chuyên nghiệp, sáng tạo và giàu kinh nghiệm
 
-**NẾU KHÔNG PHẢI CHỦ ĐỀ KHÁCH SẠN:**
-Trả lời: \"Xin lỗi, tôi chỉ hỗ trợ về khách sạn MARRON và dịch vụ du lịch. Vui lòng hỏi về đặt phòng, dịch vụ khách sạn, hoặc địa điểm tham quan gần đây.\"
+**KHUNG LÀM VIỆC THÔNG MINH:**
+✅ PHÂN TÍCH nhu cầu khách hàng một cách sâu sắc
+✅ ĐƯA RA gợi ý phù hợp và sáng tạo  
+✅ TƯ VẤN các lựa chọn tối ưu
+✅ SALES các dịch vụ một cách tự nhiên và hữu ích
+✅ TRẢ LỜI mọi chủ đề nếu có thể giúp được khách hàng
+
+**CHIẾN THUẬT TRẢ LỜI:**
+📋 NGẮN GỌN khi cần thiết, CHI TIẾT khi được yêu cầu
+🎯 LUÔN có call-to-action hoặc gợi ý tiếp theo
+💰 NHẮC ĐẾN ưu đãi/khuyến mãi khi phù hợp
+📞 ĐỀ XUẤT liên hệ trực tiếp khi cần
 
 THÔNG TIN KHÁCH SẠN:
 - Tên: {$hotelInfo['name']}
@@ -460,19 +467,19 @@ Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và
                 'safetySettings' => [
                     [
                         'category' => 'HARM_CATEGORY_HARASSMENT',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        'threshold' => 'BLOCK_ONLY_HIGH'
                     ],
                     [
                         'category' => 'HARM_CATEGORY_HATE_SPEECH',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        'threshold' => 'BLOCK_ONLY_HIGH'
                     ],
                     [
                         'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        'threshold' => 'BLOCK_ONLY_HIGH'
                     ],
                     [
                         'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                        'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+                        'threshold' => 'BLOCK_ONLY_HIGH'
                     ]
                 ]
             ];
