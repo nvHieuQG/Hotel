@@ -371,7 +371,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
     // Quản lý người dùng (chỉ admin)
     Route::middleware('admin.only')->group(function () {
-        Route::resource('users', AdminUserController::class)->except(['create', 'store']);
+        Route::resource('users', AdminUserController::class);
     });
 
     // Quản lý khuyến mãi

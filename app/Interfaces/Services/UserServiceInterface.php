@@ -3,6 +3,7 @@
 namespace App\Interfaces\Services;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface UserServiceInterface
 {
@@ -12,6 +13,15 @@ interface UserServiceInterface
      * @return Collection
      */
     public function getAll(): Collection;
+
+    /**
+     * Phân trang người dùng với bộ lọc
+     *
+     * @param array $filters
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator;
 
     /**
      * Tìm người dùng theo ID
@@ -37,4 +47,12 @@ interface UserServiceInterface
      * @return bool
      */
     public function deleteUser(int $id): bool;
-} 
+
+    /**
+     * Tạo người dùng mới
+     *
+     * @param array $data
+     * @return mixed
+     */
+    public function createUser(array $data);
+}
