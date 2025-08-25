@@ -1,0 +1,808 @@
+/* ===== CHATBOT CSS - PHONG CÁCH KHÁCH SẠN SANG TRỌNG ===== */
+
+/* Biến màu sắc chủ đạo */
+:root {
+    --primary-color: #8D703B;
+    --primary-dark: #6E552D;
+    --primary-light: #B89A6B;
+    --text-dark: #000000;
+    --text-light: #6C6C6C;
+    --bg-light: #f8f9fa;
+    --bg-white: #ffffff;
+    --border-color: #E8E8E8;
+    --shadow-light: rgba(141, 112, 59, 0.1);
+    --shadow-medium: rgba(141, 112, 59, 0.2);
+}
+
+/* Banner đã được xóa khỏi HTML - chỉ giữ menu và nền menu */
+
+/* Đảm bảo menu có nền mặc định */
+.navbar {
+    background: #232323 !important; /* Thay đổi nền menu thành màu đen tối */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important; /* Tăng shadow để nổi bật trên nền đen */
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    height: 70px !important; /* Cố định chiều cao menu */
+}
+
+/* Đảm bảo body có padding-top để không bị menu đè */
+body {
+    padding-top: 70px !important; /* Giảm từ 80px xuống 70px để phù hợp với menu cố định */
+}
+
+/* Đảm bảo text trong menu có màu sáng trên nền tối */
+.navbar .navbar-nav .nav-link {
+    color: #ffffff !important; /* Text menu màu trắng */
+}
+
+.navbar .navbar-brand {
+    color: #ffffff !important; /* Logo/brand màu trắng */
+}
+
+.navbar .navbar-toggler {
+    border-color: #ffffff !important; /* Border toggle button màu trắng */
+}
+
+.navbar .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+
+/* Page title section đã được xóa khỏi HTML */
+
+/* Chat Wrapper - Container chính */
+.chat-wrapper {
+    padding: 20px 0 30px 0; /* Tăng padding trên vì không còn banner */
+    background: var(--bg-light);
+    margin-top: 0; /* Bỏ margin-top vì đã xóa page title section */
+}
+
+/* Chat Container chính - Layout 2 cột */
+.chat-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--bg-white);
+    padding: 40px;
+    border-radius: 20px;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 15px 50px var(--shadow-light);
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Chat Layout - 2 cột chính và sidebar */
+.chat-layout {
+    display: flex;
+    gap: 25px;
+    align-items: flex-start;
+}
+
+/* Main Chat Area - Cột trái */
+.chat-main {
+    flex: 1;
+    min-width: 0;
+}
+
+
+
+/* Nút xóa lịch sử chat */
+.btn-clear-history {
+    background: #dc3545;
+    color: var(--bg-white);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.btn-clear-history:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-clear-history i {
+    font-size: 14px;
+}
+
+.btn-clear-history span {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Clear history section */
+.clear-history-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* FAQ Sidebar - Cột phải */
+.chat-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--bg-light);
+    border-radius: 15px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    position: sticky;
+    top: 20px;
+}
+
+/* Chat Layout - 2 cột chính và sidebar */
+.chat-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* Chat History - Vùng hiển thị tin nhắn - Tối ưu diện tích */
+.chat-history {
+    height: 600px;
+    overflow-y: auto;
+    background: var(--bg-light);
+    padding: 15px;
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* Message styles - Tin nhắn user/bot */
+.message {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    animation: fadeInUp 0.4s ease-out;
+    gap: 10px;
+    width: 100%;
+}
+
+/* User message - Bên phải (học theo chatai.html) */
+.message.user {
+    justify-content: flex-end;
+}
+
+/* Bot message - Bên trái (học theo chatai.html) */
+.message.bot {
+    justify-content: flex-start;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+/* Avatar styles - Hình đại diện từ Icons8 */
+.avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    position: relative;
+    border: 2px solid var(--primary-color);
+    background: var(--bg-white);
+    padding: 2px;
+    object-fit: contain;
+    z-index: 1;
+}
+
+.avatar::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    background: #4CAF50;
+    border-radius: 50%;
+    border: 2px solid var(--bg-white);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+/* Avatar positioning (học theo chatai.html) */
+.user .avatar {
+    order: 2;
+}
+
+.bot .avatar {
+    order: -1;
+}
+
+
+
+/* Message text styling (học theo chatai.html) */
+.message-text {
+    max-width: 75%;
+    padding: 10px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+    word-wrap: break-word;
+    font-family: 'Montserrat', sans-serif;
+    white-space: pre-line; /* Giữ nguyên xuống dòng từ API */
+}
+
+/* User message text - Bên phải */
+.user .message-text {
+    background: var(--primary-color);
+    color: var(--bg-white);
+    border-bottom-right-radius: 6px;
+    box-shadow: 0 2px 8px var(--shadow-medium);
+}
+
+/* Bot message text - Bên trái */
+.bot .message-text {
+    background: var(--bg-white);
+    color: var(--text-dark);
+    border: 2px solid var(--primary-color);
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+/* FAQ Container - Gộp Quick Suggestions và FAQ */
+.faq-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 450px;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--bg-white);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+/* Suggestion buttons (5 câu đầu) */
+.faq-btn.suggestion-btn {
+    background: var(--bg-white);
+    border: 1.5px solid var(--primary-color);
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--primary-color);
+    font-weight: 500;
+    font-family: 'Montserrat', sans-serif;
+    white-space: nowrap;
+    line-height: 1.2;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.faq-btn.suggestion-btn:hover {
+    background: var(--primary-color);
+    color: var(--bg-white);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--shadow-medium);
+}
+
+.suggestion-btn:hover {
+    background: var(--primary-color);
+    color: var(--bg-white);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--shadow-medium);
+}
+
+/* Input group - Thanh nhập tin nhắn - Gần với Quick Suggestions */
+.input-group {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    background: var(--bg-white);
+    border: 2px solid var(--primary-color);
+    border-radius: 30px;
+    padding: 4px; /* Giảm từ 6px xuống 4px để khung thấp hơn */
+    box-shadow: 0 4px 15px var(--shadow-light);
+    margin-top: 5px;
+    min-height: 50px; /* Đặt chiều cao tối thiểu cho khung */
+}
+
+.message-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 8px 20px; /* Giảm padding trên dưới từ 10px xuống 8px */
+    font-size: 16px;
+    background: transparent;
+    color: var(--text-dark);
+    font-family: 'Montserrat', sans-serif;
+}
+
+.message-input::placeholder {
+    color: var(--text-light);
+}
+
+.btn-send {
+    background: var(--primary-color);
+    color: var(--bg-white);
+    border: none;
+    border-radius: 50%;
+    width: 35px; /* Giảm từ 50px xuống 35px */
+    height: 35px; /* Giảm từ 50px xuống 35px */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px; /* Giảm font-size từ 20px xuống 16px */
+    flex-shrink: 0;
+}
+
+.btn-send:hover {
+    background: var(--primary-dark);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px var(--shadow-medium);
+}
+
+/* Typing indicator - Bot đang trả lời */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    background: var(--bg-white);
+    border: 2px solid var(--primary-color);
+    border-radius: 18px;
+    border-bottom-left-radius: 6px;
+    max-width: 70%;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.4s ease-out;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.typing-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+}
+
+/* FAQ Sidebar - Tiêu đề và danh sách */
+.chat-sidebar h3 {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 25px;
+    font-family: 'Montserrat', sans-serif;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 15px;
+}
+
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 15px;
+    background: var(--bg-white);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.faq-list h4 {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 12px;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.faq-btn {
+    background: var(--bg-white);
+    border: 1.5px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--primary-color);
+    font-weight: 500;
+    font-family: 'Montserrat', sans-serif;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 2px 8px var(--shadow-light);
+    width: 100%;
+}
+
+.faq-btn:hover {
+    background: var(--primary-color);
+    color: var(--bg-white);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--shadow-medium);
+}
+
+.faq-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.faq-text {
+    font-size: 13px;
+    line-height: 1.4;
+    flex: 1;
+}
+
+/* Welcome message - Tin nhắn chào mừng */
+.welcome-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-light);
+}
+
+.welcome-message h4 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.welcome-message p {
+    margin-bottom: 12px;
+    line-height: 1.6;
+    font-size: 15px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Scrollbar customization - Tùy chỉnh thanh cuộn */
+.chat-history::-webkit-scrollbar,
+.faq-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-history::-webkit-scrollbar-track,
+.faq-container::-webkit-scrollbar-track {
+    background: var(--bg-light);
+    border-radius: 4px;
+}
+
+.chat-history::-webkit-scrollbar-thumb,
+.faq-container::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.chat-history::-webkit-scrollbar-thumb:hover,
+.faq-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* Responsive Design - Đáp ứng mọi thiết bị */
+@media (max-width: 768px) {
+    .hero-banner {
+        padding: 40px 0;
+        margin-bottom: 25px;
+    }
+    
+    .chat-wrapper {
+        padding: 15px 0 30px 0;
+    }
+    
+    .banner-title {
+        font-size: 2.5rem;
+    }
+    
+    .banner-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .chat-container {
+        margin: 15px 10px;
+        padding: 20px;
+        border-radius: 15px;
+        max-width: 95%;
+    }
+    
+    /* Chuyển layout từ 2 cột sang 1 cột trên tablet */
+    .chat-layout {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .chat-sidebar {
+        width: 100%;
+        order: -1; /* Đưa FAQ lên trên */
+        position: static;
+    }
+    
+    .chat-history {
+        height: 350px;
+        padding: 18px;
+    }
+    
+    .message-text {
+        max-width: 80%;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .avatar {
+        width: 40px;
+        height: 40px;
+        padding: 1px;
+    }
+    
+    .faq-container {
+        max-height: 300px;
+        padding: 12px;
+    }
+    
+    .input-group {
+        padding: 6px;
+        gap: 12px;
+        margin-top: 3px;
+    }
+    
+    .btn-send {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    /* FAQ buttons trên tablet */
+    .faq-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .faq-btn {
+        flex: 1;
+        min-width: 200px;
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Banner đã được xóa khỏi HTML */
+    
+    /* Menu mobile cũng có nền */
+    .navbar {
+        background: #232323 !important; /* Thay đổi nền menu mobile thành màu đen tối */
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important; /* Tăng shadow để nổi bật trên nền đen */
+    }
+    
+    body {
+        padding-top: 70px !important; /* Giảm padding-top trên mobile */
+    }
+    
+    /* Page title section đã được xóa khỏi HTML */
+    
+    .chat-wrapper {
+        padding: 15px 0 20px 0; /* Tăng padding trên vì không còn banner */
+        margin-top: 0; /* Bỏ margin-top vì đã xóa page title section */
+    }
+    
+    .chat-container {
+        margin: 10px 5px;
+        padding: 15px;
+        max-width: 98%;
+    }
+    
+    /* Layout mobile - Ẩn FAQ sidebar, chỉ hiện chat */
+    .chat-sidebar {
+        display: none;
+    }
+    
+    .chat-main {
+        width: 100%;
+    }
+    
+    .chat-history {
+        height: 400px;
+        padding: 15px;
+    }
+    
+    .message-text {
+        max-width: 85%;
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    
+    .avatar {
+        width: 35px;
+        height: 35px;
+        padding: 1px;
+    }
+    
+    .input-group {
+        margin-top: 2px;
+        padding: 3px; /* Giảm padding trên mobile */
+        min-height: 45px; /* Giảm chiều cao tối thiểu trên mobile */
+    }
+    
+    .message-input {
+        padding: 6px 14px; /* Giảm padding input trên mobile */
+        font-size: 14px; /* Giảm font-size trên mobile */
+    }
+    
+    .btn-send {
+        width: 35px; /* Giữ kích thước nút nhỏ trên mobile */
+        height: 35px;
+        font-size: 14px; /* Giảm font-size trên mobile */
+    }
+}
+
+/* Simple Footer for Chatbot */
+.chatbot-footer {
+    background: var(--bg-white); /* Thay đổi nền thành trắng */
+    color: var(--text-dark); /* Thay đổi chữ thành đen */
+    padding: 10px 0; /* Giảm padding từ 20px xuống 10px */
+    margin-top: 40px;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    border-top: 1px solid var(--border-color); /* Thêm viền trên để phân biệt */
+}
+
+.chatbot-footer p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Responsive footer */
+@media (max-width: 768px) {
+    .chatbot-footer {
+        padding: 8px 0; /* Giảm padding từ 15px xuống 8px */
+        margin-top: 30px;
+    }
+    
+    .chatbot-footer p {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chatbot-footer {
+        padding: 6px 0; /* Giảm padding từ 12px xuống 6px */
+        margin-top: 25px;
+    }
+    
+    .chatbot-footer p {
+        font-size: 12px;
+    }
+}
+
+/* Authentication required message */
+.auth-required-message {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--bg-white);
+    border-radius: 15px;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 10px 30px var(--shadow-light);
+}
+
+.auth-required-message h3 {
+    color: var(--primary-color);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.auth-required-message p {
+    color: var(--text-light);
+    font-size: 16px;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.auth-required-message .btn {
+    background: var(--primary-color);
+    color: var(--bg-white);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    margin: 0 10px;
+}
+
+.auth-required-message .btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow-medium);
+}
+
+.auth-required-message a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-required-message a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Responsive auth message */
+@media (max-width: 768px) {
+    .auth-required-message {
+        padding: 30px 15px;
+        margin: 10px;
+    }
+    
+    .auth-required-message h3 {
+        font-size: 20px;
+    }
+    
+    .auth-required-message p {
+        font-size: 14px;
+    }
+    
+    .auth-required-message .btn {
+        padding: 10px 25px;
+        font-size: 14px;
+        margin: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-required-message {
+        padding: 25px 10px;
+    }
+    
+    .auth-required-message h3 {
+        font-size: 18px;
+    }
+    
+    .auth-required-message p {
+        font-size: 13px;
+    }
+    
+    .auth-required-message .btn {
+        padding: 8px 20px;
+        font-size: 13px;
+        display: block;
+        margin: 10px auto;
+        max-width: 200px;
+    }
+}

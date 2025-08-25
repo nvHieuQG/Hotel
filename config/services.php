@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY', 'AIzaSyACpbVqBRE4WNqNbsyqqsRQDMmrHqlNd7Q'),
+        'api_key_2' => env('GEMINI_API_KEY_2', 'AIzaSyAG12llaY-UyA7DBesa6xolsTt0UeMjz_w'),
+        'api_key_3' => env('GEMINI_API_KEY_3', 'AIzaSyDFU4U_pB9txpbJh2HOT3GZVRzwus9u2Ng'),
+        'api_key_4' => env('GEMINI_API_KEY_4', 'AIzaSyD0APmICsRA4-4LIXxPapEpexvU6PNka50'),
+        'api_key_5' => env('GEMINI_API_KEY_5', 'AIzaSyDdY1v1dWguWLtXYWvEfuTaFJxCk7mCmmw'),
+    ],
+
 ];
