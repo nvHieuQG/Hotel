@@ -142,9 +142,9 @@
                                                         <small class="text-muted">{{ $room->roomType->description }}</small>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="bg-primary text-white px-2 py-1 rounded">{{ $room->quantity }} phòng</span>
+                                                        <span class="px-2 py-1">{{ $room->quantity }} phòng</span>
                                                     </td>
-                                                    <td class="text-right">{{ number_format($room->price_per_night, 0, ',', '.') }} VNĐ</td>
+                                                    <td class="text-right">{{ number_format($room->price_per_room, 0, ',', '.') }} VNĐ</td>
                                                     <td class="text-right font-weight-bold">{{ number_format($room->total_price, 0, ',', '.') }} VNĐ</td>
                                                 </tr>
                                             @endforeach
@@ -374,6 +374,22 @@
 
         <!-- Cột phải - Thông tin phụ -->
         <div class="col-lg-4">
+                        <!-- Thông báo đã thanh toán đủ -->
+                        @if($outstandingAmount <= 0)
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="fas fa-check-circle"></i> Đã thanh toán đủ</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success mb-0">
+                            <strong>Trạng thái thanh toán:</strong>
+                            <i class="fas fa-check-circle"></i> Đã thanh toán đủ tiền
+                            <br><small class="text-success">Có thể xuất hóa đơn VAT</small>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Thông tin khách hàng -->
             <div class="card mb-3">
                 <div class="card-header bg-success text-white">
@@ -415,66 +431,6 @@
                         </a>
                         @endif
                     </div>
-                </div>
-            </div>
-
-            <!-- Trạng thái thanh toán -->
-            <div class="card mb-3">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0"><i class="fas fa-credit-card"></i> Trạng thái thanh toán</h6>
-                </div>
-                <div class="card-body">
-                    @php
-                        // Sử dụng logic đã tính toán ở trên
-                        $paymentStatusDisplay = $paymentStatus ?? 'unpaid';
-                        $paymentStatusTextDisplay = $paymentStatusText ?? 'Chưa thanh toán';
-                        $paymentStatusClassDisplay = $paymentStatusClass ?? 'danger';
-                        $remainingAmountDisplay = $remainingAmount ?? $finalAmount;
-                        $completionPercentageDisplay = $completionPercentage ?? 0;
-                    @endphp
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-{{ $paymentStatusClassDisplay }}">{{ $paymentStatusTextDisplay }}</h6>
-                            <p class="mb-1"><strong>Tổng tiền:</strong> {{ number_format($finalAmount, 0, ',', '.') }} VNĐ</p>
-                            <p class="mb-1"><strong>Đã thanh toán:</strong> {{ number_format($totalCompletedPayments ?? 0, 0, ',', '.') }} VNĐ</p>
-                            @if(($totalPendingPayments ?? 0) > 0)
-                                <p class="mb-1 text-warning"><strong>Đang chờ xác nhận:</strong> {{ number_format($totalPendingPayments ?? 0, 0, ',', '.') }} VNĐ</p>
-                            @endif
-                            @if(($totalProcessingPayments ?? 0) > 0)
-                                <p class="mb-1 text-info"><strong>Đang xử lý:</strong> {{ number_format($totalProcessingPayments ?? 0, 0, ',', '.') }} VNĐ</p>
-                            @endif
-                            <p class="mb-1"><strong>Còn lại:</strong> {{ number_format($remainingAmountDisplay, 0, ',', '.') }} VNĐ</p>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="progress mb-2" style="height: 25px;">
-                                <div class="progress-bar bg-{{ $paymentStatusClassDisplay }}" role="progressbar" 
-                                     style="width: {{ $completionPercentageDisplay }}%" 
-                                     aria-valuenow="{{ $completionPercentageDisplay }}" 
-                                     aria-valuemin="0" aria-valuemax="100">
-                                    {{ $completionPercentageDisplay }}%
-                                </div>
-                            </div>
-                            <small class="text-muted">Tỷ lệ hoàn thành: {{ $completionPercentageDisplay }}%</small>
-                        </div>
-                    </div>
-                    
-                    @if($paymentStatusDisplay === 'paid')
-                        <div class="alert alert-success mt-2 mb-0">
-                            <i class="fas fa-check-circle"></i>
-                            <strong>Hoàn thành thanh toán!</strong> Khách hàng đã thanh toán đủ tiền.
-                        </div>
-                    @elseif($paymentStatusDisplay === 'partial')
-                        <div class="alert alert-warning mt-2 mb-0">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Thanh toán một phần!</strong> Khách hàng còn thiếu {{ number_format($remainingAmountDisplay, 0, ',', '.') }} VNĐ.
-                        </div>
-                    @else
-                        <div class="alert alert-danger mt-2 mb-0">
-                            <i class="fas fa-times-circle"></i>
-                            <strong>Chưa thanh toán!</strong> Khách hàng cần thanh toán {{ number_format($finalAmount, 0, ',', '.') }} VNĐ.
-                        </div>
-                    @endif
                 </div>
             </div>
 
@@ -527,58 +483,6 @@
                 </div>
             </div>
             @endif
-
-            <!-- Debug: Hiển thị tất cả payments -->
-            <div class="card mb-3">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Thông tin Payments (Debug)</h6>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info mb-3">
-                        <strong>Tổng số payments:</strong> {{ $tourBooking->payments->count() }}
-                        <br><strong>Payments chuyển khoản:</strong> {{ $tourBooking->payments->where('method', 'bank_transfer')->count() }}
-                        <br><strong>Payments pending:</strong> {{ $tourBooking->payments->where('status', 'pending')->count() }}
-                        <br><strong>Payments completed:</strong> {{ $tourBooking->payments->where('status', 'completed')->count() }}
-                    </div>
-                    
-                    @if($tourBooking->payments->count() > 0)
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Method</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Created</th>
-                                        <th>Transaction ID</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($tourBooking->payments as $payment)
-                                    <tr>
-                                        <td>{{ $payment->id }}</td>
-                                        <td>{{ $payment->method }}</td>
-                                        <td>{{ number_format($payment->amount, 0, ',', '.') }} VNĐ</td>
-                                        <td>
-                                            <span class="badge badge-{{ $payment->status === 'completed' ? 'success' : ($payment->status === 'pending' ? 'warning' : 'secondary') }}">
-                                                {{ $payment->status }}
-                                            </span>
-                                        </td>
-                                        <td>{{ $payment->created_at->format('d/m/Y H:i') }}</td>
-                                        <td>{{ $payment->transaction_id }}</td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="alert alert-warning">
-                            <strong>Chưa có payment nào!</strong> Khách hàng cần bấm nút "Báo đã thanh toán" để tạo payment record.
-                        </div>
-                    @endif
-                </div>
-            </div>
 
             <!-- Cập nhật trạng thái -->
             <div class="card mb-3">
@@ -659,10 +563,8 @@
                                     </option>
                                 @endforeach
                             </select>
-                        </div>
-                        
-                        
-                        
+                        </div>   
+                        <br>
                         <button type="submit" class="btn btn-primary btn-sm btn-block" id="updateStatusBtn">
                             <i class="fas fa-save"></i> Cập nhật trạng thái
                         </button>
@@ -709,23 +611,6 @@
                 </div>
             </div>
             @endif
-            
-            <!-- Thông báo đã thanh toán đủ -->
-            @if($outstandingAmount <= 0)
-                <div class="card mb-3">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0"><i class="fas fa-check-circle"></i> Đã thanh toán đủ</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-success mb-0">
-                            <strong>Trạng thái thanh toán:</strong>
-                            <i class="fas fa-check-circle"></i> Đã thanh toán đủ tiền
-                            <br><small class="text-success">Có thể xuất hóa đơn VAT</small>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
         </div>
     </div>
 
