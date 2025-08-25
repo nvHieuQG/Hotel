@@ -325,6 +325,13 @@ class AppServiceProvider extends ServiceProvider
             return Auth::check() && optional(Auth::user()->role)->name === 'staff';
         });
 
+        // Đăng ký scheduled task để xóa giao dịch quá hạn
+        $this->app->make(\Illuminate\Console\Scheduling\Schedule::class)
+            ->command('payments:clean-expired')
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/clean-expired-payments.log'));
+
         // Share featured promotions to client master layout if exists
         try {
             \Illuminate\Support\Facades\View::composer('client.layouts.master', function ($view) {

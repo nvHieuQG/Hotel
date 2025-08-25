@@ -287,6 +287,30 @@ class Promotion extends Model
     }
 
     /**
+     * Lấy promotion tốt nhất cho một số tiền cụ thể
+     */
+    public static function getBestPromotionForAmount(float $amount): ?self
+    {
+        return static::where('status', 'active')
+            ->where('is_active', true)
+            ->where('expired_at', '>', now())
+            ->where('minimum_amount', '<=', $amount)
+            ->where(function($query) {
+                $query->whereNull('usage_limit')
+                      ->orWhereRaw('used_count < usage_limit');
+            })
+            ->where(function($query) {
+                $query->whereNull('valid_from')
+                      ->orWhere('valid_from', '<=', now());
+            })
+            ->orderByRaw('CASE 
+                WHEN discount_type = "percentage" THEN (amount * discount_value / 100)
+                ELSE discount_value 
+            END DESC')
+            ->first();
+    }
+
+    /**
      * Tăng số lần sử dụng
      */
     public function incrementUsage(): bool

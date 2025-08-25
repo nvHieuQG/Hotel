@@ -83,6 +83,9 @@
                                                     <div class="d-flex justify-content-between mb-1">
                                                         <span>Giá phòng</span><span id="price_room">{{ number_format($booking->base_room_price) }} VND</span>
                                                     </div>
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span>Dịch vụ & phụ phí</span><span id="price_services">{{ number_format($booking->surcharge + $booking->extra_services_total + $booking->total_services_price) }} VND</span>
+                                                    </div>
                                                     <div class="d-flex justify-content-between mb-1 text-success">
                                                         <span>Khuyến mại (chỉ phòng)</span><span id="price_discount">- 0 VND</span>
                                                     </div>

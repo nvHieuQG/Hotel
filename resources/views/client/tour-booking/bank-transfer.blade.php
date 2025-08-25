@@ -40,7 +40,7 @@
                             <div class="col-md-6">
                                 <p><strong>Check-in:</strong> {{ $tourBooking->check_in_date->format('d/m/Y') }}</p>
                                 <p><strong>Check-out:</strong> {{ $tourBooking->check_out_date->format('d/m/Y') }}</p>
-                                <p><strong>Số tiền:</strong> <span class="text-primary font-weight-bold">{{ number_format($tourBooking->final_price ?? ($tourBooking->total_price - $tourBooking->promotion_discount), 0, ',', '.') }} VNĐ</span></p>
+                                <p><strong>Số tiền:</strong> <span class="text-primary font-weight-bold">{{ number_format($tourBooking->total_price, 0, ',', '.') }} VNĐ</span></p>
                             </div>
                         </div>
                     </div>
@@ -109,29 +109,12 @@
                     </div>
                 </div>
 
-                <!-- Form xác nhận chuyển khoản -->
-                <form id="bank-transfer-form" action="{{ route('tour-booking.bank-transfer.confirm', $tourBooking->id) }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="transaction_id" value="{{ $payment->transaction_id }}">
-                    @if($payment->promotion_id)
-                        <input type="hidden" name="promotion_id" value="{{ $payment->promotion_id }}">
-                    @endif
-                    
-                    <div class="form-group mb-3">
-                        <label for="customer_note" class="form-label">Ghi chú (tùy chọn)</label>
-                        <textarea name="customer_note" id="customer_note" class="form-control" rows="3" 
-                                  placeholder="Nhập ghi chú nếu cần...">{{ old('customer_note') }}</textarea>
-                    </div>
-
-                    <div class="text-center mt-4">
-                        <button type="submit" class="btn btn-success btn-lg px-5" id="confirmTransfer">
-                            <i class="fas fa-university"></i> Xác nhận chuyển khoản
-                        </button>
-                        <a href="{{ route('tour-booking.payment-method', $tourBooking->id) }}" class="btn btn-secondary btn-lg px-5 ml-2">
-                            <i class="fas fa-arrow-left"></i> Quay lại
-                        </a>
-                    </div>
-                </form>
+                <!-- Nút quay lại -->
+                <div class="text-center mt-4">
+                    <a href="{{ route('tour-booking.payment', $tourBooking->booking_id) }}" class="btn btn-secondary btn-lg px-5">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                </div>
 
                 <!-- Lưu ý -->
                 <div class="card mt-4">
@@ -148,19 +131,6 @@
 </section>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Xử lý form submit
-    document.getElementById('bank-transfer-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const submitBtn = document.getElementById('confirmTransfer');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-        
-        // Submit form
-        this.submit();
-    });
-});
 
 function copyBankInfo() {
     const bankInfo = `Ngân hàng: {{ $bankInfo['bank_name'] }}\nSố tài khoản: {{ $bankInfo['account_number'] }}\nChủ tài khoản: {{ $bankInfo['account_holder'] }}\nNội dung: {{ $tourBooking->booking_id }}`;

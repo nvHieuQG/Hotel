@@ -237,7 +237,7 @@ class TourBookingService implements TourBookingServiceInterface
             $payment = $this->createTourBookingPayment($tourBooking, [
                 'promotion_id' => $request->input('promotion_id'),
                 'method' => 'credit_card',
-                'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
+                'amount' => $tourBooking->total_price, // Luôn sử dụng total_price để thanh toán
                 'discount_amount' => $tourBooking->promotion_discount ?? 0,
                 'currency' => 'VND',
                 'status' => 'pending',
@@ -499,7 +499,7 @@ class TourBookingService implements TourBookingServiceInterface
         return $this->createTourBookingPayment($tourBooking, [
             'promotion_id' => $request->input('promotion_id'),
             'method' => 'credit_card',
-            'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
+            'amount' => $tourBooking->total_price, // Luôn sử dụng total_price để thanh toán
             'discount_amount' => $tourBooking->promotion_discount ?? 0,
             'currency' => 'VND',
             'status' => 'pending',
@@ -526,7 +526,7 @@ class TourBookingService implements TourBookingServiceInterface
         return $this->createTourBookingPayment($tourBooking, [
             'promotion_id' => $request->input('promotion_id'),
             'method' => 'bank_transfer',
-            'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
+            'amount' => $tourBooking->total_price, // Luôn sử dụng total_price để thanh toán
             'discount_amount' => $tourBooking->promotion_discount ?? 0,
             'currency' => 'VND',
             'status' => 'pending',
