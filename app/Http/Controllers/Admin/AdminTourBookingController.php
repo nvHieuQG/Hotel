@@ -73,7 +73,28 @@ class AdminTourBookingController extends Controller
         $totalServicesAmount = $tourBooking->tourBookingServices->sum('total_price');
         $totalAmountBeforeDiscount = $totalRoomsAmount + $totalServicesAmount;
         $totalPaid = $tourBooking->payments->where('status', 'completed')->sum('amount');
+        
+        // Tính toán tổng tiền đã thanh toán (bao gồm cả pending để hiển thị chính xác)
+        $totalPaidIncludingPending = $tourBooking->payments->whereIn('status', ['completed', 'pending'])->sum('amount');
+        
+        // Tính toán promotion discount nếu chưa có
         $totalDiscount = $tourBooking->promotion_discount ?? 0;
+        if ($totalDiscount == 0 && $tourBooking->promotion_code) {
+            // Tìm promotion và tính toán discount
+            $promotion = \App\Models\Promotion::where('code', $tourBooking->promotion_code)
+                ->where('status', 'active')
+                ->first();
+            
+            if ($promotion) {
+                $totalDiscount = $promotion->calculateDiscount($totalAmountBeforeDiscount);
+                Log::info('Calculated promotion discount', [
+                    'promotion_code' => $tourBooking->promotion_code,
+                    'discount_amount' => $totalDiscount,
+                    'promotion_type' => $promotion->type,
+                    'discount_value' => $promotion->discount_value
+                ]);
+            }
+        }
         
         // Tính toán giá cuối - LUÔN tính từ tổng hiện tại để bao gồm dịch vụ mới
         if ($totalDiscount > 0) {
@@ -82,7 +103,28 @@ class AdminTourBookingController extends Controller
             $finalAmount = $totalAmountBeforeDiscount;
         }
         
-        $outstandingAmount = $finalAmount - $totalPaid;
+        // QUAN TRỌNG: Số tiền còn thiếu phải dựa trên giá cuối (đã giảm giá)
+        // Không được tính giảm giá thêm lần nữa
+        $outstandingAmount = $finalAmount - $totalPaidIncludingPending;
+        
+        // Số tiền còn thiếu thực tế (chỉ tính completed payments)
+        $actualOutstandingAmount = $finalAmount - $totalPaid;
+        
+        // Debug logging để kiểm tra promotion
+        Log::info('Tour booking price calculation - FIXED', [
+            'tour_booking_id' => $tourBooking->id,
+            'total_rooms_amount' => $totalRoomsAmount,
+            'total_services_amount' => $totalServicesAmount,
+            'total_amount_before_discount' => $totalAmountBeforeDiscount,
+            'promotion_discount' => $totalDiscount,
+            'promotion_code' => $tourBooking->promotion_code ?? 'N/A',
+            'final_amount' => $finalAmount,
+            'total_paid_completed' => $totalPaid,
+            'total_paid_including_pending' => $totalPaidIncludingPending,
+            'outstanding_amount' => $outstandingAmount,
+            'actual_outstanding_amount' => $actualOutstandingAmount,
+            'note' => 'Final amount already includes promotion discount'
+        ]);
 
         // Lấy dịch vụ và ghi chú
         $tourBookingServices = $tourBooking->tourBookingServices;
@@ -101,6 +143,7 @@ class AdminTourBookingController extends Controller
             'totalPaid',
             'totalDiscount', 
             'outstandingAmount',
+            'actualOutstandingAmount', // Thêm actualOutstandingAmount
             'finalAmount',
             'tourBookingServices',
             'tourBookingNotes',
@@ -379,7 +422,7 @@ class AdminTourBookingController extends Controller
 
             // Tính lại trạng thái thanh toán tổng quan
             $completedAmount = $tourBooking->payments()->where('status', 'completed')->sum('amount');
-            $totalAmount = $tourBooking->total_price;
+            $totalAmount = $tourBooking->total_price; // Sử dụng total_price (giá cuối sau giảm giá)
 
             $paymentStatus = 'pending';
             if ($completedAmount >= $totalAmount) {
@@ -655,6 +698,15 @@ class AdminTourBookingController extends Controller
                     'status' => 'confirmed' // Tự động chuyển sang trạng thái đã xác nhận
                 ]);
 
+                // Debug logging để kiểm tra tour booking update
+                Log::info('Tour booking updated to confirmed', [
+                    'tour_booking_id' => $tourBooking->id,
+                    'new_status' => 'confirmed',
+                    'new_payment_status' => 'paid',
+                    'total_paid' => $newTotalPaid,
+                    'final_amount' => $finalAmount
+                ]);
+
                 // Gửi email xác nhận
                 $this->sendTourBookingConfirmationEmail($tourBooking);
 
@@ -719,10 +771,7 @@ class AdminTourBookingController extends Controller
         }
 
         if ($expiredPayments->count() > 0) {
-            Log::info('Cleaned expired pending payments', [
-                'tour_booking_id' => $tourBooking->id,
-                'count' => $expiredPayments->count()
-            ]);
+            // Log đã được bỏ
         }
     }
 
@@ -737,7 +786,7 @@ class AdminTourBookingController extends Controller
 
         // Tìm payment cần xác nhận
         $payment = Payment::where('id', $paymentId)
-            ->where('tour_booking_id', $tourBooking->id)
+            ->where('tour_booking_id', $tourBooking->id) // Sửa: tour_booking_id thay vì booking_id
             ->where('method', 'bank_transfer')
             ->where('status', 'pending')
             ->first();
@@ -757,6 +806,10 @@ class AdminTourBookingController extends Controller
                 'completed_at' => now(),
             ]);
 
+            // Refresh tour booking để lấy thông tin payment mới nhất
+            $tourBooking->refresh();
+            $tourBooking->load(['payments', 'tourBookingRooms', 'tourBookingServices']);
+
             // Tính toán lại các giá trị để đảm bảo chính xác
             $totalRoomsAmount = $tourBooking->tourBookingRooms->sum('total_price');
             $totalServicesAmount = $tourBooking->tourBookingServices->sum('total_price');
@@ -767,13 +820,19 @@ class AdminTourBookingController extends Controller
             // Kiểm tra xem tour booking đã thanh toán đủ chưa
             $totalPaid = $tourBooking->payments->where('status', 'completed')->sum('amount');
 
+            // Cập nhật trạng thái thanh toán của tour booking
             if ($totalPaid >= $finalAmount) {
-                // Cập nhật trạng thái thanh toán
                 $tourBooking->update([
                     'payment_status' => 'paid',
                     'status' => 'confirmed' // Tự động chuyển sang trạng thái đã xác nhận
                 ]);
+            } else {
+                $tourBooking->update([
+                    'payment_status' => 'partial'
+                ]);
+            }
 
+            if ($totalPaid >= $finalAmount) {
                 // Gửi email xác nhận
                 $this->sendTourBookingConfirmationEmail($tourBooking);
 
@@ -791,7 +850,6 @@ class AdminTourBookingController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Tour booking confirm bank transfer error: ' . $e->getMessage());
             return back()->withErrors(['message' => 'Có lỗi xảy ra khi xác nhận chuyển khoản. Vui lòng thử lại.']);
         }
     }

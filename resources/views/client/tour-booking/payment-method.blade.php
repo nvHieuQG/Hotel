@@ -51,27 +51,33 @@
                         <h5>Tóm tắt giá</h5>
                     </div>
                     <div class="card-body">
+                        <!-- Debug info -->
+                        {{-- @if(config('app.debug'))
+                            <div class="alert alert-warning mb-3">
+                                <strong>Debug Info:</strong><br>
+                                total_price: {{ $tourBooking->total_price }}<br>
+                                promotion_discount: {{ $tourBooking->promotion_discount }}<br>
+                                final_price: {{ $tourBooking->final_price }}<br>
+                                Calculated: {{ $tourBooking->total_price + $tourBooking->promotion_discount }} - {{ $tourBooking->promotion_discount }} = {{ $tourBooking->total_price }}
+                            </div>
+                        @endif --}}
+                        
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="table-responsive">
                                     <table class="table table-borderless">
-                                        <tr>
-                                            <td><strong>Tiền phòng:</strong></td>
-                                            <td class="text-right">{{ number_format($tourBooking->total_price, 0, ',', '.') }} VNĐ</td>
+                                        <tr class="table-info">
+                                            <td><strong>Giá cuối cần thanh toán:</strong></td>
+                                            <td class="text-right"><strong>{{ number_format($tourBooking->total_price, 0, ',', '.') }} VNĐ</strong></td>
                                         </tr>
                                         @if($tourBooking->promotion_discount > 0)
-                                            <tr class="text-success">
-                                                <td><strong>Giảm giá:</strong></td>
-                                                <td class="text-right">-{{ number_format($tourBooking->promotion_discount, 0, ',', '.') }} VNĐ</td>
-                                            </tr>
-                                            <tr class="table-info">
-                                                <td><strong>Tổng cộng:</strong></td>
-                                                <td class="text-right"><strong>{{ number_format($tourBooking->final_price, 0, ',', '.') }} VNĐ</strong></td>
-                                            </tr>
-                                        @else
-                                            <tr class="table-info">
-                                                <td><strong>Tổng cộng:</strong></td>
-                                                <td class="text-right"><strong>{{ number_format($tourBooking->total_price, 0, ',', '.') }} VNĐ</strong></td>
+                                            <tr class="table-warning">
+                                                <td colspan="2" class="text-center">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-info-circle"></i> 
+                                                        Giá này đã bao gồm giảm giá {{ number_format($tourBooking->promotion_discount, 0, ',', '.') }} VNĐ
+                                                    </small>
+                                                </td>
                                             </tr>
                                         @endif
                                     </table>

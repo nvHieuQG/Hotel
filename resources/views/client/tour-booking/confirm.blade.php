@@ -84,13 +84,12 @@
                                     ->get();
                             @endphp
                             
+                            <input type="hidden" name="original_total_price" value="{{ $totalPrice }}">
+                            <input type="hidden" name="total_price" value="{{ $totalPrice }}">
+                            <input type="hidden" name="promotion_id" id="promotion_id" value="">
+                            <input type="hidden" name="promotion_code" id="promotion_code" value="">
                             <input type="hidden" name="promotion_discount" id="promotion_discount" value="0">
                             <input type="hidden" name="final_price" id="final_price" value="{{ $totalPrice }}">
-                                                           <input type="hidden" name="original_total_price" value="{{ $totalPrice }}">
-                               <input type="hidden" name="total_price" value="{{ $totalPrice }}">
-                               <input type="hidden" name="promotion_id" id="promotion_id" value="">
-                               <input type="hidden" name="promotion_discount" id="promotion_discount" value="0">
-                               <input type="hidden" name="final_price" id="final_price" value="{{ $totalPrice }}">
 
                             <!-- Chi tiết phòng đã chọn -->
                             <div class="row mb-4">
@@ -528,7 +527,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Cập nhật hidden fields
                 promotionDiscountInput.value = discount;
                 finalPriceInput.value = finalPrice;
-                promotionIdInput.value = '';
+                promotionIdInput.value = data.promotion_id || '';
+                document.querySelector('input[name="promotion_code"]').value = code;
                 
                 // Cập nhật total_price để sử dụng giá cuối sau giảm giá
                 document.querySelector('input[name="total_price"]').value = finalPrice;
@@ -553,6 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 promotionDiscountInput.value = 0;
                 finalPriceInput.value = totalPrice;
                 promotionIdInput.value = '';
+                document.querySelector('input[name="promotion_code"]').value = '';
                 
                 // Reset total_price về giá gốc
                 document.querySelector('input[name="total_price"]').value = totalPrice;

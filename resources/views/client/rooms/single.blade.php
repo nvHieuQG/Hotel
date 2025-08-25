@@ -165,13 +165,6 @@
                                         </div>
                                     @endif
 
-                                    <!-- Thông tin phòng -->
-                                    <div class="room-info">
-                                        <h4 class="mb-3">Thông tin phòng</h4>
-                                        <ul class="list ml-md-5">
-                                            <li><span>Mô tả:</span> {{ Str::limit($roomType->description, 100) }}</li>
-                                        </ul>
-                                    </div>
                                 </div>
                                 <div class="col-md-5">
                                     <div class="card border-0 shadow-sm">

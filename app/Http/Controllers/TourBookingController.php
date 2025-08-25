@@ -214,14 +214,15 @@ class TourBookingController extends Controller
                 'promotion_code' => $request->promotion_code,
                 'promotion_discount' => $request->promotion_discount ?? 0,
                 'promotion_id' => $request->promotion_id,
-                'total_price' => $request->total_price, // Giá gốc trước khi giảm giá
+                'total_price' => $request->total_price, // Giá cuối sau khi giảm giá (số tiền khách thanh toán)
             ];
 
-            // Tính toán giá cuối sau khi áp dụng mã giảm giá
+            // Tính toán giá gốc trước khi giảm giá
             if (($request->promotion_discount ?? 0) > 0) {
-                $tourBookingData['final_price'] = $request->total_price - ($request->promotion_discount);
-                // KHÔNG cập nhật total_price - giữ nguyên giá gốc để hiển thị
+                $tourBookingData['original_price'] = $request->total_price + ($request->promotion_discount);
+                $tourBookingData['final_price'] = $request->total_price; // Giá cuối = total_price
             } else {
+                $tourBookingData['original_price'] = $request->total_price;
                 $tourBookingData['final_price'] = $request->total_price;
             }
 
