@@ -750,6 +750,36 @@ class PaymentService implements PaymentServiceInterface
     }
 
     /**
+     * Create bank transfer payment from session data
+     */
+    public function createBankTransferPaymentFromSession(Booking $booking, array $tempPaymentData): Payment
+    {
+        $transactionId = 'BANK_' . $booking->booking_id . '_' . time();
+
+        // Promotion handling
+        $promotionId = $tempPaymentData['promotion_id'] ?? null;
+        $code = $tempPaymentData['promotion_code'] ?? null;
+        $calc = $this->calculateFinalAmountWithPromotion($booking, $promotionId, $code);
+
+        return $this->createPayment($booking, [
+            'method' => 'bank_transfer',
+            'amount' => $calc['final_amount'],
+            'discount_amount' => $calc['discount_amount'],
+            'currency' => 'VND',
+            'status' => 'pending',
+            'transaction_id' => $transactionId,
+            'gateway_name' => 'Bank Transfer',
+            'gateway_response' => [
+                'bank_info' => $this->getBankTransferInfo(),
+                'customer_note' => $tempPaymentData['customer_note'] ?? null,
+                'promotion' => $calc['promotion'],
+                'created_from_session' => true
+            ],
+            'promotion_id' => $calc['promotion_id'],
+        ]);
+    }
+
+    /**
      * Send payment confirmation email
      */
     public function sendPaymentConfirmationEmail(Payment $payment): void

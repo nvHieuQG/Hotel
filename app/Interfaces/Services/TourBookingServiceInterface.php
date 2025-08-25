@@ -46,4 +46,5 @@ interface TourBookingServiceInterface
 
     public function processCreditCardPayment(\Illuminate\Http\Request $request, \App\Models\TourBooking $tourBooking): array;
     public function processBankTransferPayment(\Illuminate\Http\Request $request, \App\Models\TourBooking $tourBooking): array;
+    public function createBankTransferPaymentFromSession(array $tempPaymentData, \App\Models\TourBooking $tourBooking): \App\Models\Payment;
 }

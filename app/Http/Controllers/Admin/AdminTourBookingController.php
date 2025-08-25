@@ -646,29 +646,25 @@ class AdminTourBookingController extends Controller
     }
 
     /**
-     * Thu tiền bổ sung cho tour booking
+     * Thu tiền bổ sung
      */
     public function collectPayment(Request $request, $id)
     {
         $tourBooking = TourBooking::with(['tourBookingRooms', 'tourBookingServices', 'payments'])->findOrFail($id);
         $amount = $request->amount;
 
-        // Tính toán lại các giá trị để đảm bảo chính xác
-        $totalRoomsAmount = $tourBooking->tourBookingRooms->sum('total_price');
-        $totalServicesAmount = $tourBooking->tourBookingServices->sum('total_price');
-        $totalAmountBeforeDiscount = $totalRoomsAmount + $totalServicesAmount;
-        $totalDiscount = $tourBooking->promotion_discount ?? 0;
-        $finalAmount = $totalDiscount > 0 ? $totalAmountBeforeDiscount - $totalDiscount : $totalAmountBeforeDiscount;
-        $totalPaid = $tourBooking->payments->where('status', 'completed')->sum('amount');
-        $outstandingAmount = $finalAmount - $totalPaid;
-
-        // Kiểm tra số tiền
+        // Kiểm tra số tiền thu
         if ($amount <= 0) {
-            return back()->withErrors(['message' => 'Số tiền phải lớn hơn 0.']);
+            return back()->withErrors(['message' => 'Số tiền thu phải lớn hơn 0.']);
         }
 
-        if ($amount > $outstandingAmount) {
-            return back()->withErrors(['message' => 'Số tiền thu không được vượt quá số tiền còn thiếu (' . number_format($outstandingAmount, 0, ',', '.') . ' VNĐ).']);
+        // Tính toán số tiền còn thiếu
+        $totalCompletedPayments = $tourBooking->payments->where('status', 'completed')->sum('amount');
+        $finalAmount = $tourBooking->final_price ?? $tourBooking->total_price;
+        $remainingAmount = max(0, $finalAmount - $totalCompletedPayments);
+
+        if ($amount > $remainingAmount) {
+            return back()->withErrors(['message' => 'Số tiền thu không được vượt quá số tiền còn thiếu: ' . number_format($remainingAmount, 0, ',', '.') . ' VNĐ.']);
         }
 
         try {
@@ -680,9 +676,16 @@ class AdminTourBookingController extends Controller
                 'amount' => $amount,
                 'method' => 'cash', // Mặc định là tiền mặt
                 'status' => 'completed',
-                'notes' => 'Thu tiền bổ sung bởi admin',
-                'admin_id' => Auth::id(),
-                'completed_at' => now(),
+                'gateway_name' => 'Cash Collection',
+                'gateway_code' => 'ADMIN_COLLECTED',
+                'gateway_message' => 'Thu tiền bổ sung bởi admin: ' . Auth::user()->name,
+                'paid_at' => now(),
+                'gateway_response' => [
+                    'admin_id' => Auth::id(),
+                    'admin_name' => Auth::user()->name,
+                    'collection_method' => 'cash',
+                    'notes' => 'Thu tiền bổ sung tại quầy'
+                ]
             ]);
 
             // Tự động xử lý các giao dịch chuyển khoản chờ xác nhận
@@ -694,7 +697,7 @@ class AdminTourBookingController extends Controller
             // Cập nhật trạng thái thanh toán
             if ($newTotalPaid >= $finalAmount) {
                 $tourBooking->update([
-                    'payment_status' => 'paid',
+                    'payment_status' => 'completed',
                     'status' => 'confirmed' // Tự động chuyển sang trạng thái đã xác nhận
                 ]);
 
@@ -702,7 +705,7 @@ class AdminTourBookingController extends Controller
                 Log::info('Tour booking updated to confirmed', [
                     'tour_booking_id' => $tourBooking->id,
                     'new_status' => 'confirmed',
-                    'new_payment_status' => 'paid',
+                    'new_payment_status' => 'completed',
                     'total_paid' => $newTotalPaid,
                     'final_amount' => $finalAmount
                 ]);
@@ -712,6 +715,10 @@ class AdminTourBookingController extends Controller
 
                 // Tạo thông báo
                 $this->createStatusChangeNotification($tourBooking, $tourBooking->getOriginal('status'), 'confirmed');
+            } else {
+                $tourBooking->update([
+                    'payment_status' => 'partial'
+                ]);
             }
 
             DB::commit();
@@ -786,7 +793,7 @@ class AdminTourBookingController extends Controller
 
         // Tìm payment cần xác nhận
         $payment = Payment::where('id', $paymentId)
-            ->where('tour_booking_id', $tourBooking->id) // Sửa: tour_booking_id thay vì booking_id
+            ->where('tour_booking_id', $tourBooking->id)
             ->where('method', 'bank_transfer')
             ->where('status', 'pending')
             ->first();
@@ -801,38 +808,31 @@ class AdminTourBookingController extends Controller
             // Cập nhật trạng thái payment
             $payment->update([
                 'status' => 'completed',
-                'notes' => 'Đã xác nhận chuyển khoản bởi admin: ' . Auth::user()->name,
-                'admin_id' => Auth::id(),
-                'completed_at' => now(),
+                'gateway_code' => 'ADMIN_CONFIRMED',
+                'gateway_message' => 'Đã xác nhận chuyển khoản bởi admin: ' . Auth::user()->name,
+                'paid_at' => now(),
+                'gateway_response' => array_merge($payment->gateway_response ?? [], [
+                    'admin_confirmed_at' => now()->toISOString(),
+                    'admin_id' => Auth::id(),
+                    'admin_name' => Auth::user()->name
+                ])
             ]);
 
             // Refresh tour booking để lấy thông tin payment mới nhất
             $tourBooking->refresh();
             $tourBooking->load(['payments', 'tourBookingRooms', 'tourBookingServices']);
 
-            // Tính toán lại các giá trị để đảm bảo chính xác
-            $totalRoomsAmount = $tourBooking->tourBookingRooms->sum('total_price');
-            $totalServicesAmount = $tourBooking->tourBookingServices->sum('total_price');
-            $totalAmountBeforeDiscount = $totalRoomsAmount + $totalServicesAmount;
-            $totalDiscount = $tourBooking->promotion_discount ?? 0;
-            $finalAmount = $totalDiscount > 0 ? $totalAmountBeforeDiscount - $totalDiscount : $totalAmountBeforeDiscount;
-
-            // Kiểm tra xem tour booking đã thanh toán đủ chưa
+            // Tính toán lại tổng tiền đã thanh toán
             $totalPaid = $tourBooking->payments->where('status', 'completed')->sum('amount');
+            $finalAmount = $tourBooking->final_price ?? $tourBooking->total_price;
 
             // Cập nhật trạng thái thanh toán của tour booking
             if ($totalPaid >= $finalAmount) {
                 $tourBooking->update([
-                    'payment_status' => 'paid',
+                    'payment_status' => 'completed',
                     'status' => 'confirmed' // Tự động chuyển sang trạng thái đã xác nhận
                 ]);
-            } else {
-                $tourBooking->update([
-                    'payment_status' => 'partial'
-                ]);
-            }
 
-            if ($totalPaid >= $finalAmount) {
                 // Gửi email xác nhận
                 $this->sendTourBookingConfirmationEmail($tourBooking);
 
@@ -843,6 +843,10 @@ class AdminTourBookingController extends Controller
 
                 return redirect()->back()->with('success', 'Đã xác nhận chuyển khoản thành công. Tour booking đã được xác nhận và gửi email thông báo cho khách hàng.');
             } else {
+                $tourBooking->update([
+                    'payment_status' => 'partial'
+                ]);
+
                 DB::commit();
 
                 return redirect()->back()->with('success', 'Đã xác nhận chuyển khoản thành công. Khách hàng còn thiếu ' . number_format($finalAmount - $totalPaid, 0, ',', '.') . ' VNĐ.');
@@ -850,7 +854,98 @@ class AdminTourBookingController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withErrors(['message' => 'Có lỗi xảy ra khi xác nhận chuyển khoản. Vui lòng thử lại.']);
+            Log::error('Error confirming bank transfer for tour booking: ' . $e->getMessage(), [
+                'tour_booking_id' => $tourBooking->id,
+                'payment_id' => $paymentId,
+                'admin_id' => Auth::id()
+            ]);
+            return back()->withErrors(['message' => 'Có lỗi xảy ra khi xác nhận chuyển khoản: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Từ chối chuyển khoản cho tour booking
+     */
+    public function rejectBankTransfer(Request $request, $id)
+    {
+        $tourBooking = TourBooking::with(['tourBookingRooms', 'tourBookingServices', 'payments'])->findOrFail($id);
+        $paymentId = $request->payment_id;
+        $rejectionReason = $request->rejection_reason ?? 'Không xác nhận được giao dịch chuyển khoản';
+
+        // Tìm payment cần từ chối
+        $payment = Payment::where('id', $paymentId)
+            ->where('tour_booking_id', $tourBooking->id)
+            ->where('method', 'bank_transfer')
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$payment) {
+            return back()->withErrors(['message' => 'Không tìm thấy giao dịch chuyển khoản cần từ chối.']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Cập nhật trạng thái payment thành failed
+            $payment->update([
+                'status' => 'failed',
+                'gateway_code' => 'ADMIN_REJECTED',
+                'gateway_message' => 'Bị từ chối bởi admin: ' . $rejectionReason,
+                'gateway_response' => array_merge($payment->gateway_response ?? [], [
+                    'admin_rejected_at' => now()->toISOString(),
+                    'admin_id' => Auth::id(),
+                    'admin_name' => Auth::user()->name,
+                    'rejection_reason' => $rejectionReason
+                ])
+            ]);
+
+            // Cập nhật trạng thái tour booking
+            $tourBooking->update([
+                'payment_status' => 'pending',
+                'status' => 'pending'
+            ]);
+
+            // Gửi email thông báo từ chối cho khách hàng
+            $this->sendBankTransferRejectionEmail($tourBooking, $payment, $rejectionReason);
+
+            // Tạo thông báo
+            $this->createStatusChangeNotification($tourBooking, $tourBooking->getOriginal('status'), 'pending');
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Đã từ chối chuyển khoản thành công. Khách hàng sẽ nhận được thông báo và có thể chuyển khoản lại.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error rejecting bank transfer for tour booking: ' . $e->getMessage(), [
+                'tour_booking_id' => $tourBooking->id,
+                'payment_id' => $paymentId,
+                'admin_id' => Auth::id()
+            ]);
+            return back()->withErrors(['message' => 'Có lỗi xảy ra khi từ chối chuyển khoản: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Gửi email thông báo từ chối chuyển khoản
+     */
+    private function sendBankTransferRejectionEmail(TourBooking $tourBooking, Payment $payment, string $reason): void
+    {
+        try {
+            $user = $tourBooking->user;
+            
+            Mail::to($user->email)->send(new \App\Mail\BankTransferRejectionMail($tourBooking, $payment, $reason));
+            
+            Log::info('Bank transfer rejection email sent successfully', [
+                'tour_booking_id' => $tourBooking->id,
+                'user_email' => $user->email,
+                'payment_id' => $payment->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send bank transfer rejection email: ' . $e->getMessage(), [
+                'tour_booking_id' => $tourBooking->id,
+                'payment_id' => $payment->id
+            ]);
         }
     }
 }

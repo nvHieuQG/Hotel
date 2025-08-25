@@ -16,6 +16,11 @@ interface PaymentServiceInterface
     public function createBankTransferPayment(Booking $booking, array $data = []): Payment;
 
     /**
+     * Create bank transfer payment from session data
+     */
+    public function createBankTransferPaymentFromSession(Booking $booking, array $tempPaymentData): Payment;
+
+    /**
      * Get bank transfer information
      */
     public function getBankTransferInfo(): array;

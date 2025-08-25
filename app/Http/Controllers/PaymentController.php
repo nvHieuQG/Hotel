@@ -169,17 +169,28 @@ class PaymentController extends Controller
         }
 
         try {
-            // Tạo payment record cho chuyển khoản
-            $payment = $this->paymentService->createBankTransferPayment($booking, [
-                'customer_note' => $request->input('customer_note'),
+            // Lưu thông tin tạm thời vào session thay vì tạo payment record
+            $tempPaymentData = [
+                'booking_id' => $booking->id,
+                'method' => 'bank_transfer',
+                'amount' => $this->paymentService->calculateFinalAmountWithPromotion($booking, 
+                    $request->input('promotion_id'), 
+                    $request->input('promotion_code')
+                )['final_amount'],
                 'promotion_id' => $request->input('promotion_id'),
                 'promotion_code' => $request->input('promotion_code'),
-            ]);
+                'customer_note' => $request->input('customer_note'),
+                'created_at' => now(),
+                'transaction_id' => 'TEMP_' . $booking->booking_id . '_' . time()
+            ];
+
+            // Lưu vào session
+            session(['temp_bank_transfer_' . $booking->id => $tempPaymentData]);
 
             // Lấy thông tin ngân hàng
             $bankInfo = $this->paymentService->getBankTransferInfo();
 
-            return view('client.payment.bank-transfer', compact('booking', 'payment', 'bankInfo'));
+            return view('client.payment.bank-transfer', compact('booking', 'tempPaymentData', 'bankInfo'));
         } catch (\Exception $e) {
             Log::error('Bank transfer error', [
                 'booking_id' => $booking->id,
@@ -187,7 +198,7 @@ class PaymentController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', 'Có lỗi xảy ra khi tạo thanh toán chuyển khoản: ' . $e->getMessage());
+                ->with('error', 'Có lỗi xảy ra khi xử lý chuyển khoản: ' . $e->getMessage());
         }
     }
 
@@ -202,6 +213,21 @@ class PaymentController extends Controller
         }
 
         try {
+            // Lấy thông tin tạm thời từ session
+            $tempPaymentData = session('temp_bank_transfer_' . $booking->id);
+            
+            if (!$tempPaymentData) {
+                return redirect()->route('payment.bank-transfer', $booking->id)
+                    ->with('error', 'Không tìm thấy thông tin chuyển khoản. Vui lòng thử lại.');
+            }
+
+            // Tạo payment record thực tế khi khách hàng báo đã thanh toán
+            $payment = $this->paymentService->createBankTransferPaymentFromSession($booking, $tempPaymentData);
+
+            // Xóa thông tin tạm thời khỏi session
+            session()->forget('temp_bank_transfer_' . $booking->id);
+
+            // Xử lý xác nhận chuyển khoản
             $result = $this->paymentService->processBankTransferConfirmation($request, $booking);
 
             if ($result['success']) {
