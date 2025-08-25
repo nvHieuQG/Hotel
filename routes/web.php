@@ -41,6 +41,69 @@ use App\Http\Controllers\Admin\TourBookingNoteController;
 //     return view('client.index');
 // });
 
+// Staff Routes
+Route::prefix('/staff')->name('staff.')->middleware(['auth', 'admin'])->group(function () {
+    // Smart redirect for /staff root -> bookings
+    Route::get('/', function () {
+        return redirect()->route('staff.bookings.index');
+    })->name('home');
+
+    // Dashboard (staff can view dashboard)
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
+    // Bookings
+    // List + full resource (except destroy)
+    Route::resource('bookings', AdminBookingController::class)->except(['destroy']);
+    // Additional booking actions (no reports here)
+    Route::patch('bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
+    // Registration documents
+    Route::get('bookings/{id}/registration/preview', [AdminBookingController::class, 'previewRegistration'])->name('bookings.registration.preview');
+    Route::post('bookings/{id}/generate-pdf', [AdminBookingController::class, 'generateRegistrationPdf'])->name('bookings.generate-pdf');
+    Route::post('bookings/{id}/send-email', [AdminBookingController::class, 'sendRegistrationEmail'])->name('bookings.send-email');
+    Route::get('bookings/{id}/download-registration', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-registration');
+    Route::get('bookings/{id}/download-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.download-word');
+    Route::get('bookings/{id}/view-word', [AdminBookingController::class, 'downloadRegistration'])->name('bookings.view-word');
+    // VAT invoice
+    Route::post('bookings/{id}/vat/generate', [AdminBookingController::class, 'generateVatInvoice'])->name('bookings.vat.generate');
+    Route::post('bookings/{id}/vat/send', [AdminBookingController::class, 'sendVatInvoice'])->name('bookings.vat.send');
+    Route::get('bookings/{id}/vat/preview', [AdminBookingController::class, 'previewVatInvoice'])->name('bookings.vat.preview');
+    Route::get('bookings/{id}/vat/download', [AdminBookingController::class, 'downloadVatInvoice'])->name('bookings.vat.download');
+    Route::post('bookings/{id}/vat/regenerate', [AdminBookingController::class, 'regenerateVatInvoice'])->name('bookings.vat.regenerate');
+    // Booking services & payments
+    Route::post('bookings/{id}/services/add', [AdminBookingController::class, 'addServiceToBooking'])->name('bookings.services.add');
+    Route::delete('bookings/{id}/services/{bookingServiceId}', [AdminBookingController::class, 'destroyServiceFromBooking'])->name('bookings.services.destroy');
+    Route::post('bookings/{id}/confirm-payment', [AdminBookingController::class, 'confirmPayment'])->name('bookings.confirm-payment');
+    Route::post('bookings/{id}/payments/collect', [AdminBookingController::class, 'collectAdditionalPayment'])->name('bookings.payments.collect');
+
+    // Room changes
+    Route::get('room-changes', [AdminRoomChangeController::class, 'index'])->name('room-changes.index');
+    Route::get('room-changes/{roomChange}', [AdminRoomChangeController::class, 'show'])->name('room-changes.show');
+    Route::post('room-changes/{roomChange}/approve', [AdminRoomChangeController::class, 'approve'])->name('room-changes.approve');
+    Route::post('room-changes/{roomChange}/reject', [AdminRoomChangeController::class, 'reject'])->name('room-changes.reject');
+    Route::post('room-changes/{roomChange}/complete', [AdminRoomChangeController::class, 'complete'])->name('room-changes.complete');
+    Route::post('room-changes/{roomChange}/mark-paid', [AdminRoomChangeController::class, 'markAsPaid'])->name('room-changes.mark-paid');
+    Route::post('room-changes/{roomChange}/mark-refunded', [AdminRoomChangeController::class, 'markAsRefunded'])->name('room-changes.mark-refunded');
+    Route::post('room-changes/{roomChange}/update-status', [AdminRoomChangeController::class, 'updateStatus'])->name('room-changes.update-status');
+
+    // Tour bookings
+    Route::resource('tour-bookings', AdminTourBookingController::class);
+    Route::patch('tour-bookings/{id}/status', [AdminTourBookingController::class, 'updateStatus'])->name('tour-bookings.update-status');
+    Route::patch('tour-bookings/{id}/payments/{paymentId}', [AdminTourBookingController::class, 'updatePaymentStatus'])->name('tour-bookings.payments.update-status');
+    Route::post('tour-bookings/{id}/collect-payment', [AdminTourBookingController::class, 'collectPayment'])->name('tour-bookings.collect-payment');
+    // Services & notes for tour bookings
+    Route::post('tour-bookings/{id}/services', [TourBookingServiceController::class, 'store'])->name('tour-bookings.services.store');
+    Route::delete('tour-bookings/{id}/services/{serviceId}', [TourBookingServiceController::class, 'destroy'])->name('tour-bookings.services.destroy');
+    Route::post('tour-bookings/{id}/notes', [TourBookingNoteController::class, 'store'])->name('tour-bookings.notes.store');
+    Route::delete('tour-bookings/{id}/notes/{noteId}', [TourBookingNoteController::class, 'destroy'])->name('tour-bookings.notes.destroy');
+
+    // Support
+    Route::get('/support', [AdminSupportController::class, 'index'])->name('support.index');
+    Route::get('/support/conversation/{conversationId}', [AdminSupportController::class, 'showConversation'])->name('support.showConversation');
+    Route::post('/support/conversation/{conversationId}/message', [AdminSupportController::class, 'sendMessage'])->name('support.sendMessage');
+    Route::get('/support/conversation/{conversationId}/messages', [AdminSupportController::class, 'getNewMessages'])->name('support.getNewMessages');
+    Route::post('/support/conversations/updates', [AdminSupportController::class, 'getUpdates'])->name('support.getUpdates');
+});
+
 Route::get('/', [HotelController::class, 'index'])->name('index');
 
 Route::get('/rooms', [HotelController::class, 'rooms'])->name('rooms');
@@ -181,12 +244,20 @@ Route::get('/rooms/{id}/reviews-ajax', [HotelController::class, 'getRoomReviewsA
 
 // Admin Routes
 Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
-    // Dashboard
+    // Smart redirect for /admin root
+    Route::get('/', function () {
+        $role = auth()->user()->role->name ?? null;
+        return in_array($role, ['admin', 'super_admin'])
+            ? redirect()->route('admin.dashboard')
+            : redirect()->route('admin.bookings.index');
+    })->name('home');
+
+    // Dashboard (staff can view)
     // Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
     // Quản lý đặt phòng
-    Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report');
+    Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report')->middleware('admin.only');
     Route::patch('bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
     Route::resource('bookings', AdminBookingController::class)->except(['destroy']);
 
@@ -210,7 +281,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
 
     // Quản lý Tour Booking
-    Route::get('tour-bookings/report', [AdminTourBookingController::class, 'report'])->name('tour-bookings.report');
+    Route::get('tour-bookings/report', [AdminTourBookingController::class, 'report'])->name('tour-bookings.report')->middleware('admin.only');
     Route::patch('tour-bookings/{id}/status', [AdminTourBookingController::class, 'updateStatus'])->name('tour-bookings.update-status');
     Route::patch('tour-bookings/{id}/payments/{paymentId}', [AdminTourBookingController::class, 'updatePaymentStatus'])->name('tour-bookings.payments.update-status');
     Route::post('tour-bookings/{id}/collect-payment', [AdminTourBookingController::class, 'collectPayment'])->name('tour-bookings.collect-payment');
@@ -226,7 +297,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('tour-vat-invoices/{id}/preview', [AdminTourVatInvoiceController::class, 'previewVatInvoice'])->name('tour-vat-invoices.preview');
     Route::post('tour-vat-invoices/{id}/send', [AdminTourVatInvoiceController::class, 'sendVatInvoice'])->name('tour-vat-invoices.send');
     Route::post('tour-vat-invoices/{id}/regenerate', [AdminTourVatInvoiceController::class, 'regenerateVatInvoice'])->name('tour-vat-invoices.regenerate');
-    Route::get('tour-vat-invoices/statistics', [AdminTourVatInvoiceController::class, 'statistics'])->name('tour-vat-invoices.statistics');
+    Route::get('tour-vat-invoices/statistics', [AdminTourVatInvoiceController::class, 'statistics'])->name('tour-vat-invoices.statistics')->middleware('admin.only');
     Route::post('tour-vat-invoices/{id}/fix-data', [AdminTourVatInvoiceController::class, 'fixVatInvoiceData'])->name('tour-vat-invoices.fix-data');
 
     // Tour Booking Services routes
@@ -272,7 +343,11 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('notifications/mark-read-multi', [AdminBookingController::class, 'markReadMulti'])->name('notifications.mark-read-multi');
 
     // Quản lý phòng
-    Route::resource('rooms', AdminRoomController::class);
+    // Staff có thể xem danh sách/chi tiết, nhưng chỉ admin/super_admin mới tạo/sửa/xóa
+    Route::resource('rooms', AdminRoomController::class)->only(['index', 'show']);
+    Route::middleware('admin.only')->group(function () {
+        Route::resource('rooms', AdminRoomController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
+    });
 
     Route::get('/support', [AdminSupportController::class, 'index'])->name('support.index');
     Route::get('/support/conversation/{conversationId}', [AdminSupportController::class, 'showConversation'])->name('support.showConversation');
@@ -280,12 +355,12 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('/support/conversation/{conversationId}/messages', [AdminSupportController::class, 'getNewMessages'])->name('support.getNewMessages');
     Route::post('/support/conversations/updates', [AdminSupportController::class, 'getUpdates'])->name('support.getUpdates');
 
-    // Routes cho quản lý ảnh phòng
-    Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete');
-    Route::post('rooms/{room}/images/{image}/primary', [AdminRoomController::class, 'setPrimaryImage'])->name('rooms.images.primary');
+    // Routes cho quản lý ảnh phòng (chỉ admin)
+    Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete')->middleware('admin.only');
+    Route::post('rooms/{room}/images/{image}/primary', [AdminRoomController::class, 'setPrimaryImage'])->name('rooms.images.primary')->middleware('admin.only');
 
     // Quản lý đánh giá loại phòng
-    Route::get('room-type-reviews/statistics', [AdminRoomTypeReviewController::class, 'statistics'])->name('room-type-reviews.statistics');
+    Route::get('room-type-reviews/statistics', [AdminRoomTypeReviewController::class, 'statistics'])->name('room-type-reviews.statistics')->middleware('admin.only');
     Route::patch('room-type-reviews/{id}/approve', [AdminRoomTypeReviewController::class, 'approve'])->name('room-type-reviews.approve');
     Route::patch('room-type-reviews/{id}/reject', [AdminRoomTypeReviewController::class, 'reject'])->name('room-type-reviews.reject');
     Route::get('room-type-reviews', [AdminRoomTypeReviewController::class, 'index'])->name('room-type-reviews.index');
@@ -294,32 +369,40 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('room-type-reviews/{review}', [AdminRoomTypeReviewController::class, 'show'])->name('room-type-reviews.show');
     Route::delete('room-type-reviews/{review}', [AdminRoomTypeReviewController::class, 'destroy'])->name('room-type-reviews.destroy');
 
-    // Quản lý người dùng
-    Route::resource('users', AdminUserController::class)->except(['create', 'store']);
+    // Quản lý người dùng (chỉ admin)
+    Route::middleware('admin.only')->group(function () {
+        Route::resource('users', AdminUserController::class);
+    });
 
     // Quản lý khuyến mãi
     Route::resource('promotions', \App\Http\Controllers\Admin\AdminPromotionController::class);
 
-    // Quản lý danh mục dịch vụ (Service Categories)
-    Route::get('service-categories', [AdminServiceCategoryController::class, 'index'])->name('service-categories.index');
-    Route::get('service-categories/create', [AdminServiceCategoryController::class, 'create'])->name('service-categories.create');
-    Route::post('service-categories', [AdminServiceCategoryController::class, 'store'])->name('service-categories.store');
-    Route::get('service-categories/{service_category}/edit', [AdminServiceCategoryController::class, 'edit'])->name('service-categories.edit');
-    Route::put('service-categories/{service_category}', [AdminServiceCategoryController::class, 'update'])->name('service-categories.update');
-    Route::delete('service-categories/{service_category}', [AdminServiceCategoryController::class, 'destroy'])->name('service-categories.destroy');
+    // Quản lý danh mục dịch vụ (Service Categories) - chỉ admin
+    Route::middleware('admin.only')->group(function () {
+        Route::get('service-categories', [AdminServiceCategoryController::class, 'index'])->name('service-categories.index');
+        Route::get('service-categories/create', [AdminServiceCategoryController::class, 'create'])->name('service-categories.create');
+        Route::post('service-categories', [AdminServiceCategoryController::class, 'store'])->name('service-categories.store');
+        Route::get('service-categories/{service_category}/edit', [AdminServiceCategoryController::class, 'edit'])->name('service-categories.edit');
+        Route::put('service-categories/{service_category}', [AdminServiceCategoryController::class, 'update'])->name('service-categories.update');
+        Route::delete('service-categories/{service_category}', [AdminServiceCategoryController::class, 'destroy'])->name('service-categories.destroy');
+    });
 
-    // Quản lý dịch vụ (Services)
-    Route::get('services', [AdminServiceController::class, 'index'])->name('services.index');
-    Route::get('services/create', [AdminServiceController::class, 'create'])->name('services.create');
-    Route::post('services', [AdminServiceController::class, 'store'])->name('services.store');
-    Route::get('services/{service}/edit', [AdminServiceController::class, 'edit'])->name('services.edit');
-    Route::put('services/{service}', [AdminServiceController::class, 'update'])->name('services.update');
-    Route::delete('services/{service}', [AdminServiceController::class, 'destroy'])->name('services.destroy');
+    // Quản lý dịch vụ (Services) - chỉ admin
+    Route::middleware('admin.only')->group(function () {
+        Route::get('services', [AdminServiceController::class, 'index'])->name('services.index');
+        Route::get('services/create', [AdminServiceController::class, 'create'])->name('services.create');
+        Route::post('services', [AdminServiceController::class, 'store'])->name('services.store');
+        Route::get('services/{service}/edit', [AdminServiceController::class, 'edit'])->name('services.edit');
+        Route::put('services/{service}', [AdminServiceController::class, 'update'])->name('services.update');
+        Route::delete('services/{service}', [AdminServiceController::class, 'destroy'])->name('services.destroy');
+    });
 
-    // Gán dịch vụ cho loại phòng (Room Type Services)
-    Route::get('room-type-services', [AdminRoomTypeServiceController::class, 'index'])->name('room-type-services.index');
-    Route::get('room-type-services/{room_type}/edit', [AdminRoomTypeServiceController::class, 'edit'])->name('room-type-services.edit');
-    Route::put('room-type-services/{room_type}', [AdminRoomTypeServiceController::class, 'update'])->name('room-type-services.update');
+    // Gán dịch vụ cho loại phòng (Room Type Services) - chỉ admin
+    Route::middleware('admin.only')->group(function () {
+        Route::get('room-type-services', [AdminRoomTypeServiceController::class, 'index'])->name('room-type-services.index');
+        Route::get('room-type-services/{room_type}/edit', [AdminRoomTypeServiceController::class, 'edit'])->name('room-type-services.edit');
+        Route::put('room-type-services/{room_type}', [AdminRoomTypeServiceController::class, 'update'])->name('room-type-services.update');
+    });
 
     // Quản lý yêu cầu đổi phòng
     Route::get('room-changes', [AdminRoomChangeController::class, 'index'])->name('room-changes.index');
@@ -332,13 +415,15 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('room-changes/statistics', [AdminRoomChangeController::class, 'statistics'])->name('room-changes.statistics');
     Route::post('room-changes/{roomChange}/update-status', [AdminRoomChangeController::class, 'updateStatus'])->name('room-changes.update-status');
 
-    // Quản lý dịch vụ bổ sung (Extra Services)
-    Route::get('extra-services', [AdminExtraServiceController::class, 'index'])->name('extra-services.index');
-    Route::get('extra-services/create', [AdminExtraServiceController::class, 'create'])->name('extra-services.create');
-    Route::post('extra-services', [AdminExtraServiceController::class, 'store'])->name('extra-services.store');
-    Route::get('extra-services/{extra_service}/edit', [AdminExtraServiceController::class, 'edit'])->name('extra-services.edit');
-    Route::put('extra-services/{extra_service}', [AdminExtraServiceController::class, 'update'])->name('extra-services.update');
-    Route::delete('extra-services/{extra_service}', [AdminExtraServiceController::class, 'destroy'])->name('extra-services.destroy');
+    // Quản lý dịch vụ bổ sung (Extra Services) - chỉ admin
+    Route::middleware('admin.only')->group(function () {
+        Route::get('extra-services', [AdminExtraServiceController::class, 'index'])->name('extra-services.index');
+        Route::get('extra-services/create', [AdminExtraServiceController::class, 'create'])->name('extra-services.create');
+        Route::post('extra-services', [AdminExtraServiceController::class, 'store'])->name('extra-services.store');
+        Route::get('extra-services/{extra_service}/edit', [AdminExtraServiceController::class, 'edit'])->name('extra-services.edit');
+        Route::put('extra-services/{extra_service}', [AdminExtraServiceController::class, 'update'])->name('extra-services.update');
+        Route::delete('extra-services/{extra_service}', [AdminExtraServiceController::class, 'destroy'])->name('extra-services.destroy');
+    });
 });
 
 // Route công khai cho room type reviews (chỉ hiển thị) - đặt sau admin routes để tránh xung đột

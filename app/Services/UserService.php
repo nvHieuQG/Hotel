@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Interfaces\Services\UserServiceInterface;
 use App\Interfaces\Repositories\UserRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class UserService implements UserServiceInterface
 {
@@ -23,6 +24,18 @@ class UserService implements UserServiceInterface
     public function getAll(): Collection
     {
         return $this->userRepository->getAll();
+    }
+
+    /**
+     * Phân trang người dùng với bộ lọc
+     *
+     * @param array $filters
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->userRepository->paginate($filters, $perPage);
     }
 
     /**
@@ -49,7 +62,13 @@ class UserService implements UserServiceInterface
         if (!$user) {
             return false;
         }
-        return $this->userRepository->update($user, $data);
+        // Repository returns a User model, but this service must return bool
+        try {
+            $this->userRepository->update($user, $data);
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /**
@@ -67,4 +86,15 @@ class UserService implements UserServiceInterface
         $user->delete();
         return true;
     }
-} 
+
+    /**
+     * Tạo người dùng mới
+     *
+     * @param array $data
+     * @return mixed
+     */
+    public function createUser(array $data)
+    {
+        return $this->userRepository->create($data);
+    }
+}

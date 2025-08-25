@@ -5,6 +5,7 @@ namespace App\Interfaces\Repositories;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface UserRepositoryInterface
 {
@@ -55,6 +56,15 @@ interface UserRepositoryInterface
      * @return Collection
      */
     public function getAll(): Collection;
+
+    /**
+     * Paginate users with optional filters
+     *
+     * @param array $filters
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator;
 
     /**
      * Cập nhật mật khẩu mới

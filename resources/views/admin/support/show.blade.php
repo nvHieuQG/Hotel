@@ -6,14 +6,18 @@
 <style>
 /* Admin Chat Styles */
 :root {
-    --primary-color: #1E88E5;
-    --secondary-color: #F5F5F5;
-    --text-dark: #333333;
-    --text-light: #9E9E9E;
-    --border-color: #E0E0E0;
-    --hover-color: #ECEFF1;
-    --success-color: #4CAF50;
-    --danger-color: #F44336;
+    --primary-color: #8d703b;
+    --primary-hover: #7b6233;
+    --secondary-color: #f9f6f1;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #8d703b;
+    --text-dark: #2c2416;
+    --text-light: #6c5a3d;
+    --border-color: #d4c4a8;
+    --hover-color: #f5f2ed;
+    --bg-light: #faf8f5;
 }
 
 /* Ẩn page header chỉ trong trang chat */
@@ -117,7 +121,7 @@ html, body {
 }
 
 .filter-tabs {
-    padding: 16px 20px;
+    padding: 12px 20px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     gap: 8px;
@@ -147,7 +151,7 @@ html, body {
 }
 
 .conversation-item {
-    padding: 16px 20px;
+    padding: 12px 20px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -238,7 +242,7 @@ html, body {
 
 /* Chat Window */
 .chat-window {
-    width: 70%;
+    width: 90%;
     display: flex;
     flex-direction: column;
     background: #FFFFFF;
@@ -246,7 +250,7 @@ html, body {
 }
 
 .chat-header {
-    padding: 15px 20px;
+    padding: 10px 20px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
@@ -310,6 +314,23 @@ html, body {
     background: var(--hover-color);
 }
 
+.profile-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.profile-btn:hover {
+    background: var(--hover-color);
+}
+
 .chat-messages {
     flex: 1;
     padding: 15px 20px;
@@ -370,7 +391,7 @@ html, body {
 }
 
 .chat-input-container {
-    padding: 15px 20px;
+    padding: 12px 20px;
     border-top: 1px solid var(--border-color);
     background: #FFFFFF;
     flex-shrink: 0;
@@ -378,11 +399,11 @@ html, body {
 
 .chat-input-wrapper {
     display: flex;
-    align-items: flex-end;
-    gap: 12px;
+    align-items: center;
+    gap: 8px;
     background: var(--secondary-color);
-    border-radius: 24px;
-    padding: 8px 16px;
+    border-radius: 18px;
+    padding: 4px 10px;
 }
 
 .chat-input {
@@ -392,9 +413,9 @@ html, body {
     outline: none;
     font-size: 14px;
     resize: none;
-    max-height: 100px;
-    min-height: 20px;
-    padding: 8px 0;
+    max-height: 60px;
+    min-height: 16px;
+    padding: 4px 0;
 }
 
 .chat-input::placeholder {
@@ -407,8 +428,8 @@ html, body {
 }
 
 .attachment-btn {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
     border: none;
     border-radius: 50%;
     background: transparent;
@@ -418,6 +439,7 @@ html, body {
     cursor: pointer;
     transition: background 0.2s;
     color: var(--text-light);
+    font-size: 13px;
 }
 
 .attachment-btn:hover {
@@ -425,8 +447,8 @@ html, body {
 }
 
 .send-btn {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
     border: none;
     border-radius: 50%;
     background: var(--primary-color);
@@ -436,10 +458,11 @@ html, body {
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
+    font-size: 13px;
 }
 
 .send-btn:hover {
-    background: #1976D2;
+    background: var(--primary-hover);
     transform: scale(1.05);
 }
 
@@ -449,14 +472,68 @@ html, body {
     transform: none;
 }
 
+/* File attachment preview */
+.file-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f9f6f1;
+    border: 1px solid #d4c4a8;
+    border-radius: 8px;
+    margin: 8px 0;
+    max-width: 100%;
+}
+
+.file-preview-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+}
+
+.file-preview-name {
+    flex: 1;
+    font-size: 12px;
+    color: var(--primary-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-preview-remove {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: #fff2f2;
+    color: var(--danger-color);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.file-preview-remove:hover {
+    background: #ffe6e6;
+    transform: scale(1.1);
+}
+
 /* Customer Info */
 .customer-info {
-    width: 30%;
+    width: 40%;
     border-left: 1px solid var(--border-color);
     background: #FFFFFF;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100vh;
+    min-height: 100vh;
+    overflow-y: auto; /* Cho phép lướt lên/xuống */
+    min-height: 0; /* Đảm bảo flex container cho phép scroll nội bộ */
 }
 
 .customer-header {
@@ -524,6 +601,7 @@ html, body {
     padding: 15px 20px;
     overflow-y: auto;
     height: 0;
+    min-height: 400px; /* Tăng chiều cao tối thiểu để hiển thị nhiều nội dung hơn */
 }
 
 .history-title {
@@ -566,33 +644,105 @@ html, body {
     color: var(--success-color);
 }
 
-.internal-notes {
-    padding: 15px 20px;
-    border-top: 1px solid var(--border-color);
-    flex-shrink: 0;
+/* Image gallery (right panel) */
+.image-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 600px; /* Tăng chiều cao để hiển thị nhiều ảnh hơn */
+    overflow-y: auto;
 }
 
-.notes-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 12px;
+.image-item {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* Không cho phép co lại */
 }
 
-.notes-textarea {
+.image-bubble {
+    max-width: 100%;
+    background: #F1F1F1;
+    border-radius: 12px;
+    padding: 0;
+    cursor: pointer; /* Thêm con trỏ pointer */
+    transition: transform 0.2s;
+}
+
+.image-bubble:hover {
+    transform: scale(1.02);
+}
+
+.image-bubble img {
     width: 100%;
-    min-height: 100px;
-    border: 1px solid var(--border-color);
+    height: auto;
+    max-height: 300px; /* Tăng kích thước ảnh trong gallery để dễ nhìn hơn */
+    object-fit: cover; /* Cắt ảnh để vừa khung */
+    display: block;
     border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    resize: vertical;
-    outline: none;
-    transition: border-color 0.2s;
 }
 
-.notes-textarea:focus {
-    border-color: var(--primary-color);
+.image-meta {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 4px;
 }
+
+/* Modal popup cho ảnh */
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.image-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90%;
+    text-align: center;
+}
+
+.image-modal img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.image-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10000;
+}
+
+.image-modal-close:hover {
+    color: #ccc;
+}
+
+/* Điều chỉnh kích thước ảnh trong chat */
+.message-bubble img {
+    max-width: 200px; /* Giảm kích thước ảnh trong chat */
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Removed internal notes styles */
 
 /* Responsive */
 @media (max-width: 1200px) {
@@ -600,10 +750,10 @@ html, body {
         width: 25%;
     }
     .chat-window {
-        width: 55%;
+        width: 50%;
     }
     .customer-info {
-        width: 20%;
+        width: 25%;
     }
 }
 
@@ -620,35 +770,160 @@ html, body {
     }
 }
 
+/* Emoji picker styles */
+.emoji-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-light);
+    font-size: 16px;
+}
+
+.emoji-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.emoji-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    width: 320px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.emoji-categories {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--secondary-color);
+}
+
+.emoji-category {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-light);
+    font-size: 14px;
+}
+
+.emoji-category:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.emoji-category.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    padding: 16px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.emoji-item {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 20px;
+    user-select: none;
+}
+
+.emoji-item:hover {
+    background: var(--hover-color);
+    transform: scale(1.2);
+}
+
 /* Custom scrollbar */
+.chat-messages,
+.conversations-list,
+.chat-history,
+.customer-info {
+    scrollbar-width: auto; /* Firefox: dày hơn mặc định */
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
 .chat-messages::-webkit-scrollbar,
 .conversations-list::-webkit-scrollbar,
-.chat-history::-webkit-scrollbar {
-    width: 6px;
+.chat-history::-webkit-scrollbar,
+.customer-info::-webkit-scrollbar {
+    width: 14px; /* Tăng độ dày thanh cuộn để dễ kéo hơn */
 }
 
 .chat-messages::-webkit-scrollbar-track,
 .conversations-list::-webkit-scrollbar-track,
-.chat-history::-webkit-scrollbar-track {
+.chat-history::-webkit-scrollbar-track,
+.customer-info::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .chat-messages::-webkit-scrollbar-thumb,
 .conversations-list::-webkit-scrollbar-thumb,
-.chat-history::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
+.chat-history::-webkit-scrollbar-thumb,
+.customer-info::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover,
 .conversations-list::-webkit-scrollbar-thumb:hover,
-.chat-history::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
+.chat-history::-webkit-scrollbar-thumb:hover,
+.customer-info::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
 }
 </style>
 @endsection
 
 @section('content')
+@php
+    $user = $conversation['user'] ?? null;
+    $userId = $user->id ?? null;
+    $totalBookings = 0;
+    $hasAnyBooking = false;
+    $activeBooking = null; // đang nhận phòng / đã xác nhận chưa trả
+    $latestBooking = null;
+    $latestRoomName = null;
+    if ($userId) {
+        $totalBookings = \App\Models\Booking::where('user_id', $userId)->count();
+        $hasAnyBooking = $totalBookings > 0;
+        $activeBooking = \App\Models\Booking::where('user_id', $userId)
+            ->whereIn('status', ['confirmed', 'checked_in'])
+            ->latest('check_in_date')
+            ->with('room')
+            ->first();
+        $latestBooking = \App\Models\Booking::where('user_id', $userId)
+            ->latest('created_at')
+            ->with('room')
+            ->first();
+        $latestRoomName = $latestBooking && $latestBooking->room ? ($latestBooking->room->name ?? ('Phòng #' . $latestBooking->room->id)) : null;
+    }
+@endphp
 <div class="admin-chat-container">
     <!-- Chat Window -->
     <div class="chat-window">
@@ -664,53 +939,82 @@ html, body {
                 </div>
             </div>
             <div class="chat-actions">
-                <a href="{{ route('admin.support.index') }}" class="chat-action-btn" title="Quay lại danh sách" style="text-decoration: none; color: inherit;">
-                    <i class="fas fa-arrow-left"></i>
+
+                @if(!empty($conversation['user']->id))
+                <a href="{{ route('admin.users.show', $conversation['user']->id) }}" class="profile-btn" title="Xem hồ sơ khách hàng">
+                    <i class="fas fa-user"></i>
                 </a>
-                <button class="chat-action-btn" title="Gắn nhãn">
-                    <i class="fas fa-tag"></i>
-                </button>
-                <button class="chat-action-btn" title="Xem thông tin">
-                    <i class="fas fa-info-circle"></i>
-                </button>
-                <button class="chat-action-btn" title="Đóng hội thoại">
+                @endif
+                <a href="{{ route('admin.support.index') }}" class="chat-action-btn" title="Quay lại danh sách" style="text-decoration: none; color: inherit;">
                     <i class="fas fa-times"></i>
-                </button>
+                </a>
             </div>
         </div>
 
         <div class="chat-messages" id="chatMessages">
             @foreach($messages as $msg)
-                @if(!empty(trim($msg->message)))
-                    <div class="message {{ $msg->sender_type == 'admin' ? 'sent' : 'received' }}" data-message-id="{{ $msg->id }}">
+                <div class="message {{ $msg->sender_type == 'admin' ? 'sent' : 'received' }}" data-message-id="{{ $msg->id }}">
+                    @if(!empty(trim((string)$msg->message)))
                         <div class="message-bubble">{{ $msg->message }}</div>
-                        <div class="message-time">{{ $msg->created_at->format('H:i') }}</div>
-                        @if($msg->sender_type == 'admin')
-                            <div class="message-status">
-                                <i class="fas fa-check-double"></i>
-                                <span>Đã xem</span>
-                            </div>
-                        @endif
-                    </div>
-                @endif
+                    @endif
+                    @if(!empty($msg->attachment_path) && \Illuminate\Support\Str::startsWith((string)$msg->attachment_type, 'image'))
+                        <div class="message-bubble" onclick="openImageModal('{{ asset('storage/'.$msg->attachment_path) }}')" style="cursor: pointer;">
+                            <img src="{{ asset('storage/'.$msg->attachment_path) }}" alt="attachment" style="max-width:200px; max-height:150px; border-radius:8px;" />
+                        </div>
+                    @elseif(!empty($msg->attachment_path))
+                        <div class="message-bubble">
+                            <a href="{{ asset('storage/'.$msg->attachment_path) }}" target="_blank" rel="noopener">{{ $msg->attachment_name ?? 'Tệp đính kèm' }}</a>
+                        </div>
+                    @endif
+                    <div class="message-time">{{ $msg->created_at->format('H:i') }}</div>
+                </div>
             @endforeach
         </div>
 
         <div class="chat-input-container">
-            <form id="chatForm">
+            <form id="chatForm" enctype="multipart/form-data">
                 @csrf
                 <div class="chat-input-wrapper">
-                    <textarea id="chatInput" name="message" class="chat-input" placeholder="Nhập tin nhắn..." required></textarea>
+                    <textarea id="chatInput" name="message" class="chat-input" placeholder="Nhập tin nhắn..."></textarea>
                     <div class="chat-attachments">
-                        <button type="button" class="attachment-btn" title="Đính kèm ảnh">
-                            <i class="fas fa-image"></i>
-                        </button>
-                        <button type="button" class="attachment-btn" title="Đính kèm file">
+                        <label for="attachmentInput" class="attachment-btn" title="Đính kèm ảnh/tệp" style="cursor: pointer;">
                             <i class="fas fa-paperclip"></i>
-                        </button>
+                        </label>
+                        <input type="file" id="attachmentInput" name="attachment" accept="image/*,application/pdf,application/zip,text/plain" style="display:none" />
                     </div>
                     <button type="submit" id="sendBtn" class="send-btn" title="Gửi tin nhắn">
                         <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+
+                <!-- Emoji picker -->
+                <div id="emojiPicker" class="emoji-picker" style="display: none;">
+                    <div class="emoji-categories">
+                        <button type="button" class="emoji-category active" data-category="smileys">
+                            <i class="fas fa-smile"></i>
+                        </button>
+                        <button type="button" class="emoji-category" data-category="gestures">
+                            <i class="fas fa-hand-paper"></i>
+                        </button>
+                        <button type="button" class="emoji-category" data-category="objects">
+                            <i class="fas fa-star"></i>
+                        </button>
+                        <button type="button" class="emoji-category" data-category="symbols">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                    <div class="emoji-grid" id="emojiGrid">
+                        <!-- Emojis will be populated by JavaScript -->
+                    </div>
+                </div>
+                <!-- File preview area -->
+                <div id="filePreview" class="file-preview" style="display: none;">
+                    <div class="file-preview-icon">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="file-preview-name" id="fileName"></div>
+                    <button type="button" class="file-preview-remove" id="removeFile" title="Xóa tệp">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
             </form>
@@ -723,38 +1027,70 @@ html, body {
             <div class="customer-avatar">{{ substr($conversation['user']->name ?? 'U', 0, 1) }}</div>
             <div class="customer-name">{{ $conversation['user']->name ?? 'Khách hàng' }}</div>
             <div class="customer-email">{{ $conversation['user']->email ?? 'N/A' }}</div>
-            <div class="customer-phone">{{ $conversation['user']->phone ?? 'N/A' }}</div>
         </div>
 
         <div class="customer-details">
-            <div class="detail-item">
-                <span class="detail-label">Conversation ID:</span>
-                <span class="detail-value">#{{ $conversation['id'] }}</span>
-            </div>
             <div class="detail-item">
                 <span class="detail-label">Chủ đề:</span>
                 <span class="detail-value">{{ $conversation['subject'] }}</span>
             </div>
             <div class="detail-item">
-                <span class="detail-label">Tạo lúc:</span>
-                <span class="detail-value">{{ $conversation['created_at']->format('d/m/Y H:i') }}</span>
+                <span class="detail-label">Tổng số đơn đặt:</span>
+                <span class="detail-value">{{ $totalBookings }}</span>
             </div>
+            <div class="detail-item">
+                <span class="detail-label">Đã từng đặt phòng:</span>
+                <span class="detail-value">{{ $hasAnyBooking ? 'Có' : 'Chưa' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Đang ở/Đã xác nhận:</span>
+                <span class="detail-value">{{ $activeBooking ? ($activeBooking->room ? ($activeBooking->room->name ?? ('Phòng #'.$activeBooking->room->id)) : 'Có') : 'Không' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Phòng gần nhất:</span>
+                <span class="detail-value">{{ $latestRoomName ?? 'N/A' }}</span>
+            </div>
+            @if(!empty($conversation['user']->id))
+            <div class="detail-item">
+                <span class="detail-label">Hồ sơ:</span>
+                <span class="detail-value"><a href="{{ route('admin.users.show', $conversation['user']->id) }}" style="text-decoration: none;">Xem chi tiết</a></span>
+            </div>
+            @endif
         </div>
 
         <div class="chat-history">
-            <div class="history-title">Lịch sử chat</div>
-            <!-- History items will be loaded here -->
-            <div class="history-item">
-                <div class="history-date">Hôm nay, 14:30</div>
-                <div class="history-subject">Hỗ trợ nhanh</div>
-                <span class="history-status open">Đang mở</span>
+            <div class="history-title">Ảnh đã gửi</div>
+            <div class="image-gallery">
+                @php
+                    $images = collect($messages ?? [])->filter(function($m){
+                        return !empty($m->attachment_path) && Str::startsWith($m->attachment_type, 'image');
+                    });
+                @endphp
+                @foreach($images as $img)
+                    <div class="image-item">
+                        <div class="image-bubble" onclick="openImageModal('{{ asset('storage/'.$img->attachment_path) }}')">
+                            <img src="{{ asset('storage/'.$img->attachment_path) }}" alt="attachment" />
+                        </div>
+                        <div class="image-meta">
+                            {{ $img->created_at->format('d/m/Y H:i') }} • {{ $img->sender_type === 'admin' ? 'Admin' : 'Khách' }}
+                        </div>
+                    </div>
+                @endforeach
+                @if(($images ?? collect())->isEmpty())
+                    <div class="image-meta">Chưa có ảnh nào.</div>
+                @endif
             </div>
         </div>
 
-        <div class="internal-notes">
-            <div class="notes-title">Ghi chú nội bộ</div>
-            <textarea class="notes-textarea" placeholder="Ghi chú về khách hàng này..."></textarea>
-        </div>
+
+    </div>
+</div>
+
+<!-- Modal popup cho ảnh -->
+<div id="imageModal" class="image-modal">
+    <span class="image-modal-close">&times;</span>
+    <div class="image-modal-content">
+        <img id="modalImage" src="" alt="Ảnh lớn" />
     </div>
 </div>
 
@@ -764,10 +1100,15 @@ html, body {
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Tránh khởi tạo script 2 lần nếu view/script bị include lặp
+    if (window.__adminSupportChatInitialized) {
+        return;
+    }
+    window.__adminSupportChatInitialized = true;
     // Ngăn scroll của body
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
-    
+
     const chatMessages = document.getElementById('chatMessages');
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
@@ -776,19 +1117,49 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.querySelector('.search-input');
     const filterTabs = document.querySelectorAll('.filter-tab');
 
+    // Modal elements
+    const imageModal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalClose = document.querySelector('.image-modal-close');
+
+    // File preview elements
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const removeFile = document.getElementById('removeFile');
+    const attachmentInput = document.getElementById('attachmentInput');
+
+    // Emoji picker elements
+    const emojiBtn = document.getElementById('emojiBtn');
+    const emojiPicker = document.getElementById('emojiPicker');
+    const emojiGrid = document.getElementById('emojiGrid');
+    const emojiCategories = document.querySelectorAll('.emoji-category');
+
     // Realtime chat variables
     let isRealtimeEnabled = false;
     let lastMessageId = 0;
     let isSending = false;
-    
+    let didShowConnectInfo = false;
+
+    // Polling config & control
+    let pollIntervalMs = 1500; // nhanh hơn: 1.5s
+    let isFetchingMessages = false;
+    let fetchAbortController = null;
+
     // Lưu trữ tin nhắn gần đây để tránh trùng lặp
     let recentMessages = [];
     const MAX_RECENT_MESSAGES = 10;
 
     // Khởi tạo lastMessageId từ tin nhắn cuối cùng
-    const lastMessage = document.querySelector('.message[data-message-id]');
-    if (lastMessage) {
-        lastMessageId = parseInt(lastMessage.getAttribute('data-message-id'));
+    const messageNodes = document.querySelectorAll('.message[data-message-id]');
+    if (messageNodes && messageNodes.length) {
+        try {
+            lastMessageId = Math.max(
+                ...Array.from(messageNodes).map(n => parseInt(n.getAttribute('data-message-id')) || 0)
+            );
+        } catch (e) {
+            const lastNode = messageNodes[messageNodes.length - 1];
+            lastMessageId = parseInt(lastNode.getAttribute('data-message-id')) || 0;
+        }
     }
 
     // Khởi tạo recentMessages từ tin nhắn hiện có
@@ -797,22 +1168,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const messageBubble = message.querySelector('.message-bubble');
         const messageTime = message.querySelector('.message-time');
         const messageId = message.getAttribute('data-message-id');
-        
+
         if(messageBubble && messageTime) {
             const content = messageBubble.textContent.trim();
             const senderType = message.classList.contains('sent') ? 'admin' : 'user';
-            
+
             // Parse thời gian từ text
             const timeText = messageTime.textContent;
             const timeMatch = timeText.match(/(\d{1,2}):(\d{2})/);
             let timestamp = new Date().getTime();
-            
+
             if(timeMatch) {
                 const now = new Date();
                 now.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0);
                 timestamp = now.getTime();
             }
-            
+
             recentMessages.push({
                 content: content,
                 senderType: senderType,
@@ -821,17 +1192,68 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-    
+
     // Giữ chỉ MAX_RECENT_MESSAGES tin nhắn gần nhất
     if(recentMessages.length > MAX_RECENT_MESSAGES) {
         recentMessages = recentMessages.slice(-MAX_RECENT_MESSAGES);
     }
-    
+
     console.log('Initialized recentMessages:', recentMessages);
 
-    // Bắt đầu realtime khi trang load
+    // Cuộn xuống cuối khi khởi tạo giao diện
+    function scrollToBottom() {
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+
+    // Bắt đầu realtime khi trang load (chỉ hiển thị thông báo 1 lần)
     startRealtimeChat();
-    showAdminChatInfo('Đã kết nối với cuộc trò chuyện!');
+    // Đảm bảo ở cuối ngay khi vào
+    scrollToBottom();
+    // Và sau một nhịp nhỏ để chắc chắn (khi font/icon render xong)
+    setTimeout(scrollToBottom, 100);
+
+    // Modal event listeners
+    modalClose.addEventListener('click', function() {
+        imageModal.style.display = 'none';
+    });
+
+    // Đóng modal khi click bên ngoài
+    imageModal.addEventListener('click', function(e) {
+        if (e.target === imageModal) {
+            imageModal.style.display = 'none';
+        }
+    });
+
+    // Đóng modal bằng ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && imageModal.style.display === 'block') {
+            imageModal.style.display = 'none';
+        }
+    });
+
+    // File input event listeners
+    attachmentInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            showFilePreview(file);
+            // Bỏ required cho message input nếu có file
+            chatInput.removeAttribute('required');
+        }
+    });
+
+    // Remove file button
+    removeFile.addEventListener('click', function() {
+        clearFilePreview();
+        // Khôi phục required cho message input
+        chatInput.setAttribute('required', 'required');
+    });
+
+    // if (!didShowConnectInfo) {
+    //     showAdminChatInfo('Đã kết nối với cuộc trò chuyện!');
+    //     didShowConnectInfo = true;
+    // }
 
     // Auto-resize textarea
     chatInput.addEventListener('input', function() {
@@ -839,22 +1261,58 @@ document.addEventListener('DOMContentLoaded', function() {
         this.style.height = Math.min(this.scrollHeight, 100) + 'px';
     });
 
-    // Send message
+    // Send message (single path, để sendMessage tự quản lý isSending)
     chatForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const message = chatInput.value.trim();
-        if (message && !isSending) {
-            sendMessage(message);
+        if (isSending) return;
+        const fileInput = document.getElementById('attachmentInput');
+        const hasFile = fileInput && fileInput.files && fileInput.files[0];
+        if (!message && !hasFile) {
+            showAdminChatError('Vui lòng nhập tin nhắn hoặc chọn tệp đính kèm');
+            return;
         }
+        sendMessage(message);
     });
 
-    // Send message on Enter (but allow Shift+Enter for new line)
+    // Send message on Enter (use submit to avoid duplicate)
     chatInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            const message = this.value.trim();
-            if (message && !isSending) {
-                sendMessage(message);
+            if (!isSending) {
+                if (typeof chatForm.requestSubmit === 'function') {
+                    chatForm.requestSubmit();
+                } else {
+                    chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+                }
+            }
+        }
+    });
+
+    // Paste image handler - cho phép copy & paste ảnh trực tiếp
+    chatInput.addEventListener('paste', function(e) {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+
+        for (let item of items) {
+            if (item.type.indexOf('image') !== -1) {
+                e.preventDefault();
+
+                const file = item.getAsFile();
+                if (file) {
+                    // Tạo FileList object để gán vào input
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    attachmentInput.files = dataTransfer.files;
+
+                    // Hiển thị preview
+                    showFilePreview(file);
+
+                    // Bỏ required cho message input
+                    chatInput.removeAttribute('required');
+
+                    showAdminChatSuccess('Đã paste ảnh! Bạn có thể gửi ngay hoặc thêm tin nhắn.');
+                }
+                break;
             }
         }
     });
@@ -866,29 +1324,34 @@ document.addEventListener('DOMContentLoaded', function() {
         sendBtn.disabled = true;
         sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
+        const formData = new FormData();
+        formData.append('_token', '{{ csrf_token() }}');
+        if (message) formData.append('message', message);
+        const fileInput = document.getElementById('attachmentInput');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            formData.append('attachment', fileInput.files[0]);
+        }
+
         fetch(`/admin/support/conversation/${conversationId}/message`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ message: message })
+            body: formData
         })
         .then(res => res.json())
         .then(data => {
             if(data.success) {
-                addMessageToUI(message, 'admin', data.message_id);
+                if (data.message_id) {
+                    lastMessageId = Math.max(lastMessageId, data.message_id);
+                }
+                addMessageToUI(message, 'admin', data.message_id, null, data.attachment);
                 chatInput.value = '';
                 chatInput.style.height = 'auto';
-
-                // Bắt đầu realtime nếu chưa bật
-                if(!isRealtimeEnabled) {
-                    startRealtimeChat();
-                    showAdminChatInfo('Đã bật chế độ realtime!');
-                } else {
-                    showAdminChatSuccess('Tin nhắn đã được gửi!');
-                }
+                if (fileInput) fileInput.value = '';
+                // Xóa file preview và khôi phục required
+                clearFilePreview();
+                chatInput.setAttribute('required', 'required');
             } else {
                 showAdminChatError(data.message || 'Có lỗi khi gửi tin nhắn!');
             }
@@ -904,18 +1367,54 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function addMessageToUI(message, senderType, messageId = null, createdAt = null) {
-        if(!message || message.trim() === '') return;
-
+    function addMessageToUI(message, senderType, messageId = null, createdAt = null, attachment = null) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${senderType === 'admin' ? 'sent' : 'received'}`;
         if(messageId) {
             messageDiv.setAttribute('data-message-id', messageId);
         }
 
-        const messageBubble = document.createElement('div');
-        messageBubble.className = 'message-bubble';
-        messageBubble.textContent = message.trim();
+        // Thêm tin nhắn text nếu có
+        if (message && message.trim()) {
+            const messageBubble = document.createElement('div');
+            messageBubble.className = 'message-bubble';
+            messageBubble.textContent = message.trim();
+            messageDiv.appendChild(messageBubble);
+        }
+
+        // Thêm file đính kèm nếu có
+        if (attachment && attachment.url) {
+            if (attachment.type && attachment.type.startsWith('image/')) {
+                // Hiển thị ảnh
+                const imageBubble = document.createElement('div');
+                imageBubble.className = 'message-bubble';
+                imageBubble.style.cursor = 'pointer';
+                imageBubble.onclick = () => openImageModal(attachment.url);
+
+                const img = document.createElement('img');
+                img.src = attachment.url;
+                img.alt = attachment.name || 'attachment';
+                img.style.maxWidth = '200px';
+                img.style.maxHeight = '150px';
+                img.style.borderRadius = '8px';
+
+                imageBubble.appendChild(img);
+                messageDiv.appendChild(imageBubble);
+            } else {
+                // Hiển thị file khác
+                const fileBubble = document.createElement('div');
+                fileBubble.className = 'message-bubble';
+
+                const fileLink = document.createElement('a');
+                fileLink.href = attachment.url;
+                fileLink.target = '_blank';
+                fileLink.rel = 'noopener';
+                fileLink.textContent = attachment.name || 'Tệp đính kèm';
+
+                fileBubble.appendChild(fileLink);
+                messageDiv.appendChild(fileBubble);
+            }
+        }
 
         const messageTime = document.createElement('div');
         messageTime.className = 'message-time';
@@ -925,36 +1424,78 @@ document.addEventListener('DOMContentLoaded', function() {
             messageTime.textContent = new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
         }
 
-        messageDiv.appendChild(messageBubble);
         messageDiv.appendChild(messageTime);
-
-        // Thêm trạng thái cho tin nhắn admin
-        if(senderType === 'admin') {
-            const messageStatus = document.createElement('div');
-            messageStatus.className = 'message-status';
-            messageStatus.innerHTML = '<i class="fas fa-check-double"></i><span>Đã xem</span>';
-            messageDiv.appendChild(messageStatus);
-        }
-
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // Lưu tin nhắn vào recentMessages để tránh trùng lặp
-        const messageData = {
-            content: message.trim(),
-            senderType: senderType,
-            timestamp: new Date().getTime(),
-            messageId: messageId
-        };
-        
-        recentMessages.push(messageData);
-        
-        // Giữ chỉ MAX_RECENT_MESSAGES tin nhắn gần nhất
-        if(recentMessages.length > MAX_RECENT_MESSAGES) {
-            recentMessages.shift();
+
+        // Lưu tin nhắn vào recentMessages để tránh trùng lặp (chỉ khi có text)
+        if (message && message.trim()) {
+            const messageData = {
+                content: message.trim(),
+                senderType: senderType,
+                timestamp: new Date().getTime(),
+                messageId: messageId
+            };
+
+            recentMessages.push(messageData);
+
+            // Giữ chỉ MAX_RECENT_MESSAGES tin nhắn gần nhất
+            if(recentMessages.length > MAX_RECENT_MESSAGES) {
+                recentMessages.shift();
+            }
+
+            console.log('Added message to UI:', messageData);
         }
-        
-        console.log('Added message to UI:', messageData);
+    }
+
+    function addAttachmentToUI(attachment, senderType, messageId = null, createdAt = null) {
+        if(!attachment || !attachment.url) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${senderType === 'admin' ? 'sent' : 'received'}`;
+        if(messageId) {
+            messageDiv.setAttribute('data-message-id', messageId);
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+
+        if (attachment.type && attachment.type.startsWith('image')) {
+            const img = document.createElement('img');
+            img.src = attachment.url;
+            img.alt = attachment.name || 'attachment';
+            img.style.maxWidth = '200px';
+            img.style.maxHeight = '150px';
+            img.style.borderRadius = '8px';
+            img.style.cursor = 'pointer';
+
+            // Thêm click event để mở modal
+            img.addEventListener('click', function() {
+                modalImage.src = attachment.url;
+                imageModal.style.display = 'block';
+            });
+
+            bubble.appendChild(img);
+        } else {
+            const a = document.createElement('a');
+            a.href = attachment.url;
+            a.target = '_blank';
+            a.textContent = attachment.name || 'Tải tệp đính kèm';
+            bubble.appendChild(a);
+        }
+
+        const messageTime = document.createElement('div');
+        messageTime.className = 'message-time';
+        if(createdAt) {
+            messageTime.textContent = new Date(createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+        } else {
+            messageTime.textContent = new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        messageDiv.appendChild(bubble);
+        messageDiv.appendChild(messageTime);
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     function startRealtimeChat() {
@@ -969,46 +1510,61 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function checkNewMessages() {
         if(!isRealtimeEnabled) return;
+        if(isFetchingMessages) return; // tránh chồng request
 
-        fetch(`/admin/support/conversation/${conversationId}/messages?last_id=${lastMessageId}`)
-            .then(res => res.json())
-            .then(data => {
-                if(data.success && data.messages && data.messages.length > 0) {
-                    console.log('Received new messages:', data.messages.length);
-                    
-                    data.messages.forEach(msg => {
-                        // Kiểm tra xem tin nhắn đã tồn tại chưa để tránh duplicate
-                        const existingMessage = document.querySelector(`[data-message-id="${msg.id}"]`);
-                        
-                        if(!existingMessage && msg.id > lastMessageId) {
-                            // Kiểm tra thêm xem có tin nhắn trùng nội dung không
-                            const duplicateContent = checkDuplicateMessage(msg.message, msg.sender_type);
-                            
-                            if(!duplicateContent) {
-                                addMessageToUI(msg.message, msg.sender_type, msg.id, msg.created_at);
-                                lastMessageId = Math.max(lastMessageId, msg.id);
-                                
-                                // Thông báo khi có tin nhắn mới từ user
-                                if(msg.sender_type === 'user') {
-                                    showAdminChatInfo('Có tin nhắn mới từ khách hàng!');
-                                }
-                            } else {
-                                console.log('Duplicate message content detected, skipping:', msg.message);
+        isFetchingMessages = true;
+        if (fetchAbortController) {
+            try { fetchAbortController.abort(); } catch (_) {}
+        }
+        fetchAbortController = new AbortController();
+
+        fetch(`/admin/support/conversation/${conversationId}/messages?last_id=${lastMessageId}`, {
+            signal: fetchAbortController.signal
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            if(data.success && data.messages && data.messages.length > 0) {
+                console.log('Received new messages:', data.messages.length);
+                data.messages.forEach(msg => {
+                    const existingMessage = document.querySelector(`[data-message-id="${msg.id}"]`);
+                    if(!existingMessage && msg.id > lastMessageId) {
+                        const duplicateContent = checkDuplicateMessage(msg.message, msg.sender_type);
+                        if(!duplicateContent) {
+                            addMessageToUI(msg.message, msg.sender_type, msg.id, msg.created_at, msg.attachment);
+                            lastMessageId = Math.max(lastMessageId, msg.id);
+
+                            // Thông báo khi nhận tin nhắn mới từ user
+                            if(msg.sender_type === 'user') {
+                                showAdminChatInfo('Có tin nhắn mới từ khách hàng!');
                             }
-                        } else if(existingMessage) {
-                            console.log('Message already exists with ID:', msg.id);
                         }
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Realtime error:', error);
-            })
-            .finally(() => {
-                if(isRealtimeEnabled) {
-                    setTimeout(checkNewMessages, 3000);
-                }
-            });
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            if (error && error.name === 'AbortError') {
+                // bị hủy do vòng lặp mới, bỏ qua
+                return;
+            }
+            console.error('Realtime error:', error);
+
+            // Thử lại sau 5 giây nếu có lỗi
+            if(isRealtimeEnabled) {
+                setTimeout(checkNewMessages, 5000);
+            }
+        })
+        .finally(() => {
+            isFetchingMessages = false;
+            if(isRealtimeEnabled) {
+                setTimeout(checkNewMessages, pollIntervalMs);
+            }
+        });
     }
 
     // Hàm kiểm tra tin nhắn trùng lặp về nội dung
@@ -1016,16 +1572,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const trimmedContent = messageContent.trim();
         const now = new Date().getTime();
         const DUPLICATE_THRESHOLD = 10000; // 10 giây
-        
+
         // Kiểm tra trong recentMessages
         for(let i = recentMessages.length - 1; i >= 0; i--) {
             const recentMsg = recentMessages[i];
-            
+
             // Kiểm tra nội dung và sender type
             if(recentMsg.content === trimmedContent && recentMsg.senderType === senderType) {
                 // Kiểm tra thời gian
                 const timeDiff = now - recentMsg.timestamp;
-                
+
                 if(timeDiff < DUPLICATE_THRESHOLD) {
                     console.log('Duplicate detected in recentMessages:', {
                         content: trimmedContent,
@@ -1037,19 +1593,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        
+
         // Kiểm tra thêm trong DOM (backup)
         const messages = document.querySelectorAll('.message');
         const recentDOMMessages = Array.from(messages).slice(-3);
-        
+
         for(let i = recentDOMMessages.length - 1; i >= 0; i--) {
             const message = recentDOMMessages[i];
             const messageBubble = message.querySelector('.message-bubble');
-            
+
             if(messageBubble) {
                 const existingContent = messageBubble.textContent.trim();
                 const existingSenderType = message.classList.contains('sent') ? 'admin' : 'user';
-                
+
                 if(existingContent === trimmedContent && existingSenderType === senderType) {
                     console.log('Duplicate detected in DOM:', {
                         content: trimmedContent,
@@ -1059,7 +1615,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        
+
         return false; // Không trùng lặp
     }
 
@@ -1074,7 +1630,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         chatMessages.appendChild(errorDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        
+
         // Tự động ẩn sau 5 giây
         setTimeout(() => {
             if (errorDiv.parentNode) {
@@ -1094,7 +1650,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         chatMessages.appendChild(infoDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        
+
         // Tự động ẩn sau 3 giây
         setTimeout(() => {
             if (infoDiv.parentNode) {
@@ -1114,7 +1670,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         chatMessages.appendChild(successDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        
+
         // Tự động ẩn sau 3 giây
         setTimeout(() => {
             if (successDiv.parentNode) {
@@ -1138,6 +1694,40 @@ document.addEventListener('DOMContentLoaded', function() {
         // TODO: Implement search logic
         console.log('Searching for:', this.value);
     });
+
+    // Hàm mở modal ảnh từ view
+    window.openImageModal = function(imageSrc) {
+        modalImage.src = imageSrc;
+        imageModal.style.display = 'block';
+    };
+
+    // Hàm hiển thị file preview
+    function showFilePreview(file) {
+        fileName.textContent = file.name;
+
+        // Thay đổi icon tùy theo loại file
+        const iconElement = filePreview.querySelector('.file-preview-icon i');
+        if (file.type.startsWith('image/')) {
+            iconElement.className = 'fas fa-image';
+        } else if (file.type === 'application/pdf') {
+            iconElement.className = 'fas fa-file-pdf';
+        } else if (file.type === 'application/zip') {
+            iconElement.className = 'fas fa-file-archive';
+        } else if (file.type === 'text/plain') {
+            iconElement.className = 'fas fa-file-alt';
+        } else {
+            iconElement.className = 'fas fa-file';
+        }
+
+        filePreview.style.display = 'flex';
+    }
+
+    // Hàm xóa file preview
+    function clearFilePreview() {
+        attachmentInput.value = '';
+        filePreview.style.display = 'none';
+        fileName.textContent = '';
+    }
 });
 </script>
 @endsection

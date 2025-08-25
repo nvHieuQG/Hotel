@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\CheckBookingAccess;
+use App\Http\Middleware\AdminOnlyMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'check.booking.access' => CheckBookingAccess::class,
+            'admin.only' => AdminOnlyMiddleware::class,
         ]);
     })
     ->withCommands([
