@@ -4,6 +4,8 @@ namespace App\Providers;
 
 
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use App\Interfaces\Repositories\UserRepositoryInterface;
@@ -309,6 +311,19 @@ class AppServiceProvider extends ServiceProvider
         Booking::observe(BookingObserver::class);
         BookingNote::observe(BookingNoteObserver::class);
         RoomTypeReview::observe(RoomTypeReviewObserver::class);
+
+        // Blade directives for roles
+        Blade::if('role', function (string $roleName) {
+            return Auth::check() && optional(Auth::user()->role)->name === $roleName;
+        });
+
+        Blade::if('roles', function (array $roles) {
+            return Auth::check() && in_array(optional(Auth::user()->role)->name, $roles, true);
+        });
+
+        Blade::if('staff', function () {
+            return Auth::check() && optional(Auth::user()->role)->name === 'staff';
+        });
 
         // Đăng ký scheduled task để xóa giao dịch quá hạn
         $this->app->make(\Illuminate\Console\Scheduling\Schedule::class)

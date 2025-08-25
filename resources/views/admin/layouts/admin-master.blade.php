@@ -309,10 +309,10 @@
             <div class="topbar-item dropdown">
                 <a class="user-profile" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
                     aria-expanded="false">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=random" alt="Admin">
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'User') }}&background=random" alt="Avatar">
                     <div class="user-profile-info d-none d-md-block">
-                        <div class="user-profile-name">Admin</div>
-                        <div class="user-profile-role">Quản trị viên</div>
+                        <div class="user-profile-name">{{ auth()->user()->name ?? 'User' }}</div>
+                        <div class="user-profile-role">{{ ucfirst(str_replace('_', ' ', auth()->user()->role->name ?? '')) }}</div>
                     </div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end animate slideIn" aria-labelledby="userDropdown">
@@ -345,107 +345,133 @@
                 <i class="fas fa-hotel me-2"></i> Marron Hotel
             </div>
             <hr class="mx-3 opacity-25">
-            <ul class="nav flex-column px-3 mt-4">
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
-                        href="{{ route('admin.dashboard') }}">
-                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}"
-                        href="{{ route('admin.bookings.index') }}">
-                        <i class="fas fa-calendar-check"></i> Đặt phòng
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.room-changes.*') ? 'active' : '' }}"
-                        href="{{ route('admin.room-changes.index') }}">
-                        <i class="fas fa-exchange-alt"></i> Yêu cầu đổi phòng
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.tour-bookings.*') ? 'active' : '' }}"
-                        href="{{ route('admin.tour-bookings.index') }}">
-                        <i class="fas fa-route"></i> Tour 
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? '' : 'collapsed' }}"
-                        data-bs-toggle="collapse" href="#submenuRoom" role="button"
-                        aria-expanded="{{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'true' : 'false' }}"
-                        aria-controls="submenuRoom">
-                        <span><i class="fas fa-bed"></i> Phòng</span>
-                        <i
-                            class="fas fa-chevron-down small {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'rotate-180' : '' }}"></i>
-                    </a>
-                    <div class="collapse {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'show' : '' }}"
-                        id="submenuRoom">
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.rooms.index') ? 'active' : '' }}"
-                                    href="{{ route('admin.rooms.index') }}">
-                                    Danh sách phòng
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.room-type-services.index') ? 'active' : '' }}"
-                                    href="{{ route('admin.room-type-services.index') }}">
-                                    Dịch vụ loại phòng
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
-                        href="{{ route('admin.users.index') }}">
-                        <i class="fas fa-users"></i> Người dùng
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}" href="{{ route('admin.promotions.index') }}">
-                        <i class="fas fa-gift"></i> Khuyến mãi
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.room-type-reviews.*') ? 'active' : '' }}"
-                        href="{{ route('admin.room-type-reviews.index') }}">
-                        <i class="fas fa-star"></i> Đánh giá
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.bookings.report') ? 'active' : '' }}"
-                        href="{{ route('admin.bookings.report') }}">
-                        <i class="fas fa-chart-bar"></i> Báo cáo
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}" href="{{ route('admin.notifications.index') }}">
-                        <i class="fas fa-bell"></i> Thông báo
-                        @if(isset($unreadCount) && $unreadCount > 0)
-                            <span class="badge bg-danger ms-auto" id="sidebarNotificationBadge">{{ $unreadCount }}</span>
-                        @endif
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.support.*') ? 'active' : '' }}" href="{{ route('admin.support.index') }}">
-                        <i class="fas fa-headset"></i> Hỗ trợ
-                        @php
-                            $unreadCount = \App\Models\SupportMessage::where('sender_type', 'user')->where('is_read', false)->count();
-                        @endphp
-                        @if($unreadCount > 0)
-                            <span class="badge bg-danger ms-2">{{ $unreadCount }}</span>
-                        @endif
-                    </a>
-                </li>
-                
-                <li class="nav-item mt-5">
-                    <a class="nav-link" href="{{ route('index') }}" target="_blank">
-                        <i class="fas fa-external-link-alt"></i> Xem trang chủ
-                    </a>
-                </li>
-            </ul>
+            @php $currentRole = auth()->user()->role->name ?? null; @endphp
+            @if($currentRole === 'staff')
+                <ul class="nav flex-column px-3 mt-4">
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('staff.dashboard') ? 'active' : '' }}"
+                            href="{{ route('staff.dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('staff.bookings.*') ? 'active' : '' }}"
+                            href="{{ route('staff.bookings.index') }}">
+                            <i class="fas fa-calendar-check"></i> Đặt phòng
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('staff.room-changes.*') ? 'active' : '' }}"
+                            href="{{ route('staff.room-changes.index') }}">
+                            <i class="fas fa-exchange-alt"></i> Yêu cầu đổi phòng
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('staff.tour-bookings.*') ? 'active' : '' }}"
+                            href="{{ route('staff.tour-bookings.index') }}">
+                            <i class="fas fa-route"></i> Tour
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('staff.support.*') ? 'active' : '' }}"
+                            href="{{ route('staff.support.index') }}">
+                            <i class="fas fa-headset"></i> Hỗ trợ
+                        </a>
+                    </li>
+                </ul>
+            @else
+                <ul class="nav flex-column px-3 mt-4">
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
+                            href="{{ route('admin.dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}"
+                            href="{{ route('admin.bookings.index') }}">
+                            <i class="fas fa-calendar-check"></i> Đặt phòng
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.room-changes.*') ? 'active' : '' }}"
+                            href="{{ route('admin.room-changes.index') }}">
+                            <i class="fas fa-exchange-alt"></i> Yêu cầu đổi phòng
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.tour-bookings.*') ? 'active' : '' }}"
+                            href="{{ route('admin.tour-bookings.index') }}">
+                            <i class="fas fa-route"></i> Tour 
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? '' : 'collapsed' }}"
+                            data-bs-toggle="collapse" href="#submenuRoom" role="button"
+                            aria-expanded="{{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'true' : 'false' }}"
+                            aria-controls="submenuRoom">
+                            <span><i class="fas fa-bed"></i> Phòng</span>
+                            <i class="fas fa-chevron-down small {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'rotate-180' : '' }}"></i>
+                        </a>
+                        <div class="collapse {{ request()->routeIs('admin.rooms.*') || request()->routeIs('admin.room-type-services.*') || request()->routeIs('admin.service-categories.*') ? 'show' : '' }}" id="submenuRoom">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('admin.rooms.index') ? 'active' : '' }}" href="{{ route('admin.rooms.index') }}">
+                                        Danh sách phòng
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('admin.room-type-services.index') ? 'active' : '' }}" href="{{ route('admin.room-type-services.index') }}">
+                                        Dịch vụ loại phòng
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('admin.service-categories.index') ? 'active' : '' }}" href="{{ route('admin.service-categories.index') }}">
+                                        Danh mục dịch vụ
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}" href="{{ route('admin.promotions.index') }}">
+                            <i class="fas fa-gift"></i> Khuyến mãi
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.room-type-reviews.*') ? 'active' : '' }}" href="{{ route('admin.room-type-reviews.index') }}">
+                            <i class="fas fa-star"></i> Đánh giá
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.bookings.report') ? 'active' : '' }}" href="{{ route('admin.bookings.report') }}">
+                            <i class="fas fa-chart-bar"></i> Báo cáo
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}" href="{{ route('admin.notifications.index') }}">
+                            <i class="fas fa-bell"></i> Thông báo
+                            @if(isset($unreadCount) && $unreadCount > 0)
+                                <span class="badge bg-danger ms-auto" id="sidebarNotificationBadge">{{ $unreadCount }}</span>
+                            @endif
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.support.*') ? 'active' : '' }}" href="{{ route('admin.support.index') }}">
+                            <i class="fas fa-headset"></i> Hỗ trợ
+                            @php $unreadCount = \App\Models\SupportMessage::where('sender_type', 'user')->where('is_read', false)->count(); @endphp
+                            @if($unreadCount > 0)
+                                <span class="badge bg-danger ms-2">{{ $unreadCount }}</span>
+                            @endif
+                        </a>
+                    </li>
+                    <li class="nav-item mt-5">
+                        <a class="nav-link" href="{{ route('index') }}" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> Xem trang chủ
+                        </a>
+                    </li>
+                </ul>
+            @endif
         </div>
     </div>
 
