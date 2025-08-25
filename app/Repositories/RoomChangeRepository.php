@@ -291,11 +291,13 @@ class RoomChangeRepository implements RoomChangeRepositoryInterface
         $newRoomTypePricePerNight = $newRoomType->price ?? 0;
         $newRoomTypeTotalPrice = $newRoomTypePricePerNight * $nights;
 
-        // Lấy giá phòng cơ bản (sử dụng giá phòng hiện tại hoặc tính từ room type)
-        $oldRoomBasePrice = $booking->price ?? ($booking->room->roomType->price ?? 0) * $nights;
+        // Lấy giá phòng cũ thuần (chỉ tính giá phòng, không bao gồm dịch vụ)
+        // Sử dụng giá từ room type của phòng hiện tại
+        $oldRoomTypePricePerNight = $booking->room->roomType->price ?? 0;
+        $oldRoomTypeTotalPrice = $oldRoomTypePricePerNight * $nights;
 
-        // Tính chênh lệch: Tổng tiền loại phòng mới - Giá phòng cơ bản cũ
-        return $newRoomTypeTotalPrice - $oldRoomBasePrice;
+        // Tính chênh lệch: Tổng tiền loại phòng mới - Tổng tiền loại phòng cũ (thuần)
+        return $newRoomTypeTotalPrice - $oldRoomTypeTotalPrice;
     }
 
 } 
