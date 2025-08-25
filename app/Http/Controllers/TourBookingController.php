@@ -220,8 +220,7 @@ class TourBookingController extends Controller
             // Tính toán giá cuối sau khi áp dụng mã giảm giá
             if (($request->promotion_discount ?? 0) > 0) {
                 $tourBookingData['final_price'] = $request->total_price - ($request->promotion_discount);
-                // Cập nhật total_price để sử dụng giá sau giảm giá cho thanh toán
-                $tourBookingData['total_price'] = $tourBookingData['final_price'];
+                // KHÔNG cập nhật total_price - giữ nguyên giá gốc để hiển thị
             } else {
                 $tourBookingData['final_price'] = $request->total_price;
             }
@@ -280,8 +279,10 @@ class TourBookingController extends Controller
         $tourBooking->total_services_amount = $tourBooking->tourBookingServices->sum('total_price');
         $tourBooking->total_amount_before_discount = $tourBooking->total_rooms_amount + $tourBooking->total_services_amount;
         
-        // Tính toán giá cuối cùng
-        if ($tourBooking->promotion_discount > 0) {
+        // Tính toán giá cuối cùng - sử dụng final_price nếu có, nếu không thì tính từ total_price
+        if ($tourBooking->final_price && $tourBooking->final_price > 0) {
+            // Giữ nguyên final_price đã có
+        } elseif ($tourBooking->promotion_discount > 0) {
             $tourBooking->final_price = $tourBooking->total_amount_before_discount - $tourBooking->promotion_discount;
         } else {
             $tourBooking->final_price = $tourBooking->total_amount_before_discount;
@@ -346,15 +347,16 @@ class TourBookingController extends Controller
                 ], 400);
             }
             
-            // Tính toán giảm giá
-            $discountAmount = $promotion->calculateDiscount($tourBooking->total_price);
+            // Tính toán giảm giá - sử dụng giá gốc (total_rooms_amount + total_services_amount)
+            $basePrice = $tourBooking->tourBookingRooms->sum('total_price') + $tourBooking->tourBookingServices->sum('total_price');
+            $discountAmount = $promotion->calculateDiscount($basePrice);
             
             // Cập nhật tour booking
             $tourBooking->update([
                 'promotion_id' => $promotionId,
                 'promotion_code' => $promotion->code,
                 'promotion_discount' => $discountAmount,
-                'final_price' => $tourBooking->total_price - $discountAmount
+                'final_price' => $basePrice - $discountAmount
             ]);
             
             return response()->json([
@@ -363,9 +365,9 @@ class TourBookingController extends Controller
                 'data' => [
                     'promotion_code' => $promotion->code,
                     'discount_amount' => $discountAmount,
-                    'final_price' => $tourBooking->total_price - $discountAmount,
+                    'final_price' => $basePrice - $discountAmount,
                     'formatted_discount' => number_format($discountAmount, 0, ',', '.') . ' VNĐ',
-                    'formatted_final_price' => number_format($tourBooking->total_price - $discountAmount, 0, ',', '.') . ' VNĐ'
+                    'formatted_final_price' => number_format($basePrice - $discountAmount, 0, ',', '.') . ' VNĐ'
                 ]
             ]);
             

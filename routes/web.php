@@ -160,8 +160,7 @@ Route::middleware(['auth', 'check.booking.access'])->group(function () {
 // Client VAT invoice
 Route::middleware(['auth'])->group(function () {
     Route::post('profile/bookings/{booking}/vat/request', [ClientVatInvoiceController::class, 'request'])->name('client.vat-invoice.request');
-    Route::post('profile/bookings/{booking}/vat/generate', [ClientVatInvoiceController::class, 'generate'])->name('client.vat-invoice.generate');
-    Route::post('profile/bookings/{booking}/vat/send', [ClientVatInvoiceController::class, 'send'])->name('client.vat-invoice.send');
+    Route::post('profile/bookings/{booking}/vat/regenerate', [ClientVatInvoiceController::class, 'regenerate'])->name('client.vat-invoice.regenerate');
 });
 
 // Routes công khai cho room type reviews (chỉ hiển thị)
@@ -193,6 +192,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('bookings/{id}/vat/send', [AdminBookingController::class, 'sendVatInvoice'])->name('bookings.vat.send');
     Route::get('bookings/{id}/vat/preview', [AdminBookingController::class, 'previewVatInvoice'])->name('bookings.vat.preview');
     Route::get('bookings/{id}/vat/download', [AdminBookingController::class, 'downloadVatInvoice'])->name('bookings.vat.download');
+    Route::post('bookings/{id}/vat/regenerate', [AdminBookingController::class, 'regenerateVatInvoice'])->name('bookings.vat.regenerate');
     
 
 
@@ -206,13 +206,14 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     // Quản lý VAT Invoice Tour Booking
     Route::get('tour-vat-invoices', [AdminTourVatInvoiceController::class, 'index'])->name('tour-vat-invoices.index');
     Route::get('tour-vat-invoices/{id}', [AdminTourVatInvoiceController::class, 'show'])->name('tour-vat-invoices.show');
-            Route::post('tour-vat-invoices/{id}/generate', [AdminTourVatInvoiceController::class, 'generateVatInvoice'])->name('tour-vat-invoices.generate');
-        Route::post('tour-vat-invoices/{id}/reject', [AdminTourVatInvoiceController::class, 'rejectVatRequest'])->name('tour-vat-invoices.reject');
-        Route::get('tour-vat-invoices/{id}/download', [AdminTourVatInvoiceController::class, 'downloadVatInvoice'])->name('tour-vat-invoices.download');
-        Route::get('tour-vat-invoices/{id}/preview', [AdminTourVatInvoiceController::class, 'previewVatInvoice'])->name('tour-vat-invoices.preview');
-        Route::post('tour-vat-invoices/{id}/send', [AdminTourVatInvoiceController::class, 'sendVatInvoice'])->name('tour-vat-invoices.send');
-        Route::post('tour-vat-invoices/{id}/regenerate', [AdminTourVatInvoiceController::class, 'regenerateVatInvoice'])->name('tour-vat-invoices.regenerate');
-        Route::get('tour-vat-invoices/statistics', [AdminTourVatInvoiceController::class, 'statistics'])->name('tour-vat-invoices.statistics');
+    Route::post('tour-vat-invoices/{id}/generate', [AdminTourVatInvoiceController::class, 'generateVatInvoice'])->name('tour-vat-invoices.generate');
+    Route::post('tour-vat-invoices/{id}/reject', [AdminTourVatInvoiceController::class, 'rejectVatRequest'])->name('tour-vat-invoices.reject');
+    Route::get('tour-vat-invoices/{id}/download', [AdminTourVatInvoiceController::class, 'downloadVatInvoice'])->name('tour-vat-invoices.download');
+    Route::get('tour-vat-invoices/{id}/preview', [AdminTourVatInvoiceController::class, 'previewVatInvoice'])->name('tour-vat-invoices.preview');
+    Route::post('tour-vat-invoices/{id}/send', [AdminTourVatInvoiceController::class, 'sendVatInvoice'])->name('tour-vat-invoices.send');
+    Route::post('tour-vat-invoices/{id}/regenerate', [AdminTourVatInvoiceController::class, 'regenerateVatInvoice'])->name('tour-vat-invoices.regenerate');
+    Route::get('tour-vat-invoices/statistics', [AdminTourVatInvoiceController::class, 'statistics'])->name('tour-vat-invoices.statistics');
+    Route::post('tour-vat-invoices/{id}/fix-data', [AdminTourVatInvoiceController::class, 'fixVatInvoiceData'])->name('tour-vat-invoices.fix-data');
 
     // Tour Booking Services routes
     Route::post('tour-bookings/{id}/services', [TourBookingServiceController::class, 'store'])->name('tour-bookings.services.store');

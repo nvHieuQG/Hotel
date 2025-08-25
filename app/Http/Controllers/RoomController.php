@@ -35,7 +35,21 @@ class RoomController extends Controller
             // Truyền searchParams để view có thể sử dụng
             $searchParams = $filters;
 
-            return view('client.rooms.index', compact('roomTypes', 'searchMessage', 'searchParams'));
+            // Lấy khuyến mại nổi bật
+            $featuredPromotions = collect();
+            try {
+                $promoService = app(\App\Services\RoomPromotionService::class);
+                if ($roomTypes->isNotEmpty()) {
+                    $representativeRoomType = $roomTypes->first();
+                    $baseAmount = (float) $representativeRoomType->price;
+                    $featuredPromotions = $promoService->getTopPromotionsForRoomType($representativeRoomType->id, $baseAmount, 3);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to load featured promotions: ' . $e->getMessage());
+                $featuredPromotions = collect();
+            }
+
+            return view('client.rooms.index', compact('roomTypes', 'searchMessage', 'searchParams', 'featuredPromotions'));
         } catch (\Exception $e) {
             Log::error('Room search error: ' . $e->getMessage(), [
                 'user_id' => Auth::check() ? Auth::id() : null,

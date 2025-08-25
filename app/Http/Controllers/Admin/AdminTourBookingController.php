@@ -69,17 +69,30 @@ class AdminTourBookingController extends Controller
         $validNextStatuses = $this->getValidNextStatuses($tourBooking->status);
 
         // Tính toán các giá trị cần thiết theo thực tế
-        $totalRoomsAmount = $tourBooking->total_rooms_amount;
-        $totalServicesAmount = $tourBooking->total_services_amount;
-        $totalAmountBeforeDiscount = $tourBooking->total_amount_before_discount;
-        $totalPaid = $tourBooking->total_paid;
-        $totalDiscount = $tourBooking->total_discount;
-        $finalAmount = $tourBooking->final_amount;
-        $outstandingAmount = $tourBooking->outstanding_amount;
+        $totalRoomsAmount = $tourBooking->tourBookingRooms->sum('total_price');
+        $totalServicesAmount = $tourBooking->tourBookingServices->sum('total_price');
+        $totalAmountBeforeDiscount = $totalRoomsAmount + $totalServicesAmount;
+        $totalPaid = $tourBooking->payments->where('status', 'completed')->sum('amount');
+        $totalDiscount = $tourBooking->promotion_discount ?? 0;
+        
+        // Tính toán giá cuối - sử dụng final_price nếu có, nếu không thì tính từ total_price
+        if ($tourBooking->final_price && $tourBooking->final_price > 0) {
+            $finalAmount = $tourBooking->final_price;
+        } elseif ($totalDiscount > 0) {
+            $finalAmount = $totalAmountBeforeDiscount - $totalDiscount;
+        } else {
+            $finalAmount = $totalAmountBeforeDiscount;
+        }
+        
+        $outstandingAmount = $finalAmount - $totalPaid;
 
         // Lấy dịch vụ và ghi chú
         $tourBookingServices = $tourBooking->tourBookingServices;
         $tourBookingNotes = $tourBooking->tourBookingNotes;
+
+        // Sử dụng VatInvoiceService để lấy thông tin thanh toán cho VAT
+        $vatInvoiceService = app(\App\Services\VatInvoiceService::class);
+        $paymentInfo = $vatInvoiceService->getTourPaymentStatusInfo($tourBooking);
 
         return view('admin.tour-bookings.show', compact(
             'tourBooking', 
@@ -92,7 +105,8 @@ class AdminTourBookingController extends Controller
             'outstandingAmount',
             'finalAmount',
             'tourBookingServices',
-            'tourBookingNotes'
+            'tourBookingNotes',
+            'paymentInfo'
         ));
     }
 

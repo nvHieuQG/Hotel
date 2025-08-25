@@ -1,66 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yêu cầu xuất hóa đơn VAT - Tour Booking</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #C9A888; color: white; padding: 20px; text-align: center; }
-        .content { padding: 20px; background-color: #f9f9f9; }
-        .info-box { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; }
-        .company-info { background-color: #e8f4f8; padding: 15px; margin: 15px 0; border-radius: 5px; }
-        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .content {
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .info-section {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #6c757d;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Yêu cầu xuất hóa đơn VAT</h1>
-            <p>Tour Booking #{{ $tourBooking->booking_id }}</p>
-        </div>
+    <div class="header">
+        <h2>🏨 Marrom Hotel</h2>
+        <h3>Yêu cầu xuất hóa đơn VAT</h3>
+    </div>
+
+    <div class="content">
+        <p>Xin chào Admin,</p>
         
-        <div class="content">
-            <h2>Thông tin Tour Booking</h2>
-            <div class="info-box">
-                <p><strong>Tên tour:</strong> {{ $tourBooking->tour_name }}</p>
-                <p><strong>Số khách:</strong> {{ $tourBooking->total_guests }} người</p>
-                <p><strong>Số phòng:</strong> {{ $tourBooking->total_rooms }} phòng</p>
-                <p><strong>Check-in:</strong> {{ $tourBooking->check_in_date->format('d/m/Y') }}</p>
-                <p><strong>Check-out:</strong> {{ $tourBooking->check_out_date->format('d/m/Y') }}</p>
-                <p><strong>Tổng tiền:</strong> {{ number_format($tourBooking->total_price, 0, ',', '.') }} VNĐ</p>
-                @if($tourBooking->promotion_discount > 0)
-                    <p><strong>Giảm giá:</strong> -{{ number_format($tourBooking->promotion_discount, 0, ',', '.') }} VNĐ</p>
-                    <p><strong>Giá cuối:</strong> {{ number_format($tourBooking->final_price, 0, ',', '.') }} VNĐ</p>
-                @endif
-            </div>
-            
-            <h2>Thông tin công ty</h2>
-            <div class="company-info">
-                <p><strong>Tên công ty:</strong> {{ $tourBooking->company_name }}</p>
-                <p><strong>Mã số thuế:</strong> {{ $tourBooking->company_tax_code }}</p>
-                <p><strong>Địa chỉ:</strong> {{ $tourBooking->company_address }}</p>
-                <p><strong>Email:</strong> {{ $tourBooking->company_email }}</p>
-                <p><strong>Điện thoại:</strong> {{ $tourBooking->company_phone }}</p>
-            </div>
-            
-            <h2>Thông tin khách hàng</h2>
-            <div class="info-box">
-                <p><strong>Họ tên:</strong> {{ $tourBooking->user->name }}</p>
-                <p><strong>Email:</strong> {{ $tourBooking->user->email }}</p>
-                <p><strong>Ngày yêu cầu:</strong> {{ now()->format('d/m/Y H:i') }}</p>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-                <p><strong>Vui lòng xử lý yêu cầu xuất hóa đơn VAT cho tour booking này.</strong></p>
-                <p>Hóa đơn sẽ được gửi qua email: {{ $tourBooking->company_email }}</p>
-            </div>
+        <p>Khách hàng đã yêu cầu xuất hóa đơn VAT cho tour booking sau:</p>
+
+        <div class="info-section">
+            <h4>📋 Thông tin Tour Booking</h4>
+            <p><strong>Mã booking:</strong> #{{ $tourBooking->id }}</p>
+            <p><strong>Tên tour:</strong> {{ $tourBooking->tour_name ?? 'N/A' }}</p>
+            <p><strong>Ngày check-in:</strong> {{ $tourBooking->check_in_date ? $tourBooking->check_in_date->format('d/m/Y') : 'N/A' }}</p>
+            <p><strong>Ngày check-out:</strong> {{ $tourBooking->check_out_date ? $tourBooking->check_out_date->format('d/m/Y') : 'N/A' }}</p>
+            <p><strong>Số khách:</strong> {{ $tourBooking->total_guests ?? 0 }} người</p>
+            <p><strong>Số phòng:</strong> {{ $tourBooking->total_rooms ?? 0 }} phòng</p>
         </div>
-        
-        <div class="footer">
-            <p>Email này được gửi tự động từ hệ thống đặt phòng khách sạn</p>
-            <p>Vui lòng không trả lời email này</p>
+
+        <div class="info-section">
+            <h4>🏢 Thông tin công ty</h4>
+            <p><strong>Tên công ty:</strong> {{ $tourBooking->company_name ?? 'N/A' }}</p>
+            <p><strong>Mã số thuế:</strong> {{ $tourBooking->company_tax_code ?? 'N/A' }}</p>
+            <p><strong>Địa chỉ:</strong> {{ $tourBooking->company_address ?? 'N/A' }}</p>
+            <p><strong>Email:</strong> {{ $tourBooking->company_email ?? 'N/A' }}</p>
+            <p><strong>Điện thoại:</strong> {{ $tourBooking->company_phone ?? 'N/A' }}</p>
         </div>
+
+        <div class="highlight">
+            <h4>⚠️ Hành động cần thiết</h4>
+            <p>Vui lòng xử lý yêu cầu xuất hóa đơn VAT này trong hệ thống admin.</p>
+            <p><strong>Link xử lý:</strong> <a href="{{ route('admin.tour-vat-invoices.show', $tourBooking->id) }}">Xem chi tiết và xử lý</a></p>
+        </div>
+
+        <p>Trân trọng,<br>
+        Hệ thống Marrom Hotel</p>
+    </div>
+
+    <div class="footer">
+        <p>Email này được gửi tự động từ hệ thống quản lý khách sạn Marrom Hotel</p>
+        <p>Vui lòng không trả lời email này</p>
     </div>
 </body>
 </html>

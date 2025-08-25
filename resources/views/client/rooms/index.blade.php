@@ -42,7 +42,7 @@
 
             <div class="row">
                 {{-- Khuyến mại nổi bật --}}
-                @if($featuredPromotions && $featuredPromotions->count() > 0)
+                @if(isset($featuredPromotions) && $featuredPromotions && $featuredPromotions->count() > 0)
                     <div class="col-12 mb-4">
                         <div class="card border-0 shadow-sm">
                             <div class="card-header bg-gradient-primary text-white">

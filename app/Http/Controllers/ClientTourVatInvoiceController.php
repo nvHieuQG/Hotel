@@ -9,10 +9,17 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Mail\TourVatInvoiceMail;
+use App\Services\VatInvoiceService;
 
 class ClientTourVatInvoiceController extends Controller
 {
+    protected $vatInvoiceService;
+
+    public function __construct(VatInvoiceService $vatInvoiceService)
+    {
+        $this->vatInvoiceService = $vatInvoiceService;
+    }
+
     /**
      * Hiển thị form yêu cầu xuất hóa đơn VAT
      */
@@ -52,10 +59,13 @@ class ClientTourVatInvoiceController extends Controller
             'company_phone' => $request->company_phone,
         ]);
 
-        // Gửi email thông báo cho admin
+        // Sử dụng service để lưu yêu cầu VAT
+        $this->vatInvoiceService->saveTourClientVatRequest($tourBooking, $request->all());
+        
+        // Gửi email thông báo cho admin (có thể tạo một mail class riêng sau)
         try {
             Mail::to(config('mail.admin_email', 'admin@hotel.com'))
-                ->send(new TourVatInvoiceMail($tourBooking));
+                ->send(new \App\Mail\TourVatInvoiceRequestMail($tourBooking));
             
             Log::info('Tour VAT invoice request sent', [
                 'tour_booking_id' => $tourBooking->id,
@@ -136,8 +146,8 @@ class ClientTourVatInvoiceController extends Controller
             $filePath = storage_path("app/vat-invoices/tour-{$tourBooking->vat_invoice_number}.pdf");
             
             // Sử dụng service để tạo PDF
-            $tourVatInvoiceService = app(\App\Services\TourVatInvoiceService::class);
-            $filePath = $tourVatInvoiceService->generateVatInvoice($tourBooking);
+            $vatInvoiceService = app(\App\Services\VatInvoiceService::class);
+            $filePath = $vatInvoiceService->generateTourVatInvoice($tourBooking);
             
             if (!$filePath) {
                 throw new \Exception("Không thể tạo file hóa đơn VAT");

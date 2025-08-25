@@ -55,19 +55,26 @@
                                 <label for="new_room_type_id">Chọn loại phòng mới:</label>
                                 <select name="new_room_type_id" id="new_room_type_id" class="form-control" required>
                                     <option value="">-- Chọn loại phòng --</option>
-                                    @foreach($availableRoomTypes as $roomType)
+                                    @foreach($availableRoomTypes ?? [] as $roomType)
                                         @php
-                                            $nights = $booking->check_in_date->diffInDays($booking->check_out_date);
-                                            $totalPrice = $roomType->price * $nights;
+                                            // Lấy giá phòng hiện tại (1 đêm)
+                                            $currentRoomPrice = 0;
+                                            if ($booking->room && $booking->room->room_type && $booking->room->room_type->price) {
+                                                $currentRoomPrice = $booking->room->room_type->price;
+                                            }
+                                            
+                                            // Làm tròn giá về nghìn gần nhất
+                                            $currentRoomPriceRounded = round($currentRoomPrice / 1000) * 1000;
+                                            $newRoomPriceRounded = round(($roomType->price ?? 0) / 1000) * 1000;
                                         @endphp
                                         <option value="{{ $roomType->id }}" 
                                                 data-price="{{ $roomType->price ?? 0 }}"
-                                                data-available-rooms="{{ $roomType->rooms->count() }}">
+                                                data-available-rooms="{{ ($roomType->rooms ?? collect())->count() }}">
                                             {{ $roomType->name }} 
-                                            @if($roomType->id === $booking->room->room_type_id)
-                                                (Cùng loại - {{ number_format($roomType->price, 0, ',', '.') }} VNĐ/đêm - {{ number_format($totalPrice, 0, ',', '.') }} VNĐ)
+                                            @if($roomType->id === ($booking->room->room_type_id ?? null))
+                                                (Cùng loại - {{ number_format($newRoomPriceRounded, 0, ',', '.') }} VNĐ/đêm)
                                             @else
-                                                ({{ number_format($roomType->price, 0, ',', '.') }} VNĐ/đêm - {{ number_format($totalPrice, 0, ',', '.') }} VNĐ)
+                                                ({{ number_format($newRoomPriceRounded, 0, ',', '.') }} VNĐ/đêm)
                                             @endif
                                         </option>
                                     @endforeach
@@ -102,10 +109,14 @@
                                 @enderror
                             </div>
 
-                            <!-- Hiển thị chênh lệch giá -->
+                            <!-- Hiển thị thông tin giá phòng -->
                             <div id="priceDifferenceInfo" class="alert" style="display: none;">
-                                <h6>Thông tin chênh lệch giá:</h6>
+                                <h6><i class="fas fa-info-circle"></i> Thông tin giá phòng:</h6>
                                 <div id="priceDifferenceText"></div>
+                                <small class="text-muted mt-2 d-block">
+                                    <i class="fas fa-lightbulb"></i> 
+                                    Giá hiển thị theo 1 đêm, đã được làm tròn về nghìn gần nhất
+                                </small>
                             </div>
 
                             <div class="form-group">
@@ -143,18 +154,24 @@ $(document).ready(function() {
                     const priceDiff = response.price_difference;
                     const priceDiffFormatted = response.price_difference_formatted;
                     
+                    // Làm tròn chênh lệch giá về nghìn gần nhất
+                    const roundedPriceDiff = Math.round(priceDiff / 1000) * 1000;
+                    const roundedPriceDiffFormatted = new Intl.NumberFormat('vi-VN', {
+                        maximumFractionDigits: 0
+                    }).format(Math.abs(roundedPriceDiff));
+                    
                     let alertClass = 'alert-info';
                     let message = '';
                     
                     if (response.is_expensive) {
                         alertClass = 'alert-warning';
-                        message = `Phòng mới đắt hơn: +${priceDiffFormatted}`;
+                        message = `<strong>Phòng mới đắt hơn:</strong> +${roundedPriceDiffFormatted} VNĐ<br><small class="text-muted">Giá hiển thị theo 1 đêm</small>`;
                     } else if (response.is_cheaper) {
                         alertClass = 'alert-success';
-                        message = `Phòng mới rẻ hơn: ${priceDiffFormatted}`;
+                        message = `<strong>Phòng mới rẻ hơn:</strong> -${roundedPriceDiffFormatted} VNĐ<br><small class="text-muted">Giá hiển thị theo 1 đêm</small>`;
                     } else {
                         alertClass = 'alert-info';
-                        message = `Không có chênh lệch giá`;
+                        message = `<strong>Không có chênh lệch giá phòng</strong><br><small class="text-muted">Đổi phòng miễn phí</small>`;
                     }
                     
                     $('#priceDifferenceInfo')

@@ -47,6 +47,24 @@ class ClientVatInvoiceController extends Controller
         $ok = $this->vatService->sendVatInvoiceEmail($booking);
         return back()->with($ok ? 'success' : 'error', $ok ? 'Đã gửi email hóa đơn VAT.' : 'Không thể gửi email hóa đơn VAT.');
     }
+
+    /**
+     * Đề nghị tạo lại hóa đơn VAT
+     */
+    public function regenerate(Booking $booking)
+    {
+        $this->ensureOwnership($booking);
+        
+        // Cập nhật trạng thái để admin biết cần tạo lại
+        $booking->update([
+            'vat_invoice_status' => 'pending',
+            'vat_invoice_file_path' => null,
+            'vat_invoice_generated_at' => null,
+            'vat_invoice_sent_at' => null,
+        ]);
+
+        return back()->with('success', 'Đã gửi yêu cầu tạo lại hóa đơn VAT. Nhân viên khách sạn sẽ xử lý trong thời gian sớm nhất.');
+    }
 }
 
 

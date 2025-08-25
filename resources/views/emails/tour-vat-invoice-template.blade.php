@@ -22,10 +22,19 @@
         $nights = $tourBooking->check_in_date && $tourBooking->check_out_date 
             ? $tourBooking->check_in_date->copy()->startOfDay()->diffInDays($tourBooking->check_out_date->copy()->startOfDay()) 
             : 0;
-        $roomCost = $tourBooking->total_rooms_amount ?? 0;
-        $services = $tourBooking->total_services_amount ?? 0;
+        
+        // Sử dụng các biến mới đã được tính toán
+        $roomCost = $tourBooking->tourBookingRooms->sum('total_price');
+        $services = $tourBooking->tourBookingServices->sum('total_price');
         $discount = $tourBooking->promotion_discount ?? 0;
-        $grandTotal = $roomCost + $services - $discount;
+        
+        // Tổng cộng đã bao gồm VAT 10% - sử dụng final_price nếu có
+        if ($tourBooking->final_price && $tourBooking->final_price > 0) {
+            $grandTotal = $tourBooking->final_price;
+        } else {
+            $grandTotal = $roomCost + $services - $discount;
+        }
+        
         $vatRate = 0.1;
         $subtotal = round($grandTotal / (1 + $vatRate));
         $vatAmount = $grandTotal - $subtotal;

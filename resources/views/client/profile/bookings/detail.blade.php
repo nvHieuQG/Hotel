@@ -227,20 +227,24 @@
                             <li><strong>Email nhận HĐ:</strong> {{ $vatInfo['receiverEmail'] ?? '' }}</li>
                         </ul>
                         <div class="d-flex gap-2">
-                            <form action="{{ route('client.vat-invoice.generate', $booking->id) }}" method="POST" class="me-2">
-                                @csrf
-                                <button type="submit" class="btn btn-outline-primary btn-sm">Tạo hóa đơn PDF</button>
-                            </form>
-                            <form action="{{ route('client.vat-invoice.send', $booking->id) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-primary btn-sm">Gửi email hóa đơn</button>
-                            </form>
+                            @if($booking->vat_invoice_file_path)
+                                <a href="{{ asset(str_starts_with($booking->vat_invoice_file_path,'public/') ? Storage::url(str_replace('public/','',$booking->vat_invoice_file_path)) : $booking->vat_invoice_file_path) }}" target="_blank" class="btn btn-info btn-sm">
+                                    <i class="fas fa-eye"></i> Xem hóa đơn
+                                </a>
+                                <form action="{{ route('client.vat-invoice.regenerate', $booking->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-warning btn-sm" 
+                                            onclick="return confirm('Bạn có chắc muốn đề nghị tạo lại hóa đơn VAT?')">
+                                        <i class="fas fa-sync-alt"></i> Đề nghị tạo lại
+                                    </button>
+                                </form>
+                            @else
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Thông báo:</strong> Hóa đơn VAT sẽ được tạo bởi nhân viên khách sạn sau khi xem xét yêu cầu của bạn.
+                                </div>
+                            @endif
                         </div>
-                        @if($booking->vat_invoice_file_path)
-                            <div class="mt-2">
-                                <a href="{{ asset(str_starts_with($booking->vat_invoice_file_path,'public/') ? Storage::url(str_replace('public/','',$booking->vat_invoice_file_path)) : $booking->vat_invoice_file_path) }}" target="_blank" class="small">Xem hóa đơn đã tạo</a>
-                            </div>
-                        @endif
                     @else
                         <div class="mb-4">
                             <div class="form-check">
@@ -251,7 +255,7 @@
                             </div>
                             <div class="alert alert-info mt-3 mb-0">
                                 <i class="fas fa-info-circle fs-5"></i>
-                                <strong class="fs-6">Lưu ý:</strong> Giá tiền đã bao gồm VAT 10%, không thu thêm phí. Chỉ cần cung cấp thông tin công ty để xuất hóa đơn.
+                                <strong class="fs-6">Lưu ý:</strong> Giá tiền cuối cùng đã bao gồm VAT 10%, không thu thêm phí. Hóa đơn VAT chỉ để khách kê khai thuế.
                             </div>
                         </div>
                         
@@ -285,17 +289,20 @@
                             </div>
                             
                             @php
-                                $ci = $booking->check_in_date;
-                                $co = $booking->check_out_date;
-                                $nights = $ci && $co ? $ci->copy()->startOfDay()->diffInDays($co->copy()->startOfDay()) : 0;
-                                $nightly = (int)($booking->room->roomType->price ?? $booking->room->price ?? 0);
-                                $roomCost = max(0, $nights) * $nightly;
-                                $services = (float)($booking->extra_services_total ?? 0) + (float)($booking->total_services_price ?? 0);
-                                $surcharge = (float)($booking->surcharge ?? 0);
-                                $discount = (float) $booking->payments()->where('status','!=','failed')->sum('discount_amount');
+                                // Sử dụng BookingPriceCalculationService để tính toán nhất quán với admin
+                                $priceService = app(\App\Services\BookingPriceCalculationService::class);
+                                $priceData = $priceService->calculateRegularBookingTotal($booking);
+                                
+                                // Lấy các thành phần giá từ service
+                                $nights = $priceData['nights'];
+                                $nightly = $priceData['nightly'];
+                                $roomCost = $priceData['finalRoomCost'];
+                                $services = $priceData['svcTotal'];
+                                $guestSurcharge = $priceData['guestSurcharge'];
+                                $totalDiscount = $priceData['totalDiscount'];
                                 
                                 // Tổng cộng đã bao gồm VAT 10%
-                                $grandTotal = $roomCost + $services + $surcharge - $discount;
+                                $grandTotal = $priceData['fullTotal'];
                                 
                                 // Tính ngược lại: giá trước VAT = tổng cộng / (1 + VAT rate)
                                 $vatRate = 0.1;
@@ -312,25 +319,25 @@
                                             <div class="text-center p-2 bg-white rounded">
                                                 <div class="fw-bold text-primary fs-6">Tổng cộng</div>
                                                 <div class="fs-5 fw-bold">{{ number_format($grandTotal) }} VNĐ</div>
-                                                <small class="text-success">Đã bao gồm VAT</small>
-                            </div>
-                </div>
+                                                <small class="text-success">Đã bao gồm VAT 10%</small>
+                                            </div>
+                                        </div>
                                         <div class="col-md-4">
                                             <div class="text-center p-2 bg-white rounded">
                                                 <div class="fw-bold text-secondary fs-6">Giá trước VAT</div>
                                                 <div class="fs-5">{{ number_format($subtotal) }} VNĐ</div>
-            </div>
-        </div>
+                                            </div>
+                                        </div>
                                         <div class="col-md-4">
                                             <div class="text-center p-2 bg-white rounded">
                                                 <div class="fw-bold text-info fs-6">VAT (10%)</div>
                                                 <div class="fs-5">{{ number_format($vatAmount) }} VNĐ</div>
-                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="text-center mt-2">
                                         <span class="badge badge-success">
-                                            <i class="fas fa-check-circle me-1"></i>Giá đã bao gồm VAT, không thu thêm phí
+                                            <i class="fas fa-check-circle me-1"></i>Giá cuối cùng đã bao gồm VAT, không thu thêm phí
                                         </span>
                                     </div>
                                 </div>
@@ -339,14 +346,15 @@
                             @if($grandTotal >= 5000000)
                                 <div class="alert alert-warning mt-3 mb-3">
                                     <i class="fas fa-exclamation-triangle fs-5"></i>
-                                    <strong class="fs-6">Lưu ý quan trọng:</strong> Hóa đơn từ 5.000.000đ phải thanh toán bằng thẻ/tài khoản công ty hoặc chuyển khoản công ty theo quy định pháp luật.
+                                    <strong class="fs-6">Lưu ý quan trọng:</strong> Hóa đơn từ 5.000.000đ ({{ number_format($grandTotal) }} VNĐ) theo quy định pháp luật nên thanh toán bằng thẻ/tài khoản công ty hoặc chuyển khoản công ty.
+                                    <br><small class="text-muted">Tuy nhiên, vẫn có thể xuất hóa đơn VAT nếu bạn đã thanh toán đủ tiền.</small>
                                 </div>
-                        @else
-                                <div class="alert alert-success mt-3 mb-3">
-                                    <i class="fas fa-check-circle fs-5"></i>
-                                    <strong class="fs-6">Thông tin:</strong> Bạn có thể thanh toán cá nhân trước, sau đó chuyển khoản công ty để xuất hóa đơn VAT.
+                            @else
+                                <div class="alert alert-info mt-3 mb-3">
+                                    <i class="fas fa-info-circle fs-5"></i>
+                                    <strong class="fs-6">Thông tin:</strong> Hóa đơn dưới 5.000.000đ ({{ number_format($grandTotal) }} VNĐ) cho phép thanh toán cá nhân trước, sau đó chuyển khoản công ty để xuất hóa đơn VAT.
                                 </div>
-                        @endif
+                            @endif
                             
                             <div class="alert alert-light mt-3 mb-3">
                                 <i class="fas fa-receipt fs-5"></i>
@@ -368,21 +376,21 @@
                                         <div class="col-md-3 text-center">
                                             <div class="p-2 bg-white rounded">
                                                 <div class="fw-bold text-primary">3</div>
-                                                <small>Gửi hóa đơn qua email</small>
+                                                <small>Xem hóa đơn trực tuyến</small>
                                             </div>
                                         </div>
                                         <div class="col-md-3 text-center">
                                             <div class="p-2 bg-white rounded">
                                                 <div class="fw-bold text-success">4</div>
-                                                <small>Không thu thêm phí VAT</small>
+                                                <small>Giá đã bao gồm VAT 10%</small>
                                             </div>
                                         </div>
                                     </div>
-        </div>
-    </div>
+                                </div>
+                            </div>
 
                             <div class="text-center">
-                                <button class="btn btn-primary btn-lg px-5">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
                                     <i class="fas fa-paper-plane me-2"></i>Gửi yêu cầu xuất hóa đơn VAT
                                 </button>
                             </div>

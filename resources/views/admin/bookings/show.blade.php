@@ -71,35 +71,58 @@
                                     <p><strong>Check-out:</strong> {{ date('d/m/Y', strtotime($booking->check_out_date)) }}</p>
                                     <p class="mb-2">Người lớn: {{ (int)($booking->adults_count ?? 0) }} - Trẻ em: {{ (int)($booking->children_count ?? 0) }} - Em bé: {{ (int)($booking->infants_count ?? 0) }}</p>
                                     @php 
-                                        /** @var \Carbon\Carbon $ci */
-                                        /** @var \Carbon\Carbon $co */
-                                        $ci = $booking->check_in_date instanceof \Carbon\Carbon ? $booking->check_in_date : \Carbon\Carbon::parse($booking->check_in_date);
-                                        $co = $booking->check_out_date instanceof \Carbon\Carbon ? $booking->check_out_date : \Carbon\Carbon::parse($booking->check_out_date);
-                                        // Tính số đêm theo ngày (bỏ phần giờ phút) để tránh số thập phân
-                                        $ciDate = $ci ? $ci->copy()->startOfDay() : null;
-                                        $coDate = $co ? $co->copy()->startOfDay() : null;
-                                        $nights = ($ciDate && $coDate) ? (int) $ciDate->diffInDays($coDate) : 0;
-                                        // Lấy giá/đêm ưu tiên roomType->price, fallback room->price
-                                        $nightly = (int)($booking->room->roomType->price ?? $booking->room->price ?? 0);
-                                        $roomCost = max(0, $nights) * $nightly;
-                                        $surcharge = (float)($booking->surcharge ?? 0);
-                                        // Phụ thu đổi phòng: cộng chênh lệch đã duyệt/hoàn tất
-                                        $roomChangeSurcharge = (float) $booking->roomChanges()
-                                            ->whereIn('status', ['approved', 'completed'])
-                                            ->sum('price_difference');
-                                        // Phụ phí người lớn/trẻ em = surcharge tổng trừ phụ thu đổi phòng (không âm)
-                                        $guestSurcharge = max(0, $surcharge - $roomChangeSurcharge);
+                                        // Sử dụng service tính toán giá thống nhất
+                                        $priceService = app(\App\Services\BookingPriceCalculationService::class);
+                                        $priceData = $priceService->calculateRegularBookingTotal($booking);
+                                        
+                                        // Gán các biến để sử dụng trong template
+                                        $nights = $priceData['nights'];
+                                        $nightly = $priceData['nightly'];
+                                        $roomCost = $priceData['roomCost'];
+                                        $roomChangeSurcharge = $priceData['roomChangeSurcharge'];
+                                        $finalRoomCost = $priceData['finalRoomCost'];
+                                        $guestSurcharge = $priceData['guestSurcharge'];
+                                        $svcFromAdmin = $priceData['svcFromAdmin'];
+                                        $svcFromClient = $priceData['svcFromClient'];
+                                        $svcTotal = $priceData['svcTotal'];
+                                        $totalDiscount = $priceData['totalDiscount'];
+                                        $totalBeforeDiscount = $priceData['totalBeforeDiscount'];
+                                        $finalAmount = $priceData['totalAmount'];
                                     @endphp
                                     <p><strong>Số đêm:</strong> {{ $nights }}</p>
                                     <hr>
-                                    <p><strong>Tiền phòng ({{ number_format($nightly) }} VNĐ/đêm × {{ (int)$nights }} đêm):</strong> {{ number_format($roomCost) }} VNĐ</p>
+                                    @if($roomChangeSurcharge > 0)
+                                        @php
+                                            // Lấy thông tin đổi phòng để hiển thị chi tiết
+                                            $roomChanges = $booking->roomChanges()->whereIn('status', ['approved', 'completed'])->get();
+                                        @endphp
+                                        <p><strong>Tiền phòng cũ ({{ number_format($nightly) }} VNĐ/đêm × {{ (int)$nights }} đêm):</strong> {{ number_format($roomCost) }} VNĐ</p>
+                                        <p><strong>Phụ thu đổi phòng:</strong> {{ number_format($roomChangeSurcharge) }} VNĐ</p>
+                                        <p><strong>Tiền phòng mới:</strong> <span class="text-primary font-weight-bold">{{ number_format($finalRoomCost) }} VNĐ</span></p>
+                                        @if($roomChanges->count() > 0)
+                                            <div class="small text-muted mb-2">
+                                                <i class="fas fa-info-circle mr-1"></i>
+                                                <strong>Chi tiết đổi phòng:</strong>
+                                                @foreach($roomChanges as $change)
+                                                    <br>• <strong>{{ $change->oldRoom->roomType->name ?? 'Phòng cũ' }}</strong> 
+                                                    <i class="fas fa-arrow-right mx-1"></i> 
+                                                    <strong>{{ $change->newRoom->roomType->name ?? 'Phòng mới' }}</strong>
+                                                    @if($change->price_difference > 0)
+                                                        <span class="text-danger fw-bold">(+{{ number_format($change->price_difference) }} VNĐ)</span>
+                                                    @elseif($change->price_difference < 0)
+                                                        <span class="text-success fw-bold">({{ number_format($change->price_difference) }} VNĐ)</span>
+                                                    @endif
+                                                    <br><small class="text-muted">Trạng thái: {{ ucfirst($change->status) }} | Ngày yêu cầu: {{ $change->created_at->format('d/m/Y H:i') }}</small>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    @else
+                                        <p><strong>Tiền phòng ({{ number_format($nightly) }} VNĐ/đêm × {{ (int)$nights }} đêm):</strong> {{ number_format($roomCost) }} VNĐ</p>
+                                    @endif
                                     <p><strong>Phụ phí (người lớn/trẻ em):</strong> {{ number_format($guestSurcharge) }} VNĐ</p>
-                                    <p><strong>Phụ thu đổi phòng:</strong> {{ number_format($roomChangeSurcharge) }} VNĐ</p>
                                     @php 
-                                        // Tính tổng dịch vụ: cộng cả dịch vụ khách chọn (extra_services_total) và dịch vụ admin thêm (bookingServices)
-                                        $svcFromAdmin = (float)($booking->total_services_price ?? 0);
-                                        $svcFromClient = (float)($booking->extra_services_total ?? 0);
-                                        $svcTotal = $svcFromAdmin + $svcFromClient; 
+                                        // Biến dịch vụ đã được tính từ service ở trên
+                                        // $svcFromAdmin, $svcFromClient, $svcTotal đã có sẵn
                                     @endphp
                                     <p class="mb-1"><strong>Tiền dịch vụ (khách chọn)</strong></p>
                                     @php 
@@ -190,22 +213,40 @@
                                         <span class="text-{{ ($svcTotal ?? 0) > 0 ? 'success' : 'muted' }}">{{ number_format($svcTotal ?? 0) }} VNĐ</span>
                                     </p>
                                     @php 
-                                        $totalDiscount = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
-                                        if ($totalDiscount <= 0 && (float)($booking->promotion_discount ?? 0) > 0) {
-                                            $totalDiscount = (float) $booking->promotion_discount;
-                                        }
-                                        $grand = ($roomCost ?? 0) + ($guestSurcharge ?? 0) + ($roomChangeSurcharge ?? 0) + ($svcTotal ?? 0); 
-                                        $finalAmount = $grand - ($totalDiscount ?? 0);
+                                        // Sử dụng service tính toán giá thống nhất
+                                        $priceService = app(\App\Services\BookingPriceCalculationService::class);
+                                        $priceData = $priceService->calculateRegularBookingTotal($booking);
+                                        
+                                        // Gán các biến để sử dụng trong template
+                                        $nights = $priceData['nights'];
+                                        $nightly = $priceData['nightly'];
+                                        $roomCost = $priceData['roomCost'];
+                                        $roomChangeSurcharge = $priceData['roomChangeSurcharge'];
+                                        $finalRoomCost = $priceData['finalRoomCost'];
+                                        $guestSurcharge = $priceData['guestSurcharge'];
+                                        $svcFromAdmin = $priceData['svcFromAdmin'];
+                                        $svcFromClient = $priceData['svcFromClient'];
+                                        $svcTotal = $priceData['svcTotal'];
+                                        $totalDiscount = $priceData['totalDiscount'];
+                                        $totalBeforeDiscount = $priceData['totalBeforeDiscount'];
+                                        $finalAmount = $priceData['totalAmount'];
                                     @endphp
                                     @if($totalDiscount > 0)
                                         <p><strong>Khuyến mại:</strong>
                                             <span class="text-success">-{{ number_format($totalDiscount) }} VNĐ</span>
+                                            <br><small class="text-muted">Mã: {{ $booking->promotion_code ?? 'N/A' }}</small>
                                         </p>
                                     @endif
                                     <hr>
                                     <p class="mb-0"><strong>Tổng cộng:</strong>
-                                        <span class="text-primary fw-bold">{{ number_format($finalAmount) }} VNĐ</span>
+                                        <span class="text-primary fw-bold">{{ number_format($priceData['fullTotal']) }} VNĐ</span>
                                     </p>
+                                    <div class="small text-muted mt-1">
+                                        <i class="fas fa-calculator mr-1"></i>
+                                        <strong>Chi tiết:</strong> Tiền phòng {{ number_format($finalRoomCost) }} + Dịch vụ {{ number_format($svcTotal) }} + Phụ phí {{ number_format($guestSurcharge) }} - Khuyến mại {{ number_format($totalDiscount) }} = {{ number_format($priceData['fullTotal']) }} VNĐ
+                                    </div>
+
+
                                 </div>
                             </div>
                         </div>
@@ -373,12 +414,24 @@
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
-                                                <div class="alert alert-{{ $booking->hasSuccessfulPayment() ? 'success' : 'warning' }}">
+                                                                                        @php
+                                            // Service đã được khởi tạo ở phần đầu, chỉ cần lấy payment info
+                                            $paymentInfo = $priceService->getPaymentInfo($booking, $priceData['fullTotal']);
+                                            
+                                            // Các biến đã được tính từ service ở phần đầu
+                                            $totalPaid = $paymentInfo['totalPaid'];
+                                            $isFullyPaid = $paymentInfo['isFullyPaid'];
+                                            
+                                            // Sử dụng fullTotal cho logic thanh toán
+                                            $totalAmount = $priceData['fullTotal'];
+                                        @endphp
+                                                <div class="alert alert-{{ $isFullyPaid ? 'success' : 'warning' }}">
                                                     <strong>Trạng thái thanh toán:</strong> 
-                                                    @if($booking->hasSuccessfulPayment())
+                                                    @if($isFullyPaid)
                                                         <i class="fas fa-check-circle"></i> Đã thanh toán đầy đủ
                                                     @else
                                                         <i class="fas fa-exclamation-triangle"></i> Chưa thanh toán đầy đủ
+                                                        <br><small class="text-muted">Còn thiếu: {{ number_format($totalAmount - $totalPaid) }} VNĐ</small>
                                                     @endif
                                                 </div>
                                             </div>
@@ -403,44 +456,29 @@
 
                                         <!-- Thu tiền phát sinh tại quầy -->
                                         @php
-                                            // Tính lại tổng tiền theo logic mới để hiển thị ở phần thanh toán
-                                            // 1) Số đêm và tiền phòng
-                                            $ci2 = $booking->check_in_date instanceof \Carbon\Carbon ? $booking->check_in_date : \Carbon\Carbon::parse($booking->check_in_date);
-                                            $co2 = $booking->check_out_date instanceof \Carbon\Carbon ? $booking->check_out_date : \Carbon\Carbon::parse($booking->check_out_date);
-                                            $ciDate2 = $ci2 ? $ci2->copy()->startOfDay() : null;
-                                            $coDate2 = $co2 ? $co2->copy()->startOfDay() : null;
-                                            $nights2 = ($ciDate2 && $coDate2) ? (int) $ciDate2->diffInDays($coDate2) : 0;
-                                            $nightly2 = (int)($booking->room->roomType->price ?? $booking->room->price ?? 0);
-                                            $roomCost2 = max(0, $nights2) * $nightly2;
-
-                                            // 2) Phụ phí người lớn/trẻ em & phụ thu đổi phòng
-                                            $surcharge2 = (float)($booking->surcharge ?? 0);
-                                            $roomChangeSurcharge2 = (float) $booking->roomChanges()
-                                                ->whereIn('status', ['approved', 'completed'])
-                                                ->sum('price_difference');
-                                            $guestSurcharge2 = max(0, $surcharge2 - $roomChangeSurcharge2);
-
-                                            // 3) Dịch vụ (khách chọn + admin thêm)
-                                            $svcFromAdmin2 = (float)($booking->total_services_price ?? 0);
-                                            $svcFromClient2 = (float)($booking->extra_services_total ?? 0);
-                                            $svcTotal2 = $svcFromAdmin2 + $svcFromClient2;
-
-                                            // 4) Khuyến mại và tổng tiền cuối
-                                            $totalDiscount2 = $booking->payments()->where('status', '!=', 'failed')->sum('discount_amount');
-                                            $totalBeforeDiscount = (float)($roomCost2 + $guestSurcharge2 + $roomChangeSurcharge2 + $svcTotal2);
-                                            $totalPrice = $totalBeforeDiscount - $totalDiscount2;
-                                            $totalPaid = (float)($booking->total_paid ?? 0);
-                                            $outstanding = max(0, $totalPrice - $totalPaid);
+                                            // Sử dụng service để tính toán
+                                            $outstanding = $priceService->calculateOutstandingAmount($booking, $priceData['fullTotal']);
                                         @endphp
                                         <div class="row mt-2">
                                             <div class="col-md-8">
                                                 <div class="card border-0 bg-light">
                                                     <div class="card-body py-2">
                                                         <div class="d-flex flex-wrap gap-3 align-items-center small">
-                                                            <div><strong>Tổng tiền:</strong> <span class="text-primary fw-semibold">{{ number_format($totalPrice) }} VNĐ</span></div>
+                                                            <div><strong>Tổng tiền:</strong> <span class="text-primary fw-semibold">{{ number_format($priceData['fullTotal']) }} VNĐ</span></div>
                                                             <div><strong>Đã thu:</strong> <span class="text-success fw-semibold">{{ number_format($totalPaid) }} VNĐ</span></div>
                                                             <div><strong>Còn thiếu:</strong> <span class="fw-bold {{ $outstanding > 0 ? 'text-danger' : 'text-muted' }}">{{ number_format($outstanding) }} VNĐ</span></div>
                                                         </div>
+                                                        @if($totalDiscount > 0)
+                                                            <div class="small text-muted mt-1">
+                                                                <small class="text-success">💡 Khuyến mại: {{ number_format($totalDiscount) }} VNĐ ({{ $booking->promotion_code ?? 'Mã không xác định' }})</small>
+                                                            </div>
+                                                        @endif
+                                                        @if($roomChangeSurcharge > 0)
+                                                            <div class="mt-2 small text-info">
+                                                                <i class="fas fa-exchange-alt mr-1"></i>
+                                                                <strong>Bao gồm phụ thu đổi phòng:</strong> {{ number_format($roomChangeSurcharge) }} VNĐ
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -494,7 +532,14 @@
                                         <div class="mt-3 d-flex gap-2 flex-wrap">
                                             <form action="{{ route('admin.bookings.vat.generate', $booking->id) }}" method="POST" class="me-2 mb-1">
                                                 @csrf
-                                                <button class="btn btn-outline-primary btn-sm"><i class="fas fa-file-pdf"></i> Tạo hóa đơn PDF</button>
+                                                <button class="btn btn-outline-primary btn-sm" 
+                                                        {{ !$paymentInfo['isFullyPaid'] ? 'disabled' : '' }}
+                                                        title="{{ !$paymentInfo['isFullyPaid'] ? 'Khách chưa thanh toán đủ tiền' : 'Tạo hóa đơn VAT PDF' }}">
+                                                    <i class="fas fa-file-pdf"></i> Tạo hóa đơn PDF
+                                                </button>
+                                                @if(!$paymentInfo['isFullyPaid'])
+                                                    <small class="text-warning d-block mt-1">Khách chưa thanh toán đủ tiền</small>
+                                                @endif
                                             </form>
                                             
                                             @if($booking->vat_invoice_file_path)
@@ -504,42 +549,85 @@
                                                 <a class="btn btn-secondary btn-sm me-2 mb-1" href="{{ route('admin.bookings.vat.download', $booking->id) }}">
                                                     <i class="fas fa-download"></i> Tải xuống
                                                 </a>
+                                                <form action="{{ route('admin.bookings.vat.regenerate', $booking->id) }}" method="POST" class="d-inline me-2 mb-1">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-warning btn-sm" 
+                                                            {{ !$paymentInfo['isFullyPaid'] ? 'disabled' : '' }}
+                                                            onclick="return confirm('Bạn có chắc muốn tạo lại file hóa đơn VAT? File cũ sẽ bị xóa.')"
+                                                            title="{{ !$paymentInfo['isFullyPaid'] ? 'Khách chưa thanh toán đủ tiền' : 'Tạo lại hóa đơn VAT' }}">
+                                                        <i class="fas fa-sync-alt"></i> Tạo lại
+                                                    </button>
+                                                    @if(!$paymentInfo['isFullyPaid'])
+                                                        <small class="text-warning d-block mt-1">Khách chưa thanh toán đủ tiền</small>
+                                                    @endif
+                                                </form>
                                             @endif
                                             
                                             <form action="{{ route('admin.bookings.vat.send', $booking->id) }}" method="POST" class="mb-1">
                                                 @csrf
-                                                <button class="btn btn-primary btn-sm" {{ empty($booking->vat_invoice_file_path) ? 'disabled' : '' }}>
+                                                <button class="btn btn-primary btn-sm" 
+                                                        {{ empty($booking->vat_invoice_file_path) || !$paymentInfo['isFullyPaid'] ? 'disabled' : '' }}
+                                                        title="{{ empty($booking->vat_invoice_file_path) ? 'Cần tạo hóa đơn PDF trước' : (!$paymentInfo['isFullyPaid'] ? 'Khách chưa thanh toán đủ tiền' : 'Gửi email hóa đơn VAT') }}">
                                                     <i class="fas fa-envelope"></i> Gửi email hóa đơn
                                                 </button>
                                                 @if(empty($booking->vat_invoice_file_path))
                                                     <small class="text-muted d-block mt-1">Cần tạo hóa đơn PDF trước</small>
+                                                @elseif(!$paymentInfo['isFullyPaid'])
+                                                    <small class="text-warning d-block mt-1">Khách chưa thanh toán đủ tiền</small>
                                                 @endif
                                             </form>
                                         </div>
                                         @php
-                                            $ci = $booking->check_in_date;
-                                            $co = $booking->check_out_date;
-                                            $nights = $ci && $co ? $ci->copy()->startOfDay()->diffInDays($co->copy()->startOfDay()) : 0;
-                                            $nightly = (int)($booking->room->roomType->price ?? $booking->room->price ?? 0);
-                                            $roomCost = max(0, $nights) * $nightly;
-                                            $services = (float)($booking->extra_services_total ?? 0) + (float)($booking->total_services_price ?? 0);
-                                            $surcharge = (float)($booking->surcharge ?? 0);
-                                            $discount = (float) $booking->payments()->where('status','!=','failed')->sum('discount_amount');
-                                            $subtotal = $roomCost + $services + $surcharge - $discount;
+                                            // Sử dụng VatInvoiceService để lấy thông tin thanh toán
+                                            $vatService = app(\App\Services\VatInvoiceService::class);
+                                            $paymentInfo = $vatService->getPaymentStatusInfo($booking);
+                                            
+                                            // Sử dụng BookingPriceCalculationService để tính toán nhất quán với admin
+                                            $priceService = app(\App\Services\BookingPriceCalculationService::class);
+                                            $priceData = $priceService->calculateRegularBookingTotal($booking);
+                                            
+                                            // Lấy các thành phần giá từ service
+                                            $nights = $priceData['nights'];
+                                            $nightly = $priceData['nightly'];
+                                            $roomCost = $priceData['finalRoomCost'];
+                                            $services = $priceData['svcTotal'];
+                                            $guestSurcharge = $priceData['guestSurcharge'];
+                                            $totalDiscount = $priceData['totalDiscount'];
+                                            
+                                            // Tổng cộng đã bao gồm VAT 10%
+                                            $grandTotal = $priceData['fullTotal'];
+                                            
+                                            // Tính ngược lại: giá trước VAT = tổng cộng / (1 + VAT rate)
                                             $vatRate = 0.1;
-                                            $vatAmount = max(0, round($subtotal * $vatRate));
-                                            $grandTotal = $subtotal + $vatAmount;
+                                            $subtotal = round($grandTotal / (1 + $vatRate));
+                                            $vatAmount = $grandTotal - $subtotal;
                                         @endphp
                                         
                                         <div class="alert alert-light mt-3 mb-0">
                                             <i class="fas fa-info-circle"></i>
                                             <strong>Thông tin VAT:</strong> Giá tiền đã bao gồm VAT 10%, không thu thêm phí. Hóa đơn chỉ để khách kê khai thuế.
+                                            <br><small class="text-muted">Sử dụng logic tính toán mới nhất quán với client</small>
+                                            <br><small class="text-muted">Điều kiện: Khách phải thanh toán đủ tiền trước khi xuất hóa đơn VAT</small>
+                                        </div>
+                                        
+                                        <!-- Thông tin trạng thái thanh toán -->
+                                        <div class="alert alert-{{ $paymentInfo['isFullyPaid'] ? 'success' : 'warning' }} mt-3 mb-0">
+                                            <i class="fas fa-{{ $paymentInfo['isFullyPaid'] ? 'check-circle' : 'exclamation-triangle' }}"></i>
+                                            <strong>Trạng thái thanh toán:</strong>
+                                            @if($paymentInfo['isFullyPaid'])
+                                                <span class="text-success">✅ Đã thanh toán đủ tiền</span>
+                                                <br><small class="text-muted">Có thể xuất hóa đơn VAT</small>
+                                            @else
+                                                <span class="text-warning">⚠️ Chưa thanh toán đủ tiền</span>
+                                                <br><small class="text-muted">Tổng tiền: {{ number_format($paymentInfo['totalDue']) }} VNĐ | Đã thanh toán: {{ number_format($paymentInfo['totalPaid']) }} VNĐ | Còn thiếu: {{ number_format($paymentInfo['remainingAmount']) }} VNĐ</small>
+                                            @endif
                                         </div>
                                         
                                         @if($grandTotal >= 5000000)
                                             <div class="alert alert-warning mt-3 mb-0">
                                                 <i class="fas fa-exclamation-triangle"></i>
-                                                <strong>Lưu ý quan trọng:</strong> Hóa đơn từ 5.000.000đ ({{ number_format($grandTotal) }} VNĐ) phải thanh toán bằng thẻ/tài khoản công ty hoặc chuyển khoản công ty theo quy định pháp luật.
+                                                <strong>Lưu ý quan trọng:</strong> Hóa đơn từ 5.000.000đ ({{ number_format($grandTotal) }} VNĐ) theo quy định pháp luật nên thanh toán bằng thẻ/tài khoản công ty hoặc chuyển khoản công ty.
+                                                <br><small class="text-muted">Tuy nhiên, vẫn có thể tạo hóa đơn VAT nếu khách đã thanh toán đủ tiền.</small>
                                             </div>
                                         @else
                                             <div class="alert alert-info mt-3 mb-0">
@@ -954,12 +1042,16 @@
             alertDiv.innerHTML = '<strong>Thanh toán đã được xác nhận:</strong><br><i class="fas fa-check-circle"></i> Đã xác nhận thành công';
         }
 
-        // Cập nhật tổng kết thanh toán
+        // Cập nhật tổng kết thanh toán - chỉ khi thực sự đã thanh toán đầy đủ
         const summaryAlert = document.querySelector('.alert-warning strong');
         if (summaryAlert && summaryAlert.textContent.includes('Chưa thanh toán đầy đủ')) {
-            const parentAlert = summaryAlert.closest('.alert');
-            parentAlert.className = 'alert alert-success';
-            parentAlert.innerHTML = '<strong>Trạng thái thanh toán:</strong> <i class="fas fa-check-circle"></i> Đã thanh toán đầy đủ';
+            // Kiểm tra xem có thực sự đã thanh toán đầy đủ không
+            const outstandingElement = document.querySelector('.text-danger, .text-muted');
+            if (outstandingElement && outstandingElement.textContent.includes('0 VNĐ')) {
+                const parentAlert = summaryAlert.closest('.alert');
+                parentAlert.className = 'alert alert-success';
+                parentAlert.innerHTML = '<strong>Trạng thái thanh toán:</strong> <i class="fas fa-check-circle"></i> Đã thanh toán đầy đủ';
+            }
         }
 
         // Cập nhật trạng thái booking (nếu đang pending)
