@@ -50,14 +50,14 @@
                             <div class="">
                                 <h6 class="alert-heading">Thông tin đặt phòng</h6>
                                 <p class="mb-1"><strong>Mã đặt phòng:</strong> {{ $booking->booking_id }}</p>
-                                <p class="mb-1"><strong>Số tiền cần thanh toán:</strong> <span class="text-danger font-weight-bold">{{ number_format($payment->amount) }} VNĐ</span></p>
-                                @if($payment->discount_amount > 0)
+                                <p class="mb-1"><strong>Số tiền cần thanh toán:</strong> <span class="text-danger font-weight-bold">{{ number_format($tempPaymentData['amount']) }} VNĐ</span></p>
+                                @if($tempPaymentData['discount_amount'] > 0)
                                     <div class="mt-2 small">
                                         <div>Giá phòng: <strong>{{ number_format($booking->base_room_price) }} VNĐ</strong></div>
                                         <div>Dịch vụ & phụ phí: <strong>{{ number_format($booking->surcharge + $booking->extra_services_total + $booking->total_services_price) }} VNĐ</strong></div>
-                                        <div>Khuyến mại (chỉ áp dụng cho phòng): <span class="text-success">-{{ number_format($payment->discount_amount) }} VNĐ</span></div>
+                                        <div>Khuyến mại (chỉ áp dụng cho phòng): <span class="text-success">-{{ number_format($tempPaymentData['discount_amount']) }} VNĐ</span></div>
                                         <hr class="my-2">
-                                        <div>Cần thanh toán: <strong class="text-primary">{{ number_format($payment->amount) }} VNĐ</strong></div>
+                                        <div>Cần thanh toán: <strong class="text-primary">{{ number_format($tempPaymentData['amount']) }} VNĐ</strong></div>
                                     </div>
                                 @endif
                                 <p class="mb-0"><strong>Nội dung chuyển khoản:</strong> <code>Thanh toan dat phong {{ $booking->booking_id }}</code></p>
@@ -117,70 +117,26 @@
                         <div class="card-header bg-success text-white">
                             <h6 class="mb-0">
                                 <i class="fas fa-check-circle mr-2"></i>
-                                Xác nhận chuyển khoản
+                                Báo đã thanh toán
                             </h6>
                         </div>
                         <div class="card-body">
-                             <form action="{{ route('payment.bank-transfer.confirm', $booking->id) }}" method="POST" enctype="multipart/form-data">
-                                @csrf
-                                <input type="hidden" name="transaction_id" value="{{ $payment->transaction_id }}">
-                                 @if($payment->promotion_id)
-                                     <input type="hidden" name="promotion_id" value="{{ $payment->promotion_id }}">
-                                 @endif
-                                
-                                <div class="form-group">
-                                    <label for="bank_name">Ngân hàng đã chuyển khoản <span class="text-danger">*</span></label>
-                                    <select name="bank_name" id="bank_name" class="form-control" required>
-                                        <option value="">-- Chọn ngân hàng --</option>
-                                        @foreach($bankInfo['banks'] as $bank)
-                                            <option value="{{ $bank['name'] }}">{{ $bank['name'] }}</option>
-                                        @endforeach
-                                    </select>
-                                                                 </div>
-
-                                <div class="form-group">
-                                    <label for="transfer_amount">Số tiền đã chuyển <span class="text-danger">*</span></label>
-                                     <input type="number" name="transfer_amount" id="transfer_amount" 
-                                           class="form-control" value="{{ (int) $payment->amount }}" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="transfer_date">Ngày chuyển khoản <span class="text-danger">*</span></label>
-                                    <input type="date" name="transfer_date" id="transfer_date" 
-                                           class="form-control" value="{{ date('Y-m-d') }}" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="receipt_image">Ảnh biên lai chuyển khoản</label>
-                                    <input type="file" name="receipt_image" id="receipt_image" 
-                                           class="form-control-file" accept="image/*">
-                                    <small class="form-text text-muted">Chụp ảnh biên lai chuyển khoản để chúng tôi xác nhận nhanh hơn</small>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="customer_note">Ghi chú (nếu có)</label>
-                                    <textarea name="customer_note" id="customer_note" rows="3" 
-                                              class="form-control" placeholder="Ghi chú thêm về giao dịch chuyển khoản..."></textarea>
-                                </div>
-
-                                <button type="submit" class="btn btn-success btn-block">
-                                    <i class="fas fa-paper-plane mr-2"></i>
-                                    Xác nhận chuyển khoản
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Hướng dẫn:</strong>
+                                <ol class="mb-0 mt-2">
+                                    <li>Thực hiện chuyển khoản theo thông tin bên trái</li>
+                                    <li>Bấm nút "Báo đã thanh toán" bên dưới</li>
+                                    <li>Admin sẽ xác nhận trong thời gian sớm nhất</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="button" class="btn btn-success btn-lg btn-block" onclick="confirmPayment()">
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    Báo đã thanh toán
                                 </button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Thông tin liên hệ -->
-                    <div class="card mt-3 shadow-sm rounded-lg">
-                        <div class="card-body">
-                            <h6 class="text-dark mb-3">
-                                <i class="fas fa-headset mr-2"></i>
-                                Hỗ trợ
-                            </h6>
-                            <p class="mb-2"><i class="fas fa-phone mr-2"></i> Hotline: 1900-xxxx</p>
-                            <p class="mb-2"><i class="fas fa-envelope mr-2"></i> Email: support@hotel.com</p>
-                            <p class="mb-0"><i class="fas fa-clock mr-2"></i> Thời gian: 8:00 - 22:00</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -250,10 +206,6 @@
     @section('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
     <script>
-
-        
-
-        
         document.addEventListener('DOMContentLoaded', function() {
             // Khởi tạo clipboard
             new ClipboardJS('.copy-btn');
@@ -273,10 +225,81 @@
                     }, 2000);
                 });
             });
+        });
 
-            // Validate form
-            const form = document.querySelector('form');
-            form.addEventListener('submit', function(e) {
+        function confirmPayment() {
+            // Hiển thị form xác nhận
+            const confirmForm = `
+                <div class="modal fade" id="confirmPaymentModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Xác nhận thông tin chuyển khoản</h5>
+                                <button type="button" class="close" data-dismiss="modal">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="confirmPaymentForm" action="{{ route('payment.bank-transfer.confirm', $booking->id) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="form-group">
+                                        <label for="bank_name">Ngân hàng đã chuyển khoản <span class="text-danger">*</span></label>
+                                        <select name="bank_name" id="bank_name" class="form-control" required>
+                                            <option value="">-- Chọn ngân hàng --</option>
+                                            @foreach($bankInfo['banks'] as $bank)
+                                                <option value="{{ $bank['name'] }}">{{ $bank['name'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="transfer_amount">Số tiền đã chuyển <span class="text-danger">*</span></label>
+                                        <input type="number" name="transfer_amount" id="transfer_amount" 
+                                               class="form-control" value="{{ (int) $tempPaymentData['amount'] }}" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="transfer_date">Ngày chuyển khoản <span class="text-danger">*</span></label>
+                                        <input type="date" name="transfer_date" id="transfer_date" 
+                                               class="form-control" value="{{ date('Y-m-d') }}" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="receipt_image">Ảnh biên lai chuyển khoản</label>
+                                        <input type="file" name="receipt_image" id="receipt_image" 
+                                               class="form-control-file" accept="image/*">
+                                        <small class="form-text text-muted">Chụp ảnh biên lai chuyển khoản để chúng tôi xác nhận nhanh hơn</small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="customer_note">Ghi chú (nếu có)</label>
+                                        <textarea name="customer_note" id="customer_note" rows="3" 
+                                                  class="form-control" placeholder="Ghi chú thêm về giao dịch chuyển khoản..."></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                                <button type="submit" form="confirmPaymentForm" class="btn btn-success">
+                                    <i class="fas fa-paper-plane mr-2"></i>
+                                    Xác nhận chuyển khoản
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Thêm modal vào body nếu chưa có
+            if (!document.getElementById('confirmPaymentModal')) {
+                document.body.insertAdjacentHTML('beforeend', confirmForm);
+            }
+
+            // Hiển thị modal
+            $('#confirmPaymentModal').modal('show');
+
+            // Validate form khi submit
+            document.getElementById('confirmPaymentForm').addEventListener('submit', function(e) {
                 const bankName = document.getElementById('bank_name').value;
                 const transferAmount = document.getElementById('transfer_amount').value;
                 const transferDate = document.getElementById('transfer_date').value;
@@ -287,13 +310,13 @@
                     return;
                 }
 
-                if (parseFloat(transferAmount) !== {{ (int) $payment->amount }}) {
+                if (parseFloat(transferAmount) !== {{ (int) $tempPaymentData['amount'] }}) {
                     e.preventDefault();
                     alert('Số tiền chuyển khoản phải bằng số tiền cần thanh toán!');
                     return;
                 }
             });
-        });
+        }
     </script>
     @endsection
 @endsection 

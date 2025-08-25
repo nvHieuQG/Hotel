@@ -482,11 +482,10 @@
             @if($tourBooking->payments->where('method', 'bank_transfer')->where('status', 'pending')->count() > 0)
             <div class="card mb-3">
                 <div class="card-header bg-warning text-dark">
-                    <h6 class="mb-0"><i class="fas fa-university"></i> Xác nhận chuyển khoản</h6>
+                    <h6 class="mb-0"><i class="fas fa-clock"></i> Xác nhận chuyển khoản</h6>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info small mb-3">
-                        <i class="fas fa-info-circle"></i>
+                    <div class="alert alert-info mb-3">
                         <strong>Thông tin:</strong> Có {{ $tourBooking->payments->where('method', 'bank_transfer')->where('status', 'pending')->count() }} giao dịch chuyển khoản đang chờ xác nhận.
                         <br><small class="text-muted">Lưu ý: Khi admin thu tiền bổ sung, các giao dịch này sẽ được tự động xác nhận.</small>
                     </div>
@@ -506,19 +505,80 @@
                             <div class="col-6 text-right"><small class="text-muted">{{ $payment->created_at->format('d/m/Y H:i') }}</small></div>
                         </div>
                         
-                        <form action="{{ route('admin.tour-bookings.confirm-bank-transfer', $tourBooking->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            <input type="hidden" name="payment_id" value="{{ $payment->id }}">
-                            <input type="hidden" name="transaction_id" value="{{ $payment->transaction_id }}">
-                            <button type="submit" class="btn btn-success btn-sm btn-block" onclick="return confirm('Xác nhận giao dịch chuyển khoản này?')">
-                                <i class="fas fa-check"></i> Xác nhận chuyển khoản
-                            </button>
-                        </form>
+                        <div class="row">
+                            <div class="col-6">
+                                <form action="{{ route('admin.tour-bookings.confirm-bank-transfer', $tourBooking->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <input type="hidden" name="payment_id" value="{{ $payment->id }}">
+                                    <input type="hidden" name="transaction_id" value="{{ $payment->transaction_id }}">
+                                    <button type="submit" class="btn btn-success btn-sm btn-block" onclick="return confirm('Xác nhận giao dịch chuyển khoản này?')">
+                                        <i class="fas fa-check"></i> Xác nhận
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="btn btn-danger btn-sm btn-block" onclick="showRejectionModal({{ $payment->id }}, '{{ $payment->transaction_id }}')">
+                                    <i class="fas fa-times"></i> Từ chối
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     @endforeach
                 </div>
             </div>
             @endif
+
+            <!-- Debug: Hiển thị tất cả payments -->
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Thông tin Payments (Debug)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <strong>Tổng số payments:</strong> {{ $tourBooking->payments->count() }}
+                        <br><strong>Payments chuyển khoản:</strong> {{ $tourBooking->payments->where('method', 'bank_transfer')->count() }}
+                        <br><strong>Payments pending:</strong> {{ $tourBooking->payments->where('status', 'pending')->count() }}
+                        <br><strong>Payments completed:</strong> {{ $tourBooking->payments->where('status', 'completed')->count() }}
+                    </div>
+                    
+                    @if($tourBooking->payments->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Method</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Transaction ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($tourBooking->payments as $payment)
+                                    <tr>
+                                        <td>{{ $payment->id }}</td>
+                                        <td>{{ $payment->method }}</td>
+                                        <td>{{ number_format($payment->amount, 0, ',', '.') }} VNĐ</td>
+                                        <td>
+                                            <span class="badge badge-{{ $payment->status === 'completed' ? 'success' : ($payment->status === 'pending' ? 'warning' : 'secondary') }}">
+                                                {{ $payment->status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $payment->created_at->format('d/m/Y H:i') }}</td>
+                                        <td>{{ $payment->transaction_id }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="alert alert-warning">
+                            <strong>Chưa có payment nào!</strong> Khách hàng cần bấm nút "Báo đã thanh toán" để tạo payment record.
+                        </div>
+                    @endif
+                </div>
+            </div>
 
             <!-- Cập nhật trạng thái -->
             <div class="card mb-3">
@@ -611,55 +671,38 @@
             </div>
 
             <!-- Thu tiền bổ sung -->
-            @if($remainingAmount > 0)
+            @php
+                $hasPendingBankTransfer = $tourBooking->payments->where('method', 'bank_transfer')->where('status', 'pending')->count() > 0;
+                $hasCompletedPayment = $tourBooking->payments->where('status', 'completed')->count() > 0;
+                $canShowCollectPayment = !$hasPendingBankTransfer || $hasCompletedPayment;
+            @endphp
+            
+            @if($canShowCollectPayment)
             <div class="card mb-3">
                 <div class="card-header bg-warning text-dark">
                     <h6 class="mb-0"><i class="fas fa-money-bill-wave"></i> Thu tiền bổ sung</h6>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Tổng tiền cần TT:</strong> {{ number_format($finalAmount, 0, ',', '.') }} VNĐ</p>
-                            <p class="mb-1"><strong>Đã thanh toán:</strong> {{ number_format($totalCompletedPayments, 0, ',', '.') }} VNĐ</p>
-                            <p class="mb-1"><strong>Còn thiếu:</strong> {{ number_format($remainingAmount, 0, ',', '.') }} VNĐ</p>
-                            <p class="mb-1"><strong>Tỷ lệ hoàn thành:</strong> {{ $completionPercentage }}%</p>
+                    @if($hasPendingBankTransfer && !$hasCompletedPayment)
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Lưu ý:</strong> Có giao dịch chuyển khoản đang chờ xác nhận. 
+                            Bạn có thể xác nhận hoặc từ chối giao dịch đó trước khi thu tiền bổ sung.
                         </div>
-                        <div class="col-md-6">
-                            <div class="progress mb-2" style="height: 25px;">
-                                <div class="progress-bar bg-warning" role="progressbar" 
-                                     style="width: {{ $completionPercentage }}%" 
-                                     aria-valuenow="{{ $completionPercentage }}" 
-                                     aria-valuemin="0" aria-valuemax="100">
-                                    {{ $completionPercentage }}%
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Số tiền cần thu:</strong> {{ number_format($remainingAmount, 0, ',', '.') }} VNĐ
-                    </div>
+                    @endif
                     
                     <form action="{{ route('admin.tour-bookings.collect-payment', $tourBooking->id) }}" method="POST">
                         @csrf
-                        <input type="hidden" name="amount" value="{{ $remainingAmount }}">
-                        <input type="hidden" name="payment_method" value="cash">
-                        <input type="hidden" name="notes" value="Thu tiền bổ sung tại quầy">
-                        
                         <div class="form-group">
-                            <label class="small">Số tiền thu:</label>
-                            <div class="input-group">
-                                <input type="number" name="collect_amount" class="form-control" 
-                                       value="{{ $remainingAmount }}" min="0" max="{{ $remainingAmount }}" step="1000" required>
-                                <div class="input-group-append">
-                                    <span class="input-group-text">VNĐ</span>
-                                </div>
-                            </div>
-                            <small class="text-muted">Số tiền tối đa có thể thu: {{ number_format($remainingAmount, 0, ',', '.') }} VNĐ</small>
+                            <label for="amount">Số tiền thu (VNĐ):</label>
+                            <input type="number" name="amount" id="amount" class="form-control" 
+                                   value="{{ max(0, ($tourBooking->final_price ?? $tourBooking->total_price) - $tourBooking->payments->where('status', 'completed')->sum('amount')) }}" 
+                                   min="0" step="1000" required>
+                            <small class="form-text text-muted">
+                                Số tiền tối đa có thể thu: {{ number_format(max(0, ($tourBooking->final_price ?? $tourBooking->total_price) - $tourBooking->payments->where('status', 'completed')->sum('amount')), 0, ',', '.') }} VNĐ
+                            </small>
                         </div>
-                        
-                        <button type="submit" class="btn btn-warning">
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('Xác nhận thu tiền bổ sung?')">
                             <i class="fas fa-money-bill-wave"></i> Thu tiền
                         </button>
                     </form>
@@ -1103,4 +1146,14 @@ $(document).ready(function() {
         color: black !important;
     }
 </style> --}}
+@endsection
+
+@section('scripts')
+<script>
+    function showRejectionModal(paymentId, transactionId) {
+        document.getElementById('reject_payment_id').value = paymentId;
+        document.getElementById('reject_transaction_id').value = transactionId;
+        $('#rejectionModal').modal('show');
+    }
+</script>
 @endsection

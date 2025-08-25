@@ -337,8 +337,6 @@ class TourBookingService implements TourBookingServiceInterface
      */
     private function createTourBookingPayment(TourBooking $tourBooking, array $data): \App\Models\Payment
     {
-        $transactionId = 'TOUR_' . $tourBooking->booking_id . '_' . time();
-
         $paymentData = [
             'booking_id' => null, // Tour booking không có trong bảng bookings
             'tour_booking_id' => $tourBooking->id, // Sử dụng tour_booking_id
@@ -348,7 +346,7 @@ class TourBookingService implements TourBookingServiceInterface
             'discount_amount' => $data['discount_amount'] ?? 0,
             'currency' => $data['currency'],
             'status' => $data['status'],
-            'transaction_id' => $transactionId,
+            'transaction_id' => $data['transaction_id'] ?? 'TOUR_' . $tourBooking->booking_id . '_' . time(),
             'gateway_name' => $data['gateway_name'],
             'gateway_response' => is_array($data['gateway_response'] ?? []) ? json_encode($data['gateway_response']) : ($data['gateway_response'] ?? '{}'),
             'created_at' => now(),
@@ -533,6 +531,28 @@ class TourBookingService implements TourBookingServiceInterface
             'gateway_name' => 'Bank Transfer',
             'gateway_response' => [
                 'customer_note' => $request->customer_note
+            ]
+        ]);
+    }
+
+    /**
+     * Tạo payment record cho chuyển khoản từ session data
+     */
+    public function createBankTransferPaymentFromSession(array $tempPaymentData, TourBooking $tourBooking): \App\Models\Payment
+    {
+        $transactionId = 'BANK_TOUR_' . $tourBooking->booking_id . '_' . time();
+
+        return $this->createTourBookingPayment($tourBooking, [
+            'promotion_id' => $tempPaymentData['promotion_id'] ?? null,
+            'method' => 'bank_transfer',
+            'amount' => $tempPaymentData['amount'],
+            'discount_amount' => $tempPaymentData['discount_amount'] ?? 0,
+            'currency' => 'VND',
+            'status' => 'pending',
+            'gateway_name' => 'Bank Transfer',
+            'gateway_response' => [
+                'customer_note' => $tempPaymentData['customer_note'] ?? null,
+                'created_from_session' => true
             ]
         ]);
     }

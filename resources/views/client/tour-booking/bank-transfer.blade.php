@@ -54,16 +54,16 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <p><strong>Mã giao dịch:</strong> {{ $payment->transaction_id }}</p>
-                                <p><strong>Phương thức:</strong> {{ $payment->gateway_name }}</p>
-                                <p><strong>Trạng thái:</strong> <span class="badge badge-warning">{{ $payment->status }}</span></p>
+                                <p><strong>Mã giao dịch:</strong> {{ $tempPaymentData['transaction_id'] }}</p>
+                                <p><strong>Phương thức:</strong> Chuyển khoản ngân hàng</p>
+                                <p><strong>Trạng thái:</strong> <span class="badge badge-warning">Chờ thanh toán</span></p>
                             </div>
                             <div class="col-md-6">
-                                <p><strong>Số tiền:</strong> {{ number_format($payment->amount, 0, ',', '.') }} VNĐ</p>
-                                @if($payment->discount_amount > 0)
-                                    <p><strong>Giảm giá:</strong> {{ number_format($payment->discount_amount, 0, ',', '.') }} VNĐ</p>
+                                <p><strong>Số tiền:</strong> {{ number_format($tempPaymentData['amount'], 0, ',', '.') }} VNĐ</p>
+                                @if($tempPaymentData['discount_amount'] > 0)
+                                    <p><strong>Giảm giá:</strong> {{ number_format($tempPaymentData['discount_amount'], 0, ',', '.') }} VNĐ</p>
                                 @endif
-                                <p><strong>Ngày tạo:</strong> {{ $payment->created_at->format('d/m/Y H:i') }}</p>
+                                <p><strong>Ngày tạo:</strong> {{ \Carbon\Carbon::parse($tempPaymentData['created_at'])->format('d/m/Y H:i') }}</p>
                             </div>
                         </div>
                     </div>
@@ -116,6 +116,34 @@
                     </a>
                 </div>
 
+                <!-- Báo đã thanh toán -->
+                <div class="card mt-4 shadow-sm rounded-lg">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Báo đã thanh toán
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Hướng dẫn:</strong>
+                            <ol class="mb-0 mt-2">
+                                <li>Thực hiện chuyển khoản theo thông tin bên trái</li>
+                                <li>Bấm nút "Báo đã thanh toán" bên dưới</li>
+                                <li>Admin sẽ xác nhận trong thời gian sớm nhất</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="button" class="btn btn-success btn-lg btn-block" onclick="confirmTourPayment()">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                Báo đã thanh toán
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Lưu ý -->
                 <div class="card mt-4">
                     <div class="card-header">
@@ -133,22 +161,108 @@
 <script>
 
 function copyBankInfo() {
-    const bankInfo = `Ngân hàng: {{ $bankInfo['bank_name'] }}\nSố tài khoản: {{ $bankInfo['account_number'] }}\nChủ tài khoản: {{ $bankInfo['account_holder'] }}\nNội dung: {{ $tourBooking->booking_id }}`;
+    // Copy thông tin ngân hàng
+    const bankInfo = document.getElementById('bankInfo');
+    const textArea = document.createElement('textarea');
+    textArea.value = bankInfo.textContent;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
     
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(bankInfo).then(() => {
-            alert('Đã sao chép thông tin ngân hàng vào clipboard!');
-        });
-    } else {
-        // Fallback cho các trình duyệt cũ
-        const textArea = document.createElement('textarea');
-        textArea.value = bankInfo;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        alert('Đã sao chép thông tin ngân hàng vào clipboard!');
+    // Hiển thị thông báo
+    alert('Đã copy thông tin ngân hàng!');
+}
+
+function confirmTourPayment() {
+    // Hiển thị form xác nhận
+    const confirmForm = `
+        <div class="modal fade" id="confirmTourPaymentModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Xác nhận thông tin chuyển khoản Tour</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="confirmTourPaymentForm" action="{{ route('tour-booking.bank-transfer.confirm', $tourBooking->id) }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="form-group">
+                                <label for="bank_name">Ngân hàng đã chuyển khoản <span class="text-danger">*</span></label>
+                                <select name="bank_name" id="bank_name" class="form-control" required>
+                                    <option value="">-- Chọn ngân hàng --</option>
+                                    <option value="Vietcombank">Vietcombank</option>
+                                    <option value="BIDV">BIDV</option>
+                                    <option value="Techcombank">Techcombank</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="transfer_amount">Số tiền đã chuyển <span class="text-danger">*</span></label>
+                                <input type="number" name="transfer_amount" id="transfer_amount" 
+                                       class="form-control" value="{{ (int) $tempPaymentData['amount'] }}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="transfer_date">Ngày chuyển khoản <span class="text-danger">*</span></label>
+                                <input type="date" name="transfer_date" id="transfer_date" 
+                                       class="form-control" value="{{ date('Y-m-d') }}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="receipt_image">Ảnh biên lai chuyển khoản</label>
+                                <input type="file" name="receipt_image" id="receipt_image" 
+                                       class="form-control-file" accept="image/*">
+                                <small class="form-text text-muted">Chụp ảnh biên lai chuyển khoản để chúng tôi xác nhận nhanh hơn</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="customer_note">Ghi chú (nếu có)</label>
+                                <textarea name="customer_note" id="customer_note" rows="3" 
+                                          class="form-control" placeholder="Ghi chú thêm về giao dịch chuyển khoản..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                        <button type="submit" form="confirmTourPaymentForm" class="btn btn-success">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Xác nhận chuyển khoản
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Thêm modal vào body nếu chưa có
+    if (!document.getElementById('confirmTourPaymentModal')) {
+        document.body.insertAdjacentHTML('beforeend', confirmForm);
     }
+
+    // Hiển thị modal
+    $('#confirmTourPaymentModal').modal('show');
+
+    // Validate form khi submit
+    document.getElementById('confirmTourPaymentForm').addEventListener('submit', function(e) {
+        const bankName = document.getElementById('bank_name').value;
+        const transferAmount = document.getElementById('transfer_amount').value;
+        const transferDate = document.getElementById('transfer_date').value;
+
+        if (!bankName || !transferAmount || !transferDate) {
+            e.preventDefault();
+            alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
+            return;
+        }
+
+        if (parseFloat(transferAmount) !== {{ (int) $tempPaymentData['amount'] }}) {
+            e.preventDefault();
+            alert('Số tiền chuyển khoản phải bằng số tiền cần thanh toán!');
+            return;
+        }
+    });
 }
 </script>
 

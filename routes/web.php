@@ -286,6 +286,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::patch('tour-bookings/{id}/payments/{paymentId}', [AdminTourBookingController::class, 'updatePaymentStatus'])->name('tour-bookings.payments.update-status');
     Route::post('tour-bookings/{id}/collect-payment', [AdminTourBookingController::class, 'collectPayment'])->name('tour-bookings.collect-payment');
     Route::post('tour-bookings/{id}/confirm-bank-transfer', [AdminTourBookingController::class, 'confirmBankTransfer'])->name('tour-bookings.confirm-bank-transfer');
+    Route::post('tour-bookings/{id}/reject-bank-transfer', [AdminTourBookingController::class, 'rejectBankTransfer'])->name('tour-bookings.reject-bank-transfer');
     Route::resource('tour-bookings', AdminTourBookingController::class);
 
     // Quản lý VAT Invoice Tour Booking

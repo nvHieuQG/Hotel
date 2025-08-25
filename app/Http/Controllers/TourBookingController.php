@@ -434,8 +434,21 @@ class TourBookingController extends Controller
         }
 
         try {
-            // Tạo payment record cho chuyển khoản
-            $payment = $this->tourBookingService->createBankTransferPayment($request, $tourBooking);
+            // Lưu thông tin tạm thời vào session thay vì tạo payment record
+            $tempPaymentData = [
+                'tour_booking_id' => $tourBooking->id,
+                'method' => 'bank_transfer',
+                'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
+                'discount_amount' => $tourBooking->promotion_discount ?? 0,
+                'currency' => 'VND',
+                'promotion_id' => $request->input('promotion_id'),
+                'customer_note' => $request->customer_note,
+                'created_at' => now(),
+                'transaction_id' => 'TEMP_TOUR_' . $tourBooking->booking_id . '_' . time()
+            ];
+
+            // Lưu vào session
+            session(['temp_tour_bank_transfer_' . $tourBooking->id => $tempPaymentData]);
 
             // Lấy thông tin ngân hàng (chuẩn hóa theo cấu trúc view cần)
             $bankInfoRaw = $this->getBankTransferInfo();
@@ -450,7 +463,7 @@ class TourBookingController extends Controller
                 'note' => $bankInfoRaw['note'] ?? ''
             ];
 
-            return view('client.tour-booking.bank-transfer', compact('tourBooking', 'payment', 'bankInfo'));
+            return view('client.tour-booking.bank-transfer', compact('tourBooking', 'tempPaymentData', 'bankInfo'));
         } catch (\Exception $e) {
             Log::error('Tour booking bank transfer error', [
                 'tour_booking_id' => $tourBooking->id,
@@ -458,7 +471,7 @@ class TourBookingController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', 'Có lỗi xảy ra khi tạo thanh toán chuyển khoản: ' . $e->getMessage());
+                ->with('error', 'Có lỗi xảy ra khi xử lý chuyển khoản: ' . $e->getMessage());
         }
     }
 
@@ -521,7 +534,6 @@ class TourBookingController extends Controller
         }
 
         $request->validate([
-            'transaction_id' => 'required|string',
             'bank_name' => 'required|string|max:255',
             'transfer_amount' => 'required|numeric|min:0',
             'transfer_date' => 'required|date',
@@ -530,16 +542,28 @@ class TourBookingController extends Controller
         ]);
 
         try {
-            // Xử lý xác nhận chuyển khoản
-            $result = $this->tourBookingService->processBankTransferPayment($request, $tourBooking);
-
-            if ($result['success']) {
-                return redirect()->route('tour-booking.show', $tourBooking->id)
-                    ->with('success', 'Đã ghi nhận thông tin chuyển khoản. Chúng tôi sẽ xác nhận trong thời gian sớm nhất.');
-            } else {
-                return redirect()->back()
-                    ->withErrors(['message' => $result['message'] ?? 'Có lỗi xảy ra khi xử lý chuyển khoản.']);
+            // Lấy thông tin tạm thời từ session
+            $tempPaymentData = session('temp_tour_bank_transfer_' . $tourBooking->id);
+            
+            if (!$tempPaymentData) {
+                return redirect()->route('tour-booking.bank-transfer', $tourBooking->id)
+                    ->with('error', 'Không tìm thấy thông tin chuyển khoản. Vui lòng thử lại.');
             }
+
+            // Tạo payment record thực tế khi khách hàng báo đã thanh toán
+            $payment = $this->tourBookingService->createBankTransferPaymentFromSession($tempPaymentData, $tourBooking);
+
+            // Xóa thông tin tạm thời khỏi session
+            session()->forget('temp_tour_bank_transfer_' . $tourBooking->id);
+
+            // Cập nhật trạng thái tổng quan
+            $tourBooking->update([
+                'payment_status' => 'pending',
+                'preferred_payment_method' => 'bank_transfer',
+            ]);
+
+            return redirect()->route('tour-booking.show', $tourBooking->id)
+                ->with('success', 'Đã ghi nhận thông tin chuyển khoản. Chúng tôi sẽ xác nhận trong thời gian sớm nhất.');
         } catch (\Exception $e) {
             Log::error('Tour booking bank transfer confirmation error', [
                 'tour_booking_id' => $tourBooking->id,
