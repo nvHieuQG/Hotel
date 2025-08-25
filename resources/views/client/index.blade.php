@@ -1,6 +1,6 @@
 @extends('client.layouts.master')
 
-@section('title', 'Home')
+@section('title', 'Trang chủ')
 
 @section('styles')
 <style>
@@ -18,12 +18,12 @@
             </button>
             <div class="collapse navbar-collapse" id="ftco-nav">
                 <ul class="navbar-nav ml-auto">
-                    <li class="nav-item active"><a href="{{ route('index') }}" class="nav-link">Home</a></li>
-                    <li class="nav-item"><a href="{{ route('rooms') }}" class="nav-link">Rooms</a></li>
-                    <li class="nav-item"><a href="{{ route('restaurant') }}" class="nav-link">Restaurant</a></li>
-                    <li class="nav-item"><a href="{{ route('about') }}" class="nav-link">About</a></li>
-                    <li class="nav-item"><a href="{{ route('blog') }}" class="nav-link">Blog</a></li>
-                    <li class="nav-item"><a href="{{ route('contact') }}" class="nav-link">Contact</a></li>
+                    <li class="nav-item active"><a href="{{ route('index') }}" class="nav-link">Trang chủ</a></li>
+                    <li class="nav-item"><a href="{{ route('rooms') }}" class="nav-link">Phòng</a></li>
+                    <li class="nav-item"><a href="{{ route('restaurant') }}" class="nav-link">Nhà hàng</a></li>
+                    <li class="nav-item"><a href="{{ route('about') }}" class="nav-link">Về chúng tôi</a></li>
+                    <li class="nav-item"><a href="{{ route('blog') }}" class="nav-link">Bài viết</a></li>
+                    <li class="nav-item"><a href="{{ route('contact') }}" class="nav-link">Liên hệ</a></li>
                 </ul>
             </div>
         </div>
@@ -37,8 +37,8 @@
                 <div class="row no-gutters slider-text align-items-center justify-content-center">
                     <div class="col-md-12 ftco-animate text-center">
                         <div class="text mb-5 pb-3">
-                            <h1 class="mb-3">Welcome To MARRON</h1>
-                            <h2>Hotels &amp; Resorts</h2>
+                            <h1 class="mb-3">Chào mừng đến với MARRON</h1>
+                            <h2>Khách sạn &amp; Khu nghỉ dưỡng</h2>
                         </div>
                     </div>
                 </div>
@@ -51,8 +51,8 @@
                 <div class="row no-gutters slider-text align-items-center justify-content-center">
                     <div class="col-md-12 ftco-animate text-center">
                         <div class="text mb-5 pb-3">
-                            <h1 class="mb-3">Enjoy A Luxury Experience</h1>
-                            <h2>Join With Us</h2>
+                            <h1 class="mb-3">Trải nghiệm sang trọng</h1>
+                            <h2>Đồng hành cùng chúng tôi</h2>
                         </div>
                     </div>
                 </div>
@@ -69,18 +69,18 @@
                             <div class="col-md-3 d-flex">
                                 <div class="form-group p-4 align-self-stretch d-flex align-items-end">
                                     <div class="wrap">
-                                        <label for="check_in_date">Check-in Date</label>
+                                        <label for="check_in_date">Ngày nhận phòng</label>
                                         <input type="date" name="check_in_date" id="check_in_date" class="form-control checkin_date"
-                                               placeholder="Check-in date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
+                                               placeholder="Chọn ngày nhận phòng" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-3 d-flex">
                                 <div class="form-group p-4 align-self-stretch d-flex align-items-end">
                                     <div class="wrap">
-                                        <label for="check_out_date">Check-out Date</label>
+                                        <label for="check_out_date">Ngày trả phòng</label>
                                         <input type="date" name="check_out_date" id="check_out_date" class="form-control checkout_date"
-                                               placeholder="Check-out date" min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                                               placeholder="Chọn ngày trả phòng" min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ date('Y-m-d', strtotime('+1 day')) }}">
                                     </div>
                                 </div>
                             </div>
@@ -207,13 +207,13 @@
 					<div class="col-md-7 py-5 wrap-about pb-md-5 ftco-animate">
 	          <div class="heading-section heading-section-wo-line pt-md-5 pl-md-5 mb-5">
 	          	<div class="ml-md-0">
-		          	<span class="subheading">Welcome to MARRON Hotel</span>
-		            <h2 class="mb-4">Welcome To Our Hotel</h2>
+		          	<span class="subheading">Chào mừng đến Khách sạn MARRON</span>
+		            <h2 class="mb-4">Chào mừng đến với Khách sạn của chúng tôi</h2>
 	            </div>
 	          </div>
 	          <div class="pb-md-5">
-							<p>On her way she met a copy. The copy warned the Little Blind Text, that where it came from it would have been rewritten a thousand times and everything that was left from its origin would be the word "and" and the Little Blind Text should turn around and return to its own, safe country. But nothing the copy said could convince her and so it didn't take long until a few insidious Copy Writers ambushed her, made her drunk with Longe and Parole and dragged her into their agency, where they abused her for their.</p>
-							<p>When she reached the first hills of the Italic Mountains, she had a last view back on the skyline of her hometown Bookmarksgrove, the headline of Alphabet Village and the subline of her own road, the Line Lane. Pityful a rethoric question ran over her cheek, then she continued her way.</p>
+							<p>MARRON Hotel – điểm đến lý tưởng cho kỳ nghỉ và công tác tại Đà Nẵng. Khách sạn sở hữu phòng nghỉ hiện đại, sạch sẽ, tiện nghi đầy đủ, vị trí thuận tiện gần biển và trung tâm. Giá phòng minh bạch, nhiều ưu đãi theo mùa giúp bạn tối ưu chi phí.</p>
+							<p>Đặt phòng trực tuyến nhanh chóng chỉ với vài bước: chọn ngày nhận – trả phòng, số khách và loại phòng phù hợp. Nhận xác nhận ngay, hỗ trợ thanh toán linh hoạt tại quầy hoặc trực tuyến, đội ngũ lễ tân 24/7 luôn sẵn sàng đồng hành cùng bạn trong suốt kỳ nghỉ.</p>
 							<ul class="ftco-social d-flex">
                 <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
                 <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
@@ -237,8 +237,8 @@
               	</div>
               </div>
               <div class="media-body p-2 mt-2">
-                <h3 class="heading mb-3">25/7 Front Desk</h3>
-                <p>A small river named Duden flows by their place and supplies.</p>
+                <h3 class="heading mb-3">Lễ tân 24/7</h3>
+                <p>Một con sông nhỏ tên Duden chảy qua nơi họ sống và mang lại nguồn cung.</p>
               </div>
             </div>
           </div>
@@ -250,8 +250,8 @@
               	</div>
               </div>
               <div class="media-body p-2 mt-2">
-                <h3 class="heading mb-3">Restaurant Bar</h3>
-                <p>A small river named Duden flows by their place and supplies.</p>
+                <h3 class="heading mb-3">Nhà hàng &amp; Bar</h3>
+                <p>Một con sông nhỏ tên Duden chảy qua nơi họ sống và mang lại nguồn cung.</p>
               </div>
             </div>
           </div>
@@ -263,8 +263,8 @@
               	</div>
               </div>
               <div class="media-body p-2 mt-2">
-                <h3 class="heading mb-3">Transfer Services</h3>
-                <p>A small river named Duden flows by their place and supplies.</p>
+                <h3 class="heading mb-3">Dịch vụ đưa đón</h3>
+                <p>Một con sông nhỏ tên Duden chảy qua nơi họ sống và mang lại nguồn cung.</p>
               </div>
             </div>
           </div>
@@ -276,8 +276,8 @@
               	</div>
               </div>
               <div class="media-body p-2 mt-2">
-                <h3 class="heading mb-3">Spa Suites</h3>
-                <p>A small river named Duden flows by their place and supplies.</p>
+                <h3 class="heading mb-3">Phòng spa</h3>
+                <p>Một con sông nhỏ tên Duden chảy qua nơi họ sống và mang lại nguồn cung.</p>
               </div>
             </div>
           </div>
@@ -362,8 +362,8 @@
         </div>
     </section>
 
-    <section class="ftco-section ftco-counter img" id="section-counter" style="background-image: url(client/images/bg_1.jpg);">
-    	<div class="container">
+    {{-- <section class="ftco-section ftco-counter img" id="section-counter" style="background-image: url(client/images/bg_1.jpg);"> --}}
+    	{{-- <div class="container">
     		<div class="row justify-content-center">
     			<div class="col-md-10">
 		    		<div class="row">
@@ -371,7 +371,7 @@
 		            <div class="block-18 text-center">
 		              <div class="text">
 		                <strong class="number" data-number="50000">0</strong>
-		                <span>Happy Guests</span>
+		                <span>Khách hàng hài lòng</span>
 		              </div>
 		            </div>
 		          </div>
@@ -379,7 +379,7 @@
 		            <div class="block-18 text-center">
 		              <div class="text">
 		                <strong class="number" data-number="3000">0</strong>
-		                <span>Rooms</span>
+		                <span>Phòng</span>
 		              </div>
 		            </div>
 		          </div>
@@ -387,7 +387,7 @@
 		            <div class="block-18 text-center">
 		              <div class="text">
 		                <strong class="number" data-number="1000">0</strong>
-		                <span>Staffs</span>
+		                <span>Nhân viên</span>
 		              </div>
 		            </div>
 		          </div>
@@ -395,39 +395,59 @@
 		            <div class="block-18 text-center">
 		              <div class="text">
 		                <strong class="number" data-number="100">0</strong>
-		                <span>Destination</span>
+		                <span>Điểm đến</span>
 		              </div>
 		            </div>
 		          </div>
 		        </div>
 	        </div>
         </div>
-    	</div>
-    </section>
+    	</section> --}}
 
-    <style>
-    .promotion-badge .badge {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        border: 2px solid #fff;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
+    {{-- <section class="ftco-section bg-light"> --}}
+      {{-- <div class="container">
+        <div class="row justify-content-center mb-5 pb-3">
+          <div class="col-md-7 heading-section text-center ftco-animate">
+            <span class="subheading">Về Chúng Tôi</span>
+            <h2 class="mb-4">Chào mừng đến với MARRON Hotel</h2>
+            <p>MARRON Hotel là điểm đến lý tưởng cho kỳ nghỉ dưỡng và công tác của bạn. Chúng tôi cung cấp hệ thống phòng nghỉ hiện đại, dịch vụ chuyên nghiệp và không gian sang trọng, mang đến trải nghiệm tuyệt vời cho mọi khách hàng.</p>
+            <a href="{{ route('about') }}" class="btn btn-primary mt-3">Xem thêm</a>
+          </div>
+        </div>
+      </div>
+    </section> --}}
 
-    .room .position-relative {
-        overflow: hidden;
-    }
-
-    .room .promotion-badge {
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-    </style>
+    {{-- <section class="ftco-section contact-section"> --}}
+      {{-- <div class="container">
+        <div class="row justify-content-center mb-5 pb-3">
+          <div class="col-md-7 heading-section text-center ftco-animate">
+            <span class="subheading">Liên hệ</span>
+            <h2 class="mb-4">Thông tin liên hệ</h2>
+            <p>Liên hệ với chúng tôi để được hỗ trợ nhanh nhất!</p>
+          </div>
+        </div>
+        <div class="row d-flex contact-info">
+          <div class="col-md-4 d-flex ftco-animate">
+            <div class="info bg-white p-4 w-100 text-center">
+              <div class="icon mb-2"><span class="icon-map-marker"></span></div>
+              <p><span>Địa chỉ:</span> 198 West 21th Street, Suite 721 New York NY 10016</p>
+            </div>
+          </div>
+          <div class="col-md-4 d-flex ftco-animate">
+            <div class="info bg-white p-4 w-100 text-center">
+              <div class="icon mb-2"><span class="icon-phone"></span></div>
+              <p><span>Điện thoại:</span> <a href="tel://1234567920">+ 1235 2355 98</a></p>
+            </div>
+          </div>
+          <div class="col-md-4 d-flex ftco-animate">
+            <div class="info bg-white p-4 w-100 text-center">
+              <div class="icon mb-2"><span class="icon-envelope"></span></div>
+              <p><span>Email:</span> <a href="mailto:info@yoursite.com">info@yoursite.com</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section> --}}
 
     {{-- Khuyến mại nổi bật --}}
     @if($featuredPromotions && $featuredPromotions->count() > 0)
@@ -474,183 +494,6 @@
         </section>
     @endif
 
-    <!-- Section Giới thiệu khách sạn -->
-    <section class="ftco-section bg-light">
-      <div class="container">
-        <div class="row justify-content-center mb-5 pb-3">
-          <div class="col-md-7 heading-section text-center ftco-animate">
-            <span class="subheading">Về Chúng Tôi</span>
-            <h2 class="mb-4">Chào mừng đến với MARRON Hotel</h2>
-            <p>MARRON Hotel là điểm đến lý tưởng cho kỳ nghỉ dưỡng và công tác của bạn. Chúng tôi cung cấp hệ thống phòng nghỉ hiện đại, dịch vụ chuyên nghiệp và không gian sang trọng, mang đến trải nghiệm tuyệt vời cho mọi khách hàng.</p>
-            <a href="{{ route('about') }}" class="btn btn-primary mt-3">Xem thêm</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section Liên hệ khách sạn -->
-    <section class="ftco-section contact-section">
-      <div class="container">
-        <div class="row justify-content-center mb-5 pb-3">
-          <div class="col-md-7 heading-section text-center ftco-animate">
-            <span class="subheading">Liên hệ</span>
-            <h2 class="mb-4">Thông tin liên hệ</h2>
-            <p>Liên hệ với chúng tôi để được hỗ trợ nhanh nhất!</p>
-          </div>
-        </div>
-        <div class="row d-flex contact-info">
-          <div class="col-md-4 d-flex ftco-animate">
-            <div class="info bg-white p-4 w-100 text-center">
-              <div class="icon mb-2"><span class="icon-map-marker"></span></div>
-              <p><span>Địa chỉ:</span> 198 West 21th Street, Suite 721 New York NY 10016</p>
-            </div>
-          </div>
-          <div class="col-md-4 d-flex ftco-animate">
-            <div class="info bg-white p-4 w-100 text-center">
-              <div class="icon mb-2"><span class="icon-phone"></span></div>
-              <p><span>Điện thoại:</span> <a href="tel://1234567920">+ 1235 2355 98</a></p>
-            </div>
-          </div>
-          <div class="col-md-4 d-flex ftco-animate">
-            <div class="info bg-white p-4 w-100 text-center">
-              <div class="icon mb-2"><span class="icon-envelope"></span></div>
-              <p><span>Email:</span> <a href="mailto:info@yoursite.com">info@yoursite.com</a></p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="ftco-section testimony-section bg-light">
-      <div class="container">
-        <div class="row justify-content-center">
-          <div class="col-md-8 ftco-animate">
-          	<div class="row ftco-animate">
-		          <div class="col-md-12">
-		            <div class="carousel-testimony owl-carousel ftco-owl">
-		              @forelse($fiveStarReviews as $review)
-		              <div class="item">
-		                <div class="testimony-wrap py-4 pb-5">
-		                  <div class="user-img mb-4" style="background-image: url(client/images/person_{{ $loop->index % 3 + 1 }}.jpg)">
-		                    <span class="quote d-flex align-items-center justify-content-center">
-		                      <i class="icon-quote-left"></i>
-		                    </span>
-		                  </div>
-		                  <div class="text text-center">
-		                    <p class="mb-4">{{ Str::limit($review->comment, 150) }}</p>
-		                    <p class="name">{{ $review->reviewer_name }}</p>
-		                    <span class="position">{{ $review->roomType->name ?? 'Khách hàng' }}</span>
-		                    <div class="stars mt-2">
-		                      @for($i = 1; $i <= 5; $i++)
-		                        <i class="icon-star{{ $i <= $review->rating ? '' : '-o' }} text-warning"></i>
-		                      @endfor
-		                    </div>
-		                  </div>
-		                </div>
-		              </div>
-		              @empty
-		              <!-- Fallback content if no reviews -->
-		              <div class="item">
-		                <div class="testimony-wrap py-4 pb-5">
-		                  <div class="user-img mb-4" style="background-image: url(client/images/person_1.jpg)">
-		                    <span class="quote d-flex align-items-center justify-content-center">
-		                      <i class="icon-quote-left"></i>
-		                    </span>
-		                  </div>
-		                  <div class="text text-center">
-		                    <p class="mb-4">Khách sạn tuyệt vời với dịch vụ chất lượng cao và phòng ốc sạch sẽ.</p>
-		                    <p class="name">Khách hàng</p>
-		                    <span class="position">Khách hàng</span>
-		                    <div class="stars mt-2">
-		                      <i class="icon-star text-warning"></i>
-		                      <i class="icon-star text-warning"></i>
-		                      <i class="icon-star text-warning"></i>
-		                      <i class="icon-star text-warning"></i>
-		                      <i class="icon-star text-warning"></i>
-		                    </div>
-		                  </div>
-		                </div>
-		              </div>
-		              @endforelse
-		            </div>
-		          </div>
-		        </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-    <section class="ftco-section">
-      <div class="container">
-        <div class="row justify-content-center mb-5 pb-3">
-          <div class="col-md-7 heading-section text-center ftco-animate">
-            <h2>Recent Blog</h2>
-          </div>
-        </div>
-        <div class="row d-flex">
-          <div class="col-md-3 d-flex ftco-animate">
-            <div class="blog-entry align-self-stretch">
-              <a href="blog-single.html" class="block-20" style="background-image: url('client/images/image_1.jpg');">
-              </a>
-              <div class="text mt-3 d-block">
-                <h3 class="heading mt-3"><a href="#">Even the all-powerful Pointing has no control about the blind texts</a></h3>
-                <div class="meta mb-3">
-                  <div><a href="#">Dec 6, 2018</a></div>
-                  <div><a href="#">Admin</a></div>
-                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 3</a></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3 d-flex ftco-animate">
-            <div class="blog-entry align-self-stretch">
-              <a href="blog-single.html" class="block-20" style="background-image: url('client/images/image_2.jpg');">
-              </a>
-              <div class="text mt-3">
-                <h3 class="heading mt-3"><a href="#">Even the all-powerful Pointing has no control about the blind texts</a></h3>
-                <div class="meta mb-3">
-                  <div><a href="#">Dec 6, 2018</a></div>
-                  <div><a href="#">Admin</a></div>
-                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 3</a></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3 d-flex ftco-animate">
-            <div class="blog-entry align-self-stretch">
-              <a href="blog-single.html" class="block-20" style="background-image: url('client/images/image_3.jpg');">
-              </a>
-              <div class="text mt-3">
-                <h3 class="heading mt-3"><a href="#">Even the all-powerful Pointing has no control about the blind texts</a></h3>
-                <div class="meta mb-3">
-                  <div><a href="#">Dec 6, 2018</a></div>
-                  <div><a href="#">Admin</a></div>
-                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 3</a></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3 d-flex ftco-animate">
-            <div class="blog-entry align-self-stretch">
-              <a href="blog-single.html" class="block-20" style="background-image: url('client/images/image_4.jpg');">
-              </a>
-              <div class="text mt-3">
-                <h3 class="heading mt-3"><a href="#">Even the all-powerful Pointing has no control about the blind texts</a></h3>
-                <div class="meta mb-3">
-                  <div><a href="#">Dec 6, 2018</a></div>
-                  <div><a href="#">Admin</a></div>
-                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 3</a></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-
     <style>
     /* Promotion styles */
     .promotion-card {
@@ -690,4 +533,73 @@
         color: white;
     }
     </style>
+
+    <section class="ftco-section">
+      <div class="container">
+        <div class="row justify-content-center mb-5 pb-3">
+          <div class="col-md-7 heading-section text-center ftco-animate">
+            <h2>Bài viết mới</h2>
+          </div>
+        </div>
+        <div class="row d-flex">
+          <div class="col-md-3 d-flex ftco-animate">
+            <div class="blog-entry align-self-stretch">
+              <a href="blog-single.html" class="block-20" style="background-image: url('client/images/image_1.jpg');">
+              </a>
+              <div class="text mt-3 d-block">
+                <h3 class="heading mt-3"><a href="#">Kinh nghiệm đặt phòng mùa cao điểm tại Hà Nội</a></h3>
+                <div class="meta mb-3">
+                  <div><a href="#">Jun 12, 2024</a></div>
+                  <div><a href="#">MARRON Team</a></div>
+                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 8</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 d-flex ftco-animate">
+            <div class="blog-entry align-self-stretch">
+              <a href="blog-single.html" class="block-20" style="background-image: url('client/images/image_2.jpg');">
+              </a>
+              <div class="text mt-3">
+                <h3 class="heading mt-3"><a href="#">Top 5 điểm đến gần biển Hồ Tây bạn không nên bỏ lỡ</a></h3>
+                <div class="meta mb-3">
+                  <div><a href="#">Mar 22, 2024</a></div>
+                  <div><a href="#">Biên tập viên</a></div>
+                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 5</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 d-flex ftco-animate">
+            <div class="blog-entry align-self-stretch">
+              <a href="blog-single.html" class="block-20" style="background-image: url('client/images/image_3.jpg');">
+              </a>
+              <div class="text mt-3">
+                <h3 class="heading mt-3"><a href="#">Bí quyết săn ưu đãi khách sạn cuối tuần</a></h3>
+                <div class="meta mb-3">
+                  <div><a href="#">Sep 15, 2023</a></div>
+                  <div><a href="#">Quản trị viên</a></div>
+                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 2</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 d-flex ftco-animate">
+            <div class="blog-entry align-self-stretch">
+              <a href="blog-single.html" class="block-20" style="background-image: url('client/images/image_4.jpg');">
+              </a>
+              <div class="text mt-3">
+                <h3 class="heading mt-3"><a href="#">Review phòng Suite: Không gian nghỉ dưỡng sang trọng</a></h3>
+                <div class="meta mb-3">
+                  <div><a href="#">Nov 1, 2023</a></div>
+                  <div><a href="#">Khách mời</a></div>
+                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 4</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
 @endsection
