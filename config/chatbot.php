@@ -29,15 +29,10 @@ return [
         'tiệc', 'party', 'buffet', 'breakfast', 'lunch', 'dinner'
     ],
 
-    // Từ khóa không liên quan đến khách sạn
+    // Từ khóa không liên quan đến khách sạn (giảm bớt để bot linh hoạt hơn)
     'non_hotel_keywords' => [
-        'chính trị', 'politics', 'bầu cử', 'election', 'chính phủ', 'government',
-        'thể thao', 'sport', 'bóng đá', 'football', 'tennis', 'basketball',
-        'giải trí', 'entertainment', 'phim', 'movie', 'nhạc', 'music', 'ca sĩ', 'singer',
-        'tin tức', 'news', 'thời sự', 'current events', 'thế giới', 'world',
-        'kinh tế', 'economy', 'chứng khoán', 'stock', 'bitcoin', 'crypto',
-        'y tế', 'health', 'bệnh viện', 'hospital', 'bác sĩ', 'doctor',
-        'giáo dục', 'education', 'trường học', 'school', 'đại học', 'university'
+        'chính trị', 'politics', 'bầu cử', 'election', 'đảng phái', 'party',
+        'quân sự', 'military', 'vũ khí', 'weapon', 'khủng bố', 'terrorism'
     ],
 
     // Cài đặt token và response
@@ -51,9 +46,9 @@ return [
 
     // Cài đặt validation
     'validation' => [
-        'enable_topic_validation' => true, // Bật/tắt validate chủ đề
-        'strict_mode' => true,             // Chế độ nghiêm ngặt
-        'fallback_message' => 'Xin lỗi, tôi chỉ hỗ trợ về khách sạn MARRON và dịch vụ du lịch. Vui lòng hỏi về đặt phòng, dịch vụ khách sạn, hoặc địa điểm tham quan gần đây.',
+        'enable_topic_validation' => false, // Tắt validate chủ đề để bot linh hoạt hơn
+        'strict_mode' => false,             // Tắt chế độ nghiêm ngặt
+        'fallback_message' => 'Tôi có thể giúp bạn với nhiều chủ đề khác nhau. Bạn cần tôi hỗ trợ gì?',
     ],
 
     // Cài đặt cache và performance

@@ -105,9 +105,9 @@ class GeminiChatbotService
 
         return "Bạn là MARRON AI CHAT BOT, trợ lý AI thông minh của khách sạn MARRON 5 sao tại TP.HCM.
 
-**QUY TẮC NGHIÊM NGẶT:**
-🚫 CHỈ TRẢ LỜI về: khách sạn, du lịch, đặt phòng, dịch vụ khách sạn, tiện ích, địa điểm gần đó
-🚫 KHÔNG TRẢ LỜI: chính trị, thể thao, giải trí, tin tức, chủ đề khác
+**QUY TẮC TRẢ LỜI:**
+✅ ƯU TIÊN: khách sạn, du lịch, đặt phòng, dịch vụ khách sạn, tiện ích, địa điểm gần đó
+✅ CÓ THỂ TRẢ LỜI: các chủ đề khác nếu có thể giúp được
 📝 Trả lời NGẮN GỌN: tối đa 2-3 câu
 📝 Sử dụng bullet points (•) cho danh sách
 📝 Xuống dòng rõ ràng giữa các ý
@@ -149,12 +149,13 @@ CÂU HỎI THƯỜNG GẶP:
 
 **HƯỚNG DẪN TRẢ LỜI:**
 1. Luôn trả lời bằng tiếng Việt, lịch sự và chuyên nghiệp
-2. Chỉ sử dụng thông tin trên để trả lời
-3. Nếu không có thông tin, đề xuất liên hệ trực tiếp
-4. Sử dụng emoji phù hợp để tạo cảm giác thân thiện
-5. Đưa ra lời khuyên hữu ích cho khách hàng
+2. ƯU TIÊN sử dụng thông tin khách sạn MARRON nếu có
+3. CÓ THỂ trả lời các chủ đề khác nếu có thể giúp được
+4. Nếu không có thông tin, đề xuất liên hệ trực tiếp
+5. Sử dụng emoji phù hợp để tạo cảm giác thân thiện
+6. Đưa ra lời khuyên hữu ích cho khách hàng
 
-Bạn hãy trả lời câu hỏi của khách hàng dựa trên thông tin trên.";
+Bạn hãy trả lời câu hỏi của khách hàng một cách linh hoạt và hữu ích.";
     }
 
     /**
@@ -333,10 +334,10 @@ Bạn hãy trả lời câu hỏi của khách hàng dựa trên thông tin trê
     public function generateResponse($userMessage, $conversationHistory = [])
     {
         try {
-            // Validate chủ đề trước khi gửi API
-            if (!$this->isHotelRelatedTopic($userMessage)) {
-                return config('chatbot.validation.fallback_message', 'Xin lỗi, tôi chỉ hỗ trợ về khách sạn MARRON và dịch vụ du lịch. Vui lòng hỏi về đặt phòng, dịch vụ khách sạn, hoặc địa điểm tham quan gần đây.');
-            }
+            // Bỏ topic validation để bot linh hoạt hơn
+            // if (!$this->isHotelRelatedTopic($userMessage)) {
+            //     return config('chatbot.validation.fallback_message', 'Xin lỗi, tôi chỉ hỗ trợ về khách sạn MARRON và dịch vụ du lịch. Vui lòng hỏi về đặt phòng, dịch vụ khách sạn, hoặc địa điểm tham quan gần đây.');
+            // }
             
             $systemPrompt = $this->generateSystemPrompt();
             
