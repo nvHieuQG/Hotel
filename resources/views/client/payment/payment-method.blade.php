@@ -19,11 +19,12 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p class="mb-1">Giá gốc: <strong>{{ number_format($booking->price, 0, ',', '.') }} VND</strong></p>
+                                <p class="mb-1">Dịch vụ & phụ phí: <strong>{{ number_format($booking->surcharge + $booking->extra_services_total + $booking->total_services_price, 0, ',', '.') }} VND</strong></p>
                                 @if($booking->promotion_discount > 0)
                                     <p class="mb-1 text-success">Giảm giá: <strong>-{{ number_format($booking->promotion_discount, 0, ',', '.') }} VND</strong></p>
                                     <p class="mb-1 text-danger">Tổng tiền: <strong>{{ number_format($booking->final_price, 0, ',', '.') }} VND</strong></p>
                                 @else
-                                    <p class="mb-1">Tổng tiền: <strong>{{ number_format($booking->price, 0, ',', '.') }} VND</strong></p>
+                                    <p class="mb-1">Tổng tiền: <strong>{{ number_format($booking->price + $booking->surcharge + $booking->extra_services_total + $booking->total_services_price, 0, ',', '.') }} VND</strong></p>
                                 @endif
                             </div>
                             <div class="col-md-6">

@@ -214,14 +214,15 @@ class TourBookingController extends Controller
                 'promotion_code' => $request->promotion_code,
                 'promotion_discount' => $request->promotion_discount ?? 0,
                 'promotion_id' => $request->promotion_id,
-                'total_price' => $request->total_price, // Giá gốc trước khi giảm giá
+                'total_price' => $request->total_price, // Giá cuối sau khi giảm giá (số tiền khách thanh toán)
             ];
 
-            // Tính toán giá cuối sau khi áp dụng mã giảm giá
+            // Tính toán giá gốc trước khi giảm giá
             if (($request->promotion_discount ?? 0) > 0) {
-                $tourBookingData['final_price'] = $request->total_price - ($request->promotion_discount);
-                // KHÔNG cập nhật total_price - giữ nguyên giá gốc để hiển thị
+                $tourBookingData['original_price'] = $request->total_price + ($request->promotion_discount);
+                $tourBookingData['final_price'] = $request->total_price; // Giá cuối = total_price
             } else {
+                $tourBookingData['original_price'] = $request->total_price;
                 $tourBookingData['final_price'] = $request->total_price;
             }
 
@@ -436,8 +437,18 @@ class TourBookingController extends Controller
             // Tạo payment record cho chuyển khoản
             $payment = $this->tourBookingService->createBankTransferPayment($request, $tourBooking);
 
-            // Lấy thông tin ngân hàng
-            $bankInfo = $this->getBankTransferInfo();
+            // Lấy thông tin ngân hàng (chuẩn hóa theo cấu trúc view cần)
+            $bankInfoRaw = $this->getBankTransferInfo();
+            $firstBank = $bankInfoRaw['banks'][0] ?? [];
+            $bankInfo = [
+                'bank_name' => $firstBank['name'] ?? 'N/A',
+                'account_number' => $firstBank['account_number'] ?? 'N/A',
+                'account_holder' => $firstBank['account_name'] ?? 'N/A',
+                'branch' => $firstBank['branch'] ?? 'N/A',
+                'swift_code' => $firstBank['swift_code'] ?? 'N/A',
+                'instructions' => $bankInfoRaw['instructions'] ?? [],
+                'note' => $bankInfoRaw['note'] ?? ''
+            ];
 
             return view('client.tour-booking.bank-transfer', compact('tourBooking', 'payment', 'bankInfo'));
         } catch (\Exception $e) {

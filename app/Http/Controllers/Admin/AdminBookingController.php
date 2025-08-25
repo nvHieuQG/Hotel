@@ -1050,6 +1050,9 @@ class AdminBookingController extends Controller
                 'gateway_message' => 'Thanh toán tại quầy'
             ]);
 
+            // Tự động xử lý các giao dịch chờ xác nhận
+            $this->bookingService->processPendingPayments($booking);
+
             // Gửi email xác nhận
             $this->paymentService->sendPaymentConfirmationEmail($payment);
 
