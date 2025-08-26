@@ -865,6 +865,20 @@
                                                     <span class="bg-success text-white px-2 py-1 rounded">Hoàn thành</span>
                                                 @elseif($payment->status === 'pending')
                                                     <span class="bg-warning text-white px-2 py-1 rounded">Chờ xử lý</span>
+                                                @elseif($payment->status === 'processing')
+                                                    <div class="d-flex flex-column align-items-center gap-1">
+                                                        <span class="bg-warning text-white px-2 py-1 rounded mb-1">Đang xác nhận</span>
+                                                        @if($payment->method === 'bank_transfer')
+                                                            <form action="{{ route('staff.tour-bookings.payments.update-status', [$tourBooking->id, $payment->id]) }}" method="POST" onsubmit="return confirm('Xác nhận thanh toán chuyển khoản này?')">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <input type="hidden" name="status" value="completed">
+                                                                <button type="submit" class="btn btn-sm btn-success">
+                                                                    <i class="fas fa-check"></i> Xác nhận thanh toán
+                                                                </button>
+                                                            </form>
+                                                        @endif
+                                                    </div>
                                                 @else
                                                     <span class="bg-danger text-white px-2 py-1 rounded">{{ $payment->status }}</span>
                                                 @endif

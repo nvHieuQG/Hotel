@@ -400,7 +400,7 @@ class AdminTourBookingController extends Controller
 
         $tourBooking = TourBooking::with('payments')->findOrFail($id);
         $payment = Payment::where('id', $paymentId)
-            ->where('booking_id', $tourBooking->id)
+            ->where('tour_booking_id', $tourBooking->id)
             ->firstOrFail();
 
         try {
@@ -422,7 +422,7 @@ class AdminTourBookingController extends Controller
 
             // Tính lại trạng thái thanh toán tổng quan
             $completedAmount = $tourBooking->payments()->where('status', 'completed')->sum('amount');
-            $totalAmount = $tourBooking->total_price; // Sử dụng total_price (giá cuối sau giảm giá)
+            $totalAmount = (float) ($tourBooking->final_price ?? $tourBooking->total_price);
 
             $paymentStatus = 'pending';
             if ($completedAmount >= $totalAmount) {

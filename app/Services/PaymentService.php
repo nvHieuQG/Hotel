@@ -29,21 +29,40 @@ class PaymentService implements PaymentServiceInterface
         $promotionId = $data['promotion_id'] ?? null;
         $code = $data['promotion_code'] ?? null;
         $calc = $this->calculateFinalAmountWithPromotion($booking, $promotionId, $code);
+        $finalNeed = (int) round($calc['final_amount']);
+        $alreadyPaid = (int) $booking->total_paid;
+        $remaining = max(0, $finalNeed - $alreadyPaid);
+
+        // Mặc định: phần còn thiếu
+        $amount = isset($data['amount']) ? (int)$data['amount'] : (int) $remaining;
+
+        // Min 20% phần còn thiếu, không vượt quá phần còn thiếu
+        $minDeposit = (int) max(1, min(round($remaining * 0.2), $remaining));
+        if ($amount < $minDeposit) {
+            throw new \InvalidArgumentException("Số tiền thanh toán tối thiểu phải là " . number_format($minDeposit) . " VNĐ");
+        }
+        if ($amount > $remaining) {
+            throw new \InvalidArgumentException("Số tiền thanh toán không được vượt quá phần còn thiếu: " . number_format($remaining) . " VNĐ");
+        }
 
         return $this->createPayment($booking, [
             'method' => 'bank_transfer',
-            'amount' => $calc['final_amount'],
+            'amount' => $amount,
             'discount_amount' => $calc['discount_amount'],
             'currency' => 'VND',
             'status' => 'pending',
             'transaction_id' => $transactionId,
             'gateway_name' => 'Bank Transfer',
-            'gateway_response' => [
-                'bank_info' => $this->getBankTransferInfo(),
-                'customer_note' => $data['customer_note'] ?? null,
-                'promotion' => $calc['promotion']
-            ],
-            'promotion_id' => $calc['promotion_id'],
+            'gateway_transaction_id' => $transactionId,
+            'description' => 'Bank transfer payment for booking ' . $booking->booking_id,
+            'gateway_response' => [],
+            'metadata' => [
+                'promotion_id' => $promotionId,
+                'promotion_code' => $code,
+                'base_amount' => $calc['base_amount'],
+                'discount_amount' => $calc['discount_amount'],
+                'final_amount' => $calc['final_amount']
+            ]
         ]);
     }
 
@@ -58,26 +77,38 @@ class PaymentService implements PaymentServiceInterface
         $promotionId = $data['promotion_id'] ?? null;
         $code = $data['promotion_code'] ?? null;
         $calc = $this->calculateFinalAmountWithPromotion($booking, $promotionId, $code);
+        $finalNeed = (int) round($calc['final_amount']);
+        $alreadyPaid = (int) $booking->total_paid;
+        $remaining = max(0, $finalNeed - $alreadyPaid);
+
+        $amount = isset($data['amount']) ? (int)$data['amount'] : (int) $remaining;
+
+        $minDeposit = (int) max(1, min(round($remaining * 0.2), $remaining));
+        if ($amount < $minDeposit) {
+            throw new \InvalidArgumentException("Số tiền thanh toán tối thiểu phải là " . number_format($minDeposit) . " VNĐ");
+        }
+        if ($amount > $remaining) {
+            throw new \InvalidArgumentException("Số tiền thanh toán không được vượt quá phần còn thiếu: " . number_format($remaining) . " VNĐ");
+        }
 
         return $this->createPayment($booking, [
             'method' => 'credit_card',
-            'amount' => $calc['final_amount'],
+            'amount' => $amount,
             'discount_amount' => $calc['discount_amount'],
             'currency' => 'VND',
             'status' => 'pending',
             'transaction_id' => $transactionId,
             'gateway_name' => 'Credit Card',
-            'gateway_response' => [
-                'card_info' => [
-                    'last4' => $data['last4'] ?? null,
-                    'brand' => $data['brand'] ?? null,
-                    'exp_month' => $data['exp_month'] ?? null,
-                    'exp_year' => $data['exp_year'] ?? null
-                ],
-                'customer_note' => $data['customer_note'] ?? null,
-                'promotion' => $calc['promotion']
-            ],
-            'promotion_id' => $calc['promotion_id'],
+            'gateway_transaction_id' => $transactionId,
+            'description' => 'Credit card payment for booking ' . $booking->booking_id,
+            'gateway_response' => [],
+            'metadata' => [
+                'promotion_id' => $promotionId,
+                'promotion_code' => $code,
+                'base_amount' => $calc['base_amount'],
+                'discount_amount' => $calc['discount_amount'],
+                'final_amount' => $calc['final_amount']
+            ]
         ]);
     }
 
@@ -222,7 +253,7 @@ class PaymentService implements PaymentServiceInterface
                 'gateway_code' => 'CC_SUCCESS',
                 'gateway_message' => 'Thanh toán thẻ tín dụng thành công',
                 'paid_at' => now(),
-                'gateway_response' => array_merge($payment->gateway_response ?? [], [
+                'gateway_response' => [
                     'card_info' => [
                         'last4' => $last4,
                         'brand' => $brand,
@@ -231,7 +262,7 @@ class PaymentService implements PaymentServiceInterface
                     ],
                     'cardholder_name' => $request->cardholder_name,
                     'is_test_card' => true
-                ])
+                ]
             ]);
 
             // Send confirmation email
@@ -247,7 +278,7 @@ class PaymentService implements PaymentServiceInterface
             $this->updatePaymentStatus($payment, 'failed', [
                 'gateway_code' => 'CC_FAILED',
                 'gateway_message' => 'Thẻ không hợp lệ hoặc không đủ tiền',
-                'gateway_response' => array_merge($payment->gateway_response ?? [], [
+                'gateway_response' => [
                     'card_info' => [
                         'last4' => $last4,
                         'brand' => $brand,
@@ -256,7 +287,7 @@ class PaymentService implements PaymentServiceInterface
                     ],
                     'cardholder_name' => $request->cardholder_name,
                     'is_test_card' => false
-                ])
+                ]
             ]);
 
             return [
@@ -350,13 +381,13 @@ class PaymentService implements PaymentServiceInterface
             'gateway_code' => 'BANK_TRANSFER',
             'gateway_message' => 'Đã nhận thông tin chuyển khoản, đang xác nhận',
             'paid_at' => now(), // Set paid_at khi xác nhận chuyển khoản
-            'gateway_response' => array_merge($payment->gateway_response ?? [], [
+            'gateway_response' => [
                 'bank_name' => $request->bank_name,
                 'transfer_amount' => $request->transfer_amount,
                 'transfer_date' => $request->transfer_date,
                 'receipt_image' => $receiptPath,
                 'customer_note' => $request->customer_note
-            ])
+            ]
         ]);
 
         return [
@@ -675,7 +706,7 @@ class PaymentService implements PaymentServiceInterface
         }
 
         if (isset($data['gateway_response'])) {
-            $updateData['gateway_response'] = $data['gateway_response'];
+            $updateData['gateway_response'] = is_array($data['gateway_response']) ? json_encode($data['gateway_response']) : $data['gateway_response'];
         }
 
         if (isset($data['paid_at'])) {
@@ -684,7 +715,7 @@ class PaymentService implements PaymentServiceInterface
 
         $success = $payment->update($updateData);
 
-        // Nếu thanh toán thành công và booking đang ở trạng thái pending hoặc pending_payment
+        // Nếu thanh toán thành công, kiểm tra đủ tổng số tiền chưa rồi mới xác nhận booking
         if ($success && $status === 'completed' && ($payment->booking->status === 'pending' || $payment->booking->status === 'pending_payment')) {
             $this->confirmBookingAfterPayment($payment->booking);
         }
@@ -718,8 +749,23 @@ class PaymentService implements PaymentServiceInterface
      */
     public function canPayBooking(Booking $booking): bool
     {
-        // Chỉ cho phép thanh toán booking có trạng thái pending hoặc pending_payment
-        return ($booking->status === 'pending' || $booking->status === 'pending_payment') && !$booking->hasSuccessfulPayment();
+        // Không cho thanh toán nếu đã hủy
+        if ($booking->status === 'cancelled') {
+            return false;
+        }
+
+        // Cho phép thanh toán thêm khi còn thiếu, kể cả trạng thái 'confirmed'
+        $calc = $this->calculateFinalAmountWithPromotion($booking, $booking->promotion_id, $booking->promotion_code);
+        $need = (int) round($calc['final_amount']);
+        $paid = (int) $booking->total_paid;
+
+        // Nếu đã đủ tiền thì không cần thanh toán nữa
+        if ($paid >= $need) {
+            return false;
+        }
+
+        // Các trạng thái cho phép: pending, pending_payment, confirmed
+        return in_array($booking->status, ['pending', 'pending_payment', 'confirmed'], true);
     }
 
     /**
@@ -761,21 +807,33 @@ class PaymentService implements PaymentServiceInterface
         $code = $tempPaymentData['promotion_code'] ?? null;
         $calc = $this->calculateFinalAmountWithPromotion($booking, $promotionId, $code);
 
+        // Mặc định thanh toán full, khách có thể thay đổi tùy chọn
+        $amount = isset($tempPaymentData['amount']) ? (int)$tempPaymentData['amount'] : (int) $calc['final_amount'];
+        
+        // Validate số tiền tối thiểu 20%
+        $minDeposit = (int) round($calc['final_amount'] * 0.2);
+        if ($amount < $minDeposit) {
+            throw new \InvalidArgumentException("Số tiền thanh toán tối thiểu phải là " . number_format($minDeposit) . " VNĐ");
+        }
+
         return $this->createPayment($booking, [
             'method' => 'bank_transfer',
-            'amount' => $calc['final_amount'],
+            'amount' => $amount,
             'discount_amount' => $calc['discount_amount'],
             'currency' => 'VND',
             'status' => 'pending',
             'transaction_id' => $transactionId,
             'gateway_name' => 'Bank Transfer',
-            'gateway_response' => [
-                'bank_info' => $this->getBankTransferInfo(),
-                'customer_note' => $tempPaymentData['customer_note'] ?? null,
-                'promotion' => $calc['promotion'],
-                'created_from_session' => true
-            ],
-            'promotion_id' => $calc['promotion_id'],
+            'gateway_transaction_id' => $transactionId,
+            'description' => 'Bank transfer payment for booking ' . $booking->booking_id,
+            'gateway_response' => [],
+            'metadata' => [
+                'promotion_id' => $promotionId,
+                'promotion_code' => $code,
+                'base_amount' => $calc['base_amount'],
+                'discount_amount' => $calc['discount_amount'],
+                'final_amount' => $calc['final_amount']
+            ]
         ]);
     }
 

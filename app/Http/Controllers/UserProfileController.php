@@ -316,4 +316,16 @@ class UserProfileController extends Controller
             return response()->json(['error' => 'Có lỗi xảy ra khi xóa đánh giá: ' . $e->getMessage()], 500);
         }
     }
+
+    public function showBookingDetail($bookingId)
+    {
+        $booking = \App\Models\Booking::with([
+            'room.primaryImage',
+            'room.firstImage',
+            'room.images',
+            'room.roomType',
+            'payments'
+        ])->findOrFail($bookingId);
+        return view('client.profile.booking_detail_partial', compact('booking'));
+    }
 } 

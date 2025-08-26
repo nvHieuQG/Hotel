@@ -165,10 +165,10 @@
                                                 <i class="fas fa-credit-card fa-3x text-primary"></i>
                                             </div>
                                             <h5 class="card-title">Thẻ tín dụng/ghi nợ</h5>
-                                            <p class="card-text text-muted">Thanh toán an toàn qua cổng thanh toán</p>
-                                            <a href="{{ route('tour-booking.credit-card', $tourBooking->id) }}" class="btn btn-primary btn-lg">
+                                            <p class="card-text text-muted">Thanh toán an toàn (có thể thanh toán một phần ≥20%)</p>
+                                            <button type="button" id="openCcModal" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#ccModal">
                                                 <i class="fas fa-credit-card"></i> Thanh toán bằng thẻ
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -181,10 +181,10 @@
                                                 <i class="fas fa-university fa-3x text-success"></i>
                                             </div>
                                             <h5 class="card-title">Chuyển khoản ngân hàng</h5>
-                                            <p class="card-text text-muted">Chuyển khoản trực tiếp đến tài khoản ngân hàng</p>
-                                            <a href="{{ route('tour-booking.bank-transfer', $tourBooking->id) }}" class="btn btn-success btn-lg">
+                                            <p class="card-text text-muted">Chuyển khoản trực tiếp (có thể thanh toán một phần ≥20%)</p>
+                                            <button type="button" id="openBankModal" class="btn btn-success btn-lg" data-toggle="modal" data-target="#bankModal">
                                                 <i class="fas fa-university"></i> Chuyển khoản ngân hàng
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -212,6 +212,62 @@
     </div>
 </section>
 
+<!-- Modal Credit Card -->
+<div class="modal fade" id="ccModal" tabindex="-1" role="dialog" aria-labelledby="ccModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ccModalLabel">Thanh toán thẻ (≥20%)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ route('tour-booking.credit-card', $tourBooking->id) }}" method="GET" id="ccForm">
+        <div class="modal-body">
+          @php $final = (int)($tourBooking->final_price ?? $tourBooking->total_price); $min = (int) round($final*0.2); @endphp
+          <div class="form-group">
+            <label>Số tiền muốn thanh toán</label>
+            <input type="number" class="form-control" name="amount" value="{{ $final }}" min="{{ $min }}" max="{{ $final }}" step="1000" required>
+            <small class="text-muted">Tối thiểu {{ number_format($min) }} VNĐ</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Tiếp tục</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Bank Transfer -->
+<div class="modal fade" id="bankModal" tabindex="-1" role="dialog" aria-labelledby="bankModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bankModalLabel">Chuyển khoản (≥20%)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ route('tour-booking.bank-transfer', $tourBooking->id) }}" method="GET" id="bankForm">
+        <div class="modal-body">
+          @php $final = (int)($tourBooking->final_price ?? $tourBooking->total_price); $min = (int) round($final*0.2); @endphp
+          <div class="form-group">
+            <label>Số tiền muốn thanh toán</label>
+            <input type="number" class="form-control" name="amount" value="{{ $final }}" min="{{ $min }}" max="{{ $final }}" step="1000" required>
+            <small class="text-muted">Tối thiểu {{ number_format($min) }} VNĐ</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-success">Tiếp tục</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <style>
 .card {
     transition: all 0.3s ease;
@@ -237,4 +293,18 @@
     padding: 0.5rem 0;
 }
 </style>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    function showModal(id){
+        var m = $(id);
+        if (typeof m.modal === 'function') { m.modal('show'); }
+        else { m.removeClass('fade'); m.show(); }
+    }
+    $('#openCcModal').on('click', function(e){ e.preventDefault(); showModal('#ccModal'); });
+    $('#openBankModal').on('click', function(e){ e.preventDefault(); showModal('#bankModal'); });
+});
+</script>
 @endsection

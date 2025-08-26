@@ -473,8 +473,9 @@ Route::get('/api/payment/promotion-preview/{booking}', [PaymentController::class
 Route::get('/api/room-type/promotion-preview', [HotelController::class, 'promotionPreviewForRoomType'])->name('api.room-type.promotion-preview');
 
 
-Route::get('/payment/bank-transfer/{booking}', [PaymentController::class, 'processBankTransfer'])->name('payment.bank-transfer');
-Route::post('/payment/bank-transfer/{booking}/confirm', [PaymentController::class, 'confirmBankTransfer'])->name('payment.bank-transfer.confirm');
+Route::get('/payment/bank-transfer/{booking}', [PaymentController::class, 'showBankTransferForm'])->name('payment.bank-transfer');
+Route::post('/payment/bank-transfer/{booking}/process', [PaymentController::class, 'processBankTransfer'])->name('payment.process-bank-transfer');
+Route::post('/payment/bank-transfer/{booking}/confirm', [PaymentController::class, 'confirmBankTransfer'])->name('payment.confirm-bank-transfer');
 Route::get('/payment/credit-card/{booking}', [PaymentController::class, 'processCreditCard'])->name('payment.credit-card');
 Route::post('/payment/credit-card/{booking}/confirm', [PaymentController::class, 'confirmCreditCard'])->name('payment.credit-card.confirm');
 Route::get('/payment/success/{booking}', [PaymentController::class, 'success'])->name('payment.success');

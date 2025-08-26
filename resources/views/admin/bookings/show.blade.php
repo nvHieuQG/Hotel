@@ -454,7 +454,13 @@
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
-                                                @if($booking->payments->where('status', 'processing')->where('method', 'bank_transfer')->count() > 0)
+                                                @php
+                                                    $needsConfirm = $booking->payments
+                                                        ->where('method','bank_transfer')
+                                                        ->whereIn('status',['processing','pending'])
+                                                        ->count() > 0;
+                                                @endphp
+                                                @if($needsConfirm)
                                                     <div class="alert alert-warning">
                                                         <strong>Chuyển khoản đang chờ xác nhận:</strong>
                                                         <br>
