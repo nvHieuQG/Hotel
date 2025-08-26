@@ -30,6 +30,15 @@ class SupportMessage extends Model
         return $query->where('conversation_id', $conversationId);
     }
 
+    // Relationship với conversation (virtual)
+    public function conversation()
+    {
+        return $this->hasOne(SupportMessage::class, 'conversation_id', 'conversation_id')
+            ->where('sender_type', 'user')
+            ->orderBy('created_at', 'asc')
+            ->limit(1);
+    }
+
     // Scope để lấy tin nhắn từ user
     public function scopeFromUser($query, $userId)
     {
