@@ -103,39 +103,93 @@
                         <h4>Chọn phương thức thanh toán</h4>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <!-- Thẻ tín dụng -->
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 border-primary">
-                                    <div class="card-body text-center">
-                                        <div class="payment-icon mb-3">
-                                            <i class="fas fa-credit-card fa-3x text-primary"></i>
-                                        </div>
-                                        <h5 class="card-title">Thẻ tín dụng/ghi nợ</h5>
-                                        <p class="card-text text-muted">Thanh toán an toàn qua cổng thanh toán</p>
-                                        <a href="{{ route('tour-booking.credit-card', $tourBooking->id) }}" class="btn btn-primary btn-lg">
-                                            <i class="fas fa-credit-card"></i> Thanh toán bằng thẻ
-                                        </a>
-                                    </div>
-                                </div>
+                        @if(session('error'))
+                            <div class="alert alert-danger mb-4">
+                                <i class="fas fa-exclamation-triangle"></i> {{ session('error') }}
                             </div>
+                        @endif
 
-                            <!-- Chuyển khoản -->
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 border-success">
-                                    <div class="card-body text-center">
-                                        <div class="payment-icon mb-3">
-                                            <i class="fas fa-university fa-3x text-success"></i>
+                        @if(session('success'))
+                            <div class="alert alert-success mb-4">
+                                <i class="fas fa-check-circle"></i> {{ session('success') }}
+                            </div>
+                        @endif
+
+                        @php
+                            // Kiểm tra trạng thái thanh toán hiện tại
+                            $hasPendingPayment = $tourBooking->payments->where('status', 'pending')->count() > 0;
+                            $hasCompletedPayment = $tourBooking->payments->where('status', 'completed')->count() > 0;
+                            $totalCompletedAmount = $tourBooking->payments->where('status', 'completed')->sum('amount');
+                            $finalAmount = $tourBooking->final_price ?? $tourBooking->total_price;
+                            $isFullyPaid = $totalCompletedAmount >= $finalAmount;
+                        @endphp
+
+                        @if($hasPendingPayment)
+                            <div class="alert alert-warning mb-4">
+                                <h6><i class="fas fa-clock"></i> Có giao dịch thanh toán đang chờ xác nhận</h6>
+                                <p class="mb-2">Bạn đã có giao dịch thanh toán đang chờ admin xác nhận. Vui lòng chờ xác nhận hoặc liên hệ admin để được hỗ trợ.</p>
+                                <div class="row">
+                                    @foreach($tourBooking->payments->where('status', 'pending') as $payment)
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-3">
+                                                <p class="mb-1"><strong>Phương thức:</strong> 
+                                                    @if($payment->method == 'bank_transfer')
+                                                        <i class="fas fa-university text-success"></i> Chuyển khoản
+                                                    @elseif($payment->method == 'credit_card')
+                                                        <i class="fas fa-credit-card text-primary"></i> Thẻ tín dụng
+                                                    @else
+                                                        {{ $payment->method }}
+                                                    @endif
+                                                </p>
+                                                <p class="mb-1"><strong>Số tiền:</strong> {{ number_format($payment->amount, 0, ',', '.') }} VNĐ</p>
+                                                <p class="mb-0"><strong>Trạng thái:</strong> <span class="badge badge-warning">Đang chờ xác nhận</span></p>
+                                            </div>
                                         </div>
-                                        <h5 class="card-title">Chuyển khoản ngân hàng</h5>
-                                        <p class="card-text text-muted">Chuyển khoản trực tiếp đến tài khoản ngân hàng</p>
-                                        <a href="{{ route('tour-booking.bank-transfer', $tourBooking->id) }}" class="btn btn-success btn-lg">
-                                            <i class="fas fa-university"></i> Chuyển khoản ngân hàng
-                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($isFullyPaid)
+                            <div class="alert alert-success mb-4">
+                                <h6><i class="fas fa-check-circle"></i> Đã thanh toán đủ tiền</h6>
+                                <p class="mb-0">Tour booking của bạn đã được thanh toán đủ tiền. Không cần thanh toán thêm.</p>
+                            </div>
+                        @elseif(!$hasPendingPayment)
+                            <div class="row">
+                                <!-- Thẻ tín dụng -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 border-primary">
+                                        <div class="card-body text-center">
+                                            <div class="payment-icon mb-3">
+                                                <i class="fas fa-credit-card fa-3x text-primary"></i>
+                                            </div>
+                                            <h5 class="card-title">Thẻ tín dụng/ghi nợ</h5>
+                                            <p class="card-text text-muted">Thanh toán an toàn (có thể thanh toán một phần ≥20%)</p>
+                                            <button type="button" id="openCcModal" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#ccModal">
+                                                <i class="fas fa-credit-card"></i> Thanh toán bằng thẻ
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Chuyển khoản -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 border-success">
+                                        <div class="card-body text-center">
+                                            <div class="payment-icon mb-3">
+                                                <i class="fas fa-university fa-3x text-success"></i>
+                                            </div>
+                                            <h5 class="card-title">Chuyển khoản ngân hàng</h5>
+                                            <p class="card-text text-muted">Chuyển khoản trực tiếp (có thể thanh toán một phần ≥20%)</p>
+                                            <button type="button" id="openBankModal" class="btn btn-success btn-lg" data-toggle="modal" data-target="#bankModal">
+                                                <i class="fas fa-university"></i> Chuyển khoản ngân hàng
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -157,6 +211,62 @@
         </div>
     </div>
 </section>
+
+<!-- Modal Credit Card -->
+<div class="modal fade" id="ccModal" tabindex="-1" role="dialog" aria-labelledby="ccModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ccModalLabel">Thanh toán thẻ (≥20%)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ route('tour-booking.credit-card', $tourBooking->id) }}" method="GET" id="ccForm">
+        <div class="modal-body">
+          @php $final = (int)($tourBooking->final_price ?? $tourBooking->total_price); $min = (int) round($final*0.2); @endphp
+          <div class="form-group">
+            <label>Số tiền muốn thanh toán</label>
+            <input type="number" class="form-control" name="amount" value="{{ $final }}" min="{{ $min }}" max="{{ $final }}" step="1000" required>
+            <small class="text-muted">Tối thiểu {{ number_format($min) }} VNĐ</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Tiếp tục</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Bank Transfer -->
+<div class="modal fade" id="bankModal" tabindex="-1" role="dialog" aria-labelledby="bankModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bankModalLabel">Chuyển khoản (≥20%)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ route('tour-booking.bank-transfer', $tourBooking->id) }}" method="GET" id="bankForm">
+        <div class="modal-body">
+          @php $final = (int)($tourBooking->final_price ?? $tourBooking->total_price); $min = (int) round($final*0.2); @endphp
+          <div class="form-group">
+            <label>Số tiền muốn thanh toán</label>
+            <input type="number" class="form-control" name="amount" value="{{ $final }}" min="{{ $min }}" max="{{ $final }}" step="1000" required>
+            <small class="text-muted">Tối thiểu {{ number_format($min) }} VNĐ</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-success">Tiếp tục</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <style>
 .card {
@@ -183,4 +293,18 @@
     padding: 0.5rem 0;
 }
 </style>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    function showModal(id){
+        var m = $(id);
+        if (typeof m.modal === 'function') { m.modal('show'); }
+        else { m.removeClass('fade'); m.show(); }
+    }
+    $('#openCcModal').on('click', function(e){ e.preventDefault(); showModal('#ccModal'); });
+    $('#openBankModal').on('click', function(e){ e.preventDefault(); showModal('#bankModal'); });
+});
+</script>
 @endsection

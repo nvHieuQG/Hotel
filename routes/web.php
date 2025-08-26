@@ -287,7 +287,9 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::patch('tour-bookings/{id}/payments/{paymentId}', [AdminTourBookingController::class, 'updatePaymentStatus'])->name('tour-bookings.payments.update-status');
     Route::post('tour-bookings/{id}/collect-payment', [AdminTourBookingController::class, 'collectPayment'])->name('tour-bookings.collect-payment');
     Route::post('tour-bookings/{id}/confirm-bank-transfer', [AdminTourBookingController::class, 'confirmBankTransfer'])->name('tour-bookings.confirm-bank-transfer');
+    Route::post('tour-bookings/{id}/confirm-credit-card', [AdminTourBookingController::class, 'confirmCreditCardPayment'])->name('tour-bookings.confirm-credit-card');
     Route::post('tour-bookings/{id}/reject-bank-transfer', [AdminTourBookingController::class, 'rejectBankTransfer'])->name('tour-bookings.reject-bank-transfer');
+    Route::post('tour-bookings/{id}/reject-credit-card', [AdminTourBookingController::class, 'rejectCreditCardPayment'])->name('tour-bookings.reject-credit-card');
     Route::resource('tour-bookings', AdminTourBookingController::class);
 
     // Quản lý VAT Invoice Tour Booking
@@ -471,8 +473,9 @@ Route::get('/api/payment/promotion-preview/{booking}', [PaymentController::class
 Route::get('/api/room-type/promotion-preview', [HotelController::class, 'promotionPreviewForRoomType'])->name('api.room-type.promotion-preview');
 
 
-Route::get('/payment/bank-transfer/{booking}', [PaymentController::class, 'processBankTransfer'])->name('payment.bank-transfer');
-Route::post('/payment/bank-transfer/{booking}/confirm', [PaymentController::class, 'confirmBankTransfer'])->name('payment.bank-transfer.confirm');
+Route::get('/payment/bank-transfer/{booking}', [PaymentController::class, 'showBankTransferForm'])->name('payment.bank-transfer');
+Route::post('/payment/bank-transfer/{booking}/process', [PaymentController::class, 'processBankTransfer'])->name('payment.process-bank-transfer');
+Route::post('/payment/bank-transfer/{booking}/confirm', [PaymentController::class, 'confirmBankTransfer'])->name('payment.confirm-bank-transfer');
 Route::get('/payment/credit-card/{booking}', [PaymentController::class, 'processCreditCard'])->name('payment.credit-card');
 Route::post('/payment/credit-card/{booking}/confirm', [PaymentController::class, 'confirmCreditCard'])->name('payment.credit-card.confirm');
 Route::get('/payment/success/{booking}', [PaymentController::class, 'success'])->name('payment.success');

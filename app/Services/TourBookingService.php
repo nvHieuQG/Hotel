@@ -156,26 +156,17 @@ class TourBookingService implements TourBookingServiceInterface
      */
     public function checkRoomAvailabilityForTour($roomTypeId, $quantity, $checkInDate, $checkOutDate)
     {
-        // Lấy tổng số phòng của loại này
-        $totalRooms = RoomType::find($roomTypeId)->rooms()->count();
-
-        // Lấy số phòng đã được đặt trong khoảng thời gian này
-        $bookedRooms = DB::table('bookings')
-            ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
-            ->where('rooms.room_type_id', $roomTypeId)
-            ->where(function ($query) use ($checkInDate, $checkOutDate) {
-                $query->whereBetween('check_in_date', [$checkInDate, $checkOutDate])
-                    ->orWhereBetween('check_out_date', [$checkInDate, $checkOutDate])
-                    ->orWhere(function ($q) use ($checkInDate, $checkOutDate) {
-                        $q->where('check_in_date', '<=', $checkInDate)
-                            ->where('check_out_date', '>=', $checkOutDate);
-                    });
-            })
-            ->where('bookings.status', '!=', 'cancelled')
-            ->count();
-
-        $availableRooms = $totalRooms - $bookedRooms;
-        return $availableRooms >= $quantity;
+        // Đếm số phòng thật sự trống theo từng ngày (không trùng với booking thường & tour holds)
+        $roomType = RoomType::with('rooms')->find($roomTypeId);
+        if (!$roomType) return false;
+        $available = 0;
+        foreach ($roomType->rooms as $room) {
+            if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
+                $available++;
+                if ($available >= (int)$quantity) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -187,40 +178,27 @@ class TourBookingService implements TourBookingServiceInterface
         $availableRoomTypes = [];
 
         foreach ($roomTypes as $roomType) {
-            // Kiểm tra tính khả dụng
-            $totalRooms = $roomType->rooms()->count();
+            // Đếm số phòng thực sự trống theo khoảng ngày
+            $totalRooms = $roomType->rooms ? $roomType->rooms->count() : 0;
+            if ($totalRooms == 0) continue;
 
-            if ($totalRooms == 0) {
-                continue; // Bỏ qua loại phòng không có phòng nào
+            $availableRooms = 0;
+            foreach ($roomType->rooms as $room) {
+                if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
+                    $availableRooms++;
+                }
             }
 
-            $bookedRooms = DB::table('bookings')
-                ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
-                ->where('rooms.room_type_id', $roomType->id)
-                ->where(function ($query) use ($checkInDate, $checkOutDate) {
-                    $query->whereBetween('check_in_date', [$checkInDate, $checkOutDate])
-                        ->orWhereBetween('check_out_date', [$checkInDate, $checkOutDate])
-                        ->orWhere(function ($q) use ($checkInDate, $checkOutDate) {
-                            $q->where('check_in_date', '<=', $checkInDate)
-                                ->where('check_out_date', '>=', $checkOutDate);
-                        });
-                })
-                ->where('bookings.status', '!=', 'cancelled')
-                ->count();
+            if ($availableRooms <= 0) continue;
 
-            $availableRooms = $totalRooms - $bookedRooms;
+            // Tính số phòng cần cho tổng số khách
+            $roomsNeeded = max(1, (int)ceil($totalGuests / max(1, (int)$roomType->capacity)));
 
-            if ($availableRooms > 0) {
-                // Tính toán số phòng cần thiết cho tổng số khách
-                $roomsNeeded = ceil($totalGuests / $roomType->capacity);
-
-                // Chỉ hiển thị nếu có đủ phòng
-                if ($availableRooms >= $roomsNeeded) {
-                    $roomType->available_rooms = $availableRooms;
-                    $roomType->rooms_needed = $roomsNeeded;
-                    $roomType->max_guests = $availableRooms * $roomType->capacity;
-                    $availableRoomTypes[] = $roomType;
-                }
+            if ($availableRooms >= $roomsNeeded) {
+                $roomType->available_rooms = $availableRooms;
+                $roomType->rooms_needed = $roomsNeeded;
+                $roomType->max_guests = $availableRooms * max(1, (int)$roomType->capacity);
+                $availableRoomTypes[] = $roomType;
             }
         }
 
@@ -233,25 +211,39 @@ class TourBookingService implements TourBookingServiceInterface
     public function processCreditCardPayment(Request $request, TourBooking $tourBooking): array
     {
         try {
-            // Tạo payment record
-            $payment = $this->createTourBookingPayment($tourBooking, [
-                'promotion_id' => $request->input('promotion_id'),
-                'method' => 'credit_card',
-                'amount' => $tourBooking->total_price, // Luôn sử dụng total_price để thanh toán
-                'discount_amount' => $tourBooking->promotion_discount ?? 0,
-                'currency' => 'VND',
-                'status' => 'pending',
-                'gateway_name' => 'Credit Card',
-                'gateway_response' => [
-                    'card_info' => [
-                        'last4' => substr($request->card_number, -4),
-                        'brand' => $this->getCardBrand($request->card_number),
-                        'exp_month' => $request->expiry_month,
-                        'exp_year' => $request->expiry_year
-                    ],
-                    'cardholder_name' => $request->cardholder_name
-                ]
-            ]);
+            // Lấy payment đã được tạo trước (theo transaction_id ẩn trong form)
+            $transactionId = $request->input('transaction_id');
+            $payment = \App\Models\Payment::where('transaction_id', $transactionId)
+                ->where('tour_booking_id', $tourBooking->id)
+                ->first();
+
+            if (!$payment) {
+                return [
+                    'success' => false,
+                    'message' => 'Không tìm thấy giao dịch thanh toán.'
+                ];
+            }
+
+            // Validate số tiền tối thiểu dựa vào số tiền trên payment (đã chốt khi tạo)
+            $final = (int) round($tourBooking->final_price ?? $tourBooking->total_price);
+            $minDeposit = (int) round($final * 0.2);
+            if ((int)$payment->amount < $minDeposit) {
+                return [
+                    'success' => false,
+                    'message' => 'Số tiền thanh toán nhỏ hơn mức tối thiểu cho phép.'
+                ];
+            }
+
+            // Bổ sung thông tin thẻ vào gateway_response
+            $gatewayResponse = [
+                'card_info' => [
+                    'last4' => substr($request->card_number, -4),
+                    'brand' => $this->getCardBrand($request->card_number),
+                    'exp_month' => $request->expiry_month,
+                    'exp_year' => $request->expiry_year
+                ],
+                'cardholder_name' => $request->cardholder_name
+            ];
 
             // Kiểm tra thẻ test
             $isTestCard = $this->isTestCard($request->card_number);
@@ -261,16 +253,24 @@ class TourBookingService implements TourBookingServiceInterface
                 $this->updateTourBookingPaymentStatus($payment, 'completed', [
                     'gateway_code' => 'CC_SUCCESS',
                     'gateway_message' => 'Thanh toán thẻ tín dụng thành công',
-                    'paid_at' => now()
+                    'paid_at' => now(),
+                    'gateway_response' => $gatewayResponse
                 ]);
 
-                // Cập nhật trạng thái tour booking
-                $this->confirmTourBookingAfterPayment($tourBooking);
-                // Ghi nhận trạng thái thanh toán tổng và phương thức ưu tiên
-                $tourBooking->update([
-                    'payment_status' => 'completed',
-                    'preferred_payment_method' => 'credit_card',
-                ]);
+                // Nếu đã trả đủ tổng, xác nhận tour
+                $totalPaid = (int) $tourBooking->payments()->where('status', 'completed')->sum('amount');
+                if ($totalPaid >= $final) {
+                    $this->confirmTourBookingAfterPayment($tourBooking);
+                    $tourBooking->update([
+                        'payment_status' => 'completed',
+                        'preferred_payment_method' => 'credit_card',
+                    ]);
+                } else {
+                    $tourBooking->update([
+                        'payment_status' => 'partial',
+                        'preferred_payment_method' => 'credit_card',
+                    ]);
+                }
 
                 return [
                     'success' => true,
@@ -281,7 +281,8 @@ class TourBookingService implements TourBookingServiceInterface
                 // Cập nhật trạng thái thanh toán thất bại
                 $this->updateTourBookingPaymentStatus($payment, 'failed', [
                     'gateway_code' => 'CC_FAILED',
-                    'gateway_message' => 'Thẻ không hợp lệ hoặc không đủ tiền'
+                    'gateway_message' => 'Thẻ không hợp lệ hoặc không đủ tiền',
+                    'gateway_response' => $gatewayResponse
                 ]);
 
                 return [
@@ -301,11 +302,18 @@ class TourBookingService implements TourBookingServiceInterface
     public function processBankTransferPayment(Request $request, TourBooking $tourBooking): array
     {
         try {
+            $final = (int) round($tourBooking->final_price ?? $tourBooking->total_price);
+            $requestedAmount = (int) ($request->input('amount') ?? $final);
+            $minDeposit = (int) round($final * 0.2);
+            if ($requestedAmount < $minDeposit) {
+                throw new \InvalidArgumentException('Số tiền thanh toán tối thiểu phải là ' . number_format($minDeposit) . ' VNĐ');
+            }
+
             // Tạo payment record
             $payment = $this->createTourBookingPayment($tourBooking, [
                 'promotion_id' => $request->input('promotion_id'),
                 'method' => 'bank_transfer',
-                'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
+                'amount' => $requestedAmount,
                 'discount_amount' => $tourBooking->promotion_discount ?? 0,
                 'currency' => 'VND',
                 'status' => 'pending',
@@ -374,7 +382,7 @@ class TourBookingService implements TourBookingServiceInterface
         }
 
         if (isset($data['gateway_response'])) {
-            $updateData['gateway_response'] = $data['gateway_response'];
+            $updateData['gateway_response'] = is_array($data['gateway_response']) ? json_encode($data['gateway_response']) : $data['gateway_response'];
         }
 
         if (isset($data['paid_at'])) {
@@ -493,11 +501,17 @@ class TourBookingService implements TourBookingServiceInterface
     public function createCreditCardPayment(Request $request, TourBooking $tourBooking): \App\Models\Payment
     {
         $transactionId = 'CC_TOUR_' . $tourBooking->booking_id . '_' . time();
+        $final = (int) round($tourBooking->final_price ?? $tourBooking->total_price);
+        $requestedAmount = (int) ($request->input('amount') ?? $final);
+        $minDeposit = (int) round($final * 0.2);
+        if ($requestedAmount < $minDeposit) {
+            throw new \InvalidArgumentException('Số tiền thanh toán tối thiểu phải là ' . number_format($minDeposit) . ' VNĐ');
+        }
 
         return $this->createTourBookingPayment($tourBooking, [
             'promotion_id' => $request->input('promotion_id'),
             'method' => 'credit_card',
-            'amount' => $tourBooking->total_price, // Luôn sử dụng total_price để thanh toán
+            'amount' => $requestedAmount,
             'discount_amount' => $tourBooking->promotion_discount ?? 0,
             'currency' => 'VND',
             'status' => 'pending',
@@ -520,11 +534,17 @@ class TourBookingService implements TourBookingServiceInterface
     public function createBankTransferPayment(Request $request, TourBooking $tourBooking): \App\Models\Payment
     {
         $transactionId = 'BANK_TOUR_' . $tourBooking->booking_id . '_' . time();
+        $final = (int) round($tourBooking->final_price ?? $tourBooking->total_price);
+        $requestedAmount = (int) ($request->input('amount') ?? $final);
+        $minDeposit = (int) round($final * 0.2);
+        if ($requestedAmount < $minDeposit) {
+            throw new \InvalidArgumentException('Số tiền thanh toán tối thiểu phải là ' . number_format($minDeposit) . ' VNĐ');
+        }
 
         return $this->createTourBookingPayment($tourBooking, [
             'promotion_id' => $request->input('promotion_id'),
             'method' => 'bank_transfer',
-            'amount' => $tourBooking->total_price, // Luôn sử dụng total_price để thanh toán
+            'amount' => $requestedAmount,
             'discount_amount' => $tourBooking->promotion_discount ?? 0,
             'currency' => 'VND',
             'status' => 'pending',

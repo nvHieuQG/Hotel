@@ -24,17 +24,18 @@ class BookingPriceCalculationService
         // Nếu check-in và check-out cùng ngày, tính 1 đêm
         if ($nights < 1) $nights = 1;
         
-        // Luôn sử dụng giá từ room type để tính tiền phòng
-        $nightly = (int)($booking->room->roomType->price ?? 0);
-        $roomCost = max(0, $nights) * $nightly;
-        
-        // $booking->price là tổng tiền đã bao gồm cả phòng và dịch vụ, KHÔNG phải giá phòng/đêm
-
-        // 2) Phụ thu đổi phòng
+        // 2) Phụ thu/hoàn đổi phòng (tổng tất cả lần đổi đã approved/completed)
         $roomChangeSurcharge = (float) $booking->roomChanges()
             ->whereIn('status', ['approved', 'completed'])
             ->sum('price_difference');
-        $finalRoomCost = ($roomChangeSurcharge > 0) ? ($roomCost + $roomChangeSurcharge) : $roomCost;
+
+        // 1') Tính tiền phòng mới theo room type hiện tại (sau đổi)
+        $nightlyNew = (int)($booking->room->roomType->price ?? 0);
+        $finalRoomCost = max(0, $nights) * $nightlyNew; // tiền phòng mới
+
+        // 1'') Suy ra tiền phòng cũ từ tổng phụ thu/hoàn: old = new - diff
+        $roomCost = $finalRoomCost - $roomChangeSurcharge; // tiền phòng cũ
+        $nightly = $nights > 0 ? (int) round($roomCost / $nights) : $nightlyNew;
 
         // 3) Phụ phí người lớn/trẻ em (KHÔNG bao gồm phụ thu đổi phòng)
         $guestSurcharge = (float)($booking->surcharge ?? 0);

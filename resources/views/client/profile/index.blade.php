@@ -540,7 +540,7 @@
 
 <!-- Modal cho Chi tiết Booking -->
 <div class="modal fade" id="bookingDetailModal" tabindex="-1" role="dialog" aria-labelledby="bookingDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl" role="document" style="max-width: 1140px;">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title" id="bookingDetailModalLabel">

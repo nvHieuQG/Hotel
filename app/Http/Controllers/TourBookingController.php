@@ -302,6 +302,21 @@ class TourBookingController extends Controller
             abort(403, 'Bạn không có quyền truy cập tour booking này.');
         }
 
+        // Kiểm tra xem có giao dịch thanh toán đang chờ xác nhận không
+        $hasPendingPayment = $tourBooking->payments()->where('status', 'pending')->exists();
+        if ($hasPendingPayment) {
+            return redirect()->route('tour-booking.payment', $tourBooking->booking_id)
+                ->with('error', 'Bạn đã có giao dịch thanh toán đang chờ xác nhận. Vui lòng chờ xác nhận hoặc liên hệ admin để được hỗ trợ.');
+        }
+
+        // Kiểm tra xem đã thanh toán đủ tiền chưa
+        $totalCompletedAmount = $tourBooking->payments()->where('status', 'completed')->sum('amount');
+        $finalAmount = $tourBooking->final_price ?? $tourBooking->total_price;
+        if ($totalCompletedAmount >= $finalAmount) {
+            return redirect()->route('tour-booking.payment', $tourBooking->booking_id)
+                ->with('error', 'Tour booking của bạn đã được thanh toán đủ tiền. Không cần thanh toán thêm.');
+        }
+
         try {
             // Tạo payment record cho credit card
             $payment = $this->tourBookingService->createCreditCardPayment($request, $tourBooking);
@@ -433,34 +448,50 @@ class TourBookingController extends Controller
             abort(403, 'Bạn không có quyền truy cập tour booking này.');
         }
 
+        // Kiểm tra xem đã thanh toán đủ tiền chưa
+        $totalCompletedAmount = $tourBooking->payments()->where('status', 'completed')->sum('amount');
+        $finalAmount = (int) ($tourBooking->final_price ?? $tourBooking->total_price);
+        if ($totalCompletedAmount >= $finalAmount) {
+            return redirect()->route('tour-booking.payment', $tourBooking->booking_id)
+                ->with('error', 'Tour booking của bạn đã được thanh toán đủ tiền. Không cần thanh toán thêm.');
+        }
+
         try {
-            // Lưu thông tin tạm thời vào session thay vì tạo payment record
+            // Nhận số tiền muốn thanh toán (mặc định full), validate >=20%
+            $amount = (int) ($request->input('amount') ?? $finalAmount);
+            $minAmount = (int) round($finalAmount * 0.2);
+            if ($amount < $minAmount) {
+                return redirect()->back()->withErrors(['amount' => 'Số tiền tối thiểu phải là ' . number_format($minAmount) . ' VNĐ (20%)']);
+            }
+            if ($amount > $finalAmount) {
+                $amount = $finalAmount;
+            }
+
+            // Sinh mã giao dịch khách phải nhập khi chuyển khoản
+            $expectedTransactionId = 'TT_TOUR_' . $tourBooking->booking_id . '_' . substr((string) time(), -6);
+
+            // Lưu thông tin tạm thời 1 bước
             $tempPaymentData = [
                 'tour_booking_id' => $tourBooking->id,
                 'method' => 'bank_transfer',
-                'amount' => $tourBooking->final_price ?? $tourBooking->total_price,
-                'discount_amount' => $tourBooking->promotion_discount ?? 0,
+                'amount' => $amount,
+                'discount_amount' => (int) ($tourBooking->promotion_discount ?? 0),
                 'currency' => 'VND',
                 'promotion_id' => $request->input('promotion_id'),
                 'customer_note' => $request->customer_note,
                 'created_at' => now(),
-                'transaction_id' => 'TEMP_TOUR_' . $tourBooking->booking_id . '_' . time()
+                'expected_transaction_id' => $expectedTransactionId,
+                'min_amount' => $minAmount,
+                'max_amount' => $finalAmount,
             ];
+            session(['temp_tour_payment_data' => $tempPaymentData]);
 
-            // Lưu vào session
-            session(['temp_tour_bank_transfer_' . $tourBooking->id => $tempPaymentData]);
-
-            // Lấy thông tin ngân hàng (chuẩn hóa theo cấu trúc view cần)
+            // Lấy thông tin ngân hàng
             $bankInfoRaw = $this->getBankTransferInfo();
-            $firstBank = $bankInfoRaw['banks'][0] ?? [];
             $bankInfo = [
-                'bank_name' => $firstBank['name'] ?? 'N/A',
-                'account_number' => $firstBank['account_number'] ?? 'N/A',
-                'account_holder' => $firstBank['account_name'] ?? 'N/A',
-                'branch' => $firstBank['branch'] ?? 'N/A',
-                'swift_code' => $firstBank['swift_code'] ?? 'N/A',
-                'instructions' => $bankInfoRaw['instructions'] ?? [],
-                'note' => $bankInfoRaw['note'] ?? ''
+                'banks' => $bankInfoRaw['banks'],
+                'instructions' => $bankInfoRaw['instructions'],
+                'note' => $bankInfoRaw['note']
             ];
 
             return view('client.tour-booking.bank-transfer', compact('tourBooking', 'tempPaymentData', 'bankInfo'));
@@ -534,27 +565,58 @@ class TourBookingController extends Controller
         }
 
         $request->validate([
-            'bank_name' => 'required|string|max:255',
-            'transfer_amount' => 'required|numeric|min:0',
-            'transfer_date' => 'required|date',
-            'customer_note' => 'nullable|string|max:500',
-            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'transaction_id' => 'required|string',
+            'amount' => 'required|numeric|min:1',
+            'bank_name' => 'required|string',
+            'customer_note' => 'nullable|string'
         ]);
 
         try {
-            // Lấy thông tin tạm thời từ session
-            $tempPaymentData = session('temp_tour_bank_transfer_' . $tourBooking->id);
-            
-            if (!$tempPaymentData) {
-                return redirect()->route('tour-booking.bank-transfer', $tourBooking->id)
-                    ->with('error', 'Không tìm thấy thông tin chuyển khoản. Vui lòng thử lại.');
+            $temp = session('temp_tour_payment_data', []);
+            if (empty($temp)) {
+                return redirect()->route('tour-booking.payment', $tourBooking->booking_id)
+                    ->with('error', 'Không tìm thấy thông tin thanh toán tạm thời.');
             }
 
-            // Tạo payment record thực tế khi khách hàng báo đã thanh toán
-            $payment = $this->tourBookingService->createBankTransferPaymentFromSession($tempPaymentData, $tourBooking);
+            // Validate amount >= 20% và <= final
+            $final = (int) ($tourBooking->final_price ?? $tourBooking->total_price);
+            $min = (int) round($final * 0.2);
+            $amount = (int) $request->amount;
+            if ($amount < $min) {
+                return redirect()->back()->withErrors(['amount' => 'Số tiền tối thiểu phải là ' . number_format($min) . ' VNĐ (20%)']);
+            }
+            if ($amount > $final) {
+                $amount = $final;
+            }
 
-            // Xóa thông tin tạm thời khỏi session
-            session()->forget('temp_tour_bank_transfer_' . $tourBooking->id);
+            // Đối chiếu mã giao dịch khách nhập với mã được sinh ra
+            if (!empty($temp['expected_transaction_id']) && $request->transaction_id !== $temp['expected_transaction_id']) {
+                return redirect()->back()->withErrors(['transaction_id' => 'Mã giao dịch không khớp. Vui lòng dùng mã: ' . $temp['expected_transaction_id']]);
+            }
+
+            // Tạo payment nếu chưa có, rồi chuyển sang processing và lưu thông tin đối chiếu
+            // Sử dụng API public để tạo payment từ session data
+            $temp['amount'] = $amount; // đảm bảo amount là số hợp lệ
+            $payment = $this->tourBookingService->createBankTransferPaymentFromSession($temp, $tourBooking);
+
+            // Cập nhật sang processing và trộn gateway_response với thông tin khách báo
+            $existing = [];
+            try {
+                $existing = is_array($payment->gateway_response) ? $payment->gateway_response : json_decode($payment->gateway_response ?? '{}', true) ?? [];
+            } catch (\Throwable $e) {
+                $existing = [];
+            }
+            $mergedGateway = array_merge($existing, [
+                'bank_name' => $request->bank_name,
+                'customer_transaction_id' => $request->transaction_id,
+                'reported_amount' => $amount,
+                'customer_note' => $request->customer_note,
+                'reported_at' => now()->toDateTimeString(),
+            ]);
+            $payment->update([
+                'status' => 'processing',
+                'gateway_response' => $mergedGateway
+            ]);
 
             // Cập nhật trạng thái tổng quan
             $tourBooking->update([
@@ -562,8 +624,11 @@ class TourBookingController extends Controller
                 'preferred_payment_method' => 'bank_transfer',
             ]);
 
+            // Xóa session tạm
+            session()->forget('temp_tour_payment_data');
+
             return redirect()->route('tour-booking.show', $tourBooking->id)
-                ->with('success', 'Đã ghi nhận thông tin chuyển khoản. Chúng tôi sẽ xác nhận trong thời gian sớm nhất.');
+                ->with('success', 'Đã ghi nhận thanh toán. Admin sẽ kiểm tra và xác nhận trong thời gian sớm nhất.');
         } catch (\Exception $e) {
             Log::error('Tour booking bank transfer confirmation error', [
                 'tour_booking_id' => $tourBooking->id,
@@ -571,7 +636,7 @@ class TourBookingController extends Controller
             ]);
 
             return redirect()->back()
-                ->withErrors(['message' => 'Có lỗi xảy ra khi xử lý chuyển khoản: ' . $e->getMessage()]);
+                ->withErrors(['message' => 'Có lỗi xảy ra khi xử nhận chuyển khoản: ' . $e->getMessage()]);
         }
     }
 

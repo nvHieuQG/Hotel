@@ -179,31 +179,21 @@ class Room extends Model
     }
     public function getStatusForDisplayAttribute()
     {
-        $latestBooking = $this->bookings()
-            ->whereIn('status', ['pending', 'confirmed', 'pending_payment'])
-            ->orderByDesc('created_at')
-            ->first();
-
-        if ($latestBooking) {
-            if (in_array($latestBooking->status, ['pending', 'pending_payment'])) {
-                // Nếu quá 30 phút thì bỏ qua
-                if (now()->diffInMinutes($latestBooking->created_at) > 30) {
-                    return 'available';
-                }
-                return 'pending';
-            }
-            if ($latestBooking->status === 'confirmed') {
-                return 'booked';
-            }
-        }
-        return $this->status; // fallback
+        // Hiển thị trạng thái theo ngày hiện tại, có tính đến Tour Booking holds
+        return $this->getStatusForDate(now());
     }
 
     public function getStatusForDate($date)
     {
         $day = \Carbon\Carbon::parse($date)->toDateString();
+        
+        // 0) Xét hold từ Tour Booking theo room_type
+        $holdStatus = $this->getTourHoldStatusForDate($day);
+        if ($holdStatus) {
+            return $holdStatus;
+        }
 
-        // 1. Ưu tiên booking đã xác nhận (confirmed) trùng NGÀY
+        // 1) Regular confirmed bookings overlap
         $confirmed = $this->bookings
             ->where('status', 'confirmed')
             ->filter(function($booking) use ($day) {
@@ -217,7 +207,7 @@ class Room extends Model
             return 'booked';
         }
 
-        // 2. Nếu không có, kiểm tra booking chờ xác nhận (pending, pending_payment) trùng NGÀY
+        // 2) Regular pending bookings overlap (valid <= 30 minutes)
         $pending = $this->bookings
             ->whereIn('status', ['pending', 'pending_payment'])
             ->filter(function($booking) use ($day) {
@@ -235,8 +225,184 @@ class Room extends Model
             return 'pending';
         }
 
-        // 3. Nếu không có booking nào, trả về trạng thái gốc
+        // 3) Fallback
         return $this->status;
+    }
+
+    /**
+     * Xác định trạng thái giữ chỗ theo Tour Booking theo day cho room_type hiện tại
+     */
+    private function getTourHoldStatusForDate(string $day): ?string
+    {
+        $allocation = $this->allocateTourHoldsForDay($day);
+        $mapped = $allocation['room_to_status'][$this->id] ?? null;
+        return $mapped;
+    }
+
+    /**
+     * Cấp phát giữ chỗ Tour Booking theo phòng (lọc trừ phòng đã bị booking thường giữ),
+     * ưu tiên: confirmed trước, sau đó pending (<=30 phút); trong mỗi nhóm sắp xếp theo:
+     *  - số đêm giảm dần, check_in tăng dần, created_at tăng dần
+     * Trả về: [ 'room_to_status' => [roomId => 'booked'|'pending'], 'room_to_tb' => [roomId => tour_booking_id] ]
+     */
+    private function allocateTourHoldsForDay(string $day): array
+    {
+        // 1) Danh sách phòng trong room_type theo id tăng dần (ổn định)
+        $orderedRoomIds = self::where('room_type_id', $this->room_type_id)
+            ->orderBy('id')
+            ->pluck('id')
+            ->toArray();
+
+        // 2) Loại trừ phòng đã bị booking thường giữ hôm đó
+        $regularHeldRoomIds = $this->getRegularHeldRoomIdsForDay($day);
+        $availableIds = array_values(array_diff($orderedRoomIds, $regularHeldRoomIds));
+        if (empty($availableIds)) {
+            return ['room_to_status' => [], 'room_to_tb' => []];
+        }
+
+        // 3) Lấy các dòng tour_booking_rooms trùng ngày cho room_type này
+        $rows = \App\Models\TourBookingRoom::with(['tourBooking' => function($q){
+                $q->select('id','booking_id','user_id','status','check_in_date','check_out_date','created_at','tour_name');
+            }])
+            ->where('room_type_id', $this->room_type_id)
+            ->whereHas('tourBooking', function($q) use ($day){
+                $q->whereIn('status', ['confirmed','pending','pending_payment'])
+                  ->whereDate('check_in_date', '<=', $day)
+                  ->whereDate('check_out_date', '>', $day);
+            })
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return ['room_to_status' => [], 'room_to_tb' => []];
+        }
+
+        // 4) Chia nhóm theo status và sort theo tiêu chí nights desc, check_in asc, created_at asc
+        $sorter = function($a, $b) {
+            $ta = $a->tourBooking; $tb = $b->tourBooking;
+            $na = \Carbon\Carbon::parse($ta->check_in_date)->diffInDays(\Carbon\Carbon::parse($ta->check_out_date));
+            $nb = \Carbon\Carbon::parse($tb->check_in_date)->diffInDays(\Carbon\Carbon::parse($tb->check_out_date));
+            if ($na === 0) $na = 1; if ($nb === 0) $nb = 1;
+            if ($na !== $nb) return $nb <=> $na; // nights desc
+            if ($ta->check_in_date != $tb->check_in_date) return strcmp((string)$ta->check_in_date, (string)$tb->check_in_date);
+            return strcmp((string)$ta->created_at, (string)$tb->created_at);
+        };
+
+        $confirmedRows = $rows->filter(fn($r)=>$r->tourBooking && $r->tourBooking->status === 'confirmed')->values();
+        $pendingRows = $rows->filter(function($r){
+            if (!$r->tourBooking) return false;
+            $st = $r->tourBooking->status;
+            if (!in_array($st, ['pending','pending_payment'])) return false;
+            // chỉ giữ pending trong 30 phút
+            return $r->tourBooking->created_at && $r->tourBooking->created_at->diffInMinutes(now()) <= 30;
+        })->values();
+
+        $confirmedRows = $confirmedRows->sort($sorter);
+        $pendingRows = $pendingRows->sort($sorter);
+
+        // 5) Cấp phát theo thứ tự: confirmed trước, rồi pending
+        $roomToStatus = [];
+        $roomToTb = [];
+        $cursor = 0;
+        $assign = function($collection, $status) use (&$cursor, $availableIds, &$roomToStatus, &$roomToTb) {
+            foreach ($collection as $row) {
+                $qty = max(0, (int)$row->quantity);
+                for ($i = 0; $i < $qty && $cursor < count($availableIds); $i++) {
+                    $rid = $availableIds[$cursor++];
+                    $roomToStatus[$rid] = ($status === 'confirmed') ? 'booked' : 'pending';
+                    $roomToTb[$rid] = $row->tourBooking->id;
+                }
+                if ($cursor >= count($availableIds)) break;
+            }
+        };
+
+        $assign($confirmedRows, 'confirmed');
+        $assign($pendingRows, 'pending');
+
+        return ['room_to_status' => $roomToStatus, 'room_to_tb' => $roomToTb];
+    }
+
+    /**
+     * Lấy danh sách room_id bị booking thường giữ trong ngày
+     */
+    private function getRegularHeldRoomIdsForDay(string $day): array
+    {
+        // confirmed overlap
+        $confirmedIds = Booking::whereDate('check_in_date', '<=', $day)
+            ->whereDate('check_out_date', '>', $day)
+            ->where('status', 'confirmed')
+            ->pluck('room_id')
+            ->toArray();
+
+        // pending within 30 minutes
+        $pending = Booking::whereDate('check_in_date', '<=', $day)
+            ->whereDate('check_out_date', '>', $day)
+            ->whereIn('status', ['pending','pending_payment'])
+            ->where('created_at', '>=', now()->subMinutes(30))
+            ->pluck('room_id')
+            ->toArray();
+
+        return array_values(array_unique(array_filter(array_merge($confirmedIds, $pending)))) ;
+    }
+
+    /**
+     * Kiểm tra nghiêm ngặt: phòng phải trống cho toàn bộ khoảng ngày [checkIn, checkOut)
+     */
+    public function isStrictlyAvailableForRange(\Carbon\Carbon|string $checkIn, \Carbon\Carbon|string $checkOut): bool
+    {
+        $in = \Carbon\Carbon::parse($checkIn)->startOfDay();
+        $out = \Carbon\Carbon::parse($checkOut)->startOfDay();
+        if ($out->lessThanOrEqualTo($in)) {
+            $out = (clone $in)->addDay();
+        }
+        for ($day = $in->copy(); $day->lt($out); $day->addDay()) {
+            if ($this->getStatusForDate($day->toDateString()) !== 'available') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Lấy booking thường đang giữ phòng này trong ngày chỉ định (ưu tiên confirmed, sau đó pending trong 30 phút)
+     */
+    public function getAssignedRegularBookingForDate(string $day): ?\App\Models\Booking
+    {
+        // Confirmed booking overlap
+        $confirmed = $this->bookings()
+            ->where('status', 'confirmed')
+            ->whereDate('check_in_date', '<=', $day)
+            ->whereDate('check_out_date', '>', $day)
+            ->orderBy('created_at')
+            ->first();
+        if ($confirmed) {
+            return $confirmed;
+        }
+
+        // Pending within 30 mins
+        $pending = $this->bookings()
+            ->whereIn('status', ['pending', 'pending_payment'])
+            ->whereDate('check_in_date', '<=', $day)
+            ->whereDate('check_out_date', '>', $day)
+            ->orderByDesc('created_at')
+            ->first();
+        if ($pending && $pending->created_at && $pending->created_at->diffInMinutes(now()) <= 30) {
+            return $pending;
+        }
+
+        return null;
+    }
+
+    /**
+     * Lấy TourBooking đang giữ phòng này trong ngày chỉ định (mapping theo chỉ số phòng trong room_type)
+     */
+    public function getAssignedTourBookingForDate(string $day): ?\App\Models\TourBooking
+    {
+        $allocation = $this->allocateTourHoldsForDay($day);
+        $tbId = $allocation['room_to_tb'][$this->id] ?? null;
+        if (!$tbId) {
+            return null;
+        }
+        return \App\Models\TourBooking::find($tbId);
     }
 
 } 

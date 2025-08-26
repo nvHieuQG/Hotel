@@ -92,6 +92,7 @@
                                     <th>Lý do</th>
                                     <th>Chênh lệch giá</th>
                                     <th>Trạng thái</th>
+                                    <th>Trạng thái TT</th>
                                     <th>Ngày yêu cầu</th>
                                     <th style="min-width: 200px;">Thao tác</th>
                                 </tr>
@@ -122,8 +123,10 @@
                                         <td>
                                             @if($roomChange->price_difference > 0)
                                                 <span class="text-danger">+{{ number_format($roomChange->price_difference, 0, ',', '.') }} VNĐ</span>
+                                                <br><small class="text-muted">Cần thu tiền</small>
                                             @elseif($roomChange->price_difference < 0)
                                                 <span class="text-success">{{ number_format($roomChange->price_difference, 0, ',', '.') }} VNĐ</span>
+                                                <br><small class="text-success">Cần hoàn tiền</small>
                                             @else
                                                 <span class="text-muted">Không có chênh lệch</span>
                                             @endif
@@ -132,6 +135,15 @@
                                             <span class="badge badge-{{ $roomChange->getStatusColor() }} fw-bold text-dark">
                                                 {{ $roomChange->getStatusText() }}
                                             </span>
+                                        </td>
+                                        <td>
+                                            @if($roomChange->status === 'completed')
+                                                <span class="badge badge-{{ $roomChange->getPaymentStatusColor() }}">
+                                                    {{ $roomChange->getPaymentStatusText() }}
+                                                </span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
                                         </td>
 
                                         <td>{{ $roomChange->created_at->format('d/m/Y H:i') }}</td>
@@ -177,13 +189,6 @@
                                                             </div>
                                                         </form>
                                                     </div>
-                                                @elseif($roomChange->status === 'approved')
-                                                    <div class="action-row-item">
-                                                     <button type="button" class="btn btn-primary  btn-action" 
-                                                             onclick="completeRoomChange({{ $roomChange->id }})" title="Hoàn thành">
-                                                         <i class="fa fa-check-circle"></i>
-                                                     </button>
-                                                    </div>
                                                 @endif
                                                 
 
@@ -192,7 +197,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10" class="text-center py-4">
+                                        <td colspan="11" class="text-center py-4">
                                             <i class="fa fa-info-circle fa-2x text-muted mb-2"></i>
                                             <p class="text-muted">Không có yêu cầu đổi phòng nào.</p>
                                         </td>

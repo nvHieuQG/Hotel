@@ -47,7 +47,7 @@
             @endif
 
             <div class="row justify-content-center">
-                <div class="col-md-10">
+                <div class="col-md-12">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-primary text-white">
                             <h4 class="mb-0">
@@ -150,7 +150,46 @@
                                 </div>
                             </div>
                             
-                            <!-- Thông tin thanh toán -->
+                            <!-- Trạng thái thanh toán (mới - to, rõ ràng) -->
+                            @php
+                                $totalAmount = (float) ($booking->total_booking_price ?? 0);
+                                $totalPaid = (float) ($paymentHistory->where('status','completed')->sum('amount') ?? 0);
+                                $outstanding = max(0, $totalAmount - $totalPaid);
+                                $percent = $totalAmount > 0 ? round(($totalPaid / $totalAmount) * 100, 1) : 0;
+                            @endphp
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                                <div class="mb-2">
+                                                    <h6 class="text-primary mb-1"><i class="fas fa-wallet mr-2"></i>Trạng thái thanh toán</h6>
+                                                    <div class="small text-muted">Tổng tiền: <strong>{{ number_format($totalAmount,0,',','.') }} VNĐ</strong> | Đã thanh toán: <strong class="text-success">{{ number_format($totalPaid,0,',','.') }} VNĐ</strong> | Còn thiếu: <strong class="text-danger">{{ number_format($outstanding,0,',','.') }} VNĐ</strong></div>
+                                                </div>
+                                                <div class="text-end mb-2">
+                                                    <span class="badge bg-{{ $outstanding == 0 ? 'success' : ($totalPaid > 0 ? 'warning' : 'secondary') }}">{{ $outstanding == 0 ? 'Đã thanh toán đủ' : ($totalPaid > 0 ? 'Thanh toán một phần' : 'Chưa thanh toán') }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="progress" style="height: 12px;">
+                                                <div class="progress-bar {{ $percent>=100 ? 'bg-success' : 'bg-info' }}" role="progressbar" style="width: {{ min($percent,100) }}%;" aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between small mt-2">
+                                                <span>{{ $percent }}%</span>
+                                                <span>{{ $outstanding == 0 ? 'Hoàn tất thanh toán' : 'Còn thiếu: '.number_format($outstanding,0,',','.').' VNĐ' }}</span>
+                                            </div>
+                                            @if($outstanding > 0)
+                                                <div class="mt-3 text-end">
+                                                    <a href="{{ route('payment-method', $booking->id) }}" class="btn btn-success btn-lg">
+                                                        <i class="fas fa-credit-card mr-2"></i>Thanh toán thêm
+                                                    </a>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lịch sử thanh toán -->
                             @if($paymentHistory->count() > 0)
                             <hr class="my-4">
                             <div class="row">

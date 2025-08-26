@@ -156,6 +156,113 @@
     </div>
 
     <div class="container px-4">
+    <!-- Trạng thái thanh toán + Lịch sử thanh toán -->
+    @php
+        $totalAmountClient = (float) (
+            isset($finalAmount) ? $finalAmount : (
+                $booking->final_amount
+                ?? $booking->final_price
+                ?? $booking->total_booking_price
+                ?? $booking->total_price
+                ?? $booking->price
+                ?? 0
+            )
+        );
+        $totalPaidClient = (float) ($booking->payments()->where('status','completed')->sum('amount'));
+        $remainingClient = max(0, $totalAmountClient - $totalPaidClient);
+        $percentClient   = $totalAmountClient > 0 ? round(($totalPaidClient / $totalAmountClient) * 100, 1) : 0;
+    @endphp
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-receipt me-3"></i>Trạng thái thanh toán</h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-3">
+                            <div class="text-muted small">Tổng tiền</div>
+                            <div class="fw-bold">{{ number_format($totalAmountClient,0,',','.') }} VNĐ</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small">Đã thanh toán</div>
+                            <div class="fw-bold text-success">{{ number_format($totalPaidClient,0,',','.') }} VNĐ</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small">Còn lại</div>
+                            <div class="fw-bold text-danger">{{ number_format($remainingClient,0,',','.') }} VNĐ</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-muted small">Tỷ lệ hoàn thành</div>
+                            <div class="fw-bold">{{ $percentClient }}%</div>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height:10px;">
+                        <div class="progress-bar" role="progressbar" style="width: {{ $percentClient }}%;" aria-valuenow="{{ $percentClient }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    @if($remainingClient > 0)
+                        <div class="mt-3">
+                            <a href="{{ route('payment.bank-transfer', $booking->id) }}" class="btn btn-primary">
+                                <i class="fas fa-credit-card me-1"></i> Thanh toán thêm
+                            </a>
+                            <span class="text-muted small ms-2">Bạn có thể thanh toán tối thiểu 20%.</span>
+                        </div>
+                    @else
+                        <div class="mt-3 text-success"><i class="fas fa-check-circle me-1"></i>Đã thanh toán đủ.</div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-history me-3"></i>Lịch sử thanh toán</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Phương thức</th>
+                                    <th>Số tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thời gian</th>
+                                    <th>Mã giao dịch</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($booking->payments()->orderByDesc('created_at')->get() as $payment)
+                                    <tr>
+                                        <td>{{ $payment->method === 'credit_card' ? 'Thẻ tín dụng' : 'Chuyển khoản' }}</td>
+                                        <td>{{ number_format($payment->amount,0,',','.') }} VNĐ</td>
+                                        <td>
+                                            @php
+                                                $badge = match($payment->status) {
+                                                    'completed' => 'success',
+                                                    'processing' => 'warning',
+                                                    'pending' => 'secondary',
+                                                    'failed' => 'danger',
+                                                    default => 'light'
+                                                };
+                                            @endphp
+                                            <span class="badge badge-{{ $badge }}">{{ $payment->status }}</span>
+                                        </td>
+                                        <td>{{ optional($payment->created_at)->format('d/m/Y H:i') }}</td>
+                                        <td>{{ $payment->transaction_id ?? '-' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="5" class="text-center text-muted">Chưa có giao dịch</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Yêu cầu đổi phòng -->
     <div class="row mb-5">
         <div class="col-12">

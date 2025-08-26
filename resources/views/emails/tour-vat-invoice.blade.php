@@ -83,9 +83,9 @@
         
         <div class="highlight">
             <h3>Thông tin Hóa đơn VAT:</h3>
-            <p><strong>Số hóa đơn:</strong> {{ $tourBooking->vat_invoice_number }}</p>
+            <p><strong>Số hóa đơn:</strong> {{ $tourBooking->vat_invoice_number ?? 'N/A' }}</p>
             <p><strong>Ngày tạo:</strong> {{ now()->format('d/m/Y H:i') }}</p>
-            <p><strong>Tổng tiền:</strong> {{ number_format($tourBooking->final_amount, 0, ',', '.') }} VNĐ</p>
+            <p><strong>Tổng tiền:</strong> {{ number_format($priceData['grandTotal'] ?? $tourBooking->final_price ?? 0, 0, ',', '.') }} VNĐ</p>
         </div>
         
         <p>Hóa đơn VAT đã được đính kèm trong email này. Bạn có thể tải xuống để sử dụng cho mục đích kê khai thuế.</p>
