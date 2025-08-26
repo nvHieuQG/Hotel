@@ -661,18 +661,14 @@ class AdminTourBookingController extends Controller
         // Tính toán số tiền còn thiếu
         $totalCompletedPayments = $tourBooking->payments->where('status', 'completed')->sum('amount');
         
-        // Tính tổng tiền bao gồm cả phòng và dịch vụ
+        // Tính tổng trước giảm và giảm giá
         $totalRoomsAmount = $tourBooking->tourBookingRooms->sum('total_price');
         $totalServicesAmount = $tourBooking->tourBookingServices->sum('total_price');
-        $finalAmountWithServices = $totalRoomsAmount + $totalServicesAmount;
-        
-        // Sử dụng final_price nếu có, nếu không thì tính từ phòng + dịch vụ
-        $finalAmount = $tourBooking->final_price ?? $finalAmountWithServices;
-        
-        // Nếu final_price chỉ chứa giá phòng, cộng thêm dịch vụ
-        if ($tourBooking->final_price && $tourBooking->final_price == $totalRoomsAmount) {
-            $finalAmount = $finalAmountWithServices;
-        }
+        $totalAmountBeforeDiscount = $totalRoomsAmount + $totalServicesAmount;
+        $discount = (float)($tourBooking->promotion_discount ?? 0);
+
+        // Giá cuối sau giảm giá
+        $finalAmount = max(0, $totalAmountBeforeDiscount - $discount);
         
         $remainingAmount = max(0, $finalAmount - $totalCompletedPayments);
 
@@ -705,7 +701,7 @@ class AdminTourBookingController extends Controller
             $this->processPendingPayments($tourBooking);
 
             // Tính lại tổng tiền đã thanh toán sau khi thu
-            $newTotalPaid = $tourBooking->payments->where('status', 'completed')->sum('amount');
+            $newTotalPaid = $tourBooking->payments()->where('status', 'completed')->sum('amount');
 
             // Cập nhật trạng thái thanh toán
             if ($newTotalPaid >= $finalAmount) {

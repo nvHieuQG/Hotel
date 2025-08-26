@@ -156,26 +156,17 @@ class TourBookingService implements TourBookingServiceInterface
      */
     public function checkRoomAvailabilityForTour($roomTypeId, $quantity, $checkInDate, $checkOutDate)
     {
-        // Lấy tổng số phòng của loại này
-        $totalRooms = RoomType::find($roomTypeId)->rooms()->count();
-
-        // Lấy số phòng đã được đặt trong khoảng thời gian này
-        $bookedRooms = DB::table('bookings')
-            ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
-            ->where('rooms.room_type_id', $roomTypeId)
-            ->where(function ($query) use ($checkInDate, $checkOutDate) {
-                $query->whereBetween('check_in_date', [$checkInDate, $checkOutDate])
-                    ->orWhereBetween('check_out_date', [$checkInDate, $checkOutDate])
-                    ->orWhere(function ($q) use ($checkInDate, $checkOutDate) {
-                        $q->where('check_in_date', '<=', $checkInDate)
-                            ->where('check_out_date', '>=', $checkOutDate);
-                    });
-            })
-            ->where('bookings.status', '!=', 'cancelled')
-            ->count();
-
-        $availableRooms = $totalRooms - $bookedRooms;
-        return $availableRooms >= $quantity;
+        // Đếm số phòng thật sự trống theo từng ngày (không trùng với booking thường & tour holds)
+        $roomType = RoomType::with('rooms')->find($roomTypeId);
+        if (!$roomType) return false;
+        $available = 0;
+        foreach ($roomType->rooms as $room) {
+            if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
+                $available++;
+                if ($available >= (int)$quantity) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -187,40 +178,27 @@ class TourBookingService implements TourBookingServiceInterface
         $availableRoomTypes = [];
 
         foreach ($roomTypes as $roomType) {
-            // Kiểm tra tính khả dụng
-            $totalRooms = $roomType->rooms()->count();
+            // Đếm số phòng thực sự trống theo khoảng ngày
+            $totalRooms = $roomType->rooms ? $roomType->rooms->count() : 0;
+            if ($totalRooms == 0) continue;
 
-            if ($totalRooms == 0) {
-                continue; // Bỏ qua loại phòng không có phòng nào
+            $availableRooms = 0;
+            foreach ($roomType->rooms as $room) {
+                if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
+                    $availableRooms++;
+                }
             }
 
-            $bookedRooms = DB::table('bookings')
-                ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
-                ->where('rooms.room_type_id', $roomType->id)
-                ->where(function ($query) use ($checkInDate, $checkOutDate) {
-                    $query->whereBetween('check_in_date', [$checkInDate, $checkOutDate])
-                        ->orWhereBetween('check_out_date', [$checkInDate, $checkOutDate])
-                        ->orWhere(function ($q) use ($checkInDate, $checkOutDate) {
-                            $q->where('check_in_date', '<=', $checkInDate)
-                                ->where('check_out_date', '>=', $checkOutDate);
-                        });
-                })
-                ->where('bookings.status', '!=', 'cancelled')
-                ->count();
+            if ($availableRooms <= 0) continue;
 
-            $availableRooms = $totalRooms - $bookedRooms;
+            // Tính số phòng cần cho tổng số khách
+            $roomsNeeded = max(1, (int)ceil($totalGuests / max(1, (int)$roomType->capacity)));
 
-            if ($availableRooms > 0) {
-                // Tính toán số phòng cần thiết cho tổng số khách
-                $roomsNeeded = ceil($totalGuests / $roomType->capacity);
-
-                // Chỉ hiển thị nếu có đủ phòng
-                if ($availableRooms >= $roomsNeeded) {
-                    $roomType->available_rooms = $availableRooms;
-                    $roomType->rooms_needed = $roomsNeeded;
-                    $roomType->max_guests = $availableRooms * $roomType->capacity;
-                    $availableRoomTypes[] = $roomType;
-                }
+            if ($availableRooms >= $roomsNeeded) {
+                $roomType->available_rooms = $availableRooms;
+                $roomType->rooms_needed = $roomsNeeded;
+                $roomType->max_guests = $availableRooms * max(1, (int)$roomType->capacity);
+                $availableRoomTypes[] = $roomType;
             }
         }
 

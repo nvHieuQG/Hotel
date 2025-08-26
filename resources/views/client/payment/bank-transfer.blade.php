@@ -50,14 +50,14 @@
                             <div class="">
                                 <h6 class="alert-heading">Thông tin đặt phòng</h6>
                                 <p class="mb-1"><strong>Mã đặt phòng:</strong> {{ $booking->booking_id }}</p>
-                                <p class="mb-1"><strong>Số tiền cần thanh toán:</strong> <span class="text-danger font-weight-bold">{{ number_format($tempPaymentData['amount']) }} VNĐ</span></p>
-                                @if($tempPaymentData['discount_amount'] > 0)
+                                <p class="mb-1"><strong>Số tiền cần thanh toán:</strong> <span class="text-danger font-weight-bold">{{ number_format($tempPaymentData['amount'] ?? ($booking->total_booking_price - ($booking->promotion_discount ?? 0))) }} VNĐ</span></p>
+                                @if(!empty($tempPaymentData['discount_amount']) && $tempPaymentData['discount_amount'] > 0)
                                     <div class="mt-2 small">
                                         <div>Giá phòng: <strong>{{ number_format($booking->base_room_price) }} VNĐ</strong></div>
                                         <div>Dịch vụ & phụ phí: <strong>{{ number_format($booking->surcharge + $booking->extra_services_total + $booking->total_services_price) }} VNĐ</strong></div>
-                                        <div>Khuyến mại (chỉ áp dụng cho phòng): <span class="text-success">-{{ number_format($tempPaymentData['discount_amount']) }} VNĐ</span></div>
+                                        <div>Khuyến mại (chỉ áp dụng cho phòng): <span class="text-success">-{{ number_format($tempPaymentData['discount_amount'] ?? 0) }} VNĐ</span></div>
                                         <hr class="my-2">
-                                        <div>Cần thanh toán: <strong class="text-primary">{{ number_format($tempPaymentData['amount']) }} VNĐ</strong></div>
+                                        <div>Cần thanh toán: <strong class="text-primary">{{ number_format($tempPaymentData['amount'] ?? ($booking->total_booking_price - ($booking->promotion_discount ?? 0))) }} VNĐ</strong></div>
                                     </div>
                                 @endif
                                 <p class="mb-0"><strong>Nội dung chuyển khoản:</strong> <code>Thanh toan dat phong {{ $booking->booking_id }}</code></p>
@@ -242,6 +242,7 @@
                             <div class="modal-body">
                                 <form id="confirmPaymentForm" action="{{ route('payment.bank-transfer.confirm', $booking->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
+                                    <input type="hidden" name="transaction_id" value="{{ $tempPaymentData['transaction_id'] ?? ('TEMP_' . $booking->booking_id) }}">
                                     <div class="form-group">
                                         <label for="bank_name">Ngân hàng đã chuyển khoản <span class="text-danger">*</span></label>
                                         <select name="bank_name" id="bank_name" class="form-control" required>
@@ -255,7 +256,7 @@
                                     <div class="form-group">
                                         <label for="transfer_amount">Số tiền đã chuyển <span class="text-danger">*</span></label>
                                         <input type="number" name="transfer_amount" id="transfer_amount" 
-                                               class="form-control" value="{{ (int) $tempPaymentData['amount'] }}" required>
+                                               class="form-control" value="{{ (int) ($tempPaymentData['amount'] ?? ($booking->total_booking_price - ($booking->promotion_discount ?? 0))) }}" required>
                                     </div>
 
                                     <div class="form-group">
@@ -310,7 +311,7 @@
                     return;
                 }
 
-                if (parseFloat(transferAmount) !== {{ (int) $tempPaymentData['amount'] }}) {
+                if (parseFloat(transferAmount) !== {{ (int) ($tempPaymentData['amount'] ?? ($booking->total_booking_price - ($booking->promotion_discount ?? 0))) }}) {
                     e.preventDefault();
                     alert('Số tiền chuyển khoản phải bằng số tiền cần thanh toán!');
                     return;

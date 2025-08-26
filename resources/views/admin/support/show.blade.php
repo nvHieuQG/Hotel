@@ -6,18 +6,27 @@
 <style>
 /* Admin Chat Styles */
 :root {
-    --primary-color: #8d703b;
-    --primary-hover: #7b6233;
-    --secondary-color: #f9f6f1;
+    --primary-color: #ff6b35;
+    --primary-hover: #e55a2b;
+    --secondary-color: #fff8f0;
     --success-color: #28a745;
     --danger-color: #dc3545;
     --warning-color: #ffc107;
-    --info-color: #8d703b;
+    --info-color: #ff6b35;
     --text-dark: #2c2416;
     --text-light: #6c5a3d;
-    --border-color: #d4c4a8;
-    --hover-color: #f5f2ed;
-    --bg-light: #faf8f5;
+    --border-color: #ffd4b8;
+    --hover-color: #fff2e6;
+    --bg-light: #fffaf5;
+}
+
+/* Đảm bảo modal ảnh hiển thị trên tất cả các element */
+#imageModal {
+    z-index: 999999 !important;
+}
+
+#imageModal * {
+    z-index: inherit;
 }
 
 /* Ẩn page header chỉ trong trang chat */
@@ -42,14 +51,15 @@ html, body {
     height: calc(100vh - 120px);
     max-height: calc(100vh - 120px);
     display: flex;
-    background: #FFFFFF;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f0 100%);
     font-family: 'Roboto', sans-serif;
-    border-radius: 8px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(255, 107, 53, 0.15);
     position: relative;
     margin: 20px;
     width: calc(100% - 40px);
+    border: 1px solid #ffd4b8;
 }
 
 /* Sidebar */
@@ -74,7 +84,7 @@ html, body {
 .company-logo {
     width: 32px;
     height: 32px;
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -82,6 +92,7 @@ html, body {
     color: white;
     font-weight: bold;
     font-size: 14px;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
 }
 
 .settings-icon {
@@ -140,8 +151,9 @@ html, body {
 }
 
 .filter-tab.active {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     color: white;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
 }
 
 .conversations-list {
@@ -165,8 +177,9 @@ html, body {
 }
 
 .conversation-item.active {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     color: white;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
 }
 
 .conversation-item.active .conversation-meta {
@@ -177,7 +190,7 @@ html, body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -185,6 +198,7 @@ html, body {
     font-weight: bold;
     font-size: 16px;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
 }
 
 .conversation-content {
@@ -250,12 +264,14 @@ html, body {
 }
 
 .chat-header {
-    padding: 10px 20px;
+    padding: 15px 20px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    color: white;
 }
 
 .chat-user-info {
@@ -269,13 +285,14 @@ html, body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--primary-color);
+    background: rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
     font-size: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .chat-user-details h5 {
@@ -333,9 +350,9 @@ html, body {
 
 .chat-messages {
     flex: 1;
-    padding: 15px 20px;
+    padding: 20px;
     overflow-y: auto;
-    background: var(--secondary-color);
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f0 50%, #fff2e6 100%);
     height: 0;
 }
 
@@ -363,15 +380,18 @@ html, body {
 }
 
 .message.sent .message-bubble {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     color: white;
-    border-bottom-right-radius: 4px;
+    border-bottom-right-radius: 8px;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }
 
 .message.received .message-bubble {
-    background: #F1F1F1;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     color: var(--text-dark);
-    border-bottom-left-radius: 4px;
+    border-bottom-left-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .message-time {
@@ -391,9 +411,9 @@ html, body {
 }
 
 .chat-input-container {
-    padding: 12px 20px;
+    padding: 15px 20px;
     border-top: 1px solid var(--border-color);
-    background: #FFFFFF;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f0 100%);
     flex-shrink: 0;
 }
 
@@ -401,9 +421,17 @@ html, body {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--secondary-color);
-    border-radius: 18px;
-    padding: 4px 10px;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f0 100%);
+    border-radius: 20px;
+    padding: 6px 12px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.chat-input-wrapper:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    transform: translateY(-1px);
 }
 
 .chat-input {
@@ -447,23 +475,25 @@ html, body {
 }
 
 .send-btn {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border: none;
     border-radius: 50%;
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
-    font-size: 13px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }
 
 .send-btn:hover {
-    background: var(--primary-hover);
-    transform: scale(1.05);
+    background: linear-gradient(135deg, var(--primary-hover) 0%, #d44a1f 100%);
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
 }
 
 .send-btn:disabled {
@@ -527,7 +557,7 @@ html, body {
 .customer-info {
     width: 40%;
     border-left: 1px solid var(--border-color);
-    background: #FFFFFF;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f0 100%);
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -547,7 +577,7 @@ html, body {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -555,6 +585,8 @@ html, body {
     font-weight: bold;
     font-size: 24px;
     margin: 0 auto 16px;
+    border: 4px solid rgba(255, 107, 53, 0.2);
+    box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
 }
 
 .customer-name {
@@ -646,58 +678,108 @@ html, body {
 
 /* Image gallery (right panel) */
 .image-gallery {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 12px;
     max-height: 600px; /* Tăng chiều cao để hiển thị nhiều ảnh hơn */
     overflow-y: auto;
+    padding: 8px;
 }
 
 .image-item {
     display: flex;
     flex-direction: column;
     flex-shrink: 0; /* Không cho phép co lại */
+    position: relative;
 }
 
 .image-bubble {
     max-width: 100%;
-    background: #F1F1F1;
-    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 16px;
     padding: 0;
     cursor: pointer; /* Thêm con trỏ pointer */
-    transition: transform 0.2s;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .image-bubble:hover {
-    transform: scale(1.02);
+    transform: scale(1.05);
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 24px rgba(255, 107, 53, 0.4);
 }
 
 .image-bubble img {
     width: 100%;
-    height: auto;
-    max-height: 300px; /* Tăng kích thước ảnh trong gallery để dễ nhìn hơn */
+    height: 120px; /* Chiều cao cố định cho grid layout */
     object-fit: cover; /* Cắt ảnh để vừa khung */
     display: block;
     border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.image-bubble:hover img {
+    transform: scale(1.1);
 }
 
 .image-meta {
-    font-size: 12px;
+    font-size: 10px;
     color: var(--text-light);
     margin-top: 4px;
+    text-align: center;
+    line-height: 1.2;
 }
 
 /* Modal popup cho ảnh */
 .image-modal {
     display: none;
     position: fixed;
-    z-index: 9999;
+    z-index: 99999 !important; /* Tăng z-index để đảm bảo hiển thị trên cùng */
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
+    width: 100vw; /* Sử dụng viewport width */
+    height: 100vh; /* Sử dụng viewport height */
+    background-color: rgba(0, 0, 0, 0.9) !important; /* Tăng độ đậm */
     backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px); /* Hỗ trợ Safari */
+    /* Đảm bảo hiển thị trên tất cả các element */
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Khi modal hiển thị */
+.image-modal.show,
+.image-modal[style*="display: block"] {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Đảm bảo modal hiển thị trên tất cả các element khác */
+.image-modal,
+.image-modal * {
+    box-sizing: border-box;
+}
+
+/* Đảm bảo modal hiển thị đúng trên mobile */
+@media (max-width: 768px) {
+    .image-modal {
+        padding: 20px;
+    }
+
+    .image-modal-content {
+        max-width: 95vw;
+        max-height: 95vh;
+    }
+
+    .image-modal-close {
+        top: 10px;
+        right: 20px;
+        font-size: 30px;
+    }
 }
 
 .image-modal-content {
@@ -705,9 +787,14 @@ html, body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    max-width: 90%;
-    max-height: 90%;
+    max-width: 90vw; /* Sử dụng viewport width */
+    max-height: 90vh; /* Sử dụng viewport height */
     text-align: center;
+    z-index: 100000 !important; /* Đảm bảo content hiển thị trên cùng */
+    /* Đảm bảo hiển thị đúng */
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .image-modal img {
@@ -715,22 +802,42 @@ html, body {
     max-height: 100%;
     object-fit: contain;
     border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    display: block; /* Đảm bảo ảnh hiển thị */
+    /* Đảm bảo ảnh hiển thị đúng */
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* Đảm bảo ảnh không bị cắt */
+    width: auto;
+    height: auto;
 }
 
 .image-modal-close {
-    position: absolute;
+    position: fixed; /* Thay đổi từ absolute sang fixed */
     top: 20px;
     right: 30px;
-    color: white;
+    color: white !important;
     font-size: 40px;
     font-weight: bold;
     cursor: pointer;
-    z-index: 10000;
+    z-index: 100001 !important; /* Cao nhất */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); /* Thêm shadow để dễ nhìn */
+    transition: all 0.2s ease;
+    /* Đảm bảo nút hiển thị đúng */
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* Đảm bảo nút có thể click được */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .image-modal-close:hover {
-    color: #ccc;
+    color: #ff6b6b !important;
+    transform: scale(1.1);
 }
 
 /* Điều chỉnh kích thước ảnh trong chat */
@@ -740,6 +847,14 @@ html, body {
     object-fit: cover;
     border-radius: 8px;
     cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.message-bubble img:hover {
+    transform: scale(1.05);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(141, 112, 59, 0.3);
 }
 
 /* Removed internal notes styles */
@@ -1389,7 +1504,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const imageBubble = document.createElement('div');
                 imageBubble.className = 'message-bubble';
                 imageBubble.style.cursor = 'pointer';
-                imageBubble.onclick = () => openImageModal(attachment.url);
+                imageBubble.onclick = () => {
+                    console.log('Image clicked in chat:', attachment.url);
+                    openImageModal(attachment.url);
+                };
 
                 const img = document.createElement('img');
                 img.src = attachment.url;
@@ -1697,9 +1815,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Hàm mở modal ảnh từ view
     window.openImageModal = function(imageSrc) {
-        modalImage.src = imageSrc;
-        imageModal.style.display = 'block';
+        if(modalImage && imageModal) {
+            modalImage.src = imageSrc;
+            imageModal.style.display = 'block';
+            // Thêm class để đảm bảo CSS hoạt động đúng
+            imageModal.classList.add('show');
+            // Đảm bảo modal hiển thị trên cùng
+            imageModal.style.zIndex = '99999';
+            console.log('Opening image modal:', imageSrc);
+        } else {
+            console.error('Modal elements not found');
+        }
     };
+
+    // Đóng modal khi click vào nút close hoặc background
+    if(modalClose) {
+        modalClose.onclick = function() {
+            closeImageModal();
+        };
+    }
+
+    if(imageModal) {
+        imageModal.onclick = function(e) {
+            if (e.target === imageModal) {
+                closeImageModal();
+            }
+        };
+    }
+
+    // Đóng modal bằng phím ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && imageModal && imageModal.style.display === 'block') {
+            closeImageModal();
+        }
+    });
+
+    // Hàm đóng modal ảnh
+    function closeImageModal() {
+        if(imageModal) {
+            imageModal.style.display = 'none';
+            imageModal.classList.remove('show');
+            console.log('Image modal closed');
+        }
+    }
 
     // Hàm hiển thị file preview
     function showFilePreview(file) {

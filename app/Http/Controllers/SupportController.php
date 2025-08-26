@@ -95,6 +95,9 @@ class SupportController extends Controller
                     $conversationId = $result['conversation_id'];
                     $message = $result['message'];
                     Log::info("Created/found conversation {$conversationId} for user {$userId}");
+                    
+                    // Kiểm tra và gửi tin nhắn chào mừng tự động nếu cần
+                    $this->checkAndSendWelcomeMessage($conversationId);
                 } catch (\Exception $e) {
                     Log::error('Error creating conversation with first message: ' . $e->getMessage());
                     if ($request->wantsJson()) {
@@ -130,6 +133,9 @@ class SupportController extends Controller
                         $attachmentMeta
                     );
                     Log::info("Message sent to conversation {$conversationId} by user {$userId}");
+                    
+                    // Kiểm tra và gửi tin nhắn chào mừng tự động nếu cần
+                    $this->checkAndSendWelcomeMessage($conversationId);
                 } catch (\Exception $e) {
                     Log::error('Error sending support message: ' . $e->getMessage());
                     if ($request->wantsJson()) {
@@ -221,6 +227,110 @@ class SupportController extends Controller
                 'success' => false,
                 'message' => 'Có lỗi xảy ra'
             ], 500);
+        }
+    }
+
+    /**
+     * Lấy số tin nhắn chưa đọc cho user hiện tại
+     */
+    public function getUnreadCount(Request $request)
+    {
+        try {
+            $userId = Auth::id();
+            
+            // Đếm tin nhắn chưa đọc từ admin cho user hiện tại
+            $unreadCount = SupportMessage::where('sender_type', 'admin')
+                ->where('is_read', false)
+                ->whereExists(function($query) use ($userId) {
+                    $query->select('id')
+                        ->from('support_messages as sm2')
+                        ->whereColumn('sm2.conversation_id', 'support_messages.conversation_id')
+                        ->where('sm2.sender_id', $userId)
+                        ->where('sm2.sender_type', 'user');
+                })
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'unread_count' => $unreadCount
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting unread count: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra',
+                'unread_count' => 0
+            ], 500);
+        }
+    }
+
+    /**
+     * Kiểm tra và gửi tin nhắn chào mừng tự động nếu tin nhắn cuối của admin quá 5 phút
+     */
+    private function checkAndSendWelcomeMessage($conversationId)
+    {
+        try {
+            // Lấy tin nhắn cuối cùng từ admin trong conversation này
+            $lastAdminMessage = SupportMessage::where('conversation_id', $conversationId)
+                ->where('sender_type', 'admin')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Nếu không có tin nhắn nào từ admin, gửi tin nhắn chào mừng
+            if (!$lastAdminMessage) {
+                $this->sendAutoWelcomeMessage($conversationId);
+                return;
+            }
+
+            // Kiểm tra thời gian tin nhắn cuối của admin
+            $timeDiff = now()->diffInMinutes($lastAdminMessage->created_at);
+            
+            // Nếu tin nhắn cuối của admin quá 5 phút, gửi tin nhắn chào mừng
+            if ($timeDiff > 5) {
+                $this->sendAutoWelcomeMessage($conversationId);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error checking welcome message: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Gửi tin nhắn chào mừng tự động từ admin
+     */
+    private function sendAutoWelcomeMessage($conversationId)
+    {
+        try {
+            // Kiểm tra xem đã có tin nhắn chào mừng tự động trong 10 phút gần đây chưa
+            $recentWelcome = SupportMessage::where('conversation_id', $conversationId)
+                ->where('sender_type', 'admin')
+                ->where('message', 'LIKE', '%Chào mừng bạn đến với hệ thống hỗ trợ%')
+                ->where('created_at', '>=', now()->subMinutes(10))
+                ->exists();
+
+            if ($recentWelcome) {
+                return; // Đã có tin nhắn chào mừng gần đây, không gửi nữa
+            }
+
+            $welcomeMessage = "Chào mừng bạn đến với hệ thống hỗ trợ khách sạn! 👋\n\nChúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ đợi trong giây lát.\n\nCảm ơn bạn đã liên hệ với chúng tôi! 🏨";
+
+            // Gửi tin nhắn từ hệ thống (admin_id = 1 hoặc admin đầu tiên)
+            $adminId = 1; // Hoặc lấy admin đầu tiên từ database
+            
+            $this->supportService->sendMessage(
+                $conversationId,
+                $adminId,
+                'admin',
+                $welcomeMessage,
+                null,
+                null
+            );
+
+            Log::info("Auto welcome message sent to conversation {$conversationId}");
+
+        } catch (\Exception $e) {
+            Log::error('Error sending auto welcome message: ' . $e->getMessage());
         }
     }
 }

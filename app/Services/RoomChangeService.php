@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class RoomChangeService implements RoomChangeServiceInterface
 {
@@ -85,21 +86,36 @@ class RoomChangeService implements RoomChangeServiceInterface
             return false;
         }
 
-        $updateData = [
-            'admin_note' => $data['admin_note'] ?? null,
-        ];
+        $updateData = [ 'admin_note' => $data['admin_note'] ?? null ];
 
-        // Không set payment_status ở đây, để completeRoomChange xử lý sau khi hoàn thành
-        // Payment status sẽ được set dựa trên chênh lệch giá thực tế khi hoàn thành
+        // Kiểm tra phòng mới thực sự trống cho toàn bộ khoảng ngày
+        $booking = $roomChange->booking;
+        $newRoom = $roomChange->newRoom;
+        if (!$newRoom->isStrictlyAvailableForRange($booking->check_in_date, $booking->check_out_date)) {
+            Log::warning('RoomChangeService: New room not available for full range', [
+                'room_change_id' => $roomChangeId,
+                'new_room_id' => $newRoom->id
+            ]);
+            return false;
+        }
 
-        $result = DB::transaction(function () use ($roomChange, $updateData) {
-            // Cập nhật trạng thái thành approved
+        $result = DB::transaction(function () use ($roomChange, $updateData, $booking, $newRoom) {
+            // 1) Cập nhật trạng thái yêu cầu -> approved + lưu note
             $roomChange->update([
                 'status' => 'approved',
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
                 ...$updateData
             ]);
+
+            // 2) Cập nhật booking sang phòng mới và cập nhật giá theo chênh lệch
+            $booking->price = ($booking->price ?? 0) + ($roomChange->price_difference ?? 0);
+            $booking->room_id = $newRoom->id;
+            $booking->save();
+
+            // 3) Cập nhật trạng thái phòng cũ -> available, phòng mới -> booked
+            $roomChange->oldRoom->update(['status' => 'available']);
+            $roomChange->newRoom->update(['status' => 'booked']);
 
             return true;
         });
@@ -108,6 +124,30 @@ class RoomChangeService implements RoomChangeServiceInterface
             'room_change_id' => $roomChangeId,
             'result' => $result
         ]);
+
+        // Sau khi duyệt: ấn định trạng thái thanh toán dựa trên chênh lệch và gửi email thông báo cho khách
+        if ($result) {
+            // Set payment_status theo chênh lệch
+            if ($roomChange->price_difference > 0) {
+                $roomChange->update(['payment_status' => 'pending']); // cần thu thêm
+            } elseif ($roomChange->price_difference < 0) {
+                $roomChange->update(['payment_status' => 'refund_pending']); // chờ hoàn tiền
+            } else {
+                $roomChange->update(['payment_status' => 'not_required']);
+            }
+
+            // Gửi email thông báo số tiền chênh/hoàn
+            try {
+                $booking = $roomChange->booking;
+                Mail::to($booking->user->email ?? null)
+                    ->send(new \App\Mail\RoomChangeSettlementMail($booking, $roomChange));
+            } catch (\Throwable $e) {
+                Log::error('Send RoomChangeSettlementMail on approve failed', [
+                    'room_change_id' => $roomChangeId,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
 
         return $result;
     }
@@ -166,6 +206,7 @@ class RoomChangeService implements RoomChangeServiceInterface
             }
         });
 
+        // Hoàn tất kỹ thuật, KHÔNG gửi email tại đây để không xung đột logic hiện có
         return $this->roomChangeRepository->updateStatus($roomChangeId, 'completed');
     }
 

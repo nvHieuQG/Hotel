@@ -228,6 +228,9 @@ class PaymentController extends Controller
             session()->forget('temp_bank_transfer_' . $booking->id);
 
             // Xử lý xác nhận chuyển khoản
+            // Dùng đúng transaction_id của payment vừa tạo để định danh giao dịch
+            $request->merge(['transaction_id' => $payment->transaction_id]);
+
             $result = $this->paymentService->processBankTransferConfirmation($request, $booking);
 
             if ($result['success']) {
@@ -237,9 +240,8 @@ class PaymentController extends Controller
                 return redirect()->route('payment.success', $booking->id)
                     ->with('success', $result['message']);
             } else {
-                // Hủy booking khi thanh toán thất bại
-                $this->paymentService->cancelBookingAfterFailedPayment($booking);
-
+                // KHÔNG hủy booking khi báo sai/chưa khớp giao dịch chuyển khoản
+                // Giữ booking ở trạng thái pending_payment để khách có thể thử lại
                 return redirect()->back()
                     ->with('error', $result['message']);
             }

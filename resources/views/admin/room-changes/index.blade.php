@@ -189,13 +189,6 @@
                                                             </div>
                                                         </form>
                                                     </div>
-                                                @elseif($roomChange->status === 'approved')
-                                                    <div class="action-row-item">
-                                                     <button type="button" class="btn btn-primary  btn-action" 
-                                                             onclick="completeRoomChange({{ $roomChange->id }})" title="Hoàn thành">
-                                                         <i class="fa fa-check-circle"></i>
-                                                     </button>
-                                                    </div>
                                                 @endif
                                                 
 

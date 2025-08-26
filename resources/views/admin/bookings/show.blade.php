@@ -96,7 +96,12 @@
                                         $roomChanges = $booking->roomChanges()->whereIn('status', ['approved', 'completed'])->get();
                                     @endphp
                                     @if($roomChanges->count() > 0)
-                                        <p><strong>Tiền phòng cũ ({{ number_format($nightly) }} VNĐ/đêm × {{ (int)$nights }} đêm):</strong> {{ number_format($roomCost) }} VNĐ</p>
+                                        @php 
+                                            // Tính lại tiền phòng cũ = Tiền phòng mới - phụ thu/hoàn đổi phòng
+                                            $oldRoomCost = $finalRoomCost - $roomChangeSurcharge; 
+                                            $oldNightly = $nights > 0 ? (int)round($oldRoomCost / (int)$nights) : $nightly;
+                                        @endphp
+                                        <p><strong>Tiền phòng cũ ({{ number_format($oldNightly) }} VNĐ/đêm × {{ (int)$nights }} đêm):</strong> {{ number_format($oldRoomCost) }} VNĐ</p>
                                         @if($roomChangeSurcharge > 0)
                                             <p><strong>Phụ thu đổi phòng:</strong> <span class="text-danger">{{ number_format($roomChangeSurcharge) }} VNĐ</span></p>
                                         @elseif($roomChangeSurcharge < 0)

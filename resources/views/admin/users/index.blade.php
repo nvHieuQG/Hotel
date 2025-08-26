@@ -15,6 +15,37 @@
         </div>
     </div>
     <div class="card-body">
+        <!-- Bộ lọc -->
+        <form method="GET" class="row g-2 mb-3">
+            <div class="col-12 col-md-4">
+                <input type="text" name="q" value="{{ request('q') }}" class="form-control" placeholder="Tìm theo họ tên, email, username, điện thoại">
+            </div>
+            <div class="col-6 col-md-3">
+                <select name="role_id" class="form-select">
+                    <option value="">-- Tất cả vai trò --</option>
+                    @isset($roles)
+                        @foreach($roles as $role)
+                            <option value="{{ $role->id }}" {{ (string)request('role_id') === (string)$role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                        @endforeach
+                    @endisset
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <select name="per_page" class="form-select">
+                    @foreach([10,15,20,30,50] as $pp)
+                        <option value="{{ $pp }}" {{ (int)request('per_page', 15) === $pp ? 'selected' : '' }}>{{ $pp }}/trang</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <button class="btn btn-outline-primary flex-fill" type="submit">
+                    <i class="fas fa-search me-1"></i> Lọc
+                </button>
+                <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary flex-fill">
+                    <i class="fas fa-undo me-1"></i> Reset
+                </a>
+            </div>
+        </form>
         <!-- Desktop Table View -->
         <div class="d-none d-lg-block">
             <div class="table-responsive">
@@ -39,11 +70,14 @@
                             <td>{{ $user->username }}</td>
                             <td>{{ $user->phone }}</td>
                             <td>
-                                <span class="badge bg-{{ 
-                                    $user->role->name == 'Admin' ? 'danger' : 
-                                    ($user->role->name == 'Staff' ? 'warning' : 'info') }}">
-                                    {{ $user->role->name ?? 'Khách' }}
-                                </span>
+                                @php($rname = optional($user->role)->name)
+                                @php($badge = match($rname){
+                                    'super_admin' => 'danger',
+                                    'admin' => 'primary',
+                                    'staff' => 'warning',
+                                    default => 'info'
+                                })
+                                <span class="badge bg-{{ $badge }}">{{ $rname ?? 'customer' }}</span>
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
@@ -79,11 +113,14 @@
                             <h6 class="card-title mb-1">{{ $user->name }}</h6>
                             <small class="text-muted">{{ $user->email }}</small>
                         </div>
-                        <span class="badge bg-{{ 
-                            $user->role->name == 'Admin' ? 'danger' : 
-                            ($user->role->name == 'Staff' ? 'warning' : 'info') }}">
-                            {{ $user->role->name ?? 'Khách' }}
-                        </span>
+                        @php($rname = optional($user->role)->name)
+                        @php($badge = match($rname){
+                            'super_admin' => 'danger',
+                            'admin' => 'primary',
+                            'staff' => 'warning',
+                            default => 'info'
+                        })
+                        <span class="badge bg-{{ $badge }}">{{ $rname ?? 'customer' }}</span>
                     </div>
                     
                     <div class="row g-2 mb-3">

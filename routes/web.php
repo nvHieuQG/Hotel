@@ -175,6 +175,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/support/conversation/{conversationId}/message', [SupportController::class, 'sendMessage'])->name('support.sendMessage');
     Route::post('/support/message', [SupportController::class, 'sendMessage'])->name('support.createMessage');
     Route::get('/support/conversation/{conversationId}/messages', [SupportController::class, 'getNewMessages'])->name('support.getNewMessages');
+    Route::get('/support/unread-count', [SupportController::class, 'getUnreadCount'])->name('support.unreadCount');
     Route::get('/booking/{id}/detail', [BookingController::class, 'showDetail'])->name('booking.detail');
 
     // AJAX Room Type Reviews - Đặt trước để tránh xung đột
@@ -374,7 +375,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
 
     // Quản lý người dùng (chỉ admin)
     Route::middleware('admin.only')->group(function () {
-        Route::resource('users', AdminUserController::class)->except(['create', 'store']);
+        Route::resource('users', AdminUserController::class);
     });
 
     // Quản lý khuyến mãi

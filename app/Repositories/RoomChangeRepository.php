@@ -160,23 +160,15 @@ class RoomChangeRepository implements RoomChangeRepositoryInterface
         $checkInDate = $booking->check_in_date;
         $checkOutDate = $booking->check_out_date;
 
-        // Lấy tất cả phòng khả dụng (không giới hạn loại phòng), trừ chính phòng hiện tại
-        $availableRooms = Room::where('id', '!=', $currentRoom->id)
-            ->where('status', 'available')
-            ->whereDoesntHave('bookings', function ($query) use ($checkInDate, $checkOutDate) {
-                $query->where(function ($q) use ($checkInDate, $checkOutDate) {
-                    $q->whereBetween('check_in_date', [$checkInDate, $checkOutDate])
-                        ->orWhereBetween('check_out_date', [$checkInDate, $checkOutDate])
-                        ->orWhere(function ($subQ) use ($checkInDate, $checkOutDate) {
-                            $subQ->where('check_in_date', '<=', $checkInDate)
-                                ->where('check_out_date', '>=', $checkOutDate);
-                        });
-                });
-            })
+        // Lấy tất cả phòng (trừ phòng hiện tại), sau đó lọc bằng kiểm tra nghiêm ngặt theo từng ngày
+        $rooms = Room::where('id', '!=', $currentRoom->id)
             ->with(['roomType'])
+            ->orderBy('id')
             ->get();
 
-        return $availableRooms;
+        return $rooms->filter(function (Room $room) use ($checkInDate, $checkOutDate) {
+            return $room->isStrictlyAvailableForRange($checkInDate, $checkOutDate);
+        })->values();
     }
 
     /**
@@ -214,19 +206,16 @@ class RoomChangeRepository implements RoomChangeRepositoryInterface
         $checkInDate = $booking->check_in_date;
         $checkOutDate = $booking->check_out_date;
 
-        return Room::where('room_type_id', $roomTypeId)
-            ->where('status', 'available')
-            ->whereDoesntHave('bookings', function ($query) use ($checkInDate, $checkOutDate) {
-                $query->where(function ($q) use ($checkInDate, $checkOutDate) {
-                    $q->whereBetween('check_in_date', [$checkInDate, $checkOutDate])
-                        ->orWhereBetween('check_out_date', [$checkInDate, $checkOutDate])
-                        ->orWhere(function ($subQ) use ($checkInDate, $checkOutDate) {
-                            $subQ->where('check_in_date', '<=', $checkInDate)
-                                ->where('check_out_date', '>=', $checkOutDate);
-                        });
-                });
-            })
-            ->first();
+        $rooms = Room::where('room_type_id', $roomTypeId)
+            ->orderBy('id')
+            ->get();
+
+        foreach ($rooms as $room) {
+            if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
+                return $room;
+            }
+        }
+        return null;
     }
 
     /**
@@ -238,37 +227,18 @@ class RoomChangeRepository implements RoomChangeRepositoryInterface
         $checkInDate = $booking->check_in_date;
         $checkOutDate = $booking->check_out_date;
 
-        // Lấy tất cả loại phòng có ít nhất một phòng khả dụng trong khoảng ngày (không giới hạn theo cấp độ loại phòng)
-        $availableRoomTypes = RoomType::query()
-            ->whereHas('rooms', function ($query) use ($checkInDate, $checkOutDate) {
-                $query->where('status', 'available')
-                    ->whereDoesntHave('bookings', function ($subQuery) use ($checkInDate, $checkOutDate) {
-                        $subQuery->where(function ($q) use ($checkInDate, $checkOutDate) {
-                            $q->whereBetween('check_in_date', [$checkInDate, $checkOutDate])
-                                ->orWhereBetween('check_out_date', [$checkInDate, $checkOutDate])
-                                ->orWhere(function ($subQ) use ($checkInDate, $checkOutDate) {
-                                    $subQ->where('check_in_date', '<=', $checkInDate)
-                                        ->where('check_out_date', '>=', $checkOutDate);
-                                });
-                        });
-                    });
-            })
-            ->with(['rooms' => function ($query) use ($checkInDate, $checkOutDate) {
-                $query->where('status', 'available')
-                    ->whereDoesntHave('bookings', function ($subQuery) use ($checkInDate, $checkOutDate) {
-                        $subQuery->where(function ($q) use ($checkInDate, $checkOutDate) {
-                            $q->whereBetween('check_in_date', [$checkInDate, $checkOutDate])
-                                ->orWhereBetween('check_out_date', [$checkInDate, $checkOutDate])
-                                ->orWhere(function ($subQ) use ($checkInDate, $checkOutDate) {
-                                    $subQ->where('check_in_date', '<=', $checkInDate)
-                                        ->where('check_out_date', '>=', $checkOutDate);
-                                });
-                        });
-                    });
-            }])
-            ->get();
-
-        return $availableRoomTypes;
+        // Lấy tất cả loại phòng, sau đó lọc theo số phòng thực sự trống bằng kiểm tra nghiêm ngặt
+        $roomTypes = RoomType::with('rooms')->get();
+        foreach ($roomTypes as $rt) {
+            $available = 0;
+            foreach ($rt->rooms as $room) {
+                if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
+                    $available++;
+                }
+            }
+            $rt->available_rooms = $available;
+        }
+        return $roomTypes->filter(fn($rt)=> ($rt->available_rooms ?? 0) > 0)->values();
     }
 
     /**

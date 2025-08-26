@@ -6,6 +6,7 @@ use App\Interfaces\Repositories\UserRepositoryInterface;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -92,7 +93,35 @@ class UserRepository implements UserRepositoryInterface
      */
     public function getAll(): Collection
     {
-        return $this->model->all();
+        return $this->model->with('role')->get();
+    }
+
+    /**
+     * Paginate users with optional filters
+     *
+     * @param array $filters
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $query = $this->model->with('role')->orderByDesc('created_at');
+
+        if (!empty($filters['q'])) {
+            $q = trim($filters['q']);
+            $query->where(function ($sub) use ($q) {
+                $sub->where('name', 'like', "%$q%")
+                    ->orWhere('email', 'like', "%$q%")
+                    ->orWhere('username', 'like', "%$q%")
+                    ->orWhere('phone', 'like', "%$q%");
+            });
+        }
+
+        if (!empty($filters['role_id'])) {
+            $query->where('role_id', $filters['role_id']);
+        }
+
+        return $query->paginate($perPage)->withQueryString();
     }
 
     /**

@@ -26,22 +26,23 @@ return [
         'tiện ích', 'amenity', 'facility', 'wifi', 'internet',
         'giặt ủi', 'laundry', 'dọn phòng', 'housekeeping',
         'phòng họp', 'meeting', 'sự kiện', 'event', 'wedding',
-        'tiệc', 'party', 'buffet', 'breakfast', 'lunch', 'dinner'
+        'tiệc', 'party', 'buffet', 'breakfast', 'lunch', 'dinner',
+        'hà nội', 'hanoi', 'việt nam', 'vietnam'
     ],
 
-    // Từ khóa không liên quan đến khách sạn (giảm bớt để bot linh hoạt hơn)
+    // Từ khóa không liên quan (đã giảm tối thiểu để bot có thể trả lời hầu hết các chủ đề)
     'non_hotel_keywords' => [
-        'chính trị', 'politics', 'bầu cử', 'election', 'đảng phái', 'party',
-        'quân sự', 'military', 'vũ khí', 'weapon', 'khủng bố', 'terrorism'
+        // Chỉ chặn những nội dung thực sự có hại
+        'khủng bố', 'terrorism', 'bạo lực cực đoan', 'violence extreme'
     ],
 
-    // Cài đặt token và response
+    // Cài đặt token và response (tối ưu cho trí thông minh và chất lượng)
     'token_settings' => [
-        'max_output_tokens' => 200,        // Giới hạn token output
-        'max_input_tokens' => 4000,        // Giới hạn token input
-        'temperature' => 0.7,              // Độ sáng tạo của AI
-        'top_k' => 40,                    // Top K sampling
-        'top_p' => 0.95,                  // Top P sampling
+        'max_output_tokens' => 1500,       // Tăng để cho phép phân tích và tư vấn thông minh
+        'max_input_tokens' => 15000,       // Tăng để xử lý ngữ cảnh phức tạp
+        'temperature' => 0.8,              // Tăng sáng tạo cho các gợi ý thông minh
+        'top_k' => 50,                    // Tăng để có nhiều lựa chọn từ ngữ
+        'top_p' => 0.9,                   // Tối ưu cho câu trả lời đa dạng
     ],
 
     // Cài đặt validation
@@ -55,6 +56,6 @@ return [
     'performance' => [
         'enable_response_cache' => true,   // Bật cache câu trả lời
         'cache_ttl' => 3600,              // Thời gian cache (giây)
-        'max_conversation_history' => 10, // Số tin nhắn tối đa trong lịch sử
+        'max_conversation_history' => 20, // Tăng lịch sử chat để bot nhớ ngữ cảnh lâu hơn
     ],
 ];

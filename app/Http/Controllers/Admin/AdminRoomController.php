@@ -81,9 +81,12 @@ class AdminRoomController extends Controller
     public function show($id)
     {
         $room = $this->roomService->getRoom($id);
+        $today = now()->toDateString();
+        $activeRegularBooking = $room->getAssignedRegularBookingForDate($today);
+        $activeTourBooking = $room->getAssignedTourBookingForDate($today);
         $services = $room->roomType && $room->roomType->services ? $room->roomType->services : collect();
         $serviceCategories = $room->roomType && $room->roomType->serviceCategories ? $room->roomType->serviceCategories : collect();
-        return view('admin.rooms.show', compact('room', 'services', 'serviceCategories'));
+        return view('admin.rooms.show', compact('room', 'services', 'serviceCategories', 'activeRegularBooking', 'activeTourBooking', 'today'));
     }
 
     public function create()

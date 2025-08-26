@@ -79,6 +79,41 @@
                                 {{ $statusText[$room->status_for_display] ?? 'Không rõ' }}
                             </span>
                         </div>
+
+                        {{-- Gán booking đang giữ phòng hôm nay (hiển thị rõ ràng) --}}
+                        <div class="mt-3">
+                            <h6 class="text-dark mb-2"><i class="fas fa-link me-1"></i>Đang giữ phòng hôm nay ({{ $today }}):</h6>
+                            @if(!$activeRegularBooking && !$activeTourBooking)
+                                <div class="alert alert-secondary mb-0">Không có booking nào đang giữ phòng này hôm nay.</div>
+                            @else
+                                <div class="list-group">
+                                    @if($activeRegularBooking)
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-bed text-primary"></i>
+                                                <strong>Booking thường</strong> — Mã: <strong>#{{ $activeRegularBooking->booking_id }}</strong>
+                                                — Khách: <strong>{{ optional($activeRegularBooking->user)->name ?? 'Khách' }}</strong>
+                                                — Trạng thái: <span class="text-muted">{{ $activeRegularBooking->status_text }}</span>
+                                                <div class="small text-muted">Thời gian: {{ optional($activeRegularBooking->check_in_date)->format('d/m/Y') }} → {{ optional($activeRegularBooking->check_out_date)->format('d/m/Y') }}</div>
+                                            </div>
+                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.bookings.show', $activeRegularBooking->id) }}" target="_blank">Xem chi tiết</a>
+                                        </div>
+                                    @endif
+                                    @if($activeTourBooking)
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-route text-success"></i>
+                                                <strong>Tour booking</strong> — Mã: <strong>#{{ $activeTourBooking->booking_id }}</strong>
+                                                — Khách: <strong>{{ optional($activeTourBooking->user)->name ?? 'Khách' }}</strong>
+                                                — Trạng thái: <span class="text-muted">{{ $activeTourBooking->status_text }}</span>
+                                                <div class="small text-muted">Thời gian: {{ optional($activeTourBooking->check_in_date)->format('d/m/Y') }} → {{ optional($activeTourBooking->check_out_date)->format('d/m/Y') }}</div>
+                                            </div>
+                                            <a class="btn btn-sm btn-outline-success" href="{{ route('admin.tour-bookings.show', $activeTourBooking->id) }}" target="_blank">Xem chi tiết</a>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
