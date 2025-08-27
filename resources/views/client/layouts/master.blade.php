@@ -23,6 +23,155 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+                /* Toast Notification Styles - Simplified & Fixed */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .toast-notification {
+        background: linear-gradient(135deg, #ff8c00 0%, #ffa726 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 8px 32px rgba(255, 140, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-out;
+        pointer-events: auto;
+        max-width: 100%;
+        word-wrap: break-word;
+    }
+
+    .toast-notification.show {
+        transform: translateX(0);
+    }
+
+    .toast-notification.hide {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    .toast-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .toast-title {
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .toast-title i {
+        font-size: 16px;
+        color: #ff8c00;
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        font-size: 16px;
+        line-height: 1;
+        min-width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toast-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .toast-content {
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 8px;
+    }
+
+    .toast-message-preview {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin-top: 8px;
+        border-left: 3px solid #ff8c00;
+        font-style: italic;
+        font-size: 12px;
+        word-break: break-word;
+    }
+
+    .toast-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .toast-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .toast-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-1px);
+    }
+
+    .toast-btn.primary {
+        background: rgba(255, 140, 0, 0.25);
+        border-color: rgba(255, 140, 0, 0.4);
+    }
+
+    .toast-btn.primary:hover {
+        background: rgba(255, 140, 0, 0.35);
+        border-color: rgba(255, 140, 0, 0.5);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .toast-container {
+            top: 10px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
+        }
+
+        .toast-notification {
+            margin-bottom: 8px;
+            padding: 14px 16px;
+        }
+    }
         .alert-container {
             position: fixed;
             top: 80px;
@@ -691,6 +840,8 @@
         height: 56px;
         font-size: 22px;
     }
+
+
 }
     </style>
 </head>
@@ -736,9 +887,32 @@
     @include('client.layouts.blocks.footer')
 
     <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+    <div class="toast-container">
         <!-- Toast notifications will be inserted here -->
     </div>
+
+    <!-- Demo Button for Testing Toast (Remove after testing) -->
+    @if(config('app.debug'))
+    <div style="position: fixed; bottom: 20px; left: 20px; z-index: 9998;">
+        <button onclick="testToast()" style="background: linear-gradient(135deg, #ff8c00, #ffa726); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; box-shadow: 0 2px 8px rgba(255, 140, 0, 0.25);">
+            🧪 Test Toast
+        </button>
+    </div>
+    <script>
+        function testToast() {
+            if (window.ToastNotification && window.ToastNotification.isAvailable()) {
+                const toast = window.ToastNotification.showNewMessage('Admin Test', 'Đây là tin nhắn test để kiểm tra toast notification!');
+                if (toast) {
+                    console.log('Test toast displayed successfully');
+                } else {
+                    console.log('Test toast skipped (user in chat)');
+                }
+            } else {
+                alert('Toast system not loaded yet. Please wait a moment and try again.');
+            }
+        }
+    </script>
+    @endif
 
     <script src="{{ asset('client/js/jquery.min.js') }}"></script>
     <script src="{{ asset('client/js/jquery-migrate-3.0.1.min.js') }}"></script>
@@ -761,6 +935,139 @@
     <script>
         // Set current user ID for chat widget
         window.currentUserId = {{ Auth::id() ?? 'null' }};
+
+        // Toast Notification System - Simplified & Fixed
+        window.ToastNotification = {
+            show: function(options) {
+                const {
+                    title = 'Thông báo',
+                    message = '',
+                    messagePreview = '',
+                    type = 'info',
+                    duration = 5000,
+                    showActions = false
+                } = options;
+
+                // Giới hạn số lượng toast hiển thị cùng lúc
+                const container = document.querySelector('.toast-container');
+                if (container && container.children.length >= 3) {
+                    // Xóa toast cũ nhất
+                    const oldestToast = container.firstChild;
+                    if (oldestToast) {
+                        oldestToast.remove();
+                    }
+                }
+
+                // Tạo toast element
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.innerHTML = `
+                    <div class="toast-header">
+                        <div class="toast-title">
+                            <i class="fas fa-${this.getIcon(type)}"></i>
+                            ${title}
+                        </div>
+                        <button class="toast-close" onclick="window.ToastNotification.hide(this.parentElement.parentElement)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="toast-content">
+                        ${message}
+                        ${messagePreview ? `<div class="toast-message-preview">"${messagePreview}"</div>` : ''}
+                    </div>
+                    ${showActions ? `
+                        <div class="toast-actions">
+                            <button class="toast-btn" onclick="window.ToastNotification.hide(this.parentElement.parentElement)">Đóng</button>
+                            <button class="toast-btn primary" onclick="window.ToastNotification.viewChat()">Xem chat</button>
+                        </div>
+                    ` : ''}
+                `;
+
+                // Thêm vào container
+                if (container) {
+                    container.appendChild(toast);
+                }
+
+                // Hiển thị với animation
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100);
+
+                // Tự động ẩn sau thời gian chỉ định
+                if (duration > 0) {
+                    setTimeout(() => {
+                        this.hide(toast);
+                    }, duration);
+                }
+
+                return toast;
+            },
+
+            hide: function(toast) {
+                if (toast) {
+                    toast.classList.add('hide');
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }
+            },
+
+            getIcon: function(type) {
+                const icons = {
+                    'success': 'check-circle',
+                    'error': 'exclamation-circle',
+                    'warning': 'exclamation-triangle',
+                    'info': 'info-circle',
+                    'message': 'envelope',
+                    'admin': 'user-shield'
+                };
+                return icons[type] || 'info-circle';
+            },
+
+            // Hàm hiển thị thông báo tin nhắn mới từ admin
+            showNewMessage: function(adminName, messageContent) {
+                // Kiểm tra nếu đang ở trang chat thì không hiển thị toast
+                if (window.location.pathname.includes('/chatbot') ||
+                    window.location.pathname.includes('/chat') ||
+                    document.getElementById('chatBox')?.style.display === 'flex') {
+                    console.log('User is in chat, skipping toast notification');
+                    return null;
+                }
+
+                return this.show({
+                    title: 'Tin nhắn mới từ Admin',
+                    message: `${adminName} đã gửi tin nhắn mới cho bạn!`,
+                    messagePreview: messageContent.length > 50 ? messageContent.substring(0, 50) + '...' : messageContent,
+                    type: 'admin',
+                    duration: 8000,
+                    showActions: true
+                });
+            },
+
+            // Hàm mở chat khi click vào button "Xem chat"
+            viewChat: function() {
+                const openChatBtn = document.getElementById('openChatModal');
+                if (openChatBtn) {
+                    openChatBtn.click();
+                    console.log('Opening chat modal from toast notification');
+                } else {
+                    console.warn('Chat modal button not found');
+                    // Fallback: chuyển đến trang chat nếu có
+                    if (window.location.pathname.includes('/chatbot')) {
+                        window.location.reload();
+                    }
+                }
+            },
+
+            // Hàm kiểm tra trạng thái hệ thống
+            isAvailable: function() {
+                return typeof this.show === 'function' &&
+                       typeof this.showNewMessage === 'function' &&
+                       typeof this.hide === 'function';
+            }
+        };
 
         // Xử lý đóng thông báo
         document.addEventListener('DOMContentLoaded', function() {
@@ -1257,7 +1564,7 @@
 <div class="chat-widget">
     <button id="openChatModal" class="chat-button">
         <i class="fas fa-comments"></i>
-        <span class="notification-badge" id="chatNotificationBadge" style="position: absolute; top: -8px; right: -8px; background: linear-gradient(135deg, #ff9500, #ffb347); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; min-width: 20px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: none; text-align: center; line-height: 16px;">0</span>
+        <span class="notification-badge" id="chatNotificationBadge" style="position: absolute; top: -8px; right: -8px; background: linear-gradient(135deg, #ff9500, #ffb347); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; min-width: 20px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); text-align: center; line-height: 16px;"></span>
     </button>
 
     <div id="chatBox" class="chat-box">
