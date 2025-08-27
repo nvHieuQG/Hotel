@@ -90,12 +90,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Cấu hình âm lượng (fade in/out)
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1);
-      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+      gainNode.gain.linearRampToValueAtTime(0.6, audioContext.currentTime + 0.1);
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.6);
 
       // Phát âm thanh trong 0.3 giây
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      oscillator.stop(audioContext.currentTime + 0.6);
 
       console.log('Notification sound played');
     } catch (error) {
