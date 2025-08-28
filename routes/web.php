@@ -312,7 +312,13 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('tour-bookings/{id}/notes', [TourBookingNoteController::class, 'store'])->name('tour-bookings.notes.store');
     Route::delete('tour-bookings/{id}/notes/{noteId}', [TourBookingNoteController::class, 'destroy'])->name('tour-bookings.notes.destroy');
 
-    // Quản lý thông báo
+    // Real-time notification routes (đặt TRƯỚC TẤT CẢ để tránh conflict)
+    Route::get('notifications/stream', [\App\Http\Controllers\Admin\NotificationController::class, 'stream'])->name('notifications.stream');
+    Route::get('notifications/unread-count', [\App\Http\Controllers\Admin\NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    Route::get('notifications/recent-conversations', [\App\Http\Controllers\Admin\NotificationController::class, 'getRecentConversations'])->name('notifications.recent-conversations');
+    Route::post('notifications/test-message', [\App\Http\Controllers\Admin\NotificationController::class, 'createTestMessage'])->name('notifications.test-message');
+
+    // Quản lý thông báo (đặt SAU real-time routes)
     Route::get('notifications', [AdminBookingController::class, 'notificationsIndex'])->name('notifications.index');
     Route::get('notifications/{id}', [AdminBookingController::class, 'notificationShow'])->name('notifications.show');
     Route::patch('notifications/{id}/mark-read', [AdminBookingController::class, 'markAsRead'])->name('notifications.mark-read');
@@ -358,6 +364,10 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::post('/support/conversation/{conversationId}/message', [AdminSupportController::class, 'sendMessage'])->name('support.sendMessage');
     Route::get('/support/conversation/{conversationId}/messages', [AdminSupportController::class, 'getNewMessages'])->name('support.getNewMessages');
     Route::post('/support/conversations/updates', [AdminSupportController::class, 'getUpdates'])->name('support.getUpdates');
+
+
+
+
 
     // Routes cho quản lý ảnh phòng (chỉ admin)
     Route::delete('rooms/{room}/images/{image}', [AdminRoomController::class, 'deleteImage'])->name('rooms.images.delete')->middleware('admin.only');

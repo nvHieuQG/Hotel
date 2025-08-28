@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\SupportService;
+use App\Services\ProfanityFilterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -12,10 +13,12 @@ use App\Models\SupportMessage;
 class AdminSupportController extends Controller
 {
     protected $supportService;
+    protected $profanityFilter;
 
-    public function __construct(SupportService $supportService)
+    public function __construct(SupportService $supportService, ProfanityFilterService $profanityFilter)
     {
         $this->supportService = $supportService;
+        $this->profanityFilter = $profanityFilter;
     }
 
     public function index()
@@ -37,7 +40,7 @@ class AdminSupportController extends Controller
 
         // Lấy thông tin conversation
         $firstMessage = $messages->first();
-        $conversation = [
+        $conversation = (object) [
             'id' => $conversationId,
             'subject' => $firstMessage->subject,
             'user' => $firstMessage->user,
@@ -63,6 +66,18 @@ class AdminSupportController extends Controller
             ]);
 
             $messageText = trim((string)$request->input('message'));
+            
+            // Lọc từ cấm trước khi xử lý (cho admin)
+            if (!empty($messageText)) {
+                $originalMessage = $messageText;
+                $messageText = $this->profanityFilter->filterMessage($messageText);
+                
+                // Log nếu có từ cấm được lọc
+                if ($this->profanityFilter->containsProfanity($originalMessage)) {
+                    Log::info("Profanity filtered in admin message from user " . Auth::id() . ": " . $originalMessage . " -> " . $messageText);
+                }
+            }
+            
             $attachmentMeta = null;
 
             if ($request->hasFile('attachment')) {

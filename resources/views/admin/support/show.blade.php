@@ -1016,8 +1016,8 @@ html, body {
 @endsection
 
 @section('content')
-@php
-    $user = $conversation['user'] ?? null;
+<?php
+    $user = $conversation->user ?? null;
     $userId = $user->id ?? null;
     $totalBookings = 0;
     $hasAnyBooking = false;
@@ -1038,15 +1038,15 @@ html, body {
             ->first();
         $latestRoomName = $latestBooking && $latestBooking->room ? ($latestBooking->room->name ?? ('Phòng #' . $latestBooking->room->id)) : null;
     }
-@endphp
+?>
 <div class="admin-chat-container">
     <!-- Chat Window -->
     <div class="chat-window">
         <div class="chat-header">
             <div class="chat-user-info">
-                <div class="chat-user-avatar">{{ substr($conversation['user']->name ?? 'U', 0, 1) }}</div>
+                <div class="chat-user-avatar">{{ substr($conversation->user->name ?? 'U', 0, 1) }}</div>
                 <div>
-                    <h5>{{ $conversation['user']->name ?? 'Khách hàng' }}</h5>
+                    <h5>{{ $conversation->user->name ?? 'Khách hàng' }}</h5>
                     <div class="chat-user-status">
                         <div class="online-indicator"></div>
                         <span>Online</span>
@@ -1055,8 +1055,8 @@ html, body {
             </div>
             <div class="chat-actions">
 
-                @if(!empty($conversation['user']->id))
-                <a href="{{ route('admin.users.show', $conversation['user']->id) }}" class="profile-btn" title="Xem hồ sơ khách hàng">
+                @if(!empty($conversation->user->id))
+                <a href="{{ route('admin.users.show', $conversation->user->id) }}" class="profile-btn" title="Xem hồ sơ khách hàng">
                     <i class="fas fa-user"></i>
                 </a>
                 @endif
@@ -1139,15 +1139,15 @@ html, body {
     <!-- Customer Info -->
     <div class="customer-info">
         <div class="customer-header">
-            <div class="customer-avatar">{{ substr($conversation['user']->name ?? 'U', 0, 1) }}</div>
-            <div class="customer-name">{{ $conversation['user']->name ?? 'Khách hàng' }}</div>
-            <div class="customer-email">{{ $conversation['user']->email ?? 'N/A' }}</div>
+            <div class="customer-avatar">{{ substr($conversation->user->name ?? 'U', 0, 1) }}</div>
+            <div class="customer-name">{{ $conversation->user->name ?? 'Khách hàng' }}</div>
+            <div class="customer-email">{{ $conversation->user->email ?? 'N/A' }}</div>
         </div>
 
         <div class="customer-details">
             <div class="detail-item">
                 <span class="detail-label">Chủ đề:</span>
-                <span class="detail-value">{{ $conversation['subject'] }}</span>
+                <span class="detail-value">{{ $conversation->subject }}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Tổng số đơn đặt:</span>
@@ -1165,10 +1165,10 @@ html, body {
                 <span class="detail-label">Phòng gần nhất:</span>
                 <span class="detail-value">{{ $latestRoomName ?? 'N/A' }}</span>
             </div>
-            @if(!empty($conversation['user']->id))
+            @if(!empty($conversation->user->id))
             <div class="detail-item">
                 <span class="detail-label">Hồ sơ:</span>
-                <span class="detail-value"><a href="{{ route('admin.users.show', $conversation['user']->id) }}" style="text-decoration: none;">Xem chi tiết</a></span>
+                <span class="detail-value"><a href="{{ route('admin.users.show', $conversation->user->id) }}" style="text-decoration: none;">Xem chi tiết</a></span>
             </div>
             @endif
         </div>
@@ -1209,7 +1209,7 @@ html, body {
     </div>
 </div>
 
-<input type="hidden" id="conversationId" value="{{ $conversation['id'] }}">
+<input type="hidden" id="conversationId" value="{{ $conversation->id }}">
 @endsection
 
 @section('scripts')
