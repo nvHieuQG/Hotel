@@ -146,7 +146,7 @@
                             $pendingTourChanges = \App\Models\TourRoomChange::where('status','pending')->count();
                             $firstPendingTourChange = \App\Models\TourRoomChange::where('status','pending')->latest()->first();
                             $tourChangeQuickLink = $firstPendingTourChange
-                                ? route('admin.tour-bookings.room-changes.index', $firstPendingTourChange->tour_booking_id)
+                                ? route('staff.admin.tour-bookings.room-changes.index', ['tourBookingId' => $firstPendingTourChange->tour_booking_id])
                                 : route('admin.tour-bookings.index');
                         @endphp
                         <a href="{{ $tourChangeQuickLink }}" class="btn btn-sm btn-warning">
