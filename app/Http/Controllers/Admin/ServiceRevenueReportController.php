@@ -26,7 +26,7 @@ class ServiceRevenueReportController extends Controller
         $summary = $this->service->getSummary($filters);
         $top = $this->service->getTop(array_merge($filters, [
             'metric' => $request->input('metric', 'total_revenue'),
-            'limit' => (int) $request->input('limit', 10),
+            'limit' => $request->has('limit') ? (int) $request->input('limit') : null,
         ]));
 
         $services = ExtraService::query()->where('is_active', true)->orderBy('name')->get(['id','name']);

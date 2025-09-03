@@ -3,6 +3,9 @@
 @section('title', 'Thanh toán chuyển khoản')
 
 @section('content')
+<!-- Spacer để tránh navbar (absolute ở desktop) đè lên nội dung -->
+<div class="d-none d-lg-block" style="height:120px"></div>
+<div class="d-lg-none" style="height:20px"></div>
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">

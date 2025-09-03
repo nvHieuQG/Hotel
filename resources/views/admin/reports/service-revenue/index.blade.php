@@ -19,35 +19,16 @@
                 <input type="date" name="date_to" value="{{ old('date_to', $filters['date_to'] ?? '') }}" class="form-control">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Trường ngày</label>
-                <select name="date_field" class="form-select">
-                    @php($df = $filters['date_field'] ?? 'check_out_date')
-                    <option value="created_at" {{ $df==='created_at'?'selected':'' }}>Ngày tạo</option>
-                    <option value="check_in_date" {{ $df==='check_in_date'?'selected':'' }}>Ngày nhận phòng</option>
-                    <option value="check_out_date" {{ $df==='check_out_date'?'selected':'' }}>Ngày trả phòng</option>
-                </select>
-            </div>
-            <div class="col-md-3">
                 <label class="form-label">Dịch vụ</label>
                 <select name="service_id" class="form-select">
                     <option value="">-- Tất cả --</option>
-                    @php($sid = (int)($filters['service_id'] ?? 0))
+                    @php
+                        $sid = (int)($filters['service_id'] ?? 0);
+                    @endphp
                     @foreach($services as $s)
                         <option value="{{ $s->id }}" {{ $sid===$s->id?'selected':'' }}>{{ $s->name }}</option>
                     @endforeach
                 </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Xếp hạng theo</label>
-                @php($metric = request('metric','total_revenue'))
-                <select name="metric" class="form-select">
-                    <option value="total_revenue" {{ $metric==='total_revenue'?'selected':'' }}>Doanh thu</option>
-                    <option value="bookings_count" {{ $metric==='bookings_count'?'selected':'' }}>Số lượt sử dụng</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Hiển thị Top</label>
-                <input type="number" name="limit" value="{{ old('limit', request('limit', 10)) }}" min="1" class="form-control">
             </div>
             <div class="col-md-2 align-self-end">
                 <button class="btn btn-primary w-100" type="submit">Lọc</button>
@@ -73,15 +54,20 @@
         <div class="col-md-4">
             <div class="card card-body h-100">
                 <div class="text-muted">Doanh thu dịch vụ</div>
-                <div class="fs-4 fw-bold">{{ number_format($summary['totals']['total_revenue'] ?? 0, 2) }}</div>
+                @php
+                    $svcCustomer = (float) ($summary['totals']['total_revenue'] ?? 0);
+                    $svcAdmin = (float) ($summary['admin_totals']['total_revenue'] ?? 0);
+                    $svcAll = $svcCustomer + $svcAdmin;
+                @endphp
+                <div class="fs-4 fw-bold">{{ number_format($svcAll) }}</div>
             </div>
         </div>
     </div>
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Top dịch vụ</h5>
-            <small class="text-muted">Theo {{ $metric==='bookings_count'?'số lượt sử dụng':'doanh thu' }}</small>
+            <h5 class="mb-0">Dịch vụ theo doanh thu</h5>
+            <small class="text-muted">Tổng tiền: {{ number_format($summary['totals']['total_revenue'] ?? 0) }}</small>
         </div>
         <div class="table-responsive">
             <table class="table table-striped mb-0">
@@ -90,34 +76,85 @@
                         <th>#</th>
                         <th>Dịch vụ</th>
                         <th>Loại tính phí</th>
-                        <th>Số lượt</th>
-                        <th>KH duy nhất</th>
-                        <th>SL</th>
-                        <th>Ngày</th>
-                        <th>Người lớn</th>
-                        <th>Trẻ em</th>
+                        <th>Lượt sử dụng</th>
+                        <th>Doanh thu</th>
+                    </tr>
+                </thead>
+                @php
+                    $ctMap = [
+                        'per_person' => 'Theo người',
+                        'per_night' => 'Theo đêm',
+                        'per_day' => 'Theo ngày',
+                        'per_service' => 'Theo lần',
+                        'per_hour' => 'Theo giờ',
+                    ];
+                @endphp
+                <tbody>
+                    @if(!empty($top) && count($top) > 0)
+                        @foreach($top as $i => $row)
+                            <tr>
+                                <td>{{ $i+1 }}</td>
+                                <td>{{ $row['service_name'] ?? ('#'.$row['service_id']) }}</td>
+                                <td>{{ $ctMap[strtolower($row['charge_type'] ?? '')] ?? ($row['charge_type'] ?? '') }}</td>
+                                <td>{{ number_format($row['total_uses'] ?? 0) }}</td>
+                                <td>{{ number_format($row['total_revenue'] ?? 0) }}</td>
+                            </tr>
+                        @endforeach
+                    @else
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Không có dữ liệu</td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Dịch vụ admin thêm theo doanh thu</h5>
+            <small class="text-muted">Tổng tiền: {{ number_format($summary['admin_totals']['total_revenue'] ?? 0) }}</small>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Dịch vụ</th>
+                        <th>Mã đặt phòng</th>
                         <th>Doanh thu</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($top as $i => $row)
+                    @php
+                        $adminRows = (array) ($summary['admin_by_service'] ?? []);
+                    @endphp
+                    @if(!empty($adminRows) && count($adminRows) > 0)
+                        @foreach($adminRows as $i => $row)
+                            <tr>
+                                <td>{{ $i+1 }}</td>
+                                <td>{{ $row['service_name'] ?? ('#'.$row['service_id']) }}</td>
+                                <td>
+                                    @php
+                                        $codes = $row['booking_codes'] ?? [];
+                                        $ids = $row['booking_ids'] ?? [];
+                                    @endphp
+                                    @if(!empty($codes))
+                                        <span class="text-nowrap">{{ implode(', ', $codes) }}</span>
+                                    @elseif(!empty($ids))
+                                        <span class="text-nowrap">{{ implode(', ', $ids) }}</span>
+                                    @else
+                                        <span class="text-muted">N/A</span>
+                                    @endif
+                                </td>
+                                <td>{{ number_format($row['total_revenue'] ?? 0) }}</td>
+                            </tr>
+                        @endforeach
+                    @else
                         <tr>
-                            <td>{{ $i+1 }}</td>
-                            <td>{{ $row['service_name'] ?? ('#'.$row['service_id']) }}</td>
-                            <td>{{ $row['charge_type'] ?? '' }}</td>
-                            <td>{{ number_format($row['bookings_count'] ?? 0) }}</td>
-                            <td>{{ number_format($row['unique_customers'] ?? 0) }}</td>
-                            <td>{{ number_format($row['total_quantity'] ?? 0) }}</td>
-                            <td>{{ number_format($row['total_days'] ?? 0) }}</td>
-                            <td>{{ number_format($row['total_adults_used'] ?? 0) }}</td>
-                            <td>{{ number_format($row['total_children_used'] ?? 0) }}</td>
-                            <td>{{ number_format($row['total_revenue'] ?? 0, 2) }}</td>
+                            <td colspan="5" class="text-center text-muted">Không có dữ liệu</td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="10" class="text-center text-muted">Không có dữ liệu</td>
-                        </tr>
-                    @endforelse
+                    @endif
                 </tbody>
             </table>
         </div>

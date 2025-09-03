@@ -505,7 +505,7 @@
                             <ul class="nav flex-column ms-3">
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->routeIs('admin.bookings.report') ? 'active' : '' }}" href="{{ route('admin.bookings.report') }}">
-                                        Tổng quan đặt phòng
+                                        Báo cáo đặt phòng
                                     </a>
                                 </li>
                                 <li class="nav-item">

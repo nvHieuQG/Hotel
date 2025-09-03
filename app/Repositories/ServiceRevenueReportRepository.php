@@ -5,8 +5,9 @@ namespace App\Repositories;
 use App\Interfaces\Repositories\ServiceRevenueReportRepositoryInterface;
 use App\Models\Booking;
 use App\Models\ExtraService;
+use App\Models\BookingService;
+use App\Models\Service as AdminService;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
 
 class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryInterface
 {
@@ -45,6 +46,9 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
             $uniqueUsers->push($b->user_id);
             $grandRevenue += (float) $b->extra_services_total;
 
+            // track services selected in this booking to count 'uses' per booking
+            $servicesInBooking = [];
+
             foreach ($items as $item) {
                 $sid = (int) Arr::get($item, 'id');
                 if ($serviceId && $sid !== (int) $serviceId) {
@@ -65,6 +69,7 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
                         'service_name' => null,
                         'charge_type' => $chargeType,
                         'bookings_count' => 0,
+                        'total_uses' => 0, // số lượt sử dụng: mỗi booking góp 1 lượt nếu có chọn dịch vụ này
                         'unique_customers' => collect(),
                         'total_revenue' => 0.0,
                         'total_quantity' => 0,
@@ -81,6 +86,32 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
                 $byService[$sid]['total_children_used'] += $childrenUsed;
                 if (is_numeric($qty)) $byService[$sid]['total_quantity'] += (int) $qty;
                 if (is_numeric($days)) $byService[$sid]['total_days'] += (int) $days;
+
+                // mark this service as present in this booking for total_uses later
+                $servicesInBooking[$sid] = true;
+            }
+
+            // After processing all items of this booking, increment total_uses ONCE per service present
+            if (!empty($servicesInBooking)) {
+                foreach (array_keys($servicesInBooking) as $sid) {
+                    if (!isset($byService[$sid])) {
+                        // should not happen because we created rows above, but guard anyway
+                        $byService[$sid] = [
+                            'service_id' => $sid,
+                            'service_name' => null,
+                            'charge_type' => '',
+                            'bookings_count' => 0,
+                            'total_uses' => 0,
+                            'unique_customers' => collect(),
+                            'total_revenue' => 0.0,
+                            'total_quantity' => 0,
+                            'total_days' => 0,
+                            'total_adults_used' => 0,
+                            'total_children_used' => 0,
+                        ];
+                    }
+                    $byService[$sid]['total_uses'] += 1;
+                }
             }
         }
 
@@ -97,6 +128,59 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
             unset($row);
         }
 
+        // Tính doanh thu dịch vụ do admin thêm từ bảng booking_services, theo cùng bộ lọc booking
+        $bookingIds = $bookings->pluck('id')->filter()->values();
+        $adminByService = [];
+        $adminTotalRevenue = 0.0;
+        if ($bookingIds->isNotEmpty()) {
+            // Map booking id -> booking code
+            $bookingCodeMap = Booking::query()->whereIn('id', $bookingIds)->pluck('booking_id', 'id');
+            $adminItems = BookingService::query()
+                ->whereIn('booking_id', $bookingIds)
+                ->get(['service_id', 'total_price', 'booking_id']);
+
+            foreach ($adminItems as $it) {
+                $sid = (int) ($it->service_id ?? 0);
+                if (!$sid) continue;
+                if (!isset($adminByService[$sid])) {
+                    $adminByService[$sid] = [
+                        'service_id' => $sid,
+                        'service_name' => null,
+                        'bookings_count' => 0,
+                        'total_uses' => 0,
+                        'total_revenue' => 0.0,
+                        'booking_ids' => [],
+                        'booking_codes' => [],
+                    ];
+                }
+                $adminByService[$sid]['total_uses'] += 1;
+                $adminByService[$sid]['total_revenue'] += (float) $it->total_price;
+                $adminByService[$sid]['bookings_count'] += 1; // mỗi dòng xem như 1 lần ghi cho 1 booking
+                if ($it->booking_id) {
+                    $adminByService[$sid]['booking_ids'][] = (int) $it->booking_id;
+                    $code = (string) ($bookingCodeMap[$it->booking_id] ?? '');
+                    if ($code !== '') {
+                        $adminByService[$sid]['booking_codes'][] = $code;
+                    }
+                }
+                $adminTotalRevenue += (float) $it->total_price;
+            }
+
+            // Gắn tên dịch vụ từ bảng services (dịch vụ admin)
+            $adminServiceIds = array_keys($adminByService);
+            if (!empty($adminServiceIds)) {
+                $adminMap = AdminService::whereIn('id', $adminServiceIds)->pluck('name', 'id');
+                foreach ($adminByService as $sid => &$row2) {
+                    $row2['service_name'] = $adminMap[$sid] ?? ('Service #' . $sid);
+                    $row2['total_revenue'] = round($row2['total_revenue'], 2);
+                    // unique & sort booking ids for readability
+                    $row2['booking_ids'] = array_values(array_unique($row2['booking_ids']));
+                    $row2['booking_codes'] = array_values(array_unique($row2['booking_codes']));
+                }
+                unset($row2);
+            }
+        }
+
         return [
             'filters' => [
                 'date_from' => $dateFrom,
@@ -106,10 +190,14 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
                 'statuses' => $statuses,
             ],
             'by_service' => array_values($byService),
+            'admin_by_service' => array_values($adminByService),
             'totals' => [
                 'bookings_with_services' => $bookingsWithServices,
                 'unique_customers' => $uniqueUsers->unique()->count(),
                 'total_revenue' => round($grandRevenue, 2),
+            ],
+            'admin_totals' => [
+                'total_revenue' => round($adminTotalRevenue, 2),
             ],
         ];
     }
@@ -117,7 +205,8 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
     public function getTopServices(array $filters = []): array
     {
         $metric = $filters['metric'] ?? 'total_revenue';
-        $limit = (int) ($filters['limit'] ?? 10);
+        $limitRaw = $filters['limit'] ?? null;
+        $limit = is_null($limitRaw) ? null : (int) $limitRaw;
 
         $summary = $this->getSummary($filters);
         $rows = $summary['by_service'] ?? [];
@@ -128,6 +217,9 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
             return $av < $bv ? 1 : -1; // desc
         });
 
+        if (is_null($limit)) {
+            return $rows; // return all
+        }
         return array_slice($rows, 0, max(1, $limit));
     }
 
