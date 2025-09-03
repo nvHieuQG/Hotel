@@ -128,6 +128,12 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\TourBookingService::class
         );
 
+        // Tour Room Change Repository Binding
+        $this->app->bind(
+            \App\Interfaces\Repositories\TourRoomChangeRepositoryInterface::class,
+            \App\Repositories\TourRoomChangeRepository::class
+        );
+
     // Profile Service Binding
     $this->app->bind(
         \App\Interfaces\Services\ProfileServiceInterface::class,

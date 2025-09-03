@@ -34,6 +34,12 @@ interface TourBookingServiceInterface
      */
     public function calculateTourBookingPrice(array $roomSelections, $checkInDate, $checkOutDate);
 
+    // Tour room change
+    public function createTourRoomChange(array $data): \App\Models\TourRoomChange;
+    public function approveTourRoomChange(int $id, array $data = []): bool;
+    public function rejectTourRoomChange(int $id, array $data = []): bool;
+    public function completeTourRoomChange(int $id): bool;
+
     /**
      * Kiểm tra tính khả dụng của phòng cho tour
      */
