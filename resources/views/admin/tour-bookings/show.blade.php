@@ -811,20 +811,6 @@
                     <h6 class="mb-0"><i class="fas fa-money-bill-wave"></i> Thu tiền bổ sung</h6>
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
-                    @if($errors->any())
-                        <div class="alert alert-danger">
-                            <ul class="mb-0 pl-3">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    
                     @if($hasAnyPendingPayment && !$hasCompletedPayment)
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
