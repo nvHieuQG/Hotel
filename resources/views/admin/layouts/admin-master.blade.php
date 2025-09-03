@@ -144,8 +144,12 @@
                         </h6>
                         @php
                             $pendingTourChanges = \App\Models\TourRoomChange::where('status','pending')->count();
+                            $firstPendingTourChange = \App\Models\TourRoomChange::where('status','pending')->latest()->first();
+                            $tourChangeQuickLink = $firstPendingTourChange
+                                ? route('admin.tour-bookings.room-changes.index', $firstPendingTourChange->tour_booking_id)
+                                : route('admin.tour-bookings.index');
                         @endphp
-                        <a href="{{ route('admin.tour-bookings.index') }}" class="btn btn-sm btn-warning">
+                        <a href="{{ $tourChangeQuickLink }}" class="btn btn-sm btn-warning">
                             <i class="fas fa-exchange-alt"></i>
                             Đổi phòng tour
                             <span class="badge bg-dark">{{ $pendingTourChanges }}</span>
