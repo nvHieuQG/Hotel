@@ -1,423 +1,859 @@
 {
-  "hotel_info": {
-    "name": "Khách sạn MARRON",
-    "address": "Hà Nội, Việt Nam",
-    "phone": "+84394841229",
-    "email": "marronhotel@gmail.com",
-    "website": "www.marronhotel.com",
-    "description": "🏨 MARRON Hotel - Viên ngọc quý giữa lòng Hà Nội thơ mộng! ✨ Khách sạn 5 sao đẳng cấp quốc tế với thiết kế sang trọng, tinh tế từng chi tiết. Nơi đây, mỗi khoảnh khắc đều trở thành kỷ niệm đáng nhớ với dịch vụ tận tâm, ẩm thực đỉnh cao và không gian nghỉ dưỡng hoàn hảo. Từ view tuyệt đẹp ngắm nhìn thủ đô ngàn năm văn hiến đến những trải nghiệm luxury không thể nào quên - MARRON là điểm đến lý tưởng cho mọi chuyến du lịch. 🌟"
-  },
-  "room_types": [
-    {
-      "name": "Phòng Standard",
-      "description": "🛏️ Không gian ấm cúng và tinh tế với thiết kế hiện đại, mang đến cảm giác như ở nhà nhưng đầy đủ tiện nghi 5 sao. Thức dậy mỗi sáng với tầm nhìn tuyệt đẹp ra phố phường Hà Nội sôi động, nơi bạn có thể cảm nhận nhịp sống đặc trưng của thủ đô.",
-      "price_range": "800,000 - 1,000,000 VNĐ/đêm",
-      "capacity": "2 người lớn",
-      "size": "25m²",
-      "bed_type": "1 giường đôi King size",
-      "amenities": ["WiFi miễn phí", "TV LCD 43 inch", "Minibar", "Két an toàn", "Điều hòa", "Máy sấy tóc", "Bàn làm việc"],
-      "view": "View thành phố",
-      "floor": "Tầng 3-8"
-    },
-    {
-      "name": "Phòng Deluxe",
-      "description": "🌟 Nâng tầm trải nghiệm lưu trú với không gian rộng rãi và đẳng cấp! Thưởng thức view hồ bơi infinity lãng mạn hoặc toàn cảnh thành phố từ ban công riêng. Nội thất cao cấp kết hợp hoàn hảo giữa phong cách cổ điển và hiện đại, tạo nên bầu không khí thư giãn và sang trọng.",
-      "price_range": "1,200,000 - 1,500,000 VNĐ/đêm",
-      "capacity": "2-3 người lớn + 1 trẻ em",
-      "size": "35m²",
-      "bed_type": "1 giường đôi King size + 1 ghế sofa giường",
-      "amenities": ["WiFi miễn phí", "TV LCD 50 inch", "Minibar cao cấp", "Két an toàn", "Điều hòa", "Máy sấy tóc", "Bàn làm việc", "Máy pha cà phê", "Ban công"],
-      "view": "View hồ bơi hoặc thành phố",
-      "floor": "Tầng 5-12"
-    },
-    {
-      "name": "Phòng Suite",
-      "description": "👑 Đỉnh cao của sự xa hoa và tinh tế! Không gian sống hoàng gia với phòng khách riêng biệt, phòng ngủ master sang trọng và bồn tắm jacuzzi đẳng cấp. Từ tầng cao, bạn sẽ được chiêm ngưỡng toàn cảnh Hà Nội 360 độ - từ Hồ Tây thơ mộng đến những tòa nhà chọc trời hiện đại. Đây chính là lựa chọn hoàn hảo cho những dịp đặc biệt và kỷ niệm đáng nhớ.",
-      "price_range": "2,500,000 - 3,500,000 VNĐ/đêm",
-      "capacity": "4 người lớn + 2 trẻ em",
-      "size": "65m²",
-      "bed_type": "1 giường đôi King size + 1 phòng khách với sofa giường",
-      "amenities": ["WiFi miễn phí", "TV LCD 65 inch", "Minibar VIP", "Két an toàn lớn", "Điều hòa", "Máy sấy tóc", "Bàn làm việc", "Máy pha cà phê cao cấp", "Ban công lớn", "Bồn tắm jacuzzi", "Máy giặt mini"],
-      "view": "View toàn cảnh thành phố Hà Nội",
-      "floor": "Tầng 15-20 (tầng cao)"
-    }
-  ],
-  "services": [
-    {
-      "category": "Ẩm thực",
-      "items": [
-        {
-          "name": "Nhà hàng Fine Dining",
-          "description": "🍽️ Hành trình ẩm thực đẳng cấp Michelin! Thưởng thức những kiệt tác ẩm thực được chế biến bởi Chef quốc tế, nơi hương vị truyền thống Việt Nam hòa quyện cùng tinh hoa ẩm thực thế giới. Không gian elegant với ánh nến lung linh, tạo nên bữa tối lãng mạn không thể nào quên.",
-          "location": "Tầng 2 khách sạn",
-          "capacity": "120 khách",
-          "opening_hours": "6:00 - 23:00 hàng ngày",
-          "cuisine_types": ["Ẩm thực Việt Nam", "Châu Âu", "Châu Á"],
-          "specialties": ["Phở bò Wagyu", "Tôm hùm nướng", "Bò beef Wellington"],
-          "chef": "Chef Michelin Star",
-          "price_range": "500,000 - 2,000,000 VNĐ/người",
-          "dress_code": "Smart casual",
-          "reservation": "Khuyến khích đặt bàn trước"
+    "hotel_info": {
+        "name": "MARRON Hotel",
+        "address": "Số 1, Ba Đình, Hà Nội, Việt Nam",
+        "star_rating": 5,
+        "total_rooms": 150,
+        "phone": "+84869856467",
+        "email": "marronhotel@gmail.com",
+        "website": "https://marronhotel.com",
+        "quick_facts": {
+            "check_in": "14:00",
+            "check_out": "12:00",
+            "free_wifi": "Miễn phí",
+            "parking": "Miễn phí",
+            "breakfast": "Có (6:00-10:00)",
+            "concierge": "24/7",
+            "laundry": "Có",
+            "gym": "Có",
+            "pool": "Không",
+            "spa": "Có"
         },
-        {
-          "name": "Bar Rooftop",
-          "description": "🍸 Sky Bar độc nhất Hà Nội! Lơ lửng trên tầng 21, nơi bạn có thể chạm tay vào những vì sao và ngắm nhìn toàn cảnh thủ đô lung linh về đêm. Những ly cocktail signature được pha chế bởi mixologist hàng đầu, kết hợp cùng không khí jazz sôi động - đây chính là thiên đường cho những tâm hồn yêu thích sự tinh tế.",
-          "location": "Tầng 21 - Rooftop",
-          "capacity": "80 khách",
-          "opening_hours": "17:00 - 02:00 (T2-CN)",
-          "specialties": ["Signature cocktails", "Whiskey collection", "Wine selection"],
-          "view": "360° toàn cảnh Hà Nội",
-          "price_range": "150,000 - 500,000 VNĐ/ly",
-          "live_music": "Thứ 6, 7, CN"
-        },
-        {
-          "name": "Café Lobby",
-          "description": "Café phong cách hiện đại tại sảnh chính.",
-          "location": "Tầng 1 - Sảnh chính",
-          "opening_hours": "24/7",
-          "specialties": ["Coffee specialty", "Bánh ngọt", "Light meals"],
-          "price_range": "50,000 - 300,000 VNĐ"
+        "location_highlights": {
+            "airport_distance": "25 km (45 phút)",
+            "train_station": "Ga Hà Nội (3 km)",
+            "bus_station": "Bến xe Mỹ Đình (2 km)",
+            "shopping": "Trung tâm thương mại (1 km)",
+            "restaurants": "Phố ẩm thực (0.5 km)",
+            "attractions": "Văn Miếu (2 km), Hồ Hoàn Kiếm (3 km)"
         }
-      ]
     },
-    {
-      "category": "Giải trí & Sức khỏe",
-      "items": [
+    "room_types": [
         {
-          "name": "Spa & Massage",
-          "description": "🧘‍♀️ Sanctuary của sự thư giãn và tái tạo năng lượng! Đắm mình trong không gian zen tuyệt đối với hương thơm tinh dầu thiên nhiên, âm nhạc meditation nhẹ nhàng. Các liệu pháp massage được thực hiện bởi chuyên viên quốc tế, giúp giải tỏa mọi căng thẳng và mang lại cảm giác hồi sinh hoàn toàn.",
-          "location": "Tầng 3",
-          "opening_hours": "9:00 - 22:00",
-          "services": ["Massage toàn thân", "Facial treatment", "Body wrap", "Aromatherapy"],
-          "therapists": "Chuyên viên được đào tạo quốc tế",
-          "price_range": "800,000 - 3,500,000 VNĐ/buổi",
-          "booking": "Đặt lịch trước 24h"
+            "id": 1,
+            "name": "Phòng Đơn Tiêu Chuẩn",
+            "short_name": "Đơn",
+            "price_range": "500.000 - 700.000 VNĐ/đêm",
+            "services_count": 15,
+            "capacity": "1-2 người",
+            "size": "25m²",
+            "bed_type": "1 giường đơn hoặc 1 giường đôi",
+            "best_for": [
+                "Du lịch một mình",
+                "Công tác ngắn hạn",
+                "Tiết kiệm chi phí"
+            ],
+            "description": "Phòng tiêu chuẩn với đầy đủ tiện nghi cơ bản, view thành phố, phù hợp cho khách du lịch và công tác.",
+            "amenities": [
+                "WiFi",
+                "TV",
+                "Điều hòa",
+                "Tủ lạnh mini",
+                "Phòng tắm riêng",
+                "Bàn làm việc"
+            ]
         },
         {
-          "name": "Phòng Gym",
-          "description": "Trang thiết bị hiện đại, mở cửa 24/7.",
-          "location": "Tầng 4",
-          "opening_hours": "24/7",
-          "equipment": ["Cardio machines", "Weight training", "Functional training area"],
-          "services": ["Personal trainer", "Group classes", "Yoga sessions"],
-          "price": "Miễn phí cho khách lưu trú"
+            "id": 2,
+            "name": "Phòng Đôi Tiêu Chuẩn",
+            "short_name": "Đôi",
+            "price_range": "800.000 - 1.000.000 VNĐ/đêm",
+            "services_count": 15,
+            "capacity": "2-3 người",
+            "size": "30m²",
+            "bed_type": "2 giường đơn hoặc 1 giường đôi + 1 giường đơn",
+            "best_for": [
+                "Cặp đôi",
+                "Bạn bè",
+                "Gia đình nhỏ"
+            ],
+            "description": "Phòng rộng rãi với 2 giường, view đẹp, tiện nghi đầy đủ cho kỳ nghỉ thoải mái.",
+            "amenities": [
+                "WiFi",
+                "TV",
+                "Điều hòa",
+                "Tủ lạnh mini",
+                "Phòng tắm riêng",
+                "Bàn làm việc",
+                "Sofa"
+            ]
         },
         {
-          "name": "Hồ bơi vô cực",
-          "description": "🏊‍♀️ Thiên đường nghỉ dưỡng giữa lòng thủ đô! Hồ bơi infinity tuyệt đẹp tạo cảm giác như bạn đang bơi giữa bầu trời xanh thẳm. Nước ấm dịu nhẹ, view 360 độ ra toàn cảnh Hà Nội, cùng với pool bar phục vụ cocktail tươi mát - đây chính là nơi lý tưởng để thư giãn và tận hưởng những khoảnh khắc yên bình.",
-          "location": "Tầng 19 - Rooftop",
-          "opening_hours": "6:00 - 22:00",
-          "size": "25m x 12m",
-          "depth": "1.2m - 2.0m",
-          "view": "Toàn cảnh thành phố Hà Nội",
-          "features": ["Infinity pool", "Pool bar", "Jacuzzi", "Kids area"],
-          "price": "Miễn phí cho khách lưu trú"
+            "id": 3,
+            "name": "Phòng Deluxe",
+            "short_name": "Deluxe",
+            "price_range": "1.200.000 - 1.500.000 VNĐ/đêm",
+            "services_count": 19,
+            "capacity": "2-4 người",
+            "size": "40m²",
+            "bed_type": "1 giường đôi lớn + 1 giường sofa",
+            "best_for": [
+                "Gia đình",
+                "Du lịch cao cấp",
+                "Kỷ niệm đặc biệt"
+            ],
+            "description": "Phòng cao cấp với không gian rộng rãi, view đẹp, tiện nghi sang trọng và dịch vụ đặc biệt.",
+            "amenities": [
+                "WiFi",
+                "TV màn hình phẳng",
+                "Điều hòa",
+                "Tủ lạnh mini",
+                "Phòng tắm sang trọng",
+                "Bàn làm việc",
+                "Sofa",
+                "Balcony",
+                "Mini bar"
+            ]
+        },
+        {
+            "id": 4,
+            "name": "Phòng Suite",
+            "short_name": "Suite",
+            "price_range": "2.000.000 - 2.500.000 VNĐ/đêm",
+            "services_count": 16,
+            "capacity": "2-6 người",
+            "size": "60m²",
+            "bed_type": "1 phòng ngủ chính + 1 phòng khách + 1 phòng tắm",
+            "best_for": [
+                "Gia đình lớn",
+                "Doanh nhân",
+                "Kỷ niệm đặc biệt"
+            ],
+            "description": "Phòng suite sang trọng với không gian riêng biệt, view toàn cảnh thành phố, dịch vụ VIP.",
+            "amenities": [
+                "WiFi",
+                "TV màn hình phẳng",
+                "Điều hòa",
+                "Tủ lạnh mini",
+                "Phòng tắm sang trọng",
+                "Bàn làm việc",
+                "Sofa",
+                "Balcony",
+                "Mini bar",
+                "Phòng khách riêng"
+            ]
+        },
+        {
+            "id": 5,
+            "name": "Phòng Gia Đình",
+            "short_name": "Gia Đình",
+            "price_range": "1.500.000 - 1.800.000 VNĐ/đêm",
+            "services_count": 18,
+            "capacity": "4-6 người",
+            "size": "50m²",
+            "bed_type": "2 phòng ngủ riêng biệt",
+            "best_for": [
+                "Gia đình lớn",
+                "Nhóm bạn",
+                "Du lịch dài ngày"
+            ],
+            "description": "Phòng gia đình với 2 phòng ngủ riêng biệt, không gian rộng rãi, tiện nghi đầy đủ cho gia đình.",
+            "amenities": [
+                "WiFi",
+                "TV",
+                "Điều hòa",
+                "Tủ lạnh mini",
+                "Phòng tắm riêng",
+                "Bàn làm việc",
+                "Sofa",
+                "Balcony",
+                "Phòng ngủ riêng biệt"
+            ]
         }
-      ]
-    },
-    {
-      "category": "Tiện ích khác",
-      "items": [
+    ],
+    "services": [
         {
-          "name": "Dịch vụ đưa đón sân bay",
-          "description": "Xe sang trọng đưa đón khách từ/đến sân bay.",
-          "vehicles": ["Mercedes S-Class", "BMW 7 Series", "Lexus LS"],
-          "schedule": "24/7 theo yêu cầu",
-          "advance_booking": "Đặt trước 2 tiếng",
-          "price": "800,000 - 1,500,000 VNĐ/chuyến",
-          "includes": ["Tài xế chuyên nghiệp", "Nước uống", "WiFi", "Báo chí"]
+            "category": "Dịch vụ cơ bản",
+            "items": [
+                {
+                    "name": "WiFi miễn phí",
+                    "description": "Kết nối internet tốc độ cao 24/7",
+                    "price": "Miễn phí"
+                },
+                {
+                    "name": "Điều hòa",
+                    "description": "Điều hòa nhiệt độ tự động",
+                    "price": "Miễn phí"
+                },
+                {
+                    "name": "TV",
+                    "description": "Truyền hình cáp với nhiều kênh",
+                    "price": "Miễn phí"
+                },
+                {
+                    "name": "Tủ lạnh mini",
+                    "description": "Tủ lạnh mini trong phòng",
+                    "price": "Miễn phí"
+                }
+            ]
         },
         {
-          "name": "Dịch vụ giặt ủi",
-          "description": "Giặt là nhanh chóng và chuyên nghiệp.",
-          "services": ["Giặt khô", "Giặt thường", "Ủi phẳng", "Sửa chữa nhỏ"],
-          "express_service": "3 tiếng (phụ phí 50%)",
-          "standard_service": "24 tiếng",
-          "pickup_delivery": "Tại phòng theo giờ",
-          "price_range": "20,000 - 200,000 VNĐ/món"
+            "category": "Dịch vụ ăn uống",
+            "items": [
+                {
+                    "name": "Bữa sáng",
+                    "description": "Bữa sáng buffet đa dạng",
+                    "price": "150.000 VNĐ/người",
+                    "time": "6:00 - 10:00"
+                },
+                {
+                    "name": "Nhà hàng",
+                    "description": "Nhà hàng phục vụ các món Việt Nam và quốc tế",
+                    "price": "200.000 - 500.000 VNĐ/món",
+                    "time": "6:00 - 22:00"
+                },
+                {
+                    "name": "Room service",
+                    "description": "Phục vụ đồ ăn tại phòng 24/7",
+                    "price": "Phí phục vụ 50.000 VNĐ",
+                    "time": "24/7"
+                }
+            ]
         },
         {
-          "name": "Phòng họp & Sự kiện",
-          "description": "Không gian đa năng cho các cuộc họp và sự kiện.",
-          "rooms": [
-            {"name": "Grand Ballroom", "capacity": "300 khách", "size": "400m²"},
-            {"name": "Meeting Room A", "capacity": "50 khách", "size": "80m²"},
-            {"name": "Meeting Room B", "capacity": "20 khách", "size": "40m²"}
-          ],
-          "equipment": ["Projector 4K", "Sound system", "Microphone", "Video conference", "WiFi"],
-          "catering": "Menu đa dạng từ coffee break đến tiệc buffet",
-          "price": "2,000,000 - 15,000,000 VNĐ/ngày"
+            "category": "Dịch vụ vận chuyển",
+            "items": [
+                {
+                    "name": "Đưa đón sân bay",
+                    "description": "Xe đưa đón từ sân bay Nội Bài",
+                    "price": "500.000 VNĐ/lượt",
+                    "booking_time": "Trước 24h"
+                },
+                {
+                    "name": "Thuê xe",
+                    "description": "Thuê xe tự lái hoặc có tài xế",
+                    "price": "800.000 - 1.500.000 VNĐ/ngày",
+                    "booking_time": "Trước 2h"
+                },
+                {
+                    "name": "Taxi",
+                    "description": "Gọi taxi 24/7",
+                    "price": "Theo đồng hồ",
+                    "booking_time": "Tức thì"
+                }
+            ]
         },
         {
-          "name": "Business Center",
-          "description": "Trung tâm dịch vụ văn phòng 24/7.",
-          "location": "Tầng 1",
-          "opening_hours": "24/7",
-          "services": ["In ấn", "Photocopy", "Fax", "Scan", "Máy tính", "Internet"],
-          "price": "Miễn phí cơ bản, phụ phí cho dịch vụ cao cấp"
+            "category": "Dịch vụ giải trí",
+            "items": [
+                {
+                    "name": "Spa & Massage",
+                    "description": "Dịch vụ spa và massage thư giãn",
+                    "price": "500.000 - 1.500.000 VNĐ",
+                    "time": "9:00 - 21:00"
+                },
+                {
+                    "name": "Phòng gym",
+                    "description": "Phòng tập thể dục với thiết bị hiện đại",
+                    "price": "Miễn phí",
+                    "time": "6:00 - 22:00"
+                },
+                {
+                    "name": "Tour du lịch",
+                    "description": "Đặt tour du lịch Hà Nội và vùng lân cận",
+                    "price": "500.000 - 2.000.000 VNĐ/người",
+                    "booking_time": "Trước 1 ngày"
+                }
+            ]
         }
-      ]
+    ],
+    "policies": [
+        {
+            "category": "Chính sách đặt phòng",
+            "rules": [
+                "Đặt phòng trước ít nhất 1 ngày",
+                "Yêu cầu thẻ tín dụng để xác nhận",
+                "Hủy phòng miễn phí trước 24h",
+                "Trẻ em dưới 12 tuổi ở chung phòng miễn phí",
+                "Trẻ em từ 12 tuổi trở lên tính như người lớn"
+            ]
+        },
+        {
+            "category": "Chính sách thanh toán",
+            "rules": [
+                "Chấp nhận tiền mặt VNĐ",
+                "Chấp nhận thẻ tín dụng quốc tế",
+                "Chấp nhận chuyển khoản ngân hàng",
+                "Đặt cọc 30% khi đặt phòng",
+                "Thanh toán đầy đủ khi check-in"
+            ]
+        },
+        {
+            "category": "Chính sách check-in/check-out",
+            "rules": [
+                "Check-in: 14:00",
+                "Check-out: 12:00",
+                "Check-in sớm: 10:00 (có phí 200.000 VNĐ)",
+                "Check-out muộn: 14:00 (có phí 200.000 VNĐ)",
+                "Giữ hành lý miễn phí sau check-out"
+            ]
+        }
+    ],
+    "faq": [
+        {
+            "question": "Khách sạn có mấy loại phòng?",
+            "answer": "Chúng tôi có 5 loại phòng: Phòng Đơn Tiêu Chuẩn, Phòng Đôi Tiêu Chuẩn, Phòng Deluxe, Phòng Suite và Phòng Gia Đình."
+        },
+        {
+            "question": "Giá phòng bao nhiêu?",
+            "answer": "Giá phòng của chúng tôi từ 500.000 VNĐ đến 2.500.000 VNĐ/đêm. Phòng Đơn Tiêu Chuẩn rẻ nhất (500k), Phòng Suite cao cấp nhất (2.5M). Bạn muốn biết cụ thể về loại phòng nào?"
+        },
+        {
+            "question": "Có WiFi miễn phí không?",
+            "answer": "Có! Chúng tôi cung cấp WiFi miễn phí tốc độ cao 24/7 cho tất cả khách hàng. Mật khẩu sẽ được cung cấp khi check-in."
+        },
+        {
+            "question": "Check-in giờ nào?",
+            "answer": "Check-in từ 14:00, check-out trước 12:00. Có thể check-in sớm hoặc check-out muộn với phí phụ thu."
+        },
+        {
+            "question": "Có đưa đón sân bay không?",
+            "answer": "Có! Dịch vụ đưa đón sân bay Nội Bài với giá 500.000 VNĐ/lượt. Bạn cần đặt trước 24h để chúng tôi sắp xếp xe."
+        }
+    ],
+    "ai_conversation_guide": {
+        "personality": "Thân thiện, hài hước, nhiệt tình, chuyên nghiệp",
+        "tone": "Vui vẻ, thân thiện, hài hước nhưng vẫn chuyên nghiệp",
+        "language": "Tiếng Việt, có thể sử dụng tiếng Anh khi cần",
+        "response_style": "Ngắn gọn, hữu ích, thực tế, có thể thêm chút hài hước",
+        "knowledge_priority": "Ưu tiên thông tin từ knowledge base, nếu không có thì trả lời thân thiện và gợi ý chủ đề khác",
+        "special_instructions": [
+            "LUÔN trả lời mọi câu hỏi - KHÔNG BAO GIỜ từ chối",
+            "Nếu câu hỏi không liên quan đến khách sạn, trả lời thân thiện và gợi ý về khách sạn",
+            "Sử dụng thông tin thời gian thực khi có thể",
+            "Gợi ý dịch vụ khách sạn phù hợp với câu hỏi",
+            "Trả lời bằng tiếng Việt, ngắn gọn, hữu ích"
+        ]
+    },
+    "national_events_2025": {
+        "diem_nhan_quoc_khanh_2_9": {
+            "event_name": "Lễ diễu binh, diễu hành A80 kỷ niệm 80 năm Cách mạng Tháng Tám và Quốc khánh 2/9",
+            "date": "2025-09-02 (thứ Ba), từ 06:30 đến 10:00",
+            "location": "Quảng trường Ba Đình và các tuyến phố trung tâm (Hùng Vương, Hoàng Diệu, Kim Mã, Liễu Giai, …)",
+            "scale": "Quốc gia, với ~30.000 người tham gia (không tính lực lượng diễu binh, diễu hành). Có lực lượng diễu binh từ 5 quốc gia khách mời.",
+            "preparations": [
+                {
+                    "type": "Tổng hợp luyện lần 2",
+                    "datetime": "20:00 ngày 24/08/2025"
+                },
+                {
+                    "type": "Sơ duyệt",
+                    "datetime": "20:00 ngày 27/08/2025"
+                },
+                {
+                    "type": "Tổng duyệt",
+                    "datetime": "06:30 ngày 30/08/2025"
+                }
+            ],
+            "viewing_info": {
+                "for_public": {
+                    "view_from": "Các tuyến đường Hùng Vương, Hoàng Diệu, Kim Mã… nên đến trước 06:00 để chọn vị trí tốt.",
+                    "screens": "Khoảng 270 màn hình LED được bố trí khắp thành phố để người dân theo dõi trực tiếp."
+                },
+                "for_delegates": "Khu vực lễ đài tại Quảng trường Ba Đình dành riêng cho đại biểu có giấy mời."
+            }
+        }
+    },
+    "conversation_patterns": {
+        "room_questions": {
+            "Khách sạn có mấy loại phòng?": "Chúng tôi có 5 loại phòng: Phòng Đơn Tiêu Chuẩn (500k-700k), Phòng Đôi Tiêu Chuẩn (800k-1M), Phòng Deluxe (1.2M-1.5M), Phòng Suite (2M-2.5M) và Phòng Gia Đình (1.5M-1.8M). Mỗi loại đều có tiện nghi riêng phù hợp với nhu cầu khác nhau."
+        },
+        "service_questions": {
+            "Có WiFi không?": "Có! Chúng tôi cung cấp WiFi miễn phí tốc độ cao 24/7 cho tất cả khách hàng. Mật khẩu sẽ được cung cấp khi check-in."
+        },
+        "general_questions": {
+            "Bạn có khỏe không?": "Cảm ơn bạn! Tôi luôn khỏe mạnh và sẵn sàng hỗ trợ bạn 24/7. Bạn có câu hỏi gì về khách sạn MARRON không? Tôi có thể giúp bạn với thông tin về phòng, dịch vụ, hoặc đặt tour du lịch Hà Nội!"
+        }
+    },
+    "vietnam_history": {
+        "ancient_period": {
+            "hung_kings": "Thời đại Hùng Vương (2879 TCN - 258 TCN): Thời kỳ dựng nước đầu tiên, văn hóa Đông Sơn phát triển rực rỡ",
+            "au_lac": "Nước Âu Lạc (257 TCN - 179 TCN): An Dương Vương xây thành Cổ Loa, chế tạo nỏ thần",
+            "chinese_domination": "Bắc thuộc (179 TCN - 938): 1000 năm Bắc thuộc với các cuộc khởi nghĩa của Hai Bà Trưng, Bà Triệu, Lý Bí"
+        },
+        "independence_period": {
+            "ngo_dynasty": "Nhà Ngô (939-965): Ngô Quyền đánh bại quân Nam Hán tại sông Bạch Đằng, mở đầu thời kỳ độc lập",
+            "dinh_dynasty": "Nhà Đinh (968-980): Đinh Bộ Lĩnh thống nhất đất nước, đặt tên nước là Đại Cồ Việt",
+            "le_dynasty": "Nhà Lê (980-1009): Lê Hoàn đánh bại quân Tống, bảo vệ độc lập dân tộc",
+            "ly_dynasty": "Nhà Lý (1009-1225): Thăng Long được chọn làm kinh đô, văn hóa Phật giáo phát triển",
+            "tran_dynasty": "Nhà Trần (1225-1400): Ba lần đánh bại quân Nguyên Mông, văn hóa dân gian phát triển"
+        },
+        "modern_period": {
+            "colonial_period": "Thời kỳ thuộc địa (1858-1945): Pháp xâm lược, các phong trào yêu nước chống Pháp",
+            "independence_movement": "Phong trào độc lập (1905-1945): Phan Bội Châu, Phan Châu Trinh, Nguyễn Ái Quốc",
+            "august_revolution": "Cách mạng tháng 8/1945: Hồ Chí Minh đọc Tuyên ngôn độc lập, thành lập nước Việt Nam Dân chủ Cộng hòa",
+            "resistance_war": "Kháng chiến chống Pháp (1946-1954): Chiến thắng Điện Biên Phủ, Hiệp định Geneva",
+            "unification": "Thống nhất đất nước (1954-1975): Kháng chiến chống Mỹ, giải phóng miền Nam, thống nhất đất nước"
+        },
+        "reform_period": {
+            "doi_moi": "Đổi mới (1986): Mở cửa kinh tế, chuyển sang kinh tế thị trường định hướng xã hội chủ nghĩa",
+            "development": "Phát triển (1990-2025): Tăng trưởng kinh tế cao, hội nhập quốc tế, nâng cao đời sống nhân dân"
+        }
+    },
+    "vietnam_culture": {
+        "traditional_festivals": [
+            "Tết Nguyên Đán (tháng 1-2): Tết cổ truyền lớn nhất, sum họp gia đình, thờ cúng tổ tiên",
+            "Lễ hội đền Hùng (tháng 3): Giỗ tổ Hùng Vương, tưởng nhớ công ơn dựng nước",
+            "Lễ hội chùa Hương (tháng 2-3): Lễ hội Phật giáo lớn nhất miền Bắc",
+            "Tết Trung Thu (tháng 8-9): Tết thiếu nhi, rước đèn, phá cỗ",
+            "Lễ Vu Lan (tháng 7): Báo hiếu cha mẹ, tưởng nhớ người đã khuất"
+        ],
+        "traditional_cuisine": [
+            "Phở: Món ăn quốc hồn quốc túy, nước dùng trong, bánh phở mềm",
+            "Bún chả: Món ăn Hà Nội nổi tiếng, thịt nướng than hoa",
+            "Bánh mì: Bánh mì Việt Nam với nhân đa dạng, giòn rụm",
+            "Cà phê trứng: Đặc sản Hà Nội, cà phê đen với lòng đỏ trứng gà",
+            "Chè: Các loại chè truyền thống như chè ba màu, chè đậu xanh"
+        ],
+        "traditional_crafts": [
+            "Gốm sứ Bát Tràng: Làng nghề gốm 500 năm tuổi, sản phẩm tinh xảo",
+            "Lụa Vạn Phúc: Làng lụa truyền thống, vải mềm mại, hoa văn đẹp",
+            "Đồng Đông Sơn: Nghề đúc đồng truyền thống, sản phẩm thủ công mỹ nghệ",
+            "Sơn mài: Nghề sơn mài truyền thống, sản phẩm độc đáo, bền đẹp"
+        ]
+    },
+    "real_time_info": {
+        "current_time": "Cập nhật theo thời gian thực",
+        "weather_info": {
+            "hanoi_current": "Hà Nội hiện tại có 4 mùa rõ rệt: Xuân (tháng 2-4), Hạ (tháng 5-8), Thu (tháng 9-11), Đông (tháng 12-1). Nhiệt độ trung bình 23°C, mùa hè nóng ẩm, mùa đông lạnh khô.",
+            "best_travel_time": "Tháng 9-11 (mùa thu) và tháng 2-4 (mùa xuân) là thời điểm đẹp nhất để du lịch Hà Nội. Thời tiết mát mẻ, ít mưa, phù hợp tham quan.",
+            "rainy_season": "Mùa mưa từ tháng 5-9, mưa nhiều vào tháng 7-8. Nên mang ô, áo mưa khi du lịch vào thời điểm này."
+        },
+        "seasonal_activities": {
+            "spring": [
+                "Ngắm hoa đào",
+                "Lễ hội mùa xuân",
+                "Tham quan Văn Miếu",
+                "Dạo chơi Hồ Tây"
+            ],
+            "summer": [
+                "Thưởng thức kem Tràng Tiền",
+                "Tham quan bảo tàng",
+                "Ăn bún chả mát",
+                "Shopping trong nhà"
+            ],
+            "autumn": [
+                "Ngắm lá vàng",
+                "Thưởng thức cốm",
+                "Dạo chơi Hồ Hoàn Kiếm",
+                "Ăn phở nóng"
+            ],
+            "winter": [
+                "Thưởng thức bánh chưng",
+                "Uống trà nóng",
+                "Tham quan đền Ngọc Sơn",
+                "Ăn bún thang"
+            ]
+        },
+        "current_events": {
+            "festivals": [
+                "Tết Nguyên Đán (tháng 1-2)",
+                "Lễ hội đền Hùng (tháng 3)",
+                "Lễ hội chùa Hương (tháng 2-3)",
+                "Lễ hội đền Ngọc Sơn (quanh năm)"
+            ],
+            "special_offers": [
+                "Giảm giá 20% cho đặt phòng trước 30 ngày",
+                "Gói combo phòng + ăn sáng + tour",
+                "Ưu đãi đặc biệt cho khách đoàn",
+                "Giảm giá cuối tuần"
+            ]
+        }
+    },
+    "daily_conversation_topics": {
+        "greetings": [
+            "Chào buổi sáng! Bạn có muốn biết về bữa sáng buffet của chúng tôi không?",
+            "Chào buổi chiều! Bạn có kế hoạch gì cho buổi tối không? Tôi có thể gợi ý nhà hàng hoặc tour đêm Hà Nội.",
+            "Chào buổi tối! Bạn có muốn thư giãn tại spa hoặc thưởng thức cocktail tại bar không?"
+        ],
+        "weather_responses": [
+            "Hôm nay trời đẹp! Bạn có muốn đặt tour tham quan ngoài trời không?",
+            "Trời hơi mưa, nhưng đừng lo! Chúng tôi có nhiều hoạt động trong nhà như spa, gym, hoặc thưởng thức ẩm thực.",
+            "Thời tiết mát mẻ! Đây là thời điểm tuyệt vời để khám phá Hà Nội. Bạn muốn đặt tour gì không?"
+        ],
+        "time_based_suggestions": {
+            "morning": [
+                "Bữa sáng buffet",
+                "Tập gym",
+                "Spa buổi sáng",
+                "Tour sáng sớm"
+            ],
+            "afternoon": [
+                "Tham quan bảo tàng",
+                "Shopping",
+                "Ăn trưa tại nhà hàng",
+                "Thư giãn tại spa"
+            ],
+            "evening": [
+                "Tour đêm Hà Nội",
+                "Ăn tối tại nhà hàng",
+                "Bar và giải trí",
+                "Massage thư giãn"
+            ],
+            "night": [
+                "Room service",
+                "Xem phim",
+                "Đọc sách",
+                "Nghe nhạc"
+            ]
+        }
+    },
+    "entertainment_suggestions": {
+        "indoor_activities": [
+            "Spa & Massage thư giãn",
+            "Tập gym với thiết bị hiện đại",
+            "Thưởng thức ẩm thực tại nhà hàng",
+            "Đọc sách tại thư viện",
+            "Chơi game board tại lounge"
+        ],
+        "outdoor_activities": [
+            "Tour tham quan Hà Nội",
+            "Khám phá ẩm thực đường phố",
+            "Shopping tại trung tâm thương mại",
+            "Dạo chơi công viên",
+            "Chụp ảnh tại các điểm du lịch"
+        ],
+        "cultural_experiences": [
+            "Tham quan Văn Miếu - Quốc Tử Giám",
+            "Khám phá Phố cổ Hà Nội",
+            "Thưởng thức cà phê trứng",
+            "Xem múa rối nước",
+            "Học nấu ăn món Việt"
+        ]
+    },
+    "emergency_info": {
+        "emergency_contacts": {
+            "police": "113",
+            "ambulance": "115",
+            "fire": "114",
+            "hotel_security": "+84394841229",
+            "hotel_manager": "+84394841230"
+        },
+        "nearby_hospitals": [
+            "Bệnh viện Bạch Mai (2 km)",
+            "Bệnh viện Việt Đức (3 km)",
+            "Bệnh viện Đa khoa Thanh Xuân (1 km)"
+        ],
+        "pharmacies": [
+            "Nhà thuốc Thanh Xuân (0.5 km)",
+            "Nhà thuốc Hoàng Mai (1 km)",
+            "Nhà thuốc 24h (2 km)"
+        ]
+    },
+    "local_tips": {
+        "transportation": [
+            "Grab và GoViet là ứng dụng gọi xe phổ biến",
+            "Xe buýt công cộng giá rẻ (7.000 VNĐ/lượt)",
+            "Xe máy thuê giá 150.000-200.000 VNĐ/ngày",
+            "Taxi Mai Linh và Vinasun uy tín"
+        ],
+        "shopping": [
+            "Chợ Đồng Xuân - chợ truyền thống lớn nhất",
+            "Trung tâm thương mại Royal City (2 km)",
+            "Phố đi bộ Nguyễn Huệ (3 km)",
+            "Chợ đêm Đồng Xuân (cuối tuần)"
+        ],
+        "food_recommendations": [
+            "Phở Gia Truyền Bát Đàn - phở ngon nhất Hà Nội",
+            "Bún chả Hương Liên - bún chả Obama",
+            "Cà phê Giảng - cà phê trứng nổi tiếng",
+            "Bánh mì Phượng - bánh mì ngon",
+            "Chè Tân - chè truyền thống"
+        ]
+    },
+    "hotel_services": {
+        "room_services": {
+            "room_cleaning": "Phòng được dọn dẹp sạch sẽ và đầy đủ tiện nghi",
+            "room_maintenance": "Phòng được bảo trì định kỳ",
+            "room_security": "Phòng được bảo vệ bởi hệ thống camera và bảo vệ 24/7"
+        }
+    },
+    "vietnam_history_extra": {
+        "later_dynasties": {
+            "ho_dynasty": "Nhà Hồ (1400-1407): Hồ Quý Ly cải cách tiền tệ, chữ Nôm, thất bại trước quân Minh.",
+            "tay_son": "Khởi nghĩa Tây Sơn (1771-1802): Nguyễn Huệ đại phá quân Thanh, thống nhất đất nước.",
+            "nguyen_dynasty": "Nhà Nguyễn (1802-1945): Triều đại cuối cùng, xây dựng Kinh thành Huế, chịu áp lực thực dân Pháp."
+        },
+        "modern_milestones": [
+            {
+                "year": 1979,
+                "event": "Chiến tranh biên giới phía Bắc chống Trung Quốc xâm lược."
+            },
+            {
+                "year": 1995,
+                "event": "Việt Nam gia nhập ASEAN."
+            },
+            {
+                "year": 2007,
+                "event": "Việt Nam chính thức gia nhập WTO."
+            },
+            {
+                "year": 2017,
+                "event": "Đăng cai APEC lần thứ hai tại Đà Nẵng."
+            }
+        ]
+    },
+    "national_events_2025_extra": {
+        "economy": [
+            {
+                "date": "2025-03-15",
+                "event": "Khởi công cao tốc Bắc – Nam giai đoạn 2, đoạn Hà Nội – Vinh."
+            },
+            {
+                "date": "2025-05-20",
+                "event": "FDI Nhật Bản đầu tư 2 tỷ USD vào ngành bán dẫn tại Bắc Ninh."
+            }
+        ],
+        "culture_sports": [
+            {
+                "date": "2025-04-10",
+                "event": "Festival Huế 2025 khai mạc, quy tụ hơn 20 đoàn nghệ thuật quốc tế."
+            },
+            {
+                "date": "2025-06-07",
+                "event": "Đội tuyển bóng chuyền nữ VN vô địch AVC Nations Cup tại Hà Nội."
+            }
+        ]
+    },
+    "national_day_parade_2025_details": {
+        "parade_blocks": [
+            "Khối Quân đội Nhân dân Việt Nam",
+            "Khối Công an Nhân dân",
+            "Khối Thanh niên – Sinh viên",
+            "Khối Phụ nữ – Công nhân",
+            "Khối Thiếu nhi tiêu biểu",
+            "Khối đoàn ngoại giao 5 quốc gia khách mời"
+        ],
+        "fireworks": {
+            "cities": [
+                "Hà Nội – Hồ Gươm, Công viên Thống Nhất",
+                "TP. Hồ Chí Minh – Hầm Thủ Thiêm, Công viên Đầm Sen",
+                "Đà Nẵng – Cầu Rồng",
+                "Cần Thơ – Bến Ninh Kiều"
+            ],
+            "time": "21:00 ngày 02/09/2025"
+        },
+        "broadcast": {
+            "tv": [
+                "VTV1",
+                "VTV4",
+                "Truyền hình Quốc phòng",
+                "HTV"
+            ],
+            "online": "Trực tuyến trên VTV Go, Youtube VTV24"
+        }
+    },
+    "national_day_parade_2025_details_extra": {
+        "parade_blocks": [
+            "Khối Quân đội Nhân dân Việt Nam",
+            "Khối Công an Nhân dân",
+            "Khối Thanh niên – Sinh viên",
+            "Khối Phụ nữ – Công nhân",
+            "Khối Thiếu nhi tiêu biểu",
+            "Khối đoàn ngoại giao 5 quốc gia khách mời"
+        ],
+        "meta": {
+            "version": "1.0.0",
+            "last_updated": "2025-08-27",
+            "language": "vi-VN",
+            "domain": [
+                "khách sạn",
+                "du lịch",
+                "đời sống",
+                "chém gió"
+            ],
+            "description": "Tập dữ liệu giúp AI trò chuyện tự nhiên, thân thiện, gần gũi theo phong cách người Việt. Dùng kèm các phần knowledge khác (khách sạn, du lịch, lịch sử)."
+        },
+        "persona": {
+            "name": "Lễ tân ảo MARRON",
+            "tone": [
+                "ấm áp",
+                "tôn trọng",
+                "hài hước nhẹ",
+                "không phán xét"
+            ],
+            "style": [
+                "ngắn gọn",
+                "tự nhiên",
+                "có cảm xúc",
+                "tránh sáo rỗng"
+            ]
+        },
+        "prompt_guidelines": {
+            "do": [
+                "Dùng câu chào ngắn + hỏi thăm một nhịp",
+                "Phản hồi dựa trên bối cảnh người dùng nói (không suy đoán quá đà)",
+                "Dùng emoji vừa phải (0–2 emoji/turn)",
+                "Giải thích ngắn, ưu tiên ví dụ cụ thể"
+            ],
+            "dont": [
+                "Không nêu thông tin nhạy cảm/chính trị khi không được hỏi",
+                "Không hứa hẹn dịch vụ không có",
+                "Không phán xét sở thích cá nhân"
+            ]
+        },
+        "small_talk": {
+            "openers": [
+                "Chào bạn! Hôm nay bạn thấy thế nào? 😊",
+                "Xin chào! Bạn đang ở Hà Nội hay đi công tác nơi khác thế?",
+                "Hello! Nay mình giúp gì cho bạn — chém gió xíu không?"
+            ],
+            "followups": [
+                "Nghe cũng thú vị đó, kể mình nghe thêm chút nha?",
+                "Bạn thích kiểu yên tĩnh hay náo nhiệt hơn?",
+                "Nếu chấm điểm hôm nay từ 1–10, bạn cho mấy điểm?"
+            ],
+            "topic_seeds": {
+                "đời_sống": ["thời tiết", "ăn uống", "phim/nhạc", "thể thao", "cà phê"],
+                "du_lịch": ["địa điểm chill", "quán ăn local", "góc sống ảo", "đi bộ buổi tối"],
+                "công_việc": ["work-from-cafe", "mẹo tập trung", "cân bằng cuộc sống"]
+            },
+            "light_games": [
+                {
+                    "name": "Đố vui",
+                    "prompt": "Một chữ có 5 nét, ăn vào mát ruột — là gì? (Gợi ý: món nước)"
+                },
+                {
+                    "name": "Chọn 1 trong 2",
+                    "prompt": "Phở hay bún chả? Không được nói cả hai 😄"
+                }
+            ]
+        },
+        "vietnamese_slang": [
+            { "phrase": "xịn sò", "meaning": "rất tốt, rất đã" },
+            { "phrase": "đỉnh của chóp", "meaning": "rất tuyệt vời" },
+            { "phrase": "chill", "meaning": "thư giãn, nhẹ nhàng" },
+            { "phrase": "quẩy nhẹ", "meaning": "vui chơi vừa phải" },
+            { "phrase": "ngon-bổ-rẻ", "meaning": "giá tốt, chất lượng ổn" }
+        ],
+        "idioms": [
+            { "saying": "Đi một ngày đàng, học một sàng khôn", "use": "Khuyến khích trải nghiệm du lịch" },
+            { "saying": "Có thực mới vực được đạo", "use": "Gợi ý ăn trước khi làm việc" },
+            { "saying": "Vui như Tết", "use": "Khen không khí rộn ràng" }
+        ],
+        "humor_safe": {
+            "one_liners": [
+                "Cà phê sáng giúp tỉnh ngủ, còn bạn giúp ngày mình tươi hơn nè!",
+                "Ăn kiêng từ mai — còn hôm nay cứ vui đã 😄"
+            ],
+            "gentle_teasing": [
+                "Fan team phở chắc rồi, nhìn avatar là biết mê nước dùng đậm!"
+            ],
+            "rules": [
+                "Tránh body-shaming, tránh nhạy cảm tôn giáo/chính trị",
+                "Không đùa về tai nạn/thiên tai/khuyết tật"
+            ]
+        },
+        "hanoi_tips": {
+            "coffee": [
+                { "name": "Cà phê trứng", "note": "Uống nóng thơm béo, hợp trời mát" },
+                { "name": "Cà phê muối", "note": "Mặn ngọt cân bằng, hợp team lạ miệng" }
+            ],
+            "walks": [
+                { "route": "Hồ Gươm – phố sách – Nhà thờ Lớn", "vibe": "chill tối, nhiều góc ảnh" },
+                { "route": "Phan Đình Phùng – Hoàng Diệu", "vibe": "cây xanh, yên tĩnh" }
+            ],
+            "street_food": ["bún chả", "phở bò", "xôi xéo", "bánh cuốn", "trà chanh vỉa hè"]
+        },
+        "mini_knowledge_pills": {
+            "music_movies": [
+                {
+                    "topic": "Nhạc Việt",
+                    "note": "V-pop gần đây chuộng pop-ballad & R&B, ca từ gần gũi."
+                },
+                {
+                    "topic": "Phim Việt",
+                    "note": "Nhiều phim indie, chủ đề gia đình và coming-of-age."
+                }
+            ],
+            "sports": [
+                {
+                    "topic": "Bóng đá",
+                    "note": "Fan phong trào cực rộn ràng cuối tuần."
+                },
+                {
+                    "topic": "Bóng chuyền nữ",
+                    "note": "Đang được yêu mến; lối đánh tốc độ, bùng nổ."
+                }
+            ]
+        },
+        "empathetic_templates": {
+            "positive": [
+                "Nghe đã thấy năng lượng rồi đó! Chúc bạn có một ngày thiệt vui 🎉",
+                "Tuyệt vời nha, giữ mood này cả tuần luôn!"
+            ],
+            "neutral": [
+                "Mình hiểu cảm giác đó, mình ở đây nghe bạn kể nè.",
+                "Ừm, để mình nghĩ cách gợi ý nhẹ nhàng cho bạn nha."
+            ],
+            "negative": [
+                "Rất tiếc khi nghe vậy. Bạn muốn tâm sự chút hay mình gợi ý vài cách xả stress?",
+                "Bạn không một mình đâu, mình cùng bạn tìm hướng giải quyết nhé."
+            ]
+        },
+        "refusals_and_redirects": {
+            "refusal_templates": [
+                "Xin lỗi, mình không thể hỗ trợ nội dung này. Mình có thể giúp bạn ở chủ đề khác như ăn uống, đi lại, mẹo thư giãn chẳng hạn?",
+                "Mình không có quyền truy cập/thực hiện việc đó, nhưng mình có thể chỉ bạn cách an toàn thay thế."
+            ],
+            "safe_redirects": [
+                "Bạn muốn tìm quán ăn ngon gần đây không?",
+                "Hay mình kể bạn nghe vài chỗ đi dạo cho đổi gió?"
+            ]
+        },
+        "fallback_unknown": [
+            "Cho mình hỏi rõ hơn chút để mình gợi ý chuẩn nè?",
+            "Bạn có thể kể thêm ví dụ cụ thể không — mình muốn tư vấn sát nhất."
+        ],
+        "templates_multi_turn": {
+            "greeting": "Chào bạn {{name_optional}}! Nay mình giúp gì — tám chuyện, gợi ý ăn chơi hay đặt phòng?",
+            "ask_location_soft": "Bạn đang ở khu nào để mình gợi ý đúng chỗ nhất nè?",
+            "close_conversation": "Chém gió vui ghê! Khi nào cần gợi ý món/đi chơi cứ gọi mình nha."
+        },
+        "examples": [
+            {
+                "user": "Buồn ngủ quá",
+                "assistant": "Thử đi dạo 5 phút và làm ly cà phê nhẹ xem sao? Nếu thích ngọt, cà phê trứng là cứu tinh đó!"
+            },
+            {
+                "user": "Nay Hà Nội nóng ghê",
+                "assistant": "Chuẩn luôn! Chiều ghé hồ uống trà chanh, tối đi Phan Đình Phùng là đỡ mệt liền 😄"
+            },
+            {
+                "user": "Chán quá, chẳng biết làm gì",
+                "assistant": "Mình có mini-game nè: phở hay bún chả? Chọn một và nói lý do!"
+            }
+        ],
+        "politeness_pack": {
+            "thanks": [
+                "Cảm ơn bạn nhiều nè!",
+                "Rất trân trọng góp ý của bạn 🙏"
+            ],
+            "apology": [
+                "Xin lỗi vì sự bất tiện này nha.",
+                "Rất tiếc nếu làm bạn phiền lòng."
+            ]
+        },
+        "placeholders": {
+            "vars": [
+                "{{city}}",
+                "{{temp}}",
+                "{{condition}}",
+                "{{name_optional}}"
+            ],
+            "notes": "Render các biến nếu có, nếu không thì bỏ qua phần đó. Không nói 'placeholder'."
+        },
+        "safety_guardrails": [
+            "Không đưa lời khuyên y tế/pháp lý/chứng khoán chuyên sâu",
+            "Tránh thông tin sai lệch; nếu không chắc, đề nghị người dùng kiểm tra nguồn tin cậy",
+            "Không thu thập dữ liệu cá nhân nhạy cảm",
+            "Tôn trọng mọi vùng miền, văn hóa, tôn giáo"
+        ]
+    },
+    "meta": {
+        "version": "2.0.0",
+        "last_updated": "2025-01-27",
+        "language": "vi-VN",
+        "description": "Knowledge base đầy đủ cho AI chatbot MARRON Hotel - thân thiện, chính xác, toàn diện"
     }
-  ],
-  "policies": [
-    {
-      "category": "Check-in/Check-out",
-      "rules": [
-        "Giờ check-in: 14:00",
-        "Giờ check-out: 12:00",
-        "Check-in sớm/check-out muộn có thể áp dụng phụ phí và tùy thuộc vào tình trạng phòng."
-      ]
-    },
-    {
-      "category": "Hủy phòng",
-      "rules": [
-        "Miễn phí hủy phòng nếu thông báo trước 24 giờ so với ngày check-in.",
-        "Hủy phòng muộn hơn hoặc không đến sẽ bị tính phí đêm đầu tiên."
-      ]
-    },
-    {
-      "category": "Trẻ em & Giường phụ",
-      "rules": [
-        "Trẻ em dưới 6 tuổi miễn phí khi ở chung phòng với bố mẹ và không yêu cầu giường phụ.",
-        "Trẻ em từ 6-12 tuổi có thể áp dụng phụ phí.",
-        "Giường phụ có sẵn với phụ phí."
-      ]
-    },
-    {
-      "category": "Thú cưng",
-      "rules": [
-        "Khách sạn không cho phép mang thú cưng."
-      ]
-    }
-  ],
-  "nearby_attractions": [
-    {
-      "name": "Chợ Bến Thành",
-      "distance": "5 phút đi bộ",
-      "description": "Chợ truyền thống nổi tiếng với ẩm thực và mua sắm."
-    },
-    {
-      "name": "Nhà hát Lớn Sài Gòn",
-      "distance": "10 phút đi bộ",
-      "description": "Kiến trúc Pháp cổ điển, nơi diễn ra các sự kiện văn hóa."
-    },
-    {
-      "name": "Dinh Độc Lập",
-      "distance": "15 phút đi bộ",
-      "description": "Di tích lịch sử quan trọng của Việt Nam."
-    }
-  ],
-  "booking_guide": [
-    {
-      "step": "1. Kiểm tra phòng trống",
-      "description": "Sử dụng form Check Availability trên trang chủ để kiểm tra phòng trống theo ngày và loại phòng."
-    },
-    {
-      "step": "2. Đăng nhập/Đăng ký",
-      "description": "Bạn cần đăng nhập hoặc đăng ký tài khoản để đặt phòng."
-    },
-    {
-      "step": "3. Chọn phương thức thanh toán",
-      "description": "Chọn giữa Credit Card hoặc Bank Transfer để thanh toán."
-    },
-    {
-      "step": "4. Xác nhận đặt phòng",
-      "description": "Kiểm tra thông tin và xác nhận đặt phòng."
-    }
-  ],
-  "payment_methods": [
-    {
-      "method": "Credit Card",
-      "description": "Thanh toán bằng thẻ tín dụng/ghi nợ quốc tế."
-    },
-    {
-      "method": "Bank Transfer",
-      "description": "Chuyển khoản ngân hàng với thông tin được cung cấp."
-    }
-  ],
-  "detailed_features": {
-    "room_change": {
-      "title": "Hướng dẫn đổi phòng sau khi đặt",
-      "description": "Bạn có thể yêu cầu đổi phòng sau khi đặt thông qua hệ thống Room Change Request",
-      "steps": [
-        "1. Đăng nhập vào tài khoản của bạn",
-        "2. Vào mục 'My Bookings' trong profile",
-        "3. Chọn booking muốn đổi phòng",
-        "4. Click vào nút 'Request Room Change'",
-        "5. Chọn loại phòng mới từ danh sách có sẵn",
-        "6. Điền lý do đổi phòng (không bắt buộc)",
-        "7. Ghi chú thêm nếu cần",
-        "8. Submit yêu cầu",
-        "9. Chờ admin xét duyệt (thường trong 24h)",
-        "10. Nhận thông báo kết quả qua email"
-      ],
-      "requirements": [
-        "Booking phải ở trạng thái 'confirmed' hoặc 'checked_in'",
-        "Không có yêu cầu đổi phòng đang chờ duyệt",
-        "Phòng mới phải còn trống trong thời gian đặt",
-        "Có thể áp dụng phụ phí nếu phòng mới đắt hơn"
-      ],
-      "route": "/booking/{booking}/room-change/request"
-    },
-    "booking_management": {
-      "title": "Quản lý đặt phòng",
-      "description": "Các tính năng quản lý đặt phòng trong tài khoản cá nhân",
-      "features": [
-        "Xem danh sách tất cả đặt phòng: /user/bookings",
-        "Xem chi tiết đặt phòng: /user/bookings/{id}/detail",
-        "Hủy đặt phòng: /booking/cancel/{id}",
-        "Xem lịch sử đổi phòng: /booking/{booking}/room-change/history",
-        "Yêu cầu hóa đơn VAT: /profile/bookings/{booking}/vat/request"
-      ]
-    },
-    "payment_process": {
-      "title": "Quy trình thanh toán chi tiết",
-      "description": "Hướng dẫn từng bước thanh toán đặt phòng",
-      "steps": [
-        "1. Sau khi đặt phòng thành công, booking có trạng thái 'pending_payment'",
-        "2. Vào trang 'Payment Method': /payment-method/{booking}",
-        "3. Chọn phương thức thanh toán: Credit Card hoặc Bank Transfer",
-        "4. Nếu chọn Credit Card: Chuyển đến cổng thanh toán VNPay",
-        "5. Nếu chọn Bank Transfer: Hiển thị thông tin tài khoản ngân hàng",
-        "6. Thực hiện thanh toán theo hướng dẫn",
-        "7. Chờ xác nhận thanh toán từ admin",
-        "8. Nhận email xác nhận khi thanh toán thành công"
-      ],
-      "routes": {
-        "payment_method": "/payment-method/{booking}",
-        "credit_card": "/payment/credit-card/{booking}",
-        "bank_transfer": "/payment/bank-transfer/{booking}",
-        "success": "/payment/success/{booking}",
-        "failed": "/payment/failed"
-      }
-    },
-    "promotion_system": {
-      "title": "Hệ thống khuyến mãi",
-      "description": "Cách sử dụng mã khuyến mãi và promotion",
-      "features": [
-        "Xem danh sách khuyến mãi: /promotions",
-        "Áp dụng mã khuyến mãi khi thanh toán",
-        "Xem khuyến mãi đã áp dụng",
-        "Hủy khuyến mãi nếu cần"
-      ],
-      "routes": {
-        "promotions": "/promotions",
-        "apply_promotion": "/bookings/{booking}/promotions/apply",
-        "remove_promotion": "/bookings/{booking}/promotions/remove"
-      }
-    },
-    "review_system": {
-      "title": "Hệ thống đánh giá",
-      "description": "Cách đánh giá phòng và dịch vụ",
-      "steps": [
-        "1. Sau khi check-out, vào trang 'My Reviews'",
-        "2. Chọn phòng đã ở để đánh giá",
-        "3. Đánh giá từ 1-5 sao",
-        "4. Viết nhận xét chi tiết",
-        "5. Đánh giá các tiêu chí: vệ sinh, tiện nghi, vị trí, dịch vụ",
-        "6. Submit đánh giá",
-        "7. Đánh giá sẽ được admin duyệt trước khi hiển thị"
-      ],
-      "routes": {
-        "reviews": "/user/reviews",
-        "review_form": "/room-type-reviews/{roomTypeId}/form"
-      }
-    },
-    "support_system": {
-      "title": "Hệ thống hỗ trợ",
-      "description": "Cách liên hệ hỗ trợ và tạo ticket",
-      "features": [
-        "Tạo ticket hỗ trợ mới",
-        "Xem lịch sử ticket",
-        "Chat với nhân viên hỗ trợ",
-        "Upload file đính kèm"
-      ],
-      "routes": {
-        "support": "/support",
-        "conversation": "/support/conversation/{conversationId}"
-      }
-    },
-    "vat_invoice": {
-      "title": "Hóa đơn VAT",
-      "description": "Cách yêu cầu và nhận hóa đơn VAT",
-      "steps": [
-        "1. Vào trang chi tiết đặt phòng",
-        "2. Click vào nút 'Request VAT Invoice'",
-        "3. Điền thông tin công ty (nếu cần)",
-        "4. Submit yêu cầu",
-        "5. Admin sẽ xử lý và gửi hóa đơn qua email",
-        "6. Có thể download hóa đơn từ email"
-      ],
-      "routes": {
-        "request_vat": "/profile/bookings/{booking}/vat/request",
-        "generate_vat": "/profile/bookings/{booking}/vat/generate"
-      }
-    }
-  },
-  "faq": [
-    {
-      "question": "Làm thế nào để đặt phòng trực tuyến?",
-      "answer": "Bạn có thể đặt phòng qua website: 1) Kiểm tra phòng trống, 2) Đăng nhập/đăng ký, 3) Chọn phương thức thanh toán, 4) Xác nhận đặt phòng."
-    },
-    {
-      "question": "Có những phương thức thanh toán nào?",
-      "answer": "Chúng tôi chấp nhận thanh toán bằng Credit Card và Bank Transfer."
-    },
-    {
-      "question": "Làm thế nào để hủy đặt phòng?",
-      "answer": "Bạn có thể hủy phòng miễn phí nếu thông báo trước 24 giờ so với ngày check-in."
-    },
-    {
-      "question": "Có thể thay đổi phòng sau khi đặt không?",
-      "answer": "Có, bạn có thể yêu cầu thay đổi phòng thông qua hệ thống Room Change Request. Vào My Bookings → Chọn booking → Request Room Change → Chọn phòng mới → Submit yêu cầu."
-    },
-    {
-      "question": "Làm thế nào để xem lịch sử đặt phòng?",
-      "answer": "Đăng nhập vào tài khoản và vào mục 'My Bookings' để xem lịch sử đặt phòng."
-    },
-    {
-      "question": "Có thể áp dụng mã khuyến mãi không?",
-      "answer": "Có, bạn có thể áp dụng mã khuyến mãi trong quá trình đặt phòng tại trang Payment Method."
-    },
-    {
-      "question": "Làm thế nào để đánh giá khách sạn?",
-      "answer": "Sau khi check-out, bạn có thể đánh giá khách sạn qua hệ thống review. Vào My Reviews → Chọn phòng → Đánh giá từ 1-5 sao và viết nhận xét."
-    },
-    {
-      "question": "Có thể yêu cầu hóa đơn VAT không?",
-      "answer": "Có, bạn có thể yêu cầu hóa đơn VAT sau khi hoàn thành đặt phòng. Vào chi tiết booking → Request VAT Invoice → Điền thông tin → Submit."
-    },
-    {
-      "question": "Làm thế nào để liên hệ hỗ trợ?",
-      "answer": "Bạn có thể liên hệ qua: Điện thoại: +84 28 1234 5678, Email: info@marronhotel.com, hoặc sử dụng hệ thống Support trên website."
-    },
-    {
-      "question": "Khách sạn có hồ bơi không?",
-      "answer": "Có, chúng tôi có hồ bơi vô cực với view đẹp dành cho khách lưu trú."
-    },
-    {
-      "question": "Tôi có thể đặt phòng trực tuyến không?",
-      "answer": "Có, bạn có thể đặt phòng trực tuyến qua website của chúng tôi hoặc liên hệ trực tiếp."
-    },
-    {
-      "question": "Khách sạn có dịch vụ ăn sáng không?",
-      "answer": "Có, chúng tôi phục vụ bữa sáng buffet tại nhà hàng Fine Dining từ 6:00 đến 10:00 sáng."
-    },
-    {
-      "question": "Giờ check-in và check-out?",
-      "answer": "Giờ check-in: 14:00, Giờ check-out: 12:00. Check-in sớm/check-out muộn có thể áp dụng phụ phí."
-    },
-    {
-      "question": "Có dịch vụ đưa đón sân bay không?",
-      "answer": "Có, chúng tôi cung cấp dịch vụ đưa đón sân bay bằng xe sang trọng."
-    },
-    {
-      "question": "Có thể check-in sớm hoặc check-out muộn không?",
-      "answer": "Có thể áp dụng nhưng sẽ có phụ phí và tùy thuộc vào tình trạng phòng."
-    },
-    {
-      "question": "Số điện thoại liên hệ?",
-      "answer": "Số điện thoại: +84 28 1234 5678, Email: info@marronhotel.com"
-    }
-  ]
 }

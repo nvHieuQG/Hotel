@@ -87,6 +87,13 @@ Route::prefix('/staff')->name('staff.')->middleware(['auth', 'admin'])->group(fu
 
     // Tour bookings
     Route::resource('tour-bookings', AdminTourBookingController::class);
+    // Tour room changes (staff per tour)
+    Route::get('tour-bookings/{tourBookingId}/room-changes', [\App\Http\Controllers\Admin\AdminTourRoomChangeController::class, 'index'])->name('admin.tour-bookings.room-changes.index');
+    Route::get('tour-bookings/{tourBookingId}/room-changes/create', [\App\Http\Controllers\Admin\AdminTourRoomChangeController::class, 'create'])->name('admin.tour-bookings.room-changes.create');
+    Route::post('tour-bookings/{tourBookingId}/room-changes', [\App\Http\Controllers\Admin\AdminTourRoomChangeController::class, 'store'])->name('admin.tour-bookings.room-changes.store');
+    Route::post('tour-room-changes/{id}/approve', [\App\Http\Controllers\Admin\AdminTourRoomChangeController::class, 'approve'])->name('admin.tour-room-changes.approve');
+    Route::post('tour-room-changes/{id}/reject', [\App\Http\Controllers\Admin\AdminTourRoomChangeController::class, 'reject'])->name('admin.tour-room-changes.reject');
+    Route::post('tour-room-changes/{id}/complete', [\App\Http\Controllers\Admin\AdminTourRoomChangeController::class, 'complete'])->name('admin.tour-room-changes.complete');
     Route::patch('tour-bookings/{id}/status', [AdminTourBookingController::class, 'updateStatus'])->name('tour-bookings.update-status');
     Route::patch('tour-bookings/{id}/payments/{paymentId}', [AdminTourBookingController::class, 'updatePaymentStatus'])->name('tour-bookings.payments.update-status');
     Route::post('tour-bookings/{id}/collect-payment', [AdminTourBookingController::class, 'collectPayment'])->name('tour-bookings.collect-payment');
@@ -238,6 +245,13 @@ Route::middleware(['auth', 'check.booking.access'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::post('profile/bookings/{booking}/vat/request', [ClientVatInvoiceController::class, 'request'])->name('client.vat-invoice.request');
     Route::post('profile/bookings/{booking}/vat/regenerate', [ClientVatInvoiceController::class, 'regenerate'])->name('client.vat-invoice.regenerate');
+    
+    // Tour room changes (client)
+    Route::get('tour-bookings/{tourBookingId}/room-change', [\App\Http\Controllers\TourRoomChangeController::class, 'create'])->name('tour-bookings.room-change.create');
+    Route::post('tour-bookings/{tourBookingId}/room-changes', [\App\Http\Controllers\TourRoomChangeController::class, 'store'])->name('tour-room-changes.store');
+    
+    // API for getting available rooms by type
+    Route::get('api/rooms/available-by-type/{roomTypeId}', [\App\Http\Controllers\TourRoomChangeController::class, 'getAvailableRoomsByType'])->name('api.rooms.available-by-type');
 });
 
 // Routes công khai cho room type reviews (chỉ hiển thị)

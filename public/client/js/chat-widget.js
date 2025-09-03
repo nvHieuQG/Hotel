@@ -30,6 +30,10 @@ document.addEventListener('DOMContentLoaded', function() {
   let messageCount = 1;
   let newMessageCount = 0;
   let realtimeInterval = null;
+  let isRequestInFlight = false;
+  let activePollInterval = 8000; // 8s khi tab hoạt động
+  let backgroundPollInterval = 16000; // 16s khi tab nền
+  let currentPollInterval = activePollInterval;
 
   // Khởi tạo lastMessageId từ tin nhắn cuối cùng và đếm số tin nhắn
   if(chatMessages) {
@@ -471,11 +475,14 @@ document.addEventListener('DOMContentLoaded', function() {
       checkNewMessages();
     }
 
-    realtimeInterval = setInterval(() => {
+    // Thay setInterval bằng vòng setTimeout tự điều chỉnh
+    const tick = () => {
       if (conversationIdInput && conversationIdInput.value) {
         checkNewMessages();
       }
-    }, 3000); // Kiểm tra mỗi 3 giây
+      realtimeInterval = setTimeout(tick, currentPollInterval);
+    };
+    realtimeInterval = setTimeout(tick, currentPollInterval);
 
     console.log('Realtime chat started and will continue running even when modal is closed. Badge will show new messages.');
   }
@@ -483,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Hàm dừng realtime chat (chỉ sử dụng khi cần thiết)
   function stopRealtimeChat() {
     if (realtimeInterval) {
-      clearInterval(realtimeInterval);
+      clearTimeout(realtimeInterval);
       realtimeInterval = null;
     }
     isRealtimeEnabled = false;
@@ -505,6 +512,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     console.log('Checking new messages for conversation:', conversationId, 'last ID:', lastMessageId);
+
+    if (isRequestInFlight) {
+      return;
+    }
+    isRequestInFlight = true;
 
     fetch(`/support/conversation/${conversationId}/messages?last_id=${lastMessageId}`, {
       headers: {
@@ -579,14 +591,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Realtime chat continues despite error, badge will still show new messages');
       })
       .finally(() => {
-        // Tiếp tục polling nếu realtime vẫn được bật
-        if (isRealtimeEnabled) {
-          setTimeout(checkNewMessages, 3000);
-        } else {
-          // Nếu realtime bị tắt, khởi động lại
-          console.log('Realtime was disabled, restarting... Badge will continue to show new messages');
-          startRealtimeChat();
-        }
+        isRequestInFlight = false;
+        // Tiếp tục polling theo vòng tick bên trên
       });
   }
 
@@ -735,15 +741,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Xử lý visibility change - realtime vẫn chạy ngay cả khi tab không active
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) {
-      console.log('Tab hidden, but realtime chat continues running');
-      // KHÔNG dừng realtime chat khi tab không active
-      // Realtime vẫn chạy để nhận tin nhắn mới
-    } else {
-      console.log('Tab visible again');
-      // Tab visible trở lại, không cần làm gì đặc biệt
-      // Realtime đã chạy rồi
-    }
+    currentPollInterval = document.hidden ? backgroundPollInterval : activePollInterval;
   });
 
   // Hàm hiển thị file preview

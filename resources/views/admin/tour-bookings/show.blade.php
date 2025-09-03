@@ -42,6 +42,18 @@
             </nav>
         </div>
         <div>
+            @php
+                $pendingRoomChanges = \App\Models\TourRoomChange::where('tour_booking_id', $tourBooking->id)
+                    ->where('status', 'pending')
+                    ->count();
+            @endphp
+            
+            @if($pendingRoomChanges > 0)
+                <a href="{{ route('staff.admin.tour-bookings.room-changes.index', $tourBooking->id) }}" class="btn btn-warning mr-2">
+                    <i class="fas fa-exchange-alt"></i> Yêu cầu đổi phòng ({{ $pendingRoomChanges }})
+                </a>
+            @endif
+            
             <a href="{{ route('admin.tour-bookings.edit', $tourBooking->id) }}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> Chỉnh sửa
             </a>
@@ -153,8 +165,10 @@
                                             <tr>
                                                 <th>Loại phòng</th>
                                                 <th>Số lượng</th>
+                                                <th>Phòng đã gán</th>
                                                 <th>Giá/phòng</th>
                                                 <th>Tổng tiền</th>
+                                                <th>Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -167,19 +181,68 @@
                                                     <td class="text-center">
                                                         <span class="px-2 py-1">{{ $room->quantity }} phòng</span>
                                                     </td>
+                                                    <td>
+                                                        @if(!empty($room->assigned_room_ids))
+                                                            @foreach($room->assigned_room_ids as $roomId)
+                                                                @php $assignedRoom = \App\Models\Room::find($roomId); @endphp
+                                                                @if($assignedRoom)
+                                                                    <span class="badge badge-primary mr-1">{{ $assignedRoom->room_number }}</span>
+                                                                @endif
+                                                            @endforeach
+                                                        @else
+                                                            <span class="text-muted">Chưa gán phòng</span>
+                                                        @endif
+                                                    </td>
                                                     <td class="text-right">{{ number_format($room->price_per_room, 0, ',', '.') }} VNĐ</td>
                                                     <td class="text-right font-weight-bold">{{ number_format($room->total_price, 0, ',', '.') }} VNĐ</td>
+                                                    <td>
+                                                        <a href="{{ route('staff.admin.tour-bookings.room-changes.index', $tourBooking->id) }}" 
+                                                           class="btn btn-sm btn-info" title="Xem yêu cầu đổi phòng">
+                                                            <i class="fas fa-exchange-alt"></i>
+                                                        </a>
+                                                    </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
                                         <tfoot class="table-info">
                                             <tr>
-                                                <td colspan="3" class="text-right"><strong>Tổng tiền phòng:</strong></td>
+                                                <td colspan="4" class="text-right"><strong>Tổng tiền phòng:</strong></td>
                                                 <td class="text-right font-weight-bold">{{ number_format($tourBooking->total_rooms_amount, 0, ',', '.') }} VNĐ</td>
+                                                <td></td>
                                             </tr>
                                         </tfoot>
                                     </table>
                                 </div>
+                                
+                                <!-- Thông báo yêu cầu đổi phòng -->
+                                @php
+                                    $pendingRoomChanges = \App\Models\TourRoomChange::where('tour_booking_id', $tourBooking->id)
+                                        ->where('status', 'pending')
+                                        ->count();
+                                @endphp
+                                
+                                @if($pendingRoomChanges > 0)
+                                    <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <strong>Có {{ $pendingRoomChanges }} yêu cầu đổi phòng đang chờ duyệt!</strong>
+                                        <a href="{{ route('staff.admin.tour-bookings.room-changes.index', $tourBooking->id) }}" class="btn btn-warning btn-sm ml-2">
+                                            <i class="fas fa-eye"></i> Xem chi tiết
+                                        </a>
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                @endif
+                                @php
+                                    $pendingChanges = \App\Models\TourRoomChange::where('tour_booking_id', $tourBooking->id)->where('status','pending')->count();
+                                @endphp
+                                @if($pendingChanges > 0)
+                                    <div class="alert alert-warning mt-3">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        Có {{ $pendingChanges }} yêu cầu đổi phòng đang chờ duyệt.
+                                        <a href="{{ route('staff.admin.tour-bookings.room-changes.index', $tourBooking->id) }}" class="btn btn-sm btn-warning ml-2">Xem yêu cầu</a>
+                                    </div>
+                                @endif
                             @else
                                 <p class="text-muted text-center my-3">Không có phòng nào được đặt</p>
                             @endif

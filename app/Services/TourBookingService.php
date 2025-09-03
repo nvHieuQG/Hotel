@@ -11,6 +11,7 @@ use App\Models\RoomType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 
@@ -62,8 +63,9 @@ class TourBookingService implements TourBookingServiceInterface
             ]);
 
             // Tạo tour booking rooms với giá đã tính toán
+            $createdRooms = [];
             foreach ($calculatedData['room_selections'] as $roomSelection) {
-                TourBookingRoom::create([
+                $created = TourBookingRoom::create([
                     'tour_booking_id' => $tourBooking->id,
                     'room_type_id' => $roomSelection['room_type_id'],
                     'quantity' => $roomSelection['quantity'],
@@ -72,6 +74,23 @@ class TourBookingService implements TourBookingServiceInterface
                     'total_price' => $roomSelection['total_price'],
                     'guest_details' => $roomSelection['guest_details'] ?? null,
                 ]);
+                $createdRooms[] = $created;
+            }
+
+            // Gán cố định phòng theo từng room_type ngay tại thời điểm tạo (best-effort)
+            foreach ($createdRooms as $tbr) {
+                if (!$tbr instanceof \App\Models\TourBookingRoom) {
+                    continue;
+                }
+                $assigned = $this->assignFixedRoomsForTourSelection(
+                    $tbr->room_type_id,
+                    (int)$tbr->quantity,
+                    $data['check_in_date'],
+                    $data['check_out_date']
+                );
+                if (!empty($assigned)) {
+                    $tbr->update(['assigned_room_ids' => $assigned]);
+                }
             }
 
             DB::commit();
@@ -81,6 +100,148 @@ class TourBookingService implements TourBookingServiceInterface
             Log::error('Tour booking creation error: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Gán cố định N phòng thuộc room_type cho khoảng ngày, ưu tiên phòng có id nhỏ và thực sự trống toàn dải.
+     */
+    private function assignFixedRoomsForTourSelection(int $roomTypeId, int $quantity, $checkInDate, $checkOutDate): array
+    {
+        $assigned = [];
+        $roomType = RoomType::with('rooms')->find($roomTypeId);
+        if (!$roomType || !$roomType->rooms || $quantity <= 0) return $assigned;
+
+        $rooms = $roomType->rooms->sortBy('id')->values();
+        foreach ($rooms as $room) {
+            if (count($assigned) >= $quantity) break;
+            // Chỉ chọn phòng thật sự trống toàn dải
+            if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
+                $assigned[] = $room->id;
+            }
+        }
+        return $assigned;
+    }
+
+    /**
+     * Tạo yêu cầu đổi phòng cho tour (client tạo)
+     */
+    public function createTourRoomChange(array $data): \App\Models\TourRoomChange
+    {
+        $tb = $this->tourBookingRepository->findById((int)$data['tour_booking_id']);
+        if (!$tb) throw new \InvalidArgumentException('Tour booking không tồn tại');
+
+        // Kiểm tra from_room thuộc assigned_room_ids hiện tại
+        $belongs = \App\Models\TourBookingRoom::where('tour_booking_id', $tb->id)
+            ->whereJsonContains('assigned_room_ids', (int)$data['from_room_id'])
+            ->exists();
+        if (!$belongs) throw new \InvalidArgumentException('Phòng hiện tại không thuộc tour booking');
+
+        $to = null;
+        if (!empty($data['to_room_id'])) {
+            // Kiểm tra to_room có trống toàn dải nếu client đã chọn
+            $to = \App\Models\Room::findOrFail((int)$data['to_room_id']);
+            if (!$to->isStrictlyAvailableForRange($tb->check_in_date, $tb->check_out_date)) {
+                throw new \InvalidArgumentException('Phòng muốn đổi không trống cho toàn bộ khoảng ngày');
+            }
+        } else {
+            // Auto đề xuất phòng đích cùng loại, trống toàn dải
+            $fromRoom = \App\Models\Room::findOrFail((int)$data['from_room_id']);
+            // chỉ đề xuất CÙNG LOẠI phòng
+            $candidate = \App\Models\Room::where('room_type_id', $fromRoom->room_type_id)
+                ->where('status', 'available')
+                ->orderBy('id')
+                ->get()
+                ->first(function($room) use ($tb) {
+                    return $room->isStrictlyAvailableForRange($tb->check_in_date, $tb->check_out_date);
+                });
+            if ($candidate) {
+                $to = $candidate; // gợi ý
+                $data['suggested_to_room_id'] = $candidate->id;
+            }
+        }
+
+        // Tính chênh lệch theo giá loại phòng * số đêm
+        $nights = max(1, (int)\Carbon\Carbon::parse($tb->check_in_date)->diffInDays(\Carbon\Carbon::parse($tb->check_out_date)));
+        $fromRoom = \App\Models\Room::findOrFail((int)$data['from_room_id']);
+        $delta = 0;
+        if ($to) {
+            $delta = ((int)($to->roomType->price) - (int)($fromRoom->roomType->price)) * $nights;
+        }
+
+        return \App\Models\TourRoomChange::create([
+            'tour_booking_id' => $tb->id,
+            'from_room_id' => (int)$data['from_room_id'],
+            'to_room_id' => $to?->id,
+            'suggested_to_room_id' => $data['suggested_to_room_id'] ?? null,
+            'price_difference' => $delta,
+            'status' => 'pending',
+            'reason' => $data['reason'] ?? null,
+            'customer_note' => $data['customer_note'] ?? null,
+            'requested_by' => Auth::id(),
+        ]);
+    }
+
+    /**
+     * Duyệt yêu cầu đổi phòng tour (admin)
+     */
+    public function approveTourRoomChange(int $id, array $data = []): bool
+    {
+        $trc = \App\Models\TourRoomChange::find($id);
+        if (!$trc || $trc->status !== 'pending') return false;
+
+        $tb = $trc->tourBooking;
+        if (!$tb) return false;
+
+        // Nếu chưa có phòng đích, dùng phòng đề xuất
+        if (empty($trc->to_room_id) && !empty($trc->suggested_to_room_id)) {
+            $trc->to_room_id = (int)$trc->suggested_to_room_id;
+        }
+
+        // Phòng đích vẫn phải trống toàn dải tại thời điểm duyệt
+        $to = \App\Models\Room::findOrFail($trc->to_room_id);
+        if (!$to->isStrictlyAvailableForRange($tb->check_in_date, $tb->check_out_date)) return false;
+
+        // Ép cùng loại phòng (VAT): từ chối nếu khác loại
+        $from = \App\Models\Room::findOrFail($trc->from_room_id);
+        if ((int)$from->room_type_id !== (int)$to->room_type_id) {
+            return false;
+        }
+
+        // Không cho duyệt nếu phòng đích đang là phòng đã gán cho tour khác trùng dải ngày
+        $conflictTour = \App\Models\TourBookingRoom::whereJsonContains('assigned_room_ids', $to->id)
+            ->whereHas('tourBooking', function($q) use ($tb) {
+                $q->where('id', '!=', $tb->id)
+                  ->where('check_in_date', '<', $tb->check_out_date)
+                  ->where('check_out_date', '>', $tb->check_in_date)
+                  ->where('status', '!=', 'cancelled');
+            })
+            ->exists();
+        if ($conflictTour) return false;
+
+        return DB::transaction(function () use ($trc, $tb, $data, $to) {
+            // cập nhật trạng thái yêu cầu
+            $trc->update([
+                'status' => 'approved',
+                'admin_note' => $data['admin_note'] ?? null,
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+            ]);
+
+            // thay from_room -> to_room trong assigned_room_ids
+            $tbr = \App\Models\TourBookingRoom::where('tour_booking_id', $tb->id)
+                ->whereJsonContains('assigned_room_ids', $trc->from_room_id)
+                ->first();
+            if ($tbr) {
+                $ids = array_values(array_filter((array)$tbr->assigned_room_ids, fn($rid)=> (int)$rid !== (int)$trc->from_room_id));
+                $ids[] = (int)$trc->to_room_id;
+                $tbr->update(['assigned_room_ids' => array_values(array_unique($ids))]);
+            }
+
+            \App\Models\Room::where('id', $trc->from_room_id)->update(['status' => 'repair']);
+            \App\Models\Room::where('id', $trc->to_room_id)->update(['status' => 'booked']);
+
+            return true;
+        });
     }
 
     /**
@@ -112,8 +273,23 @@ class TourBookingService implements TourBookingServiceInterface
      */
     public function updateTourBookingStatus($id, $status)
     {
-        return $this->tourBookingRepository->update($id, ['status' => $status]);
+        $updated = $this->tourBookingRepository->update($id, ['status' => $status]);
+        if ($updated && in_array($status, ['cancelled','completed'])) {
+            // Clear assigned_room_ids khi tour kết thúc/hủy
+            try {
+                $tbrs = \App\Models\TourBookingRoom::where('tour_booking_id', $id)->get();
+                foreach ($tbrs as $tbr) {
+                    if (!empty($tbr->assigned_room_ids)) {
+                        $tbr->update(['assigned_room_ids' => null]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Clear assigned_room_ids failed: '.$e->getMessage());
+            }
+        }
+        return $updated;
     }
+
 
     /**
      * Tính toán giá tour booking
@@ -167,6 +343,125 @@ class TourBookingService implements TourBookingServiceInterface
             }
         }
         return false;
+    }
+
+    public function rejectTourRoomChange(int $id, array $data = []): bool
+    {
+        $trc = \App\Models\TourRoomChange::find($id);
+        if (!$trc || $trc->status !== 'pending') return false;
+
+        return \DB::transaction(function () use ($trc, $data) {
+            $trc->update([
+                'status' => 'rejected',
+                'admin_note' => $data['admin_note'] ?? null,
+                'approved_by' => \Auth::id(),
+                'approved_at' => now(),
+            ]);
+
+            // Gửi email thông báo từ chối
+            try {
+                $this->sendTourRoomChangeRejectionEmail($trc);
+            } catch (\Throwable $e) {
+                \Log::warning('Send tour room change rejection email failed: '.$e->getMessage());
+            }
+
+            return true;
+        });
+    }
+
+    public function completeTourRoomChange(int $id): bool
+    {
+        $trc = \App\Models\TourRoomChange::find($id);
+        if (!$trc || $trc->status !== 'approved') return false;
+
+        return \DB::transaction(function () use ($trc) {
+            $trc->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+
+            // Gửi email thông báo hoàn tất
+            try {
+                $this->sendTourRoomChangeCompletionEmail($trc);
+            } catch (\Throwable $e) {
+                \Log::warning('Send tour room change completion email failed: '.$e->getMessage());
+            }
+
+            return true;
+        });
+    }
+
+    private function sendTourRoomChangeApprovalEmail(\App\Models\TourRoomChange $trc): void
+    {
+        $tourBooking = $trc->tourBooking;
+        $user = $tourBooking->user;
+        
+        if (!$user || !$user->email) return;
+
+        $data = [
+            'user_name' => $user->name,
+            'tour_name' => $tourBooking->tour_name,
+            'booking_id' => $tourBooking->booking_id,
+            'from_room' => $trc->fromRoom->room_number,
+            'to_room' => $trc->toRoom->room_number,
+            'price_difference' => $trc->price_difference,
+            'check_in_date' => $tourBooking->check_in_date,
+            'check_out_date' => $tourBooking->check_out_date,
+            'admin_note' => $trc->admin_note,
+        ];
+
+        \Mail::send('emails.tour-room-change-approved', $data, function ($message) use ($user, $tourBooking) {
+            $message->to($user->email, $user->name)
+                    ->subject('Yêu cầu đổi phòng tour #' . $tourBooking->booking_id . ' đã được duyệt');
+        });
+    }
+
+    private function sendTourRoomChangeRejectionEmail(\App\Models\TourRoomChange $trc): void
+    {
+        $tourBooking = $trc->tourBooking;
+        $user = $tourBooking->user;
+        
+        if (!$user || !$user->email) return;
+
+        $data = [
+            'user_name' => $user->name,
+            'tour_name' => $tourBooking->tour_name,
+            'booking_id' => $tourBooking->booking_id,
+            'from_room' => $trc->fromRoom->room_number,
+            'to_room' => $trc->toRoom->room_number,
+            'check_in_date' => $tourBooking->check_in_date,
+            'check_out_date' => $tourBooking->check_out_date,
+            'admin_note' => $trc->admin_note,
+        ];
+
+        \Mail::send('emails.tour-room-change-rejected', $data, function ($message) use ($user, $tourBooking) {
+            $message->to($user->email, $user->name)
+                    ->subject('Yêu cầu đổi phòng tour #' . $tourBooking->booking_id . ' đã bị từ chối');
+        });
+    }
+
+    private function sendTourRoomChangeCompletionEmail(\App\Models\TourRoomChange $trc): void
+    {
+        $tourBooking = $trc->tourBooking;
+        $user = $tourBooking->user;
+        
+        if (!$user || !$user->email) return;
+
+        $data = [
+            'user_name' => $user->name,
+            'tour_name' => $tourBooking->tour_name,
+            'booking_id' => $tourBooking->booking_id,
+            'from_room' => $trc->fromRoom->room_number,
+            'to_room' => $trc->toRoom->room_number,
+            'price_difference' => $trc->price_difference,
+            'check_in_date' => $tourBooking->check_in_date,
+            'check_out_date' => $tourBooking->check_out_date,
+        ];
+
+        \Mail::send('emails.tour-room-change-completed', $data, function ($message) use ($user, $tourBooking) {
+            $message->to($user->email, $user->name)
+                    ->subject('Đổi phòng tour #' . $tourBooking->booking_id . ' đã hoàn tất');
+        });
     }
 
     /**

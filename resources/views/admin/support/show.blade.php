@@ -1256,7 +1256,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let didShowConnectInfo = false;
 
     // Polling config & control
-    let pollIntervalMs = 1500; // nhanh hơn: 1.5s
+    const ACTIVE_POLL_INTERVAL = 7000; // 7s khi tab hoạt động
+    const BACKGROUND_POLL_INTERVAL = 15000; // 15s khi tab nền
+    let pollIntervalMs = ACTIVE_POLL_INTERVAL;
     let isFetchingMessages = false;
     let fetchAbortController = null;
 
@@ -1346,6 +1348,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape' && imageModal.style.display === 'block') {
             imageModal.style.display = 'none';
         }
+    });
+
+    // Điều chỉnh chu kỳ theo trạng thái tab
+    document.addEventListener('visibilitychange', function() {
+        pollIntervalMs = document.hidden ? BACKGROUND_POLL_INTERVAL : ACTIVE_POLL_INTERVAL;
     });
 
     // File input event listeners

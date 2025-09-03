@@ -73,6 +73,7 @@
                                         <th>Loại phòng</th>
                                         <th>Số lượng</th>
                                         <th>Số khách/phòng</th>
+                                        <th>Phòng đã gán</th>
                                         <th>Giá/phòng</th>
                                         <th>Tổng tiền</th>
                                     </tr>
@@ -86,6 +87,15 @@
                                             </td>
                                             <td><span class="badge badge-primary">{{ $tourBookingRoom->quantity }} phòng</span></td>
                                             <td><span class="badge badge-info">{{ $tourBookingRoom->guests_per_room }} người</span></td>
+                                            <td>
+                                                @if($tourBookingRoom->assigned_rooms->count() > 0)
+                                                    @foreach($tourBookingRoom->assigned_rooms as $room)
+                                                        <span class="badge badge-success mr-1 mb-1">{{ $room->room_number }}</span>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-muted">Chưa gán phòng</span>
+                                                @endif
+                                            </td>
                                             <td>{{ number_format($tourBookingRoom->price_per_room, 0, ',', '.') }} VNĐ</td>
                                             <td>{{ number_format($tourBookingRoom->total_price, 0, ',', '.') }} VNĐ</td>
                                         </tr>
@@ -93,26 +103,26 @@
                                 </tbody>
                                 <tfoot class="table-info">
                                     <tr>
-                                        <td colspan="4" class="text-right"><strong>Tổng tiền phòng:</strong></td>
+                                        <td colspan="5" class="text-right"><strong>Tổng tiền phòng:</strong></td>
                                         <td><strong>{{ number_format($tourBooking->total_rooms_amount ?? $tourBooking->total_price, 0, ',', '.') }} VNĐ</strong></td>
                                     </tr>
                                     @if($tourBooking->total_services_amount > 0)
                                         <tr>
-                                            <td colspan="4" class="text-right"><strong>Tổng tiền dịch vụ:</strong></td>
+                                            <td colspan="5" class="text-right"><strong>Tổng tiền dịch vụ:</strong></td>
                                             <td><strong>{{ number_format($tourBooking->total_services_amount, 0, ',', '.') }} VNĐ</strong></td>
                                         </tr>
                                     @endif
                                     <tr>
-                                        <td colspan="4" class="text-right"><strong>Tổng cộng:</strong></td>
+                                        <td colspan="5" class="text-right"><strong>Tổng cộng:</strong></td>
                                         <td><strong>{{ number_format($tourBooking->total_amount_before_discount ?? $tourBooking->total_price, 0, ',', '.') }} VNĐ</strong></td>
                                     </tr>
                                     @if($tourBooking->promotion_discount > 0)
                                         <tr class="table-success">
-                                            <td colspan="4" class="text-right"><strong>Giảm giá:</strong></td>
+                                            <td colspan="5" class="text-right"><strong>Giảm giá:</strong></td>
                                             <td><strong class="text-success">-{{ number_format($tourBooking->promotion_discount, 0, ',', '.') }} VNĐ</strong></td>
                                         </tr>
                                         <tr class="table-warning">
-                                            <td colspan="4" class="text-right"><strong>Giá cuối:</strong></td>
+                                            <td colspan="5" class="text-right"><strong>Giá cuối:</strong></td>
                                             <td><strong class="text-danger">{{ number_format($tourBooking->final_price ?? ($tourBooking->total_price - $tourBooking->promotion_discount), 0, ',', '.') }} VNĐ</strong></td>
                                         </tr>
                                     @endif
@@ -364,7 +374,12 @@
                                 </a>
                             </div>
                             <div class="col-md-4">
-                                @if(!$tourBooking->need_vat_invoice && !$tourBooking->vat_invoice_number)
+                                @if($tourBooking->status === 'confirmed' || $tourBooking->status === 'pending')
+                                    <a href="{{ route('tour-bookings.room-change.create', $tourBooking->id) }}" 
+                                       class="btn btn-warning btn-block">
+                                        <i class="fas fa-exchange-alt"></i> Đổi phòng
+                                    </a>
+                                @elseif(!$tourBooking->need_vat_invoice && !$tourBooking->vat_invoice_number)
                                     <a href="{{ route('tour-booking.vat-invoice', $tourBooking->id) }}" 
                                        class="btn btn-info btn-block">
                                         <i class="fas fa-file-invoice"></i> Yêu cầu VAT
