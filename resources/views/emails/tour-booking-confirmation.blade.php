@@ -116,7 +116,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🏨 Khách Sạn Luxury</div>
+            <div class="logo">🏨 Khách Sạn MARRON</div>
             <h1 style="color: #17a2b8; margin: 10px 0;">Xác nhận đặt phòng tour thành công!</h1>
             <div class="booking-id">Mã Booking: {{ $tourBooking->booking_id }}</div>
         </div>
@@ -207,7 +207,7 @@
         </div>
 
         <div class="footer">
-            <p>Cảm ơn bạn đã chọn Khách Sạn Luxury!</p>
+            <p>Cảm ơn bạn đã chọn Khách Sạn MARRON!</p>
             <p>Chúng tôi rất hân hạnh được phục vụ bạn trong chuyến đi sắp tới.</p>
             <p><small>Email này được gửi tự động, vui lòng không trả lời.</small></p>
         </div>

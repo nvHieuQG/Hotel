@@ -63,7 +63,7 @@
 <body>
     <div class="header">
         <h1>HÓA ĐƠN VAT - TOUR BOOKING</h1>
-        <p>Happy Holiday Resort</p>
+        <p>MARRON HOTEL</p>
     </div>
     
     <div class="content">
@@ -100,12 +100,12 @@
         <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
         
         <p>Trân trọng,<br>
-        <strong>Happy Holiday Resort</strong></p>
+        <strong>MARRON HOTEL</strong></p>
     </div>
     
     <div class="footer">
         <p>Email này được gửi tự động từ hệ thống đặt phòng</p>
-        <p>© {{ date('Y') }} Happy Holiday Resort. All rights reserved.</p>
+        <p>© {{ date('Y') }} MARRON HOTEL. All rights reserved.</p>
     </div>
 </body>
 </html>

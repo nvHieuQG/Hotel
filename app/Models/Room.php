@@ -390,6 +390,34 @@ class Room extends Model
     }
 
     /**
+     * Kiểm tra phòng trống cho toàn bộ khoảng ngày nhưng BỎ QUA giữ chỗ từ Tour Booking.
+     * Chỉ xét: booking thường (confirmed + pending<=30 phút) và trạng thái phòng (repair).
+     */
+    public function isAvailableForRangeIgnoringTourHolds(\Carbon\Carbon|string $checkIn, \Carbon\Carbon|string $checkOut): bool
+    {
+        $in = \Carbon\Carbon::parse($checkIn)->startOfDay();
+        $out = \Carbon\Carbon::parse($checkOut)->startOfDay();
+        if ($out->lessThanOrEqualTo($in)) {
+            $out = (clone $in)->addDay();
+        }
+
+        if ($this->status === 'repair') {
+            return false;
+        }
+
+        for ($day = $in->copy(); $day->lt($out); $day->addDay()) {
+            $dayStr = $day->toDateString();
+
+            // Bị giữ bởi booking thường?
+            $regularBooking = $this->getAssignedRegularBookingForDate($dayStr);
+            if ($regularBooking) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Lấy booking thường đang giữ phòng này trong ngày chỉ định (ưu tiên confirmed, sau đó pending trong 30 phút)
      */
     public function getAssignedRegularBookingForDate(string $day): ?\App\Models\Booking

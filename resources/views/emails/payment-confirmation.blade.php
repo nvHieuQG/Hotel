@@ -24,7 +24,7 @@
 <body>
     <div class="card">
         <div class="header">
-            <div class="brand">🏨 Happy Holiday Resort</div>
+            <div class="brand">🏨 MARRON HOTEL</div>
             <h2>Hóa đơn mua bán - Xác nhận thanh toán</h2>
             <div class="invoice-tag">Mã đặt phòng: {{ $booking->booking_id }}</div>
         </div>
@@ -68,7 +68,7 @@
         <p class="muted">Lưu ý: Đây là hóa đơn mua bán/biên nhận thanh toán. Nếu bạn cần hóa đơn VAT, vui lòng gửi yêu cầu xuất hóa đơn VAT trong trang hồ sơ khách hàng.</p>
 
         <div class="footer">
-            <p>Cảm ơn bạn đã chọn Happy Holiday Resort!</p>
+            <p>Cảm ơn bạn đã chọn MARRON HOTEL!</p>
             <p><small>Email được gửi tự động, vui lòng không trả lời.</small></p>
         </div>
     </div>

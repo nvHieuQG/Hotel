@@ -60,14 +60,23 @@
                                     <div class="card border-0 bg-light">
                                         <div class="card-body">
                                             <div class="room-image-container">
-                                                @if($booking->room->primaryImage)
-                                                    <img src="{{ $booking->room->primaryImage->full_image_url }}" 
-                                                         alt="Ảnh phòng {{ $booking->room->name }}" 
-                                                         class="img-fluid rounded shadow-sm" 
-                                                         style="max-height: 300px; width: 100%; object-fit: cover;">
-                                                @elseif($booking->room->firstImage)
-                                                    <img src="{{ $booking->room->firstImage->full_image_url }}" 
-                                                         alt="Ảnh phòng {{ $booking->room->name }}" 
+                                                @php
+                                                    $roomImageUrl = null;
+                                                    if ($booking->room && $booking->room->primaryImage) {
+                                                        $roomImageUrl = $booking->room->primaryImage->full_image_url;
+                                                    } elseif ($booking->room && $booking->room->firstImage) {
+                                                        $roomImageUrl = $booking->room->firstImage->full_image_url;
+                                                    } else {
+                                                        // Fallback: ảnh mặc định theo room_type_id nếu có
+                                                        $fallbackPath = 'client/images/room-' . ($booking->room->room_type_id ?? '1') . '.jpg';
+                                                        if (file_exists(public_path($fallbackPath))) {
+                                                            $roomImageUrl = asset($fallbackPath);
+                                                        }
+                                                    }
+                                                @endphp
+                                                @if($roomImageUrl)
+                                                    <img src="{{ $roomImageUrl }}" 
+                                                         alt="Ảnh phòng {{ $booking->room->name ?? 'Phòng' }}" 
                                                          class="img-fluid rounded shadow-sm" 
                                                          style="max-height: 300px; width: 100%; object-fit: cover;">
                                                 @else

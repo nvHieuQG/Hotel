@@ -423,20 +423,20 @@
                                 <div class="mt-2">
                                     <div class="row">
                                         <div class="col-md-4">
-                                            <div class="text-center p-2 bg-white rounded">
-                                                <div class="fw-bold text-primary fs-6">Tổng cộng</div>
+                                            <div class="text-center p-2 bg-white text-dark rounded">
+                                                <div class="fw-bold fs-6">Tổng cộng</div>
                                                 <div class="fs-5 fw-bold">{{ number_format($grandTotal) }} VNĐ</div>
                                                 <small class="text-success">Đã bao gồm VAT 10%</small>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="text-center p-2 bg-white rounded">
+                                            <div class="text-center p-2 bg-white text-dark rounded">
                                                 <div class="fw-bold text-secondary fs-6">Giá trước VAT</div>
                                                 <div class="fs-5">{{ number_format($subtotal) }} VNĐ</div>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="text-center p-2 bg-white rounded">
+                                            <div class="text-center p-2 bg-white text-dark rounded">
                                                 <div class="fw-bold text-info fs-6">VAT (10%)</div>
                                                 <div class="fs-5">{{ number_format($vatAmount) }} VNĐ</div>
                                             </div>
