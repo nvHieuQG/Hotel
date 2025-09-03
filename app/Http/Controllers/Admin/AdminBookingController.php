@@ -512,6 +512,8 @@ class AdminBookingController extends Controller
                 'toDate' => $reportData['filters']['to_date'] ?? null,
                 'status' => $reportData['filters']['status'] ?? null,
                 'totalRevenue' => $reportData['totalRevenue'],
+                'serviceRevenue' => $reportData['serviceRevenue'] ?? 0,
+                'grandRevenue' => $reportData['grandRevenue'] ?? ($reportData['totalRevenue'] ?? 0),
                 'statusStats' => $reportData['statusStats']
             ]);
         } catch (\Exception $e) {

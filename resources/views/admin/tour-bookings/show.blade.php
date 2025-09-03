@@ -236,13 +236,6 @@
                                 @php
                                     $pendingChanges = \App\Models\TourRoomChange::where('tour_booking_id', $tourBooking->id)->where('status','pending')->count();
                                 @endphp
-                                @if($pendingChanges > 0)
-                                    <div class="alert alert-warning mt-3">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        Có {{ $pendingChanges }} yêu cầu đổi phòng đang chờ duyệt.
-                                        <a href="{{ route('staff.admin.tour-bookings.room-changes.index', $tourBooking->id) }}" class="btn btn-sm btn-warning ml-2">Xem yêu cầu</a>
-                                    </div>
-                                @endif
                             @else
                                 <p class="text-muted text-center my-3">Không có phòng nào được đặt</p>
                             @endif
