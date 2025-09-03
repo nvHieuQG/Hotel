@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\SupportService;
+use App\Services\ProfanityFilterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -11,10 +12,12 @@ use App\Models\SupportMessage;
 class SupportController extends Controller
 {
     protected $supportService;
+    protected $profanityFilter;
 
-    public function __construct(SupportService $supportService)
+    public function __construct(SupportService $supportService, ProfanityFilterService $profanityFilter)
     {
         $this->supportService = $supportService;
+        $this->profanityFilter = $profanityFilter;
     }
 
     public function index()
@@ -61,6 +64,18 @@ class SupportController extends Controller
             ]);
 
             $messageText = trim((string)$request->input('message'));
+            
+            // Lọc từ cấm trước khi xử lý
+            if (!empty($messageText)) {
+                $originalMessage = $messageText;
+                $messageText = $this->profanityFilter->filterMessage($messageText);
+                
+                // Log nếu có từ cấm được lọc
+                if ($this->profanityFilter->containsProfanity($originalMessage)) {
+                    Log::info("Profanity filtered in message from user " . Auth::id() . ": " . $originalMessage . " -> " . $messageText);
+                }
+            }
+            
             $attachmentMeta = null;
 
             if ($request->hasFile('attachment')) {

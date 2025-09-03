@@ -1,4 +1,3 @@
-// Chat Widget JavaScript
 document.addEventListener('DOMContentLoaded', function() {
   const openBtn = document.getElementById('openChatModal');
   const chatBox = document.getElementById('chatBox');
@@ -90,12 +89,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Cấu hình âm lượng (fade in/out)
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.6, audioContext.currentTime + 0.1);
-      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.6);
+      gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1);
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
 
       // Phát âm thanh trong 0.3 giây
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.6);
+      oscillator.stop(audioContext.currentTime + 0.3);
 
       console.log('Notification sound played');
     } catch (error) {
@@ -104,27 +103,28 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Event listeners
-  if(openBtn) {
-    openBtn.onclick = function() {
+  if (openBtn) {
+    openBtn.onclick = function () {
       console.log('Open chat button clicked');
 
       // Reset new message count khi người dùng click vào button để xem tin nhắn
-      if(newMessageCount > 0) {
+      // Đây là thời điểm DUY NHẤT badge bị mất - khi người dùng chủ động mở chat
+      if (newMessageCount > 0) {
         newMessageCount = 0;
         updateNewMessageBadge();
         console.log('New message count reset to 0 when opening chat');
       }
 
-      if(chatBox) {
+      if (chatBox) {
         chatBox.style.display = 'flex';
         console.log('Chat box displayed');
         setTimeout(() => {
-          if(chatInput) {
+          if (chatInput) {
             chatInput.focus();
             console.log('Chat input focused');
           }
           // Scroll xuống cuối tin nhắn khi mở modal
-          if(chatMessages) {
+          if (chatMessages) {
             chatMessages.scrollTop = chatMessages.scrollHeight;
             console.log('Scrolled to bottom');
           }
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Chat opened, unread count reset to 0');
 
         // Đảm bảo realtime chat đang chạy khi mở modal
-        if(conversationIdInput && conversationIdInput.value && !isRealtimeEnabled) {
+        if (conversationIdInput && conversationIdInput.value && !isRealtimeEnabled) {
           console.log('Starting realtime chat when opening modal');
           startRealtimeChat();
         }
@@ -148,9 +148,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Bắt đầu realtime nếu đã có conversation
-  if(conversationIdInput) {
+  if (conversationIdInput) {
     const conversationId = conversationIdInput.value;
-    if(conversationId) {
+    if (conversationId) {
       console.log('Starting realtime for conversation:', conversationId);
       startRealtimeChat();
       showChatInfo('Đã kết nối với cuộc trò chuyện! Badge sẽ hiển thị số tin nhắn mới khi có tin nhắn đến.');
@@ -159,10 +159,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  if(closeBtn) {
-    closeBtn.onclick = function() {
+  if (closeBtn) {
+    closeBtn.onclick = function () {
       console.log('Close chat button clicked');
-      if(chatBox) {
+      if (chatBox) {
         chatBox.style.display = 'none';
         console.log('Chat box hidden');
 
@@ -177,11 +177,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Hàm gửi tin nhắn
   function sendMessage(message, attachment = null) {
-    if(isSending) return;
+    if (isSending) return;
 
     isSending = true;
     const sendBtn = document.getElementById('sendChatBtn');
-    if(sendBtn) {
+    if (sendBtn) {
       sendBtn.disabled = true;
       sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     }
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
     }
 
-    if(conversationId) {
+    if (conversationId) {
       url = '/support/conversation/' + conversationId + '/message';
       console.log('Sending message to existing conversation:', conversationId);
     } else {
@@ -229,54 +229,54 @@ document.addEventListener('DOMContentLoaded', function() {
       headers: headers,
       body: requestData
     })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      return res.json();
-    })
-    .then(data => {
-      console.log('Send message response:', data);
-      if(data.success) {
-        // Cập nhật conversation ID nếu là tin nhắn đầu tiên
-        if(!conversationId && data.conversation_id && conversationIdInput) {
-          conversationIdInput.value = data.conversation_id;
-          console.log('New conversation created:', data.conversation_id);
-          showChatSuccess('Cuộc trò chuyện đã được tạo! Badge sẽ hiển thị số tin nhắn mới khi có tin nhắn đến.');
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
         }
+        return res.json();
+      })
+      .then(data => {
+        console.log('Send message response:', data);
+        if (data.success) {
+          // Cập nhật conversation ID nếu là tin nhắn đầu tiên
+          if (!conversationId && data.conversation_id && conversationIdInput) {
+            conversationIdInput.value = data.conversation_id;
+            console.log('New conversation created:', data.conversation_id);
+            showChatSuccess('Cuộc trò chuyện đã được tạo! Badge sẽ hiển thị số tin nhắn mới khi có tin nhắn đến.');
+          }
 
-        // Thêm tin nhắn vào UI
-        addMessageToUI(message, 'user', data.message_id, data.attachment);
-        if(chatInput) {
-          chatInput.value = '';
-          chatInput.style.height = 'auto';
-        }
+          // Thêm tin nhắn vào UI
+          addMessageToUI(message, 'user', data.message_id, data.attachment);
+          if (chatInput) {
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+          }
 
-        // Xóa file preview nếu có
-        if (attachment) {
-          clearFilePreview();
-        }
+          // Xóa file preview nếu có
+          if (attachment) {
+            clearFilePreview();
+          }
 
-        // Bắt đầu realtime sau khi gửi tin nhắn đầu tiên
-        if(!isRealtimeEnabled) {
-          startRealtimeChat();
-          showChatInfo('Đã bật chế độ realtime! Badge sẽ hiển thị số tin nhắn mới khi có tin nhắn đến.');
+          // Bắt đầu realtime sau khi gửi tin nhắn đầu tiên
+          if (!isRealtimeEnabled) {
+            startRealtimeChat();
+            showChatInfo('Đã bật chế độ realtime! Badge sẽ hiển thị số tin nhắn mới khi có tin nhắn đến.');
+          }
+        } else {
+          showChatError(data.message || 'Có lỗi khi gửi tin nhắn!');
         }
-      } else {
-        showChatError(data.message || 'Có lỗi khi gửi tin nhắn!');
-      }
-    })
-    .catch((error) => {
-      console.error('Chat error:', error);
-      showChatError('Kết nối mạng có vấn đề. Vui lòng thử lại sau! Badge vẫn sẽ hiển thị tin nhắn mới.');
-    })
-    .finally(() => {
-      isSending = false;
-      if(sendBtn) {
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-      }
-    });
+      })
+      .catch((error) => {
+        console.error('Chat error:', error);
+        showChatError('Kết nối mạng có vấn đề. Vui lòng thử lại sau! Badge vẫn sẽ hiển thị tin nhắn mới.');
+      })
+      .finally(() => {
+        isSending = false;
+        if (sendBtn) {
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        }
+      });
   }
 
   // Hàm hiển thị lỗi chat
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span>${message}</span>
     `;
 
-    if(chatMessages) {
+    if (chatMessages) {
       chatMessages.insertBefore(errorDiv, chatMessages.firstChild);
 
       setTimeout(() => {
@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span>${message}</span>
     `;
 
-    if(chatMessages) {
+    if (chatMessages) {
       chatMessages.insertBefore(successDiv, chatMessages.firstChild);
 
       setTimeout(() => {
@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <span>${message}</span>
     `;
 
-    if(chatMessages) {
+    if (chatMessages) {
       chatMessages.insertBefore(infoDiv, chatMessages.firstChild);
 
       setTimeout(() => {
@@ -340,22 +340,18 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Auto-resize textarea
-  if(chatInput) {
-    chatInput.addEventListener('input', function() {
+  if (chatInput) {
+    chatInput.addEventListener('input', function () {
       this.style.height = 'auto';
       this.style.height = Math.min(this.scrollHeight, 100) + 'px';
     });
   }
 
-  // Reset new message count khi người dùng scroll xuống cuối để xem tin nhắn mới
-  if(chatMessages) {
-    chatMessages.addEventListener('scroll', function() {
-      const isAtBottom = this.scrollTop + this.clientHeight >= this.scrollHeight - 10; // 10px tolerance
-      if(isAtBottom && newMessageCount > 0) {
-        newMessageCount = 0;
-        updateNewMessageBadge();
-        console.log('New message count reset to 0 after scrolling to bottom');
-      }
+  // KHÔNG reset new message count khi scroll - chỉ reset khi người dùng nhấn vào button
+  if (chatMessages) {
+    chatMessages.addEventListener('scroll', function () {
+      // Không làm gì khi scroll - giữ nguyên số tin nhắn mới
+      console.log('Scrolled but keeping new message count:', newMessageCount);
     });
   }
 
@@ -376,12 +372,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Hàm thêm tin nhắn vào UI
   function addMessageToUI(message, senderType, messageId = null, createdAt = null, attachment = null) {
     // Cho phép gửi chỉ attachment (không cần text)
-    if((!message || message.trim() === '') && !attachment) return;
+    if ((!message || message.trim() === '') && !attachment) return;
 
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${senderType === 'user' ? 'sent' : 'received'}`;
 
-    if(messageId) {
+    if (messageId) {
       messageDiv.setAttribute('data-message-id', messageId);
     }
 
@@ -429,14 +425,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const messageTime = document.createElement('div');
     messageTime.className = 'message-time';
-    if(createdAt) {
-      messageTime.textContent = new Date(createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+    if (createdAt) {
+      messageTime.textContent = new Date(createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     } else {
-      messageTime.textContent = new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+      messageTime.textContent = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     }
 
     messageDiv.appendChild(messageTime);
-    if(chatMessages) {
+    if (chatMessages) {
       chatMessages.appendChild(messageDiv);
 
       // Cập nhật counter tin nhắn
@@ -447,26 +443,22 @@ document.addEventListener('DOMContentLoaded', function() {
       // Scroll xuống tin nhắn mới nhất
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
-      // Reset new message count khi tin nhắn được hiển thị (người dùng đã xem)
-      if(newMessageCount > 0) {
-        newMessageCount = 0;
-        updateNewMessageBadge();
-        console.log('New message count reset to 0 after displaying message');
-      }
+      // KHÔNG reset new message count khi hiển thị tin nhắn - chỉ reset khi người dùng nhấn vào button
+      console.log('Message displayed but keeping new message count:', newMessageCount);
     }
   }
 
   // Hàm bắt đầu realtime chat
   function startRealtimeChat() {
-    if(isRealtimeEnabled) return;
+    if (isRealtimeEnabled) return;
 
     isRealtimeEnabled = true;
     console.log('Starting realtime chat...');
 
     // Cập nhật lastMessageId nếu chưa có
-    if(lastMessageId === 0) {
+    if (lastMessageId === 0) {
       const lastMessage = chatMessages.querySelector('.message[data-message-id]:last-child');
-      if(lastMessage) {
+      if (lastMessage) {
         lastMessageId = parseInt(lastMessage.getAttribute('data-message-id'));
         console.log('Updated last message ID:', lastMessageId);
       }
@@ -475,12 +467,12 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Starting realtime chat with conversation ID:', conversationIdInput ? conversationIdInput.value : 'none');
 
     // Kiểm tra ngay lập tức
-    if(conversationIdInput && conversationIdInput.value) {
+    if (conversationIdInput && conversationIdInput.value) {
       checkNewMessages();
     }
 
     realtimeInterval = setInterval(() => {
-      if(conversationIdInput && conversationIdInput.value) {
+      if (conversationIdInput && conversationIdInput.value) {
         checkNewMessages();
       }
     }, 3000); // Kiểm tra mỗi 3 giây
@@ -490,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Hàm dừng realtime chat (chỉ sử dụng khi cần thiết)
   function stopRealtimeChat() {
-    if(realtimeInterval) {
+    if (realtimeInterval) {
       clearInterval(realtimeInterval);
       realtimeInterval = null;
     }
@@ -500,14 +492,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Hàm kiểm tra tin nhắn mới
   function checkNewMessages() {
-    if(!isRealtimeEnabled) {
+    if (!isRealtimeEnabled) {
       console.log('Realtime not enabled, restarting... Badge will show new messages');
       startRealtimeChat();
       return;
     }
 
     const conversationId = conversationIdInput ? conversationIdInput.value : '';
-    if(!conversationId) {
+    if (!conversationId) {
       console.log('No conversation ID, waiting for new message... Badge will show when message arrives');
       return;
     }
@@ -520,71 +512,87 @@ document.addEventListener('DOMContentLoaded', function() {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
       }
     })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success && data.messages && data.messages.length > 0) {
-        console.log('Received new messages:', data.messages.length);
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.messages && data.messages.length > 0) {
+          console.log('Received new messages:', data.messages.length);
 
-        data.messages.forEach(msg => {
-          // Kiểm tra tin nhắn đã tồn tại chưa
-          const existingMessage = document.querySelector(`[data-message-id="${msg.id}"]`);
-          if(!existingMessage && msg.id > lastMessageId) {
-            const duplicateContent = checkDuplicateMessage(msg.message, msg.sender_type);
-            if(!duplicateContent) {
-              console.log('Adding new message:', msg.id, msg.message);
-              addMessageToUI(msg.message, msg.sender_type, msg.id, msg.created_at, msg.attachment);
-              lastMessageId = Math.max(lastMessageId, msg.id);
+          data.messages.forEach(msg => {
+            // Kiểm tra tin nhắn đã tồn tại chưa
+            const existingMessage = document.querySelector(`[data-message-id="${msg.id}"]`);
+            if (!existingMessage && msg.id > lastMessageId) {
+              const duplicateContent = checkDuplicateMessage(msg.message, msg.sender_type);
+              if (!duplicateContent) {
+                console.log('Adding new message:', msg.id, msg.message);
+                addMessageToUI(msg.message, msg.sender_type, msg.id, msg.created_at, msg.attachment);
+                lastMessageId = Math.max(lastMessageId, msg.id);
 
-              // Thông báo khi nhận tin nhắn mới từ admin (chỉ tin nhắn realtime)
-              if(msg.sender_type === 'admin') {
-                console.log('New realtime admin message received');
+                // Thông báo khi nhận tin nhắn mới từ admin (chỉ tin nhắn realtime)
+                if (msg.sender_type === 'admin') {
+                  console.log('New realtime admin message received');
 
-                // Phát âm thanh thông báo
-                playNotificationSound();
+                  // Phát âm thanh thông báo
+                  playNotificationSound();
 
-                                 // Hiển thị toast notification
-                 showChatSuccess('Bạn có tin nhắn mới từ hỗ trợ! Badge đã được cập nhật.');
+                  // Hiển thị toast notification đẹp mắt
+                  if (window.ToastNotification && window.ToastNotification.isAvailable()) {
+                    try {
+                      const toast = window.ToastNotification.showNewMessage('Hỗ trợ', msg.message);
+                      if (toast) {
+                        console.log('Toast notification displayed successfully');
+                      } else {
+                        console.log('Toast notification skipped (user in chat)');
+                      }
+                    } catch (error) {
+                      console.error('Error showing toast notification:', error);
+                      showChatSuccess('Bạn có tin nhắn mới từ hỗ trợ! Badge đã được cập nhật.');
+                    }
+                  } else {
+                    console.log('Toast notification system not available, using fallback');
+                    showChatSuccess('Bạn có tin nhắn mới từ hỗ trợ! Badge đã được cập nhật.');
+                  }
 
-                                 // Cập nhật badge nếu chat đang đóng
-                 if(chatBox && (chatBox.style.display === 'none' || chatBox.style.display === '')) {
-                   newMessageCount++;
-                   updateNewMessageBadge();
-                   fetchUnreadCount();
-                   console.log('Badge updated for closed chat, count:', newMessageCount);
-                 } else {
-                   // Nếu chat đang mở, không cần cập nhật badge vì người dùng đã thấy tin nhắn
-                   console.log('Chat is open, no need to update badge');
-                 }
+                  // Cập nhật badge nếu chat đang đóng
+                  // Badge sẽ tích lũy tổng số tin nhắn mới cho đến khi người dùng nhấn vào button
+                  if (chatBox && (chatBox.style.display === 'none' || chatBox.style.display === '')) {
+                    newMessageCount++;
+                    updateNewMessageBadge(); // Tự động hiển thị/ẩn badge dựa trên newMessageCount
+                    fetchUnreadCount();
+                    console.log('Badge updated for closed chat, count:', newMessageCount);
+                  } else {
+                    // Nếu chat đang mở, không cần cập nhật badge vì người dùng đã thấy tin nhắn
+                    console.log('Chat is open, no need to update badge');
+                  }
+                }
+              } else {
+                console.log('Duplicate message detected, skipping:', msg.message);
               }
             } else {
-              console.log('Duplicate message detected, skipping:', msg.message);
+              console.log('Message already exists or ID not greater:', msg.id, 'lastMessageId:', lastMessageId);
             }
-          } else {
-            console.log('Message already exists or ID not greater:', msg.id, 'lastMessageId:', lastMessageId);
-          }
-        });
-      }
-    })
-    .catch(err => {
-      console.error('Error checking new messages:', err);
-      // Không dừng realtime khi có lỗi, tiếp tục thử lại
-      console.log('Realtime chat continues despite error, badge will still show new messages');
-    })
-    .finally(() => {
-      // Tiếp tục polling nếu realtime vẫn được bật
-      if(isRealtimeEnabled) {
-        setTimeout(checkNewMessages, 3000);
-      } else {
-        // Nếu realtime bị tắt, khởi động lại
-        console.log('Realtime was disabled, restarting... Badge will continue to show new messages');
-        startRealtimeChat();
-      }
-    });
+          });
+        }
+      })
+      .catch(err => {
+        console.error('Error checking new messages:', err);
+        // Không dừng realtime khi có lỗi, tiếp tục thử lại
+        console.log('Realtime chat continues despite error, badge will still show new messages');
+      })
+      .finally(() => {
+        // Tiếp tục polling nếu realtime vẫn được bật
+        if (isRealtimeEnabled) {
+          setTimeout(checkNewMessages, 3000);
+        } else {
+          // Nếu realtime bị tắt, khởi động lại
+          console.log('Realtime was disabled, restarting... Badge will continue to show new messages');
+          startRealtimeChat();
+        }
+      });
   }
 
   // Form submit handler
-  if(chatForm) {
-    chatForm.onsubmit = function(e) {
+  if (chatForm) {
+    chatForm.onsubmit = function (e) {
       e.preventDefault();
       const msg = chatInput ? chatInput.value.trim() : '';
       const attachment = attachmentInput ? attachmentInput.files[0] : null;
@@ -602,8 +610,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Enter key handler
-  if(chatInput) {
-    chatInput.addEventListener('keydown', function(e) {
+  if (chatInput) {
+    chatInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         const msg = this.value.trim();
@@ -615,7 +623,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Paste image handler - cho phép copy & paste ảnh trực tiếp
-    chatInput.addEventListener('paste', function(e) {
+    chatInput.addEventListener('paste', function (e) {
       const items = (e.clipboardData || e.originalEvent.clipboardData).items;
 
       for (let item of items) {
@@ -627,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Tạo FileList object để gán vào input
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(file);
-            if(attachmentInput) attachmentInput.files = dataTransfer.files;
+            if (attachmentInput) attachmentInput.files = dataTransfer.files;
 
             // Hiển thị preview
             showFilePreview(file);
@@ -643,19 +651,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Drag and drop ảnh trực tiếp vào input text
-    chatInput.addEventListener('dragover', function(e) {
+    chatInput.addEventListener('dragover', function (e) {
       e.preventDefault();
       this.style.borderColor = '#007bff';
       this.style.backgroundColor = '#f8f9fa';
     });
 
-    chatInput.addEventListener('dragleave', function(e) {
+    chatInput.addEventListener('dragleave', function (e) {
       e.preventDefault();
       this.style.borderColor = '';
       this.style.backgroundColor = '';
     });
 
-    chatInput.addEventListener('drop', function(e) {
+    chatInput.addEventListener('drop', function (e) {
       e.preventDefault();
       this.style.borderColor = '';
       this.style.backgroundColor = '';
@@ -667,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
           // Tạo FileList object để gán vào input
           const dataTransfer = new DataTransfer();
           dataTransfer.items.add(file);
-          if(attachmentInput) attachmentInput.files = dataTransfer.files;
+          if (attachmentInput) attachmentInput.files = dataTransfer.files;
 
           // Hiển thị preview
           showFilePreview(file);
@@ -682,36 +690,36 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // File input event listeners
-  if(attachmentInput) {
-    attachmentInput.addEventListener('change', function(e) {
+  if (attachmentInput) {
+    attachmentInput.addEventListener('change', function (e) {
       const file = e.target.files[0];
       if (file) {
         showFilePreview(file);
         // Bỏ required cho message input nếu có file
-        if(chatInput) chatInput.removeAttribute('required');
+        if (chatInput) chatInput.removeAttribute('required');
       }
     });
   }
 
   // Remove file button
-  if(removeFile) {
-    removeFile.addEventListener('click', function() {
+  if (removeFile) {
+    removeFile.addEventListener('click', function () {
       clearFilePreview();
       // Khôi phục required cho message input
-      if(chatInput) chatInput.setAttribute('required', 'required');
+      if (chatInput) chatInput.setAttribute('required', 'required');
     });
   }
 
   // Modal event listeners
-  if(modalClose) {
-    modalClose.addEventListener('click', function() {
-      if(imageModal) imageModal.style.display = 'none';
+  if (modalClose) {
+    modalClose.addEventListener('click', function () {
+      if (imageModal) imageModal.style.display = 'none';
     });
   }
 
   // Đóng modal khi click bên ngoài
-  if(imageModal) {
-    imageModal.addEventListener('click', function(e) {
+  if (imageModal) {
+    imageModal.addEventListener('click', function (e) {
       if (e.target === imageModal) {
         imageModal.style.display = 'none';
       }
@@ -719,14 +727,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Đóng modal bằng ESC key
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && imageModal && imageModal.style.display === 'block') {
       imageModal.style.display = 'none';
     }
   });
 
   // Xử lý visibility change - realtime vẫn chạy ngay cả khi tab không active
-  document.addEventListener('visibilitychange', function() {
+  document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
       console.log('Tab hidden, but realtime chat continues running');
       // KHÔNG dừng realtime chat khi tab không active
@@ -740,10 +748,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Hàm hiển thị file preview
   function showFilePreview(file) {
-    if(fileName) fileName.textContent = file.name;
+    if (fileName) fileName.textContent = file.name;
 
     // Thay đổi icon tùy theo loại file
-    if(filePreview) {
+    if (filePreview) {
       const iconElement = filePreview.querySelector('.file-preview-icon i');
       if (iconElement) {
         if (file.type.startsWith('image/')) {
@@ -764,19 +772,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Hàm xóa file preview
   function clearFilePreview() {
-    if(attachmentInput) attachmentInput.value = '';
-    if(filePreview) filePreview.style.display = 'none';
-    if(fileName) fileName.textContent = '';
+    if (attachmentInput) attachmentInput.value = '';
+    if (filePreview) filePreview.style.display = 'none';
+    if (fileName) fileName.textContent = '';
   }
 
   // Hàm mở modal ảnh
   function openImageModal(imageSrc) {
-    if(modalImage && imageModal) {
+    if (modalImage && imageModal) {
       modalImage.src = imageSrc;
       imageModal.style.display = 'block';
       console.log('Opening image modal:', imageSrc);
     } else {
-      console.error('Modal elements not found:', {modalImage, imageModal});
+      console.error('Modal elements not found:', { modalImage, imageModal });
     }
   }
 
@@ -800,15 +808,15 @@ document.addEventListener('DOMContentLoaded', function() {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
       }
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        updateUnreadBadge(data.unread_count);
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching unread count:', error);
-    });
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          updateUnreadBadge(data.unread_count);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching unread count:', error);
+      });
   }
 
   // Khởi tạo: Lấy số tin nhắn chưa đọc khi load trang
@@ -819,3 +827,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
   console.log('Chat widget initialized successfully');
 });
+

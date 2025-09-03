@@ -23,6 +23,261 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+                /* Toast Notification Styles - Simplified & Fixed */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    /* Compact Message Notification - Positioned below chat widget */
+    .message-notification-container {
+        position: fixed;
+        bottom: 20px;
+        right: 95px;
+        z-index: 999;
+        max-width: 350px;
+        pointer-events: none;
+    }
+
+    .compact-message-notification {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.92) 100%);
+        color: #4a5568;
+        border-radius: 16px;
+        padding: 14px 18px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08), 0 3px 10px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(8px);
+        position: relative;
+        overflow: hidden;
+        transform: translateX(100%);
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        pointer-events: auto;
+        cursor: pointer;
+        max-width: 100%;
+        word-wrap: break-word;
+        height: 65px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .compact-message-notification.show {
+        transform: translateX(0);
+    }
+
+    .compact-message-notification.hide {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    .compact-message-notification:hover {
+        transform: translateX(-8px) translateY(-2px);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 6px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .compact-notification-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        color: white;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(255, 138, 101, 0.25);
+    }
+
+    .compact-notification-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .compact-notification-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #2d3748;
+    }
+
+    .compact-notification-message {
+        font-size: 12px;
+        opacity: 0.75;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #718096;
+    }
+
+    .compact-notification-close {
+        width: 24px;
+        height: 24px;
+        background: rgba(113, 128, 150, 0.1);
+        border: none;
+        color: #a0aec0;
+        cursor: pointer;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .compact-notification-close:hover {
+        background: rgba(245, 101, 101, 0.15);
+        color: #f56565;
+        transform: scale(1.1);
+    }
+
+    .toast-notification {
+        background: linear-gradient(135deg, #ff8c00 0%, #ffa726 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 8px 32px rgba(255, 140, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-out;
+        pointer-events: auto;
+        max-width: 100%;
+        word-wrap: break-word;
+    }
+
+    .toast-notification.show {
+        transform: translateX(0);
+    }
+
+    .toast-notification.hide {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    .toast-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .toast-title {
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .toast-title i {
+        font-size: 16px;
+        color: #ff8c00;
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        font-size: 16px;
+        line-height: 1;
+        min-width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toast-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .toast-content {
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 8px;
+    }
+
+    .toast-message-preview {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin-top: 8px;
+        border-left: 3px solid #ff8c00;
+        font-style: italic;
+        font-size: 12px;
+        word-break: break-word;
+    }
+
+    .toast-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .toast-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .toast-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-1px);
+    }
+
+    .toast-btn.primary {
+        background: rgba(255, 140, 0, 0.25);
+        border-color: rgba(255, 140, 0, 0.4);
+    }
+
+    .toast-btn.primary:hover {
+        background: rgba(255, 140, 0, 0.35);
+        border-color: rgba(255, 140, 0, 0.5);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .toast-container {
+            top: 10px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
+        }
+
+        .toast-notification {
+            margin-bottom: 8px;
+            padding: 14px 16px;
+        }
+    }
         .alert-container {
             position: fixed;
             top: 80px;
@@ -691,6 +946,8 @@
         height: 56px;
         font-size: 22px;
     }
+
+
 }
     </style>
 </head>
@@ -736,10 +993,14 @@
     @include('client.layouts.blocks.footer')
 
     <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+    <div class="toast-container">
         <!-- Toast notifications will be inserted here -->
     </div>
 
+    <!-- Compact Message Notification Container -->
+    <div class="message-notification-container">
+        <!-- Compact message notifications will be inserted here -->
+    </div>
     <script src="{{ asset('client/js/jquery.min.js') }}"></script>
     <script src="{{ asset('client/js/jquery-migrate-3.0.1.min.js') }}"></script>
     <script src="{{ asset('client/js/popper.min.js') }}"></script>
@@ -761,6 +1022,263 @@
     <script>
         // Set current user ID for chat widget
         window.currentUserId = {{ Auth::id() ?? 'null' }};
+
+        // Profanity Filter System
+        window.ProfanityFilter = {
+            // Danh sách từ cấm (Vietnamese)
+            badWords: [
+                'địt', 'đù', 'đụ', 'fuck', 'shit', 'damn', 'bitch', 'ass', 'hell',
+                'cặc', 'lồn', 'buồi', 'đéo', 'vãi', 'đĩ', 'cave', 'óc chó',
+                'đồ chó', 'thằng chó', 'con chó', 'đồ khốn', 'khốn nạn',
+                'đồ súc sinh', 'súc sinh', 'đồ đĩ', 'con đĩ', 'thằng đĩ',
+                'đồ ngu', 'ngu ngốc', 'đồ ngốc', 'ngốc nghếch', 'đần độn',
+                'đồ khùng', 'điên khùng', 'đồ điên', 'tâm thần', 'đồ dở hơi',
+                'chết tiệt', 'đồ chết tiệt', 'đi chết', 'chết đi', 'đi chết đi',
+                'đồ ranh', 'ranh con', 'đồ bẩn', 'bẩn thỉu', 'đồ bẩn thỉu',
+                'mẹ kiếp', 'đồ mẹ kiếp', 'kiếp nạn', 'đồ kiếp nạn',
+                'đồ phản bội', 'phản bội', 'đồ phản động', 'phản động',
+                'đồ bán nước', 'bán nước', 'đồ tham nhũng', 'tham nhũng'
+            ],
+
+            // Hàm lọc từ cấm
+            filterMessage: function(message) {
+                if (!message || typeof message !== 'string') {
+                    return message;
+                }
+
+                let filteredMessage = message;
+
+                // Tách chuỗi bằng dấu cách
+                let words = filteredMessage.split(' ');
+
+                // Kiểm tra và thay thế từng từ
+                words = words.map(word => {
+                    let cleanWord = word.toLowerCase()
+                        .replace(/[.,!?;:\"'()\\[\\]{}]/g, '') // Loại bỏ dấu câu
+                        .trim();
+
+                    // Kiểm tra từ có trong danh sách cấm không
+                    for (let badWord of this.badWords) {
+                        if (cleanWord === badWord.toLowerCase() ||
+                            cleanWord.includes(badWord.toLowerCase())) {
+                            // Thay thế bằng dấu sao, giữ nguyên độ dài
+                            let stars = '*'.repeat(word.length);
+                            return stars;
+                        }
+                    }
+                    return word;
+                });
+
+                return words.join(' ');
+            },
+
+            // Hàm kiểm tra có từ cấm không
+            containsProfanity: function(message) {
+                if (!message || typeof message !== 'string') {
+                    return false;
+                }
+
+                let cleanMessage = message.toLowerCase();
+                return this.badWords.some(badWord =>
+                    cleanMessage.includes(badWord.toLowerCase())
+                );
+            }
+        };
+
+        // Toast Notification System - Simplified & Fixed
+        window.ToastNotification = {
+            show: function(options) {
+                const {
+                    title = 'Thông báo',
+                    message = '',
+                    messagePreview = '',
+                    type = 'info',
+                    duration = 5000,
+                    showActions = false
+                } = options;
+
+                // Giới hạn số lượng toast hiển thị cùng lúc
+                const container = document.querySelector('.toast-container');
+                if (container && container.children.length >= 3) {
+                    // Xóa toast cũ nhất
+                    const oldestToast = container.firstChild;
+                    if (oldestToast) {
+                        oldestToast.remove();
+                    }
+                }
+
+                // Tạo toast element
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.innerHTML = `
+                    <div class="toast-header">
+                        <div class="toast-title">
+                            <i class="fas fa-${this.getIcon(type)}"></i>
+                            ${title}
+                        </div>
+                        <button class="toast-close" onclick="window.ToastNotification.hide(this.parentElement.parentElement)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="toast-content">
+                        ${message}
+                        ${messagePreview ? `<div class="toast-message-preview">"${messagePreview}"</div>` : ''}
+                    </div>
+                    ${showActions ? `
+                        <div class="toast-actions">
+                            <button class="toast-btn" onclick="window.ToastNotification.hide(this.parentElement.parentElement)">Đóng</button>
+                            <button class="toast-btn primary" onclick="window.ToastNotification.viewChat()">Xem chat</button>
+                        </div>
+                    ` : ''}
+                `;
+
+                // Thêm vào container
+                if (container) {
+                    container.appendChild(toast);
+                }
+
+                // Hiển thị với animation
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100);
+
+                // Tự động ẩn sau thời gian chỉ định
+                if (duration > 0) {
+                    setTimeout(() => {
+                        this.hide(toast);
+                    }, duration);
+                }
+
+                return toast;
+            },
+
+            hide: function(toast) {
+                if (toast) {
+                    toast.classList.add('hide');
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }
+            },
+
+            getIcon: function(type) {
+                const icons = {
+                    'success': 'check-circle',
+                    'error': 'exclamation-circle',
+                    'warning': 'exclamation-triangle',
+                    'info': 'info-circle',
+                    'message': 'envelope',
+                    'admin': 'user-shield'
+                };
+                return icons[type] || 'info-circle';
+            },
+
+            // Hàm hiển thị thông báo tin nhắn mới từ admin - Compact version
+            showNewMessage: function(adminName, messageContent) {
+                // Kiểm tra nếu đang ở trang chat thì không hiển thị notification
+                if (window.location.pathname.includes('/chatbot') ||
+                    window.location.pathname.includes('/chat') ||
+                    document.getElementById('chatBox')?.style.display === 'flex') {
+                    console.log('User is in chat, skipping notification');
+                    return null;
+                }
+
+                return this.showCompactMessage(adminName, messageContent);
+            },
+
+            // Hàm hiển thị thông báo compact bên dưới chat widget
+            showCompactMessage: function(adminName, messageContent) {
+                const container = document.querySelector('.message-notification-container');
+                if (!container) {
+                    console.error('Message notification container not found');
+                    return null;
+                }
+
+                // Lọc nội dung tin nhắn trước khi hiển thị
+                const filteredContent = window.ProfanityFilter.filterMessage(messageContent);
+
+                // Xóa notification cũ nếu có
+                const existingNotification = container.querySelector('.compact-message-notification');
+                if (existingNotification) {
+                    existingNotification.remove();
+                }
+
+                // Tạo compact notification element
+                const notification = document.createElement('div');
+                notification.className = 'compact-message-notification';
+                notification.innerHTML = `
+                    <div class="compact-notification-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="compact-notification-content">
+                        <div class="compact-notification-title">Tin nhắn từ ${adminName}</div>
+                        <div class="compact-notification-message">${filteredContent.length > 30 ? filteredContent.substring(0, 30) + '...' : filteredContent}</div>
+                    </div>
+                    <button class="compact-notification-close" onclick="window.ToastNotification.hideCompactMessage(this.parentElement)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                // Thêm sự kiện click để mở chat
+                notification.addEventListener('click', function(e) {
+                    if (!e.target.closest('.compact-notification-close')) {
+                        window.ToastNotification.viewChat();
+                        window.ToastNotification.hideCompactMessage(notification);
+                    }
+                });
+
+                // Thêm vào container
+                container.appendChild(notification);
+
+                // Hiển thị với animation
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 100);
+
+                // Tự động ẩn sau 10 giây
+                setTimeout(() => {
+                    this.hideCompactMessage(notification);
+                }, 10000);
+
+                return notification;
+            },
+
+            // Hàm ẩn compact message notification
+            hideCompactMessage: function(notification) {
+                if (notification && notification.parentElement) {
+                    notification.classList.add('hide');
+                    setTimeout(() => {
+                        if (notification.parentElement) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            },
+
+            // Hàm mở chat khi click vào button "Xem chat"
+            viewChat: function() {
+                const openChatBtn = document.getElementById('openChatModal');
+                if (openChatBtn) {
+                    openChatBtn.click();
+                    console.log('Opening chat modal from toast notification');
+                } else {
+                    console.warn('Chat modal button not found');
+                    // Fallback: chuyển đến trang chat nếu có
+                    if (window.location.pathname.includes('/chatbot')) {
+                        window.location.reload();
+                    }
+                }
+            },
+
+            // Hàm kiểm tra trạng thái hệ thống
+            isAvailable: function() {
+                return typeof this.show === 'function' &&
+                       typeof this.showNewMessage === 'function' &&
+                       typeof this.hide === 'function';
+            }
+        };
 
         // Xử lý đóng thông báo
         document.addEventListener('DOMContentLoaded', function() {
@@ -785,6 +1303,66 @@
                     }, 300);
                 });
             }, 5000);
+        });
+
+        // Apply profanity filter to existing messages on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filter existing chat messages
+            const messageBubbles = document.querySelectorAll('.message-bubble[data-original-message]');
+            messageBubbles.forEach(function(bubble) {
+                const originalMessage = bubble.getAttribute('data-original-message');
+                if (originalMessage && window.ProfanityFilter) {
+                    const filteredMessage = window.ProfanityFilter.filterMessage(originalMessage);
+                    bubble.textContent = filteredMessage;
+                }
+            });
+        });
+
+        // Filter messages when sending from client
+        function filterClientMessage(message) {
+            if (window.ProfanityFilter && typeof window.ProfanityFilter.filterMessage === 'function') {
+                return window.ProfanityFilter.filterMessage(message);
+            }
+            return message;
+        }
+
+        // Override chat form submission to filter messages
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatForm = document.getElementById('chatForm');
+            const chatInput = document.getElementById('chatInput');
+            
+            if (chatForm && chatInput) {
+                chatForm.addEventListener('submit', function(e) {
+                    const messageText = chatInput.value.trim();
+                    if (messageText) {
+                        // Filter the message before sending
+                        const filteredMessage = filterClientMessage(messageText);
+                        
+                        // Show warning if profanity was detected
+                        if (window.ProfanityFilter.containsProfanity(messageText)) {
+                            console.log('Profanity detected and filtered in message');
+                            
+                            // Optional: Show a brief warning to user
+                            const warningDiv = document.createElement('div');
+                            warningDiv.className = 'chat-info';
+                            warningDiv.innerHTML = '<i class="fas fa-info-circle"></i><span>Tin nhắn đã được lọc nội dung không phù hợp</span>';
+                            
+                            const chatMessages = document.getElementById('chatMessages');
+                            if (chatMessages) {
+                                chatMessages.appendChild(warningDiv);
+                                setTimeout(() => {
+                                    if (warningDiv.parentElement) {
+                                        warningDiv.remove();
+                                    }
+                                }, 3000);
+                            }
+                        }
+                        
+                        // Update the input with filtered message
+                        chatInput.value = filteredMessage;
+                    }
+                });
+            }
         });
     </script>
 
@@ -1257,7 +1835,7 @@
 <div class="chat-widget">
     <button id="openChatModal" class="chat-button">
         <i class="fas fa-comments"></i>
-        <span class="notification-badge" id="chatNotificationBadge" style="position: absolute; top: -8px; right: -8px; background: linear-gradient(135deg, #ff9500, #ffb347); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; min-width: 20px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: none; text-align: center; line-height: 16px;">0</span>
+        <span class="notification-badge" id="chatNotificationBadge" style="position: absolute; top: -8px; right: -8px; background: linear-gradient(135deg, #ff9500, #ffb347); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; min-width: 20px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); text-align: center; line-height: 16px;"></span>
     </button>
 
     <div id="chatBox" class="chat-box">
@@ -1302,7 +1880,7 @@
                 @foreach($messages as $msg)
                     <div class="message {{ $msg->sender_type == 'user' ? 'sent' : 'received' }}" data-message-id="{{ $msg->id }}">
                         @if(!empty(trim($msg->message)))
-                            <div class="message-bubble">{{ $msg->message }}</div>
+                            <div class="message-bubble" data-original-message="{{ $msg->message }}">{{ $msg->message }}</div>
                         @endif
                         @if(!empty($msg->attachment_path) && \Illuminate\Support\Str::startsWith((string)$msg->attachment_type, 'image'))
                             <div class="message-bubble" onclick="openImageModal('{{ asset('storage/'.$msg->attachment_path) }}')" style="cursor: pointer;">
@@ -1626,6 +2204,75 @@ document.addEventListener('DOMContentLoaded', function() {
         .rating-star {
             font-size: 2rem;
         }
+
+        .rating-star-sm {
+            font-size: 1rem;
+        }
+
+        .rating-item {
+            padding: 12px;
+        }
+
+        .btn-lg {
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
+    }
+    </style>
+    @yield('styles')
+</body>
+</html>
+
+
+        .rating-star-sm {
+            font-size: 1rem;
+        }
+
+        .rating-item {
+            padding: 12px;
+        }
+
+        .btn-lg {
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
+    }
+    </style>
+    @yield('styles')
+</body>
+</html>
+
+    }
+
+    .toast-notification-info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .rating-star {
+            font-size: 2rem;
+        }
+
+        .rating-star-sm {
+            font-size: 1rem;
+        }
+
+        .rating-item {
+            padding: 12px;
+        }
+
+        .btn-lg {
+            padding: 10px 20px;
+            font-size: 1rem;
+        }
+    }
+    </style>
+    @yield('styles')
+</body>
+</html>
+
 
         .rating-star-sm {
             font-size: 1rem;

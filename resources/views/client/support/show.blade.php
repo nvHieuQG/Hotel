@@ -396,6 +396,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Profanity filter function
+    function filterProfanity(text) {
+        const badWords = [
+            // Vietnamese profanity
+            'đụ', 'địt', 'đéo', 'đm', 'dm', 'đcm', 'dcm', 'cc', 'cặc', 'lồn', 'loz', 'vcl', 'vkl',
+            'đĩ', 'đĩ mẹ', 'mẹ kiếp', 'thằng chó', 'con chó', 'đồ chó', 'chó đẻ', 'súc vật',
+            'đồ súc sinh', 'con đĩ', 'thằng đĩ', 'đồ đĩ', 'đồ khốn', 'khốn nạn', 'đồ khốn nạn',
+            'đồ ngu', 'ngu ngốc', 'đồ ngốc', 'thằng ngu', 'con ngu', 'đồ dốt', 'ngu dốt',
+            'đồ rác', 'đồ bẩn', 'bẩn thỉu', 'đồ bẩn thỉu', 'rác rưởi', 'đồ rác rưởi',
+            'địt mẹ', 'đù mẹ', 'đụ má', 'cút đi', 'cút mẹ',
+            
+            // English profanity
+            'fuck', 'shit', 'damn', 'bitch', 'ass', 'hell', 'bastard',
+            'asshole', 'motherfucker', 'cocksucker', 'dickhead', 'prick',
+            'whore', 'slut', 'cunt', 'pussy', 'cock', 'dick', 'penis',
+            'vagina', 'boobs', 'tits', 'nipples', 'sex', 'porn', 'xxx'
+        ];
+
+        let filteredText = text;
+        badWords.forEach(badWord => {
+            const regex = new RegExp('\\b' + badWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+            filteredText = filteredText.replace(regex, '***');
+        });
+
+        return filteredText;
+    }
+
+    // Real-time input filtering
+    messageInput.addEventListener('input', function(e) {
+        const originalValue = e.target.value;
+        const filteredValue = filterProfanity(originalValue);
+        
+        if (originalValue !== filteredValue) {
+            e.target.value = filteredValue;
+            // Move cursor to end
+            e.target.setSelectionRange(filteredValue.length, filteredValue.length);
+        }
+    });
+
     // Form submission
     supportForm.addEventListener('submit', function(e) {
         const message = messageInput.value.trim();
@@ -406,6 +445,9 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Vui lòng nhập tin nhắn hoặc chọn tệp đính kèm');
             return;
         }
+
+        // Filter message before submission
+        messageInput.value = filterProfanity(messageInput.value);
 
         // Disable button to prevent double submission
         sendBtn.disabled = true;
