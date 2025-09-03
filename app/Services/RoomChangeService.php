@@ -100,6 +100,20 @@ class RoomChangeService implements RoomChangeServiceInterface
         }
 
         $result = DB::transaction(function () use ($roomChange, $updateData, $booking, $newRoom) {
+            // Chặn: Không cho đổi sang phòng đã gán cố định cho Tour trong khoảng ngày
+            $hasTourHold = \App\Models\TourBookingRoom::whereJsonContains('assigned_room_ids', $newRoom->id)
+                ->whereHas('tourBooking', function($q) use ($booking){
+                    $q->whereDate('check_in_date', '<=', $booking->check_in_date)
+                      ->whereDate('check_out_date', '>', $booking->check_in_date)
+                      ->orWhere(function($q2) use ($booking){
+                          $q2->whereDate('check_in_date', '<', $booking->check_out_date)
+                             ->whereDate('check_out_date', '>=', $booking->check_out_date);
+                      });
+                })
+                ->exists();
+            if ($hasTourHold) {
+                throw new \Exception('Phòng mới đang được Tour giữ cố định. Vui lòng chọn phòng khác hoặc điều phối lại Tour.');
+            }
             // 1) Cập nhật trạng thái yêu cầu -> approved + lưu note
             $roomChange->update([
                 'status' => 'approved',
@@ -113,8 +127,8 @@ class RoomChangeService implements RoomChangeServiceInterface
             $booking->room_id = $newRoom->id;
             $booking->save();
 
-            // 3) Cập nhật trạng thái phòng cũ -> available, phòng mới -> booked
-            $roomChange->oldRoom->update(['status' => 'available']);
+            // 3) Cập nhật trạng thái phòng cũ -> maintenance, phòng mới -> booked
+            $roomChange->oldRoom->update(['status' => 'maintenance']);
             $roomChange->newRoom->update(['status' => 'booked']);
 
             return true;

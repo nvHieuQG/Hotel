@@ -21,7 +21,8 @@ class TourBookingRoom extends Model
         'guests_per_room',
         'price_per_room',
         'total_price',
-        'guest_details'
+        'guest_details',
+        'assigned_room_ids'
     ];
 
     /**
@@ -31,6 +32,7 @@ class TourBookingRoom extends Model
      */
     protected $casts = [
         'guest_details' => 'array',
+        'assigned_room_ids' => 'array',
     ];
 
     /**

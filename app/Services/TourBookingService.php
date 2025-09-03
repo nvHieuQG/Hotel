@@ -62,8 +62,9 @@ class TourBookingService implements TourBookingServiceInterface
             ]);
 
             // Tạo tour booking rooms với giá đã tính toán
+            $createdRooms = [];
             foreach ($calculatedData['room_selections'] as $roomSelection) {
-                TourBookingRoom::create([
+                $created = TourBookingRoom::create([
                     'tour_booking_id' => $tourBooking->id,
                     'room_type_id' => $roomSelection['room_type_id'],
                     'quantity' => $roomSelection['quantity'],
@@ -72,6 +73,23 @@ class TourBookingService implements TourBookingServiceInterface
                     'total_price' => $roomSelection['total_price'],
                     'guest_details' => $roomSelection['guest_details'] ?? null,
                 ]);
+                $createdRooms[] = $created;
+            }
+
+            // Gán cố định phòng theo từng room_type ngay tại thời điểm tạo (best-effort)
+            foreach ($createdRooms as $tbr) {
+                if (!$tbr instanceof \App\Models\TourBookingRoom) {
+                    continue;
+                }
+                $assigned = $this->assignFixedRoomsForTourSelection(
+                    $tbr->room_type_id,
+                    (int)$tbr->quantity,
+                    $data['check_in_date'],
+                    $data['check_out_date']
+                );
+                if (!empty($assigned)) {
+                    $tbr->update(['assigned_room_ids' => $assigned]);
+                }
             }
 
             DB::commit();
@@ -81,6 +99,26 @@ class TourBookingService implements TourBookingServiceInterface
             Log::error('Tour booking creation error: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Gán cố định N phòng thuộc room_type cho khoảng ngày, ưu tiên phòng có id nhỏ và thực sự trống toàn dải.
+     */
+    private function assignFixedRoomsForTourSelection(int $roomTypeId, int $quantity, $checkInDate, $checkOutDate): array
+    {
+        $assigned = [];
+        $roomType = RoomType::with('rooms')->find($roomTypeId);
+        if (!$roomType || !$roomType->rooms || $quantity <= 0) return $assigned;
+
+        $rooms = $roomType->rooms->sortBy('id')->values();
+        foreach ($rooms as $room) {
+            if (count($assigned) >= $quantity) break;
+            // Chỉ chọn phòng thật sự trống toàn dải
+            if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
+                $assigned[] = $room->id;
+            }
+        }
+        return $assigned;
     }
 
     /**
@@ -112,7 +150,48 @@ class TourBookingService implements TourBookingServiceInterface
      */
     public function updateTourBookingStatus($id, $status)
     {
-        return $this->tourBookingRepository->update($id, ['status' => $status]);
+        $updated = $this->tourBookingRepository->update($id, ['status' => $status]);
+        if ($updated && in_array($status, ['cancelled','completed'])) {
+            // Clear assigned_room_ids khi tour kết thúc/hủy
+            try {
+                $tbrs = \App\Models\TourBookingRoom::where('tour_booking_id', $id)->get();
+                foreach ($tbrs as $tbr) {
+                    if (!empty($tbr->assigned_room_ids)) {
+                        $tbr->update(['assigned_room_ids' => null]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Clear assigned_room_ids failed: '.$e->getMessage());
+            }
+        }
+        return $updated;
+    }
+
+    /**
+     * Reassign assigned_room_ids cho một TourBooking (admin trigger)
+     */
+    public function reassignTourRooms(int $tourBookingId): array
+    {
+        $tb = $this->tourBookingRepository->findById($tourBookingId);
+        if (!$tb) return ['success' => false, 'message' => 'Tour booking không tồn tại'];
+        $tbrs = \App\Models\TourBookingRoom::where('tour_booking_id', $tb->id)->get();
+        $changed = 0; $errors = 0;
+        foreach ($tbrs as $tbr) {
+            try {
+                $assigned = $this->assignFixedRoomsForTourSelection(
+                    (int)$tbr->room_type_id,
+                    (int)$tbr->quantity,
+                    $tb->check_in_date,
+                    $tb->check_out_date
+                );
+                $tbr->update(['assigned_room_ids' => $assigned]);
+                $changed++;
+            } catch (\Throwable $e) {
+                Log::warning('Reassign room failed: '.$e->getMessage());
+                $errors++;
+            }
+        }
+        return ['success' => true, 'changed' => $changed, 'errors' => $errors];
     }
 
     /**
