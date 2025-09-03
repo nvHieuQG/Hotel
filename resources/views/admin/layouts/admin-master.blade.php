@@ -146,7 +146,7 @@
                             $pendingTourChanges = \App\Models\TourRoomChange::where('status','pending')->count();
                             $firstPendingTourChange = \App\Models\TourRoomChange::where('status','pending')->latest()->first();
                             $tourChangeQuickLink = $firstPendingTourChange
-                                ? route('admin.tour-bookings.room-changes.index', $firstPendingTourChange->tour_booking_id)
+                                ? route('staff.admin.tour-bookings.room-changes.index', ['tourBookingId' => $firstPendingTourChange->tour_booking_id])
                                 : route('admin.tour-bookings.index');
                         @endphp
                         <a href="{{ $tourChangeQuickLink }}" class="btn btn-sm btn-warning">
@@ -438,7 +438,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}"
+                        <a class="nav-link {{ (request()->routeIs('admin.bookings.*') && !request()->routeIs('admin.bookings.report')) ? 'active' : '' }}"
                             href="{{ route('admin.bookings.index') }}">
                             <i class="fas fa-calendar-check"></i> Đặt phòng
                         </a>
@@ -507,10 +507,28 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.bookings.report') ? 'active' : '' }}"
-                            href="{{ route('admin.bookings.report') }}">
-                            <i class="fas fa-chart-bar"></i> Báo cáo
+                        <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.bookings.report') || request()->routeIs('admin.reports.extra-services') ? '' : 'collapsed' }}"
+                           
+                           data-bs-toggle="collapse" href="#submenuReports" role="button"
+                           aria-expanded="{{ request()->routeIs('admin.bookings.report') || request()->routeIs('admin.reports.extra-services') ? 'true' : 'false' }}"
+                           aria-controls="submenuReports">
+                            <span><i class="fas fa-chart-bar"></i> Báo cáo</span>
+                            <i class="fas fa-chevron-down small {{ request()->routeIs('admin.bookings.report') || request()->routeIs('admin.reports.extra-services') ? 'rotate-180' : '' }}"></i>
                         </a>
+                        <div class="collapse {{ request()->routeIs('admin.bookings.report') || request()->routeIs('admin.reports.extra-services') ? 'show' : '' }}" id="submenuReports">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('admin.bookings.report') ? 'active' : '' }}" href="{{ route('admin.bookings.report') }}">
+                                        Báo cáo đặt phòng
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('admin.reports.extra-services') ? 'active' : '' }}" href="{{ route('admin.reports.extra-services') }}">
+                                        Báo cáo dịch vụ
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}"

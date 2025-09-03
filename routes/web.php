@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminRoomTypeServiceController;
 use App\Http\Controllers\Admin\AdminServiceCategoryController;
 use App\Http\Controllers\Admin\AdminServiceController;
 use App\Http\Controllers\Admin\AdminSupportController;
+use App\Http\Controllers\Admin\ServiceRevenueReportController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -451,6 +452,8 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
         Route::get('extra-services/{extra_service}/edit', [AdminExtraServiceController::class, 'edit'])->name('extra-services.edit');
         Route::put('extra-services/{extra_service}', [AdminExtraServiceController::class, 'update'])->name('extra-services.update');
         Route::delete('extra-services/{extra_service}', [AdminExtraServiceController::class, 'destroy'])->name('extra-services.destroy');
+        // Báo cáo doanh thu dịch vụ khách chọn
+        Route::get('reports/extra-services', [ServiceRevenueReportController::class, 'index'])->name('reports.extra-services');
     });
 });
 

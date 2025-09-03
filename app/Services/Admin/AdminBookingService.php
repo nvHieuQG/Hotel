@@ -11,6 +11,7 @@ use App\Models\Room;
 use App\Models\AdminNotification;
 use App\Mail\BookingConfirmationMail;
 use App\Mail\PaymentConfirmationMail;
+use App\Models\BookingService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -362,8 +363,18 @@ class AdminBookingService implements AdminBookingServiceInterface
 
         $bookings = $this->adminBookingRepository->getBookingsForReport($filters);
 
-        // Tính toán tổng doanh thu
+        // Tính toán doanh thu
+        // Doanh thu phòng
         $totalRevenue = $bookings->sum('price');
+        // Doanh thu dịch vụ bổ sung khách chọn + dịch vụ admin thêm
+        $bookingIds = $bookings->pluck('id')->filter()->values();
+        $customerServiceRevenue = $bookings->sum('extra_services_total');
+        $adminAddedServiceRevenue = $bookingIds->isEmpty()
+            ? 0
+            : (float) BookingService::query()->whereIn('booking_id', $bookingIds)->sum('total_price');
+        $serviceRevenue = $customerServiceRevenue + $adminAddedServiceRevenue;
+        // Tổng hợp
+        $grandRevenue = $totalRevenue + $serviceRevenue;
 
         // Thống kê theo trạng thái
         $statusStats = $bookings->groupBy('status')
@@ -377,6 +388,8 @@ class AdminBookingService implements AdminBookingServiceInterface
         return [
             'bookings' => $bookings,
             'totalRevenue' => $totalRevenue,
+            'serviceRevenue' => $serviceRevenue,
+            'grandRevenue' => $grandRevenue,
             'statusStats' => $statusStats,
             'filters' => $filters
         ];
