@@ -392,13 +392,27 @@
                                         <i class="fas fa-credit-card"></i> Thanh toán ngay
                                     </a>
                                 @elseif($tourBooking->status === 'confirmed')
-                                    <button class="btn btn-info btn-block" disabled>
-                                        <i class="fas fa-check"></i> Đã xác nhận
-                                    </button>
+                                    @if(!$tourBooking->need_vat_invoice && !$tourBooking->vat_invoice_number)
+                                        <a href="{{ route('tour-booking.vat-invoice', $tourBooking->id) }}" 
+                                           class="btn btn-info btn-block">
+                                            <i class="fas fa-file-invoice"></i> Yêu cầu VAT
+                                        </a>
+                                    @else
+                                        <button class="btn btn-info btn-block" disabled>
+                                            <i class="fas fa-check"></i> Đã xác nhận
+                                        </button>
+                                    @endif
                                 @elseif($tourBooking->status === 'completed')
-                                    <button class="btn btn-success btn-block" disabled>
-                                        <i class="fas fa-star"></i> Hoàn thành
-                                    </button>
+                                    @if(!$tourBooking->need_vat_invoice && !$tourBooking->vat_invoice_number)
+                                        <a href="{{ route('tour-booking.vat-invoice', $tourBooking->id) }}" 
+                                           class="btn btn-info btn-block">
+                                            <i class="fas fa-file-invoice"></i> Yêu cầu VAT
+                                        </a>
+                                    @else
+                                        <button class="btn btn-success btn-block" disabled>
+                                            <i class="fas fa-star"></i> Hoàn thành
+                                        </button>
+                                    @endif
                                 @else
                                     <button class="btn btn-danger btn-block" disabled>
                                         <i class="fas fa-times"></i> Đã hủy

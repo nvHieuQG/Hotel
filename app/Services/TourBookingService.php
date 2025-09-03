@@ -114,8 +114,8 @@ class TourBookingService implements TourBookingServiceInterface
         $rooms = $roomType->rooms->sortBy('id')->values();
         foreach ($rooms as $room) {
             if (count($assigned) >= $quantity) break;
-            // Chỉ chọn phòng thật sự trống toàn dải
-            if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
+            // Ưu tiên chọn phòng không bị giữ bởi tour khác (bỏ qua tour holds) nhưng không trùng booking thường
+            if ($room->isAvailableForRangeIgnoringTourHolds($checkInDate, $checkOutDate)) {
                 $assigned[] = $room->id;
             }
         }
