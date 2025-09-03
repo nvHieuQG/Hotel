@@ -40,6 +40,8 @@ class Room extends Model
     }
 
 
+
+
     
     /**
      * Lấy hình ảnh của phòng

@@ -52,6 +52,18 @@ class TourBookingRoom extends Model
     }
 
     /**
+     * Get the assigned rooms for this tour booking room.
+     */
+    public function getAssignedRoomsAttribute()
+    {
+        if (empty($this->assigned_room_ids)) {
+            return collect();
+        }
+        
+        return Room::with('roomType')->whereIn('id', $this->assigned_room_ids)->get();
+    }
+
+    /**
      * Get total guests for this room type.
      */
     public function getTotalGuestsAttribute()

@@ -13,6 +13,7 @@ class TourRoomChange extends Model
         'tour_booking_id',
         'from_room_id',
         'to_room_id',
+        'suggested_to_room_id',
         'price_difference',
         'status',
         'reason',

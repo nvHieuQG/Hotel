@@ -2,12 +2,13 @@
 
 @section('title', 'Đổi phòng Tour')
 
+@section('body_class', 'page-room-change')
 @section('content')
-<div class="container mt-4">
+<div class="container mt-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); min-height: 100vh; padding: 20px;">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
+        <div class="col-md-10">
+            <div class="card shadow-lg" style="border: none; border-radius: 15px;">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0;">
                     <h4 class="mb-0">
                         <i class="fas fa-exchange-alt"></i>
                         Yêu cầu đổi phòng Tour #{{ $tourBooking->booking_id }}
@@ -34,72 +35,73 @@
 
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <h6>Thông tin Tour:</h6>
-                            <p><strong>Tour:</strong> {{ $tourBooking->tour_name }}</p>
-                            <p><strong>Check-in:</strong> {{ \Carbon\Carbon::parse($tourBooking->check_in_date)->format('d/m/Y') }}</p>
-                            <p><strong>Check-out:</strong> {{ \Carbon\Carbon::parse($tourBooking->check_out_date)->format('d/m/Y') }}</p>
+                            <div class="card border-info" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);">
+                                <div class="card-body">
+                                    <h6 class="text-primary"><i class="fas fa-info-circle"></i> Thông tin Tour:</h6>
+                                    <p class="text-dark"><strong>Tour:</strong> {{ $tourBooking->tour_name }}</p>
+                                    <p class="text-dark"><strong>Check-in:</strong> {{ \Carbon\Carbon::parse($tourBooking->check_in_date)->format('d/m/Y') }}</p>
+                                    <p class="text-dark"><strong>Check-out:</strong> {{ \Carbon\Carbon::parse($tourBooking->check_out_date)->format('d/m/Y') }}</p>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <h6>Phòng hiện tại:</h6>
-                            @foreach($tourBooking->tourBookingRooms as $tbr)
-                                @if(!empty($tbr->assigned_room_ids))
-                                    @foreach($tbr->assigned_room_ids as $roomId)
-                                        @php $room = \App\Models\Room::find($roomId); @endphp
-                                        @if($room)
-                                            <div class="mb-2">
-                                                <span class="badge badge-primary">{{ $room->room_number }}</span>
-                                                <small class="text-muted">({{ $room->roomType->name }})</small>
-                                            </div>
+                            <div class="card border-warning" style="background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%);">
+                                <div class="card-body">
+                                    <h6 class="text-warning"><i class="fas fa-bed"></i> Phòng hiện tại:</h6>
+                                    @foreach($tourBooking->tourBookingRooms as $tbr)
+                                        @if($tbr->assigned_rooms->count() > 0)
+                                            @foreach($tbr->assigned_rooms as $room)
+                                                <div class="mb-2">
+                                                    <span class="badge badge-success" style="font-size: 14px; padding: 8px 12px;">{{ $room->room_number }}</span>
+                                                    <small class="text-dark">({{ $room->roomType->name }})</small>
+                                                </div>
+                                            @endforeach
+                                        @else
+                                            <p class="text-muted">Chưa có phòng nào được gán</p>
                                         @endif
                                     @endforeach
-                                @endif
-                            @endforeach
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <form method="POST" action="{{ route('tour-room-changes.store', $tourBooking->id) }}">
                         @csrf
                         
-                        <div class="form-group">
-                            <label for="from_room_id">Chọn phòng muốn đổi:</label>
-                            <select name="from_room_id" id="from_room_id" class="form-control @error('from_room_id') is-invalid @enderror" required>
-                                <option value="">-- Chọn phòng --</option>
-                                @foreach($tourBooking->tourBookingRooms as $tbr)
-                                    @if(!empty($tbr->assigned_room_ids))
-                                        @foreach($tbr->assigned_room_ids as $roomId)
-                                            @php $room = \App\Models\Room::find($roomId); @endphp
-                                            @if($room)
-                                                <option value="{{ $room->id }}" data-room-type="{{ $room->room_type_id }}">
-                                                    {{ $room->room_number }} - {{ $room->roomType->name }}
-                                                </option>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="from_room_id" class="text-danger"><i class="fas fa-arrow-left"></i> Từ phòng (hiện tại):</label>
+                                    <select name="from_room_id" id="from_room_id" class="form-control @error('from_room_id') is-invalid @enderror" required>
+                                        <option value="">-- Chọn phòng hiện tại --</option>
+                                        @foreach($tourBooking->tourBookingRooms as $tbr)
+                                            @if($tbr->assigned_rooms->count() > 0)
+                                                @foreach($tbr->assigned_rooms as $room)
+                                                    <option value="{{ $room->id }}" data-room-type="{{ $room->room_type_id }}" data-price="{{ $room->roomType->price }}">
+                                                        {{ $room->room_number }} - {{ $room->roomType->name }} ({{ number_format($room->roomType->price) }} VNĐ/đêm)
+                                                    </option>
+                                                @endforeach
                                             @endif
                                         @endforeach
-                                    @endif
-                                @endforeach
-                            </select>
-                            @error('from_room_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                                    </select>
+                                    @error('from_room_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <small class="form-text text-muted">Hệ thống sẽ tự đề xuất phòng cùng loại còn trống để đổi.</small>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="to_room_id">Chọn phòng muốn chuyển đến:</label>
-                            <select name="to_room_id" id="to_room_id" class="form-control @error('to_room_id') is-invalid @enderror" required>
-                                <option value="">-- Chọn phòng --</option>
-                            </select>
-                            @error('to_room_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
 
                         <div class="form-group">
                             <label for="reason">Lý do đổi phòng:</label>
-                            <select name="reason" id="reason" class="form-control @error('reason') is-invalid @enderror">
+                            <select name="reason" id="reason" class="form-control @error('reason') is-invalid @enderror" required>
                                 <option value="">-- Chọn lý do --</option>
-                                <option value="upgrade">Nâng cấp phòng</option>
-                                <option value="downgrade">Hạ cấp phòng</option>
-                                <option value="preference">Sở thích cá nhân</option>
-                                <option value="other">Khác</option>
+                                <option value="Phòng không đúng yêu cầu">Phòng không đúng yêu cầu</option>
+                                <option value="Phòng có vấn đề kỹ thuật">Phòng có vấn đề kỹ thuật</option>
+                                <option value="Khách hàng yêu cầu">Khách hàng yêu cầu</option>
+                                <option value="Nâng cấp phòng">Nâng cấp phòng</option>
+                                <option value="Lý do khác">Lý do khác</option>
                             </select>
                             @error('reason')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -122,12 +124,12 @@
                             </div>
                         </div>
 
-                        <div class="form-group text-center">
-                            <button type="submit" class="btn btn-primary btn-lg">
+                        <div class="form-group text-center" style="margin-top: 30px;">
+                            <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 30px; border-radius: 25px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
                                 <i class="fas fa-paper-plane"></i>
                                 Gửi yêu cầu đổi phòng
                             </button>
-                            <a href="{{ route('client.tour-bookings.show', $tourBooking->id) }}" class="btn btn-secondary btn-lg ml-2">
+                            <a href="{{ route('tour-booking.show', $tourBooking->id) }}" class="btn btn-secondary btn-lg ml-2" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); border: none; padding: 12px 30px; border-radius: 25px; box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);">
                                 <i class="fas fa-arrow-left"></i>
                                 Quay lại
                             </a>
@@ -140,38 +142,74 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const fromRoomSelect = document.getElementById('from_room_id');
-    const toRoomSelect = document.getElementById('to_room_id');
+@push('styles')
+<style>
+    /* Dark theme for this page */
+    body.page-room-change {
+        background: #000000 !important;
+        color: #ffffff !important;
+    }
+    body.page-room-change .card {
+        background-color: #111318;
+        color: #ffffff;
+        border-color: #1f2430;
+    }
+    body.page-room-change .card-header {
+        color: #ffffff;
+    }
+    body.page-room-change .form-control,
+    body.page-room-change select,
+    body.page-room-change textarea {
+        background-color: #1a1f29;
+        border: 1px solid #2b3240;
+        color: #ffffff;
+    }
+    body.page-room-change .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background-color: #1a1f29;
+        color: #ffffff;
+    }
+    body.page-room-change label,
+    body.page-room-change h6,
+    body.page-room-change p,
+    body.page-room-change small,
+    body.page-room-change .text-muted { color: #e6e6e6 !important; }
+    body.page-room-change .alert-info { color: #0c5460; }
+    body.page-room-change .badge-success { background-color: #2e7d32; }
 
-    fromRoomSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const roomTypeId = selectedOption.getAttribute('data-room-type');
-        
-        // Clear previous options
-        toRoomSelect.innerHTML = '<option value="">-- Chọn phòng --</option>';
-        
-        if (roomTypeId) {
-            // Fetch available rooms of the same type
-            fetch(`/api/rooms/available-by-type/${roomTypeId}?check_in={{ $tourBooking->check_in_date }}&check_out={{ $tourBooking->check_out_date }}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.rooms) {
-                        data.rooms.forEach(room => {
-                            const option = document.createElement('option');
-                            option.value = room.id;
-                            option.textContent = `${room.room_number} - ${room.room_type.name}`;
-                            toRoomSelect.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching rooms:', error);
-                });
-        }
-    });
-});
-</script>
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .alert-info {
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        border: none;
+        border-radius: 10px;
+        color: #0c5460;
+    }
+    
+    .badge {
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    .card {
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+</style>
 @endpush
+
+{{-- Loại bỏ JS động để tránh lỗi – form submit qua route thuần --}}

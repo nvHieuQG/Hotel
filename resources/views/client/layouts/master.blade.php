@@ -23,7 +23,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-                /* Toast Notification Styles - Simplified & Fixed */
+        /* Navbar z-index as requested */
+        .navbar, .ftco_navbar {
+            z-index: 1000 !important;
+            position: relative;
+            background: #000000 !important;
+            color: #ffffff !important;
+        }
+        
+        /* Toast Notification Styles - Simplified & Fixed */
     .toast-container {
         position: fixed;
         top: 20px;
@@ -951,7 +959,7 @@
 }
     </style>
 </head>
-<body>
+<body class="@yield('body_class')">
 
     @include('client.layouts.blocks.header')
 

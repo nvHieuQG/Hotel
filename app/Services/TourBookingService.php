@@ -136,21 +136,43 @@ class TourBookingService implements TourBookingServiceInterface
             ->exists();
         if (!$belongs) throw new \InvalidArgumentException('Phòng hiện tại không thuộc tour booking');
 
-        // Kiểm tra to_room có trống toàn dải
-        $to = \App\Models\Room::findOrFail((int)$data['to_room_id']);
-        if (!$to->isStrictlyAvailableForRange($tb->check_in_date, $tb->check_out_date)) {
-            throw new \InvalidArgumentException('Phòng muốn đổi không trống cho toàn bộ khoảng ngày');
+        $to = null;
+        if (!empty($data['to_room_id'])) {
+            // Kiểm tra to_room có trống toàn dải nếu client đã chọn
+            $to = \App\Models\Room::findOrFail((int)$data['to_room_id']);
+            if (!$to->isStrictlyAvailableForRange($tb->check_in_date, $tb->check_out_date)) {
+                throw new \InvalidArgumentException('Phòng muốn đổi không trống cho toàn bộ khoảng ngày');
+            }
+        } else {
+            // Auto đề xuất phòng đích cùng loại, trống toàn dải
+            $fromRoom = \App\Models\Room::findOrFail((int)$data['from_room_id']);
+            // chỉ đề xuất CÙNG LOẠI phòng
+            $candidate = \App\Models\Room::where('room_type_id', $fromRoom->room_type_id)
+                ->where('status', 'available')
+                ->orderBy('id')
+                ->get()
+                ->first(function($room) use ($tb) {
+                    return $room->isStrictlyAvailableForRange($tb->check_in_date, $tb->check_out_date);
+                });
+            if ($candidate) {
+                $to = $candidate; // gợi ý
+                $data['suggested_to_room_id'] = $candidate->id;
+            }
         }
 
         // Tính chênh lệch theo giá loại phòng * số đêm
         $nights = max(1, (int)\Carbon\Carbon::parse($tb->check_in_date)->diffInDays(\Carbon\Carbon::parse($tb->check_out_date)));
         $fromRoom = \App\Models\Room::findOrFail((int)$data['from_room_id']);
-        $delta = ((int)($to->roomType->price) - (int)($fromRoom->roomType->price)) * $nights;
+        $delta = 0;
+        if ($to) {
+            $delta = ((int)($to->roomType->price) - (int)($fromRoom->roomType->price)) * $nights;
+        }
 
         return \App\Models\TourRoomChange::create([
             'tour_booking_id' => $tb->id,
             'from_room_id' => (int)$data['from_room_id'],
-            'to_room_id' => (int)$data['to_room_id'],
+            'to_room_id' => $to?->id,
+            'suggested_to_room_id' => $data['suggested_to_room_id'] ?? null,
             'price_difference' => $delta,
             'status' => 'pending',
             'reason' => $data['reason'] ?? null,
@@ -170,9 +192,31 @@ class TourBookingService implements TourBookingServiceInterface
         $tb = $trc->tourBooking;
         if (!$tb) return false;
 
+        // Nếu chưa có phòng đích, dùng phòng đề xuất
+        if (empty($trc->to_room_id) && !empty($trc->suggested_to_room_id)) {
+            $trc->to_room_id = (int)$trc->suggested_to_room_id;
+        }
+
         // Phòng đích vẫn phải trống toàn dải tại thời điểm duyệt
         $to = \App\Models\Room::findOrFail($trc->to_room_id);
         if (!$to->isStrictlyAvailableForRange($tb->check_in_date, $tb->check_out_date)) return false;
+
+        // Ép cùng loại phòng (VAT): từ chối nếu khác loại
+        $from = \App\Models\Room::findOrFail($trc->from_room_id);
+        if ((int)$from->room_type_id !== (int)$to->room_type_id) {
+            return false;
+        }
+
+        // Không cho duyệt nếu phòng đích đang là phòng đã gán cho tour khác trùng dải ngày
+        $conflictTour = \App\Models\TourBookingRoom::whereJsonContains('assigned_room_ids', $to->id)
+            ->whereHas('tourBooking', function($q) use ($tb) {
+                $q->where('id', '!=', $tb->id)
+                  ->where('check_in_date', '<', $tb->check_out_date)
+                  ->where('check_out_date', '>', $tb->check_in_date)
+                  ->where('status', '!=', 'cancelled');
+            })
+            ->exists();
+        if ($conflictTour) return false;
 
         return DB::transaction(function () use ($trc, $tb, $data, $to) {
             // cập nhật trạng thái yêu cầu
@@ -193,8 +237,7 @@ class TourBookingService implements TourBookingServiceInterface
                 $tbr->update(['assigned_room_ids' => array_values(array_unique($ids))]);
             }
 
-            // cập nhật trạng thái phòng
-            \App\Models\Room::where('id', $trc->from_room_id)->update(['status' => 'available']);
+            \App\Models\Room::where('id', $trc->from_room_id)->update(['status' => 'repair']);
             \App\Models\Room::where('id', $trc->to_room_id)->update(['status' => 'booked']);
 
             return true;
@@ -296,7 +339,10 @@ class TourBookingService implements TourBookingServiceInterface
         foreach ($roomType->rooms as $room) {
             if ($room->isStrictlyAvailableForRange($checkInDate, $checkOutDate)) {
                 $available++;
-                if ($available >= (int)$quantity)         return true;
+                if ($available >= (int)$quantity) return true;
+            }
+        }
+        return false;
     }
 
     public function rejectTourRoomChange(int $id, array $data = []): bool
@@ -417,7 +463,6 @@ class TourBookingService implements TourBookingServiceInterface
                     ->subject('Đổi phòng tour #' . $tourBooking->booking_id . ' đã hoàn tất');
         });
     }
-}
 
     /**
      * Lấy danh sách loại phòng có sẵn cho tour

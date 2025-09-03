@@ -142,6 +142,14 @@
                         <h6 class="m-0">
                             <i class="fas fa-bell me-2"></i>Thông báo
                         </h6>
+                        @php
+                            $pendingTourChanges = \App\Models\TourRoomChange::where('status','pending')->count();
+                        @endphp
+                        <a href="{{ route('admin.tour-bookings.index') }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-exchange-alt"></i>
+                            Đổi phòng tour
+                            <span class="badge bg-dark">{{ $pendingTourChanges }}</span>
+                        </a>
                     </div>
                     <div id="notificationsList">
                         @if (isset($unreadCount) && $unreadCount > 0 && isset($unreadNotifications))
