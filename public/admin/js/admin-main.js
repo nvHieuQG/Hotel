@@ -52,19 +52,47 @@ window.AdminUtils = {
     }
 };
 
-// Real-time notification 
-function loadNotificationCount() {
-    $.get('/admin/api/notifications/count', function(res) {
-        if (res.success) {
-            $('#notificationBadge').text(res.count);
-            $('#sidebarNotificationBadge').text(res.count);
-            console.log('Badge cập nhật:', res.count, $('#sidebarNotificationBadge'));
-        } else {
-            console.log('Không lấy được số lượng thông báo');
+// Real-time notification (tối ưu tần suất và tránh chồng chéo)
+if (!window.__adminNotificationPollingInitialized) {
+    window.__adminNotificationPollingInitialized = true;
+
+    let isNotificationInFlight = false;
+    let activeIntervalMs = 15000; // 15s khi tab hoạt động
+    let backgroundIntervalMs = 30000; // 30s khi tab nền
+    let currentIntervalMs = activeIntervalMs;
+    let notificationTimer = null;
+
+    function loadNotificationCount() {
+        if (isNotificationInFlight) {
+            scheduleNext();
+            return;
         }
-    }).fail(function() {
-        console.log('Lỗi khi gọi API get-unread-notification-count');
+        isNotificationInFlight = true;
+
+        $.get('/admin/api/notifications/count', function(res) {
+            if (res.success) {
+                $('#notificationBadge').text(res.count);
+                $('#sidebarNotificationBadge').text(res.count);
+            }
+        }).fail(function() {
+            console.log('Lỗi khi gọi API get-unread-notification-count');
+        }).always(function() {
+            isNotificationInFlight = false;
+            scheduleNext();
+        });
+    }
+
+    function scheduleNext() {
+        if (notificationTimer) {
+            clearTimeout(notificationTimer);
+        }
+        notificationTimer = setTimeout(loadNotificationCount, currentIntervalMs);
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        currentIntervalMs = document.hidden ? backgroundIntervalMs : activeIntervalMs;
     });
+
+    // Kick off
+    loadNotificationCount();
 }
-loadNotificationCount();
-setInterval(loadNotificationCount, 10000); 

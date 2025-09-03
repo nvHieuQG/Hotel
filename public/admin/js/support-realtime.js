@@ -9,6 +9,10 @@ class SupportRealtimeSystem {
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.isConnected = false;
+        this.isUnreadInFlight = false;
+        this.syncIntervalActive = 120000; // 120s khi tab hoạt động
+        this.syncIntervalBackground = 180000; // 180s khi tab nền
+        this.currentSyncInterval = this.syncIntervalActive;
 
         this.init();
     }
@@ -17,6 +21,13 @@ class SupportRealtimeSystem {
         console.log('🔧 Initializing Support Realtime System...');
         this.connectToStream();
         this.setupPeriodicSync();
+
+        // Điều chỉnh chu kỳ sync theo trạng thái tab
+        document.addEventListener('visibilitychange', () => {
+            this.currentSyncInterval = document.hidden
+                ? this.syncIntervalBackground
+                : this.syncIntervalActive;
+        });
     }
 
     connectToStream() {
@@ -78,6 +89,10 @@ class SupportRealtimeSystem {
 
     refreshUnreadCount() {
         console.log('🔄 Refreshing support unread count...');
+        if (this.isUnreadInFlight) {
+            return;
+        }
+        this.isUnreadInFlight = true;
 
         $.get('/admin/support/unread-count', (response) => {
             console.log('📊 Support unread count response:', response);
@@ -88,6 +103,8 @@ class SupportRealtimeSystem {
             }
         }).fail((xhr, status, error) => {
             console.error('❌ Failed to fetch support unread count:', {xhr, status, error});
+        }).always(() => {
+            this.isUnreadInFlight = false;
         });
     }
 
@@ -220,28 +237,12 @@ class SupportRealtimeSystem {
     }
 
     setupPeriodicSync() {
-        // Sync every 60 seconds
-        setInterval(() => {
+        // Đồng bộ theo chu kỳ động dựa trên trạng thái tab
+        const tick = () => {
             this.refreshUnreadCount();
-        }, 60000);
-    }
-
-    testSystem() {
-        console.log('🧪 Testing support system...');
-        $('#testStatus').html('Testing support system...');
-
-        // Test unread count
-        this.refreshUnreadCount();
-
-        // Test conversations
-        this.updateDropdown();
-
-        // Test SSE connection
-        if (this.isConnected) {
-            $('#testStatus').html('✅ Support SSE Connected');
-        } else {
-            $('#testStatus').html('❌ Support SSE Not Connected');
-        }
+            setTimeout(tick, this.currentSyncInterval);
+        };
+        setTimeout(tick, this.currentSyncInterval);
     }
 
     createTestMessage() {

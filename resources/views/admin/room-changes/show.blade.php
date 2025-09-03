@@ -310,7 +310,7 @@
                     <span>&times;</span>
                 </button>
             </div>
-            <form action="{{ route('admin.room-changes.approve', $roomChange->id) }}" method="POST">
+            <form id="approveForm" action="{{ route('admin.room-changes.approve', $roomChange->id) }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="form-group">
@@ -338,7 +338,7 @@
                     <span>&times;</span>
                 </button>
             </div>
-            <form action="{{ route('admin.room-changes.reject', $roomChange->id) }}" method="POST">
+            <form id="rejectForm" action="{{ route('admin.room-changes.reject', $roomChange->id) }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="form-group">
@@ -366,6 +366,40 @@ function rejectRoomChange() {
     $('#rejectModal').modal('show');
 }
 
+// AJAX submit để hiển thị lỗi rõ ràng và tránh nhầm route ngoài admin group
+document.addEventListener('DOMContentLoaded', function(){
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    const handleSubmit = (formId) => {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            const url = form.getAttribute('action');
+            const formData = new FormData(form);
+            fetch(url, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+            .then(async resp => {
+                const isJson = (resp.headers.get('content-type')||'').includes('application/json');
+                const data = isJson ? await resp.json() : {};
+                if (resp.ok && data.success) {
+                    toastr.success(data.message || 'Thao tác thành công.');
+                    setTimeout(()=> window.location.reload(), 600);
+                } else {
+                    const msg = (data && data.message) ? data.message : 'Không thể thực hiện yêu cầu.';
+                    toastr.error(msg);
+                }
+            })
+            .catch(() => toastr.error('Có lỗi kết nối. Vui lòng thử lại.'));
+        });
+    };
+
+    handleSubmit('approveForm');
+    handleSubmit('rejectForm');
+});
 
 </script>
 @endpush

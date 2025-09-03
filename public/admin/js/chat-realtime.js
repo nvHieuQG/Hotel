@@ -3,7 +3,10 @@ const chatRealtime = {
         this.conversationId = conversationId;
         this.isRealtimeEnabled = true;
         this.lastMessageId = this.getLastMessageIdFromDom();
-        this.pollInterval = 3000; // Poll every 3 seconds
+        this.basePollInterval = 7000; // 7s khi tab hoạt động
+        this.backgroundPollInterval = 15000; // 15s khi tab nền
+        this.pollInterval = this.basePollInterval;
+        this.isRequestInFlight = false;
         this.setupRealtime();
     },
 
@@ -19,10 +22,25 @@ const chatRealtime = {
 
         // Thiết lập audio cho notification
         this.messageSound = new Audio('/admin/sounds/message.mp3');
+
+        // Điều chỉnh chu kỳ theo trạng thái tab (Page Visibility API)
+        document.addEventListener('visibilitychange', () => {
+            this.pollInterval = document.hidden
+                ? this.backgroundPollInterval
+                : this.basePollInterval;
+        });
     },
 
     checkNewMessages() {
         if (!this.isRealtimeEnabled) return;
+
+        // Tránh gọi chồng chéo khi request trước chưa xong
+        if (this.isRequestInFlight) {
+            setTimeout(() => this.checkNewMessages(), this.pollInterval);
+            return;
+        }
+
+        this.isRequestInFlight = true;
 
         fetch(
             `/admin/support/conversation/${this.conversationId}/messages?last_id=${this.lastMessageId}`
@@ -35,6 +53,7 @@ const chatRealtime = {
             })
             .catch((err) => console.error('Error fetching messages:', err))
             .finally(() => {
+                this.isRequestInFlight = false;
                 // Tiếp tục polling
                 setTimeout(() => this.checkNewMessages(), this.pollInterval);
             });

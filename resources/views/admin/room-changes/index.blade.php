@@ -160,7 +160,7 @@
                                                 @if($roomChange->status === 'pending')
                                                     <!-- Dòng 2: Duyệt kèm ghi chú -->
                                                     <div class="action-row-item">
-                                                        <form method="POST" action="{{ route('admin.room-changes.approve', $roomChange->id) }}">
+                                                        <form method="POST" action="{{ route('admin.room-changes.approve', $roomChange->id) }}" class="approve-form">
                                                             @csrf
                                                             <div class="input-group input-group-sm">
                                                                 <div class="input-group-append ">
@@ -176,7 +176,7 @@
                                                     
                                                     <!-- Dòng 3: Từ chối kèm lý do -->
                                                     <div class="action-row-item">
-                                                        <form method="POST" action="{{ route('admin.room-changes.reject', $roomChange->id) }}">
+                                                        <form method="POST" action="{{ route('admin.room-changes.reject', $roomChange->id) }}" class="reject-form">
                                                             @csrf
                                                             <div class="input-group input-group-sm">
                                                                 <div class="input-group-append ">
@@ -258,6 +258,36 @@
 
 @push('scripts')
 <script>
+// Intercept approve/reject submit để dùng AJAX + route name admin.*
+document.addEventListener('DOMContentLoaded', function(){
+  const csrf = '{{ csrf_token() }}';
+
+  function wireAjaxSubmit(selector) {
+    document.querySelectorAll(selector).forEach(function(form){
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        const url = form.getAttribute('action');
+        const fd = new FormData(form);
+        fetch(url, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' }, body: fd })
+          .then(async (resp) => {
+            const isJson = (resp.headers.get('content-type')||'').includes('application/json');
+            const data = isJson ? await resp.json() : {};
+            if (resp.ok && data.success) {
+              toastr.success(data.message || 'Thao tác thành công.');
+              setTimeout(()=> window.location.reload(), 600);
+            } else {
+              throw new Error(data.message || 'Không thể thực hiện yêu cầu.');
+            }
+          })
+          .catch(err => toastr.error(err.message));
+      });
+    });
+  }
+
+  wireAjaxSubmit('form.approve-form');
+  wireAjaxSubmit('form.reject-form');
+});
+
 function completeRoomChange(id) {
     if (confirm('Bạn có chắc chắn muốn hoàn thành đổi phòng này?')) {
         $.ajax({

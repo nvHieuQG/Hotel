@@ -40,6 +40,8 @@ class Room extends Model
     }
 
 
+
+
     
     /**
      * Lấy hình ảnh của phòng
@@ -225,8 +227,11 @@ class Room extends Model
             return 'pending';
         }
 
-        // 3) Fallback
-        return $this->status;
+        // 3) Fallback: nếu không bị giữ bởi booking/tour trong ngày, hiển thị 'available' trừ khi đang 'repair'
+        if ($this->status === 'repair') {
+            return 'repair';
+        }
+        return 'available';
     }
 
     /**
@@ -276,7 +281,26 @@ class Room extends Model
             return ['room_to_status' => [], 'room_to_tb' => []];
         }
 
-        // 4) Chia nhóm theo status và sort theo tiêu chí nights desc, check_in asc, created_at asc
+        // ƯU TIÊN: Ánh xạ các gán cố định (assigned_room_ids) trước
+        $roomToStatus = [];
+        $roomToTb = [];
+
+        foreach ($rows as $row) {
+            $assigned = is_array($row->assigned_room_ids) ? $row->assigned_room_ids : [];
+            if (empty($assigned)) continue;
+
+            $status = ($row->tourBooking && $row->tourBooking->status === 'confirmed') ? 'booked' : 'pending';
+            foreach ($assigned as $rid) {
+                // Bỏ qua nếu phòng này bị booking thường giữ
+                if (in_array($rid, $regularHeldRoomIds, true)) continue;
+                $roomToStatus[$rid] = $status;
+                $roomToTb[$rid] = $row->tourBooking?->id;
+                // Loại trừ khỏi availableIds để không bị cấp phát lần nữa
+                $availableIds = array_values(array_diff($availableIds, [$rid]));
+            }
+        }
+
+        // 4) Chia nhóm theo status và sort theo tiêu chí nights desc, check_in asc, created_at asc cho phần CHƯA gán cố định
         $sorter = function($a, $b) {
             $ta = $a->tourBooking; $tb = $b->tourBooking;
             $na = \Carbon\Carbon::parse($ta->check_in_date)->diffInDays(\Carbon\Carbon::parse($ta->check_out_date));
@@ -287,9 +311,14 @@ class Room extends Model
             return strcmp((string)$ta->created_at, (string)$tb->created_at);
         };
 
-        $confirmedRows = $rows->filter(fn($r)=>$r->tourBooking && $r->tourBooking->status === 'confirmed')->values();
+        $confirmedRows = $rows->filter(function($r){
+            if (!$r->tourBooking) return false;
+            if (!empty($r->assigned_room_ids)) return false; // đã gán cố định, bỏ qua ở bước phân bổ động
+            return $r->tourBooking->status === 'confirmed';
+        })->values();
         $pendingRows = $rows->filter(function($r){
             if (!$r->tourBooking) return false;
+            if (!empty($r->assigned_room_ids)) return false; // đã gán cố định, bỏ qua ở bước phân bổ động
             $st = $r->tourBooking->status;
             if (!in_array($st, ['pending','pending_payment'])) return false;
             // chỉ giữ pending trong 30 phút
@@ -300,8 +329,6 @@ class Room extends Model
         $pendingRows = $pendingRows->sort($sorter);
 
         // 5) Cấp phát theo thứ tự: confirmed trước, rồi pending
-        $roomToStatus = [];
-        $roomToTb = [];
         $cursor = 0;
         $assign = function($collection, $status) use (&$cursor, $availableIds, &$roomToStatus, &$roomToTb) {
             foreach ($collection as $row) {

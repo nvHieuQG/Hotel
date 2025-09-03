@@ -3,6 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hóa đơn mua bán - Xác nhận thanh toán</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 680px; margin: 0 auto; padding: 24px; background-color: #f7f8fa; }
+        .card { background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+        .header { text-align: center; border-bottom: 3px solid #0d6efd; padding-bottom: 18px; margin-bottom: 26px; }
+        .brand { font-size: 22px; font-weight: 700; color: #0d6efd; }
+        .invoice-tag { display: inline-block; background-color: #0d6efd; color: #fff; padding: 8px 14px; border-radius: 6px; font-weight: 600; margin-top: 8px; }
+        .section { margin: 18px 0; padding: 16px; background: #f8f9fb; border-radius: 8px; }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eef0f3; }
+        .row:last-child { border-bottom: none; }
+        .label { font-weight: 600; color: #555; }
+        .value { color: #222; }
+        .total { background: #0d6efd; color: #fff; text-align: center; padding: 18px; border-radius: 8px; margin: 18px 0; }
+        .amount { font-size: 24px; font-weight: 800; }
+        .footer { text-align: center; margin-top: 28px; padding-top: 18px; border-top: 1px solid #e9ecef; color: #6c757d; font-size: 13px; }
+        .muted { color: #6c757d; }
+    </style>
+    </head>
+<body>
+    <div class="card">
+        <div class="header">
+            <div class="brand">🏨 Happy Holiday Resort</div>
+            <h2>Hóa đơn mua bán - Xác nhận thanh toán</h2>
+            <div class="invoice-tag">Mã đặt phòng: {{ $booking->booking_id }}</div>
+        </div>
+
+        <p>Xin chào <strong>{{ $user->name }}</strong>,</p>
+        <p>Chúng tôi xác nhận đã nhận thanh toán cho đơn đặt phòng của bạn. Dưới đây là thông tin hóa đơn mua bán.</p>
+
+        <div class="section">
+            <h3>Thông tin khách hàng</h3>
+            <div class="row"><div class="label">Tên khách hàng</div><div class="value">{{ $user->name }}</div></div>
+            <div class="row"><div class="label">Email</div><div class="value">{{ $user->email }}</div></div>
+            @if(!empty($user->phone))
+            <div class="row"><div class="label">Số điện thoại</div><div class="value">{{ $user->phone }}</div></div>
+            @endif
+        </div>
+
+        <div class="section">
+            <h3>Chi tiết đặt phòng</h3>
+            <div class="row"><div class="label">Phòng</div><div class="value">{{ $booking->room->name ?? 'N/A' }}</div></div>
+            <div class="row"><div class="label">Loại phòng</div><div class="value">{{ $booking->room->roomType->name ?? 'N/A' }}</div></div>
+            <div class="row"><div class="label">Check-in</div><div class="value">{{ \Carbon\Carbon::parse($booking->check_in_date)->format('d/m/Y H:i') }}</div></div>
+            <div class="row"><div class="label">Check-out</div><div class="value">{{ \Carbon\Carbon::parse($booking->check_out_date)->format('d/m/Y H:i') }}</div></div>
+            <div class="row"><div class="label">Số đêm</div><div class="value">{{ \Carbon\Carbon::parse($booking->check_in_date)->diffInDays(\Carbon\Carbon::parse($booking->check_out_date)) }}</div></div>
+        </div>
+
+        <div class="section">
+            <h3>Thông tin thanh toán</h3>
+            <div class="row"><div class="label">Phương thức</div><div class="value">{{ $payment->method === 'bank_transfer' ? 'Chuyển khoản ngân hàng' : ucfirst($payment->method) }}</div></div>
+            <div class="row"><div class="label">Trạng thái</div><div class="value">{{ $payment->status_text ?? ucfirst($payment->status) }}</div></div>
+            <div class="row"><div class="label">Thời gian</div><div class="value">{{ $payment->paid_at ? $payment->paid_at->format('d/m/Y H:i:s') : $payment->created_at->format('d/m/Y H:i:s') }}</div></div>
+            @if(!empty($payment->transaction_id))
+            <div class="row"><div class="label">Mã giao dịch</div><div class="value">{{ $payment->transaction_id }}</div></div>
+            @endif
+        </div>
+
+        <div class="total">
+            <div class="amount">{{ number_format($booking->total_booking_price) }} VNĐ</div>
+            <div>Giá trị đã thanh toán</div>
+        </div>
+
+        <p class="muted">Lưu ý: Đây là hóa đơn mua bán/biên nhận thanh toán. Nếu bạn cần hóa đơn VAT, vui lòng gửi yêu cầu xuất hóa đơn VAT trong trang hồ sơ khách hàng.</p>
+
+        <div class="footer">
+            <p>Cảm ơn bạn đã chọn Happy Holiday Resort!</p>
+            <p><small>Email được gửi tự động, vui lòng không trả lời.</small></p>
+        </div>
+    </div>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xác nhận thanh toán thành công</title>
     <style>
         body {

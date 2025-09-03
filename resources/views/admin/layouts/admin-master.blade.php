@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="{{ asset('admin/css/admin-responsive.css') }}">
     <!-- Admin Components CSS -->
     <link rel="stylesheet" href="{{ asset('admin/css/admin-components.css') }}">
+    <!-- Toastr CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
     @yield('styles')
     @stack('styles')
     <style>
@@ -140,6 +142,18 @@
                         <h6 class="m-0">
                             <i class="fas fa-bell me-2"></i>Thông báo
                         </h6>
+                        @php
+                            $pendingTourChanges = \App\Models\TourRoomChange::where('status','pending')->count();
+                            $firstPendingTourChange = \App\Models\TourRoomChange::where('status','pending')->latest()->first();
+                            $tourChangeQuickLink = $firstPendingTourChange
+                                ? route('admin.tour-bookings.room-changes.index', $firstPendingTourChange->tour_booking_id)
+                                : route('admin.tour-bookings.index');
+                        @endphp
+                        <a href="{{ $tourChangeQuickLink }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-exchange-alt"></i>
+                            Đổi phòng tour
+                            <span class="badge bg-dark">{{ $pendingTourChanges }}</span>
+                        </a>
                     </div>
                     <div id="notificationsList">
                         @if (isset($unreadCount) && $unreadCount > 0 && isset($unreadNotifications))
@@ -599,6 +613,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Admin Main JavaScript -->
     <script src="{{ asset('admin/js/admin-main.js') }}"></script>
+    <!-- Toastr JS + Fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+      window.toastr = window.toastr || {
+        success: function(m){ alert(m || 'Thành công'); },
+        error: function(m){ alert(m || 'Có lỗi xảy ra'); },
+        info: function(m){ alert(m || 'Thông tin'); },
+        warning: function(m){ alert(m || 'Cảnh báo'); }
+      };
+    </script>
 
     @yield('scripts')
     <style>
