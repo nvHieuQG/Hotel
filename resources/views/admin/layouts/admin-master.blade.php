@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="{{ asset('admin/css/admin-responsive.css') }}">
     <!-- Admin Components CSS -->
     <link rel="stylesheet" href="{{ asset('admin/css/admin-components.css') }}">
+    <!-- Toastr CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
     @yield('styles')
     @stack('styles')
     <style>
@@ -581,6 +583,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Admin Main JavaScript -->
     <script src="{{ asset('admin/js/admin-main.js') }}"></script>
+    <!-- Toastr JS + Fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+      window.toastr = window.toastr || {
+        success: function(m){ alert(m || 'Thành công'); },
+        error: function(m){ alert(m || 'Có lỗi xảy ra'); },
+        info: function(m){ alert(m || 'Thông tin'); },
+        warning: function(m){ alert(m || 'Cảnh báo'); }
+      };
+    </script>
 
     @yield('scripts')
     <style>

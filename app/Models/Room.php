@@ -225,8 +225,11 @@ class Room extends Model
             return 'pending';
         }
 
-        // 3) Fallback
-        return $this->status;
+        // 3) Fallback: nếu không bị giữ bởi booking/tour trong ngày, hiển thị 'available' trừ khi đang 'repair'
+        if ($this->status === 'repair') {
+            return 'repair';
+        }
+        return 'available';
     }
 
     /**

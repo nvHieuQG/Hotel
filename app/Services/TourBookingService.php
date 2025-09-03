@@ -167,32 +167,6 @@ class TourBookingService implements TourBookingServiceInterface
         return $updated;
     }
 
-    /**
-     * Reassign assigned_room_ids cho một TourBooking (admin trigger)
-     */
-    public function reassignTourRooms(int $tourBookingId): array
-    {
-        $tb = $this->tourBookingRepository->findById($tourBookingId);
-        if (!$tb) return ['success' => false, 'message' => 'Tour booking không tồn tại'];
-        $tbrs = \App\Models\TourBookingRoom::where('tour_booking_id', $tb->id)->get();
-        $changed = 0; $errors = 0;
-        foreach ($tbrs as $tbr) {
-            try {
-                $assigned = $this->assignFixedRoomsForTourSelection(
-                    (int)$tbr->room_type_id,
-                    (int)$tbr->quantity,
-                    $tb->check_in_date,
-                    $tb->check_out_date
-                );
-                $tbr->update(['assigned_room_ids' => $assigned]);
-                $changed++;
-            } catch (\Throwable $e) {
-                Log::warning('Reassign room failed: '.$e->getMessage());
-                $errors++;
-            }
-        }
-        return ['success' => true, 'changed' => $changed, 'errors' => $errors];
-    }
 
     /**
      * Tính toán giá tour booking

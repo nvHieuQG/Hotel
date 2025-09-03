@@ -127,8 +127,8 @@ class RoomChangeService implements RoomChangeServiceInterface
             $booking->room_id = $newRoom->id;
             $booking->save();
 
-            // 3) Cập nhật trạng thái phòng cũ -> maintenance, phòng mới -> booked
-            $roomChange->oldRoom->update(['status' => 'maintenance']);
+            // 3) Cập nhật trạng thái phòng cũ -> repair, phòng mới -> booked
+            $roomChange->oldRoom->update(['status' => 'repair']);
             $roomChange->newRoom->update(['status' => 'booked']);
 
             return true;
