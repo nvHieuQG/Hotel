@@ -287,6 +287,16 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\ExtraServiceService::class
         );
 
+        // Service Revenue Report Bindings
+        $this->app->bind(
+            \App\Interfaces\Repositories\ServiceRevenueReportRepositoryInterface::class,
+            \App\Repositories\ServiceRevenueReportRepository::class
+        );
+        $this->app->bind(
+            \App\Interfaces\Services\ServiceRevenueReportServiceInterface::class,
+            \App\Services\ServiceRevenueReportService::class
+        );
+
     // View Composer cho dropdown notification
     \Illuminate\Support\Facades\View::composer('admin.layouts.admin-master', function ($view) {
         $unreadNotifications = \App\Models\AdminNotification::unread()->orderBy('created_at', 'desc')->limit(5)->get();

@@ -146,9 +146,12 @@
                                         <a href="{{ route('admin.bookings.edit', $booking->id) }}" class="btn btn-warning btn-sm">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="{{ route('admin.bookings.generate-pdf', $booking->id) }}" class="btn btn-success btn-sm">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </a>
+                                        <form action="{{ route('admin.bookings.generate-pdf', $booking->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -240,9 +243,12 @@
                                 <a href="{{ route('admin.bookings.edit', $booking->id) }}" class="btn btn-warning">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{{ route('admin.bookings.generate-pdf', $booking->id) }}" class="btn btn-success">
-                                    <i class="fas fa-file-pdf"></i>
-                                </a>
+                                <form action="{{ route('admin.bookings.generate-pdf', $booking->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>

@@ -746,7 +746,6 @@
                                                     </tbody>
                                                     <tfoot class="table-light small">
                                                         <tr>
-                                                            <td colspan="4" class="text-end fw-semibold">Tổng cộng:</td>
                                                             <div class="text-muted small">Phụ phí & dịch vụ: {{ number_format($booking->surcharge + $booking->extra_services_total + $booking->total_services_price) }} VNĐ</div>
                                                             <td></td>
                                                         </tr>
