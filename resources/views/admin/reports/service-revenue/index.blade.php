@@ -53,11 +53,12 @@
         </div>
         <div class="col-md-4">
             <div class="card card-body h-100">
-                <div class="text-muted">Doanh thu dịch vụ</div>
+                <div class="text-muted">Doanh thu (dịch vụ + phụ phí)</div>
                 @php
                     $svcCustomer = (float) ($summary['totals']['total_revenue'] ?? 0);
+                    $svcSurcharge = (float) ($summary['totals']['surcharge_revenue'] ?? 0);
                     $svcAdmin = (float) ($summary['admin_totals']['total_revenue'] ?? 0);
-                    $svcAll = $svcCustomer + $svcAdmin;
+                    $svcAll = $svcCustomer + $svcSurcharge + $svcAdmin;
                 @endphp
                 <div class="fs-4 fw-bold">{{ number_format($svcAll) }}</div>
             </div>
