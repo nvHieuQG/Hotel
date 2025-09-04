@@ -30,12 +30,13 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
             $query->whereDate($dateField, '<=', $dateTo);
         }
 
-        $bookings = $query->get(['id', 'user_id', 'extra_services', 'extra_services_total']);
+        $bookings = $query->get(['id', 'user_id', 'extra_services', 'extra_services_total', 'surcharge']);
 
         $byService = [];
         $bookingsWithServices = 0;
         $uniqueUsers = collect();
-        $grandRevenue = 0;
+        $grandRevenue = 0; // doanh thu dịch vụ khách chọn (không gồm phụ phí)
+        $surchargeTotal = 0; // tổng phụ phí để cộng vào báo cáo dịch vụ
 
         foreach ($bookings as $b) {
             $items = $b->extra_services ?? [];
@@ -45,6 +46,7 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
             $bookingsWithServices++;
             $uniqueUsers->push($b->user_id);
             $grandRevenue += (float) $b->extra_services_total;
+            $surchargeTotal += (float) ($b->surcharge ?? 0);
 
             // track services selected in this booking to count 'uses' per booking
             $servicesInBooking = [];
@@ -194,7 +196,8 @@ class ServiceRevenueReportRepository implements ServiceRevenueReportRepositoryIn
             'totals' => [
                 'bookings_with_services' => $bookingsWithServices,
                 'unique_customers' => $uniqueUsers->unique()->count(),
-                'total_revenue' => round($grandRevenue, 2),
+                'total_revenue' => round($grandRevenue, 2), // chỉ dịch vụ khách chọn
+                'surcharge_revenue' => round($surchargeTotal, 2), // phụ phí
             ],
             'admin_totals' => [
                 'total_revenue' => round($adminTotalRevenue, 2),

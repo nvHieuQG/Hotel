@@ -364,15 +364,39 @@ class AdminBookingService implements AdminBookingServiceInterface
         $bookings = $this->adminBookingRepository->getBookingsForReport($filters);
 
         // Tính toán doanh thu
-        // Doanh thu phòng
-        $totalRevenue = $bookings->sum('price');
         // Doanh thu dịch vụ bổ sung khách chọn + dịch vụ admin thêm
         $bookingIds = $bookings->pluck('id')->filter()->values();
-        $customerServiceRevenue = $bookings->sum('extra_services_total');
-        $adminAddedServiceRevenue = $bookingIds->isEmpty()
-            ? 0
-            : (float) BookingService::query()->whereIn('booking_id', $bookingIds)->sum('total_price');
-        $serviceRevenue = $customerServiceRevenue + $adminAddedServiceRevenue;
+        $customerServiceRevenue = (float) $bookings->sum(function ($b) {
+            return (float) ($b->extra_services_total ?? 0);
+        });
+        // Phụ phí (surcharge) được tính là doanh thu dịch vụ theo yêu cầu
+        $surchargeRevenue = (float) $bookings->sum(function ($b) {
+            return (float) ($b->surcharge ?? 0);
+        });
+
+        // Lấy tổng dịch vụ admin thêm theo từng booking (group by) để có thể trừ ra khỏi doanh thu phòng
+        $adminAddedByBooking = collect();
+        if ($bookingIds->isNotEmpty()) {
+            $adminAddedByBooking = BookingService::query()
+                ->whereIn('booking_id', $bookingIds)
+                ->selectRaw('booking_id, SUM(total_price) as total')
+                ->groupBy('booking_id')
+                ->pluck('total', 'booking_id');
+        }
+        $adminAddedServiceRevenue = (float) ($adminAddedByBooking->isEmpty() ? 0 : $adminAddedByBooking->sum());
+
+        // Doanh thu phòng (KHÔNG bao gồm dịch vụ): price - extra_services_total - admin_added_services (mỗi booking)
+        $roomRevenue = (float) $bookings->sum(function ($b) use ($adminAddedByBooking) {
+            $extra = (float) ($b->extra_services_total ?? 0);
+            $surcharge = (float) ($b->surcharge ?? 0);
+            $adminExtra = (float) ($adminAddedByBooking[$b->id] ?? 0);
+            $base = (float) ($b->price ?? 0) - $extra - $surcharge - $adminExtra;
+            return $base > 0 ? $base : 0; // tránh âm trong trường hợp dữ liệu lệch
+        });
+
+        // Gán lại biến theo ý nghĩa hiển thị
+        $totalRevenue = $roomRevenue; // Doanh thu đặt phòng chỉ tính tiền phòng
+        $serviceRevenue = $customerServiceRevenue + $surchargeRevenue + $adminAddedServiceRevenue; // Doanh thu dịch vụ (khách chọn + phụ phí + admin thêm)
         // Tổng hợp
         $grandRevenue = $totalRevenue + $serviceRevenue;
 
