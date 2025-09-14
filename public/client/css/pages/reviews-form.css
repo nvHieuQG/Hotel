@@ -1,0 +1,29 @@
+/* Extracted from resources/views/client/reviews/form.blade.php */
+.review-form-modern { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+.bg-light-info { background-color: #e3f2fd !important; }
+.rating-container { text-align: center; }
+.rating-stars { display: inline-flex; flex-direction: row-reverse; gap: 8px; }
+.rating-input { display: none; }
+.rating-star { font-size: 2.5rem; color: #e0e0e0; cursor: pointer; transition: all 0.2s ease; padding: 4px; border-radius: 50%; }
+.rating-star:hover, .rating-star:hover ~ .rating-star, .rating-input:checked ~ .rating-star { color: #ffc107; transform: scale(1.1); }
+.rating-star i { transition: all 0.2s ease; }
+.rating-text { font-size: 0.9rem; min-height: 20px; }
+.form-control { border-radius: 8px; border: 2px solid #e9ecef; transition: all 0.2s ease; font-size: 0.95rem; }
+.form-control:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25); background-color: #ffffff; }
+.custom-switch .custom-control-label::before { border-radius: 20px; height: 24px; width: 44px; }
+.custom-switch .custom-control-label::after { border-radius: 50%; height: 18px; width: 18px; top: 3px; left: 3px; }
+.custom-switch .custom-control-input:checked ~ .custom-control-label::after { transform: translateX(20px); }
+.btn-lg { padding: 12px 24px; font-size: 1.1rem; font-weight: 600; border-radius: 8px; transition: all 0.3s ease; }
+.btn-lg:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,123,255,0.3); }
+.btn-loading { display: none; }
+.btn-loading.d-none { display: none !important; }
+.alert { border-radius: 8px; border: none; }
+.alert-info { background-color: #e3f2fd; color: #0c5460; }
+.alert-danger { background-color: #ffebee; color: #c62828; }
+@media (max-width: 768px) { .rating-star { font-size: 2rem; } .btn-lg { padding: 10px 20px; font-size: 1rem; } }
+/* Toast styles extracted */
+.toast-notification { min-width: 300px; margin-bottom: 10px; }
+.toast-notification-success { background-color: #d4edda; border-color: #c3e6cb; }
+.toast-notification-warning { background-color: #fff3cd; border-color: #ffeaa7; }
+.toast-notification-danger { background-color: #f8d7da; border-color: #f5c6cb; }
+.toast-notification-info { background-color: #d1ecf1; border-color: #bee5eb; }

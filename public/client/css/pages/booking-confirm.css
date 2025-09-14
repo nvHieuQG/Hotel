@@ -1,0 +1,40 @@
+/* Extracted from resources/views/client/booking/confirm.blade.php - Styles section */
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-lg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.card { border: none; border-radius: 12px; }
+.card-header { border-radius: 12px 12px 0 0 !important; }
+
+/* Layout width tweak */
+@media (min-width: 992px) {
+    .booking-form-col { flex: 0 0 64%; max-width: 64%; }
+    .booking-summary-col { flex: 0 0 36%; max-width: 36%; }
+}
+@media (min-width: 1200px) {
+    .booking-form-col { flex: 0 0 62%; max-width: 62%; }
+    .booking-summary-col { flex: 0 0 38%; max-width: 38%; }
+}
+
+/* Ensure summary lines stay on one row and box uses full width */
+#booking-summary .summary-row { white-space: nowrap; }
+#booking-summary .border { width: 105%; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .btn-lg { padding: 10px 20px; font-size: 1rem; }
+}

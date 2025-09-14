@@ -494,45 +494,9 @@
         </section>
     @endif
 
-    <style>
-    /* Promotion styles */
-    .promotion-card {
-        transition: all 0.3s ease;
-        border: 1px solid #e9ecef !important;
-    }
-
-    .promotion-card:hover {
-        border-color: #007bff !important;
-        box-shadow: 0 4px 20px rgba(0, 123, 255, 0.2) !important;
-        transform: translateY(-5px);
-    }
-
-    .promotion-card .card-body {
-        transition: all 0.3s ease;
-    }
-
-    .promotion-card:hover .card-body {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    }
-
-    .badge.bg-success {
-        background-color: #28a745 !important;
-    }
-
-    .badge.bg-secondary {
-        background-color: #6c757d !important;
-    }
-
-    .fs-6 {
-        font-size: 0.875rem !important;
-    }
-
-    .btn-outline-primary:hover {
-        background-color: #007bff;
-        border-color: #007bff;
-        color: white;
-    }
-    </style>
+    @push('styles')
+    <link rel="stylesheet" href="{{ asset('client/css/pages/home.css') }}">
+    @endpush
 
     <section class="ftco-section">
       <div class="container">

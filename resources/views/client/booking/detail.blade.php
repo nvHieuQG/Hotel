@@ -279,57 +279,7 @@
         </div>
     </section>
 
-    @section('styles')
-    <style>
-        .card {
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        
-        .card-header {
-            border-bottom: none;
-            padding: 1.5rem;
-        }
-        
-        .btn-lg {
-            padding: 12px 24px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-lg:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        }
-        
-        .table td {
-            padding: 0.5rem 0;
-            border: none;
-        }
-        
-        .table-hover tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .badge {
-            font-size: 0.875em;
-            padding: 0.5em 0.75em;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .btn-lg {
-                padding: 10px 20px;
-                font-size: 1rem;
-                margin-bottom: 10px;
-            }
-            
-            .card-body {
-                padding: 2rem;
-            }
-        }
-    </style>
-    @endsection
+    @push('styles')
+    <link rel="stylesheet" href="{{ asset('client/css/pages/booking-detail.css') }}">
+    @endpush
 @endsection 

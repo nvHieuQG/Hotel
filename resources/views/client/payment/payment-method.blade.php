@@ -106,23 +106,7 @@ function confirmCOD() {
 }
 </script>
 
-<style>
-.payment-method-card {
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-}
-
-.payment-method-card:hover {
-    border-color: #007bff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.payment-icon {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-</style>
+@push('styles')
+<link rel="stylesheet" href="{{ asset('client/css/pages/payment-method-simple.css') }}">
+@endpush
 @endsection 

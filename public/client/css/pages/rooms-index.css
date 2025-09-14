@@ -1,0 +1,31 @@
+/* Extracted from resources/views/client/rooms/index.blade.php */
+/* Promotion styles */
+.promotion-section { margin-bottom: 2rem; }
+.promotion-item { transition: all 0.3s ease; border: 1px solid #e9ecef !important; }
+.promotion-item:hover { border-color: #007bff !important; box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15); transform: translateY(-1px); }
+.bg-gradient-primary { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); }
+.bg-gradient-success { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); }
+.cursor-pointer { cursor: pointer; }
+.cursor-pointer:hover { color: #0056b3 !important; }
+
+/* Price container styles */
+.price-container { display: flex; flex-direction: column; justify-content: center; }
+.room .text { display: flex; flex-direction: column; height: 100%; }
+.room .text h3 { flex-grow: 0; }
+
+/* Card improvements */
+.card { border: none; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); transition: all 0.3s ease; }
+.card:hover { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12); }
+.card-header { border-bottom: none; padding: 1rem 1.25rem; }
+.card-body { padding: 1.25rem; }
+
+/* Badge improvements */
+.badge { font-size: 0.75rem; padding: 0.375rem 0.75rem; border-radius: 6px; }
+.badge.bg-success { background-color: #28a745 !important; }
+.badge.bg-secondary { background-color: #6c757d !important; }
+
+/* Promotion badge styles */
+.promotion-badge .badge { box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 2px solid #fff; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.room .position-relative { overflow: hidden; }
+.room .promotion-badge { animation: pulse 2s infinite; }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }

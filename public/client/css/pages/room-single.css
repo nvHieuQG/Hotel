@@ -1,0 +1,13 @@
+/* Extracted from resources/views/client/rooms/single.blade.php */
+/* CSS cho rating stars */
+.rating-input { display: none; }
+.rating-stars { display: inline-flex; flex-direction: row-reverse; gap: 6px; }
+.rating-star { cursor: pointer; font-size: 1.6rem; color: #ddd; transition: color 0.2s ease; }
+.rating-star:hover, .rating-star:hover ~ .rating-star, .rating-input:checked ~ .rating-star { color: #ffc107; }
+.rating-text { font-size: 0.95rem; }
+
+/* Review form styles */
+.review-form-modern { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+.review-form-modern .form-label { font-weight: 600; }
+.review-form-modern .custom-control-label { cursor: pointer; }
+.review-form-modern .btn[disabled] { opacity: .75; }

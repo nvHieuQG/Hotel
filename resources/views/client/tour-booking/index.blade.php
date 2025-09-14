@@ -95,17 +95,7 @@
     </div>
 </section>
 
-<style>
-.card {
-    transition: all 0.3s ease;
-}
-
-.card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.badge {
-    font-size: 0.8em;
-}
-</style>
+@push('styles')
+<link rel="stylesheet" href="{{ asset('client/css/pages/tour-index.css') }}">
+@endpush
 @endsection 

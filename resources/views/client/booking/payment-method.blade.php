@@ -395,68 +395,7 @@
     });
     </script>
 
-    @section('styles')
-    <style>
-    .payment-method-item {
-        border: 1px solid #e9ecef;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 15px;
-        transition: all 0.3s ease;
-    }
-
-    .payment-method-item:hover {
-        border-color: #007bff;
-        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
-    }
-
-    .payment-icons img {
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .payment-details ul {
-        list-style: none;
-        padding-left: 0;
-    }
-
-    .payment-details li {
-        padding: 5px 0;
-        color: #6c757d;
-        font-size: 0.9rem;
-    }
-
-    .payment-details li:before {
-        content: "✓";
-        color: #28a745;
-        font-weight: bold;
-        margin-right: 8px;
-    }
-
-    .btn-lg {
-        padding: 12px 24px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-lg:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .payment-method-item {
-            padding: 15px;
-        }
-        
-        .btn-lg {
-            padding: 10px 20px;
-            font-size: 1rem;
-        }
-    }
-    </style>
-    @endsection
+    @push('styles')
+    <link rel="stylesheet" href="{{ asset('client/css/pages/booking-payment-method.css') }}">
+    @endpush
 @endsection 

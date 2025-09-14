@@ -1,0 +1,4 @@
+/* Extracted from resources/views/client/tour-booking/index.blade.php */
+.card { transition: all 0.3s ease; }
+.card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.badge { font-size: 0.8em; }

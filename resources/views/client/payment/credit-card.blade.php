@@ -288,50 +288,7 @@
 
     </script>
 
-    @section('styles')
-    <style>
-        .test-card-item:hover {
-            background-color: #f8f9fa;
-            border-color: #007bff !important;
-        }
-
-        .form-control:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        }
-
-        .btn-lg {
-            padding: 12px 24px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-lg:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        }
-
-        .booking-summary {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        }
-
-        .alert-info {
-            background-color: #d1ecf1;
-            border-color: #bee5eb;
-            color: #0c5460;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .btn-lg {
-                padding: 10px 20px;
-                font-size: 1rem;
-            }
-        }
-        
-
-    </style>
-    @endsection
+    @push('styles')
+    <link rel="stylesheet" href="{{ asset('client/css/pages/payment-credit-card.css') }}">
+    @endpush
 @endsection 

@@ -1,0 +1,87 @@
+/* Extracted from resources/views/admin/layouts/admin-master.blade.php */
+.page-header h1 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin-bottom: 0.1rem;
+}
+
+/* Xử lý thông báo */
+.alert-container {
+    position: relative;
+    z-index: 1000;
+}
+
+.alert {
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.alert-success {
+    border-left: 4px solid #28a745;
+}
+
+.alert-danger {
+    border-left: 4px solid #dc3545;
+}
+
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.alert-info {
+    border-left: 4px solid #17a2b8;
+}
+
+/* Đảm bảo chỉ hiển thị một thông báo */
+.alert-container .alert:not(:first-child) {
+    display: none;
+}
+
+/* Notification dropdown table styling */
+.notification-table {
+    margin-bottom: 0;
+}
+
+.notification-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.notification-table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+.notification-table tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+.notification-table th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #6c757d;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.notification-table td {
+    padding: 0.4rem 0.5rem;
+    border: none;
+    vertical-align: middle;
+}
+
+.notification-table tbody tr {
+    height: 45px;
+}
+
+.icon-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+}
+
+.notification-row {
+    transition: background-color 0.2s ease;
+}

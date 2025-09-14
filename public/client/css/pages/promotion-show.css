@@ -1,0 +1,11 @@
+/* Extracted from resources/views/client/promotions/show.blade.php */
+.bg-gradient-primary { background: linear-gradient(45deg, #007bff, #0056b3); }
+.detail-item { padding: 8px 0; border-bottom: 1px solid #eee; }
+.detail-item:last-child { border-bottom: none; }
+.badge-lg { font-size: 1.1em; padding: 10px 15px; }
+.status-badge .badge { font-size: 1.2em; }
+.promotion-item { transition: all 0.3s ease; }
+.promotion-item:hover { background-color: #f8f9fa; cursor: pointer; }
+.sidebar-box { margin-bottom: 2rem; }
+.promotion-card { transition: transform 0.3s ease; }
+.promotion-card:hover { transform: translateY(-3px); }
