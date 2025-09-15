@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\RoomChangeSettlementMail;
 use App\Interfaces\Services\Admin\AdminBookingServiceInterface;
 use App\Interfaces\Services\Admin\AdminBookingServiceServiceInterface;
 use App\Services\NotificationDataFormatterService;
@@ -13,11 +14,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 use Illuminate\Validation\ValidationException;
 use App\Interfaces\Services\RegistrationDocumentServiceInterface;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Mail;
 use App\Interfaces\Services\VatInvoiceServiceInterface;
 
 class AdminBookingController extends Controller
@@ -46,6 +48,57 @@ class AdminBookingController extends Controller
         $this->paymentService = $paymentService;
         $this->registrationDocumentService = $registrationDocumentService;
         $this->vatInvoiceService = $vatInvoiceService;
+    }
+
+    /**
+     * API: Danh sách phòng có thể đổi cho booking (cùng loại, trống toàn kỳ),
+     * hỗ trợ lọc theo tầng cụ thể hoặc tối thiểu.
+     * Query params: floor (==), min_floor (>=), higher_than_current=1 để chỉ lấy tầng > tầng hiện tại.
+     */
+    public function availableRoomsForChange(Request $request, $id): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->getBookingDetails($id);
+            if (!$booking || !$booking->room) {
+                return response()->json(['success' => false, 'message' => 'Booking không hợp lệ'], 400);
+            }
+
+            $oldRoom = $booking->room;
+            $roomTypeId = (int)$oldRoom->room_type_id;
+            $checkIn = $booking->check_in_date;
+            $checkOut = $booking->check_out_date;
+
+            $query = \App\Models\Room::where('room_type_id', $roomTypeId);
+
+            if ($request->boolean('higher_than_current')) {
+                $query->where('floor', '>', $oldRoom->floor);
+            }
+            if ($request->filled('floor')) {
+                $query->where('floor', (int)$request->input('floor'));
+            }
+            if ($request->filled('min_floor')) {
+                $query->where('floor', '>=', (int)$request->input('min_floor'));
+            }
+
+            $candidates = $query->orderBy('floor')->orderBy('room_number')->get();
+
+            $rooms = [];
+            foreach ($candidates as $r) {
+                if ($r->isStrictlyAvailableForRange($checkIn, $checkOut)) {
+                    $rooms[] = [
+                        'id' => $r->id,
+                        'room_number' => $r->room_number,
+                        'floor' => (int)$r->floor,
+                        'status' => $r->status,
+                    ];
+                }
+            }
+
+            return response()->json(['success' => true, 'rooms' => $rooms]);
+        } catch (\Throwable $e) {
+            Log::error('availableRoomsForChange error: '.$e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Lỗi hệ thống'], 500);
+        }
     }
 
     // ==================== BOOKING METHODS ====================
@@ -1062,6 +1115,121 @@ class AdminBookingController extends Controller
         } catch (\Throwable $e) {
             Log::error('collectAdditionalPayment error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Có lỗi xảy ra khi thu tiền: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Đổi phòng ngay (cùng loại, tầng cao hơn) trên Admin UI.
+     * Nếu có chỉ định to_room_id thì dùng phòng đó, ngược lại hệ thống tự chọn.
+     */
+    public function immediateRoomChange(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'to_room_id' => 'nullable|exists:rooms,id',
+                'old_status' => 'nullable|in:available,dirty,repair',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $booking = $this->bookingService->getBookingDetails($id);
+            if (!$booking) {
+                return redirect()->back()->with('error', 'Không tìm thấy đặt phòng');
+            }
+
+            if (in_array($booking->status, ['cancelled','completed'])) {
+                return redirect()->back()->with('error', 'Booking đã hoàn tất/hủy, không thể đổi phòng.');
+            }
+            if (!$booking->room) {
+                return redirect()->back()->with('error', 'Booking chưa gán phòng hiện tại.');
+            }
+            if (now()->gte(\Carbon\Carbon::parse($booking->check_out_date))) {
+                return redirect()->back()->with('error', 'Đã qua thởi gian checkout, không thể đổi phòng.');
+            }
+
+            $oldRoom = $booking->room;
+            $roomTypeId = (int)$oldRoom->room_type_id;
+            $checkIn = $booking->check_in_date;
+            $checkOut = $booking->check_out_date;
+            $oldStatus = $request->input('old_status', 'available');
+            $reason = $request->input('reason', 'Khách yêu cầu lên tầng cao hơn - cùng loại');
+
+            $toRoomId = $request->input('to_room_id');
+            $targetRoom = null;
+            if ($toRoomId) {
+                $targetRoom = \App\Models\Room::find($toRoomId);
+                if ((int)$targetRoom->room_type_id !== $roomTypeId) {
+                    return redirect()->back()->with('error', 'Phòng đích không cùng loại.');
+                }
+                if ((int)$targetRoom->floor <= (int)$oldRoom->floor) {
+                    return redirect()->back()->with('error', 'Phòng đích phải ở tầng cao hơn.');
+                }
+                if (!$targetRoom->isStrictlyAvailableForRange($checkIn, $checkOut)) {
+                    return redirect()->back()->with('error', 'Phòng đích không trống toàn bộ khoảng ở.');
+                }
+            } else {
+                $candidates = \App\Models\Room::where('room_type_id', $roomTypeId)
+                    ->where('floor', '>', $oldRoom->floor)
+                    ->orderBy('floor')
+                    ->orderBy('room_number')
+                    ->get();
+                foreach ($candidates as $c) {
+                    if ($c->isStrictlyAvailableForRange($checkIn, $checkOut)) {
+                        $targetRoom = $c; break;
+                    }
+                }
+                if (!$targetRoom) {
+                    return redirect()->back()->with('error', 'Không có phòng phù hợp để đổi (cùng loại, tầng cao hơn, trống).');
+                }
+            }
+
+            DB::transaction(function () use ($booking, $oldRoom, $targetRoom, $oldStatus, $reason) {
+                $rc = \App\Models\RoomChange::create([
+                    'booking_id' => $booking->id,
+                    'old_room_id' => $oldRoom->id,
+                    'new_room_id' => $targetRoom->id,
+                    'reason' => $reason,
+                    'status' => 'completed',
+                    'price_difference' => 0,
+                    'requested_by' => Auth::id(),
+                    'approved_by' => Auth::id(),
+                    'admin_note' => 'Đổi phòng ngay qua Admin UI: cùng loại, tầng cao hơn, không chênh lệch.',
+                    'approved_at' => now(),
+                    'completed_at' => now(),
+                    'payment_status' => 'not_required',
+                ]);
+
+                $booking->room_id = $targetRoom->id;
+                $booking->save();
+
+                $oldRoom->update(['status' => $oldStatus]);
+                $targetRoom->update(['status' => 'booked']);
+
+                try {
+                    \App\Models\BookingNote::create([
+                        'booking_id' => $booking->id,
+                        'user_id' => (int)Auth::id(),
+                        'content' => sprintf('Đổi phòng ngay: %s (tầng %s) -> %s (tầng %s). Lý do: %s',
+                            $oldRoom->room_number, $oldRoom->floor, $targetRoom->room_number, $targetRoom->floor, $reason
+                        ),
+                        'type' => 'staff',
+                        'visibility' => 'internal',
+                        'is_internal' => true,
+                    ]);
+                } catch (\Throwable $e) { /* ignore */ }
+
+                try {
+                    if ($booking->user && $booking->user->email) {
+                        Mail::to($booking->user->email)->send(new RoomChangeSettlementMail($booking, $rc));
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Send RoomChangeSettlementMail (UI) failed', ['booking_id' => $booking->id, 'error' => $e->getMessage()]);
+                }
+            });
+
+            return redirect()->route('admin.bookings.show', $booking->id)->with('success', 'Đã đổi phòng ngay thành công.');
+        } catch (\Throwable $e) {
+            Log::error('immediateRoomChange error: '.$e->getMessage());
+            return redirect()->back()->with('error', 'Không thể đổi phòng: '.$e->getMessage());
         }
     }
 

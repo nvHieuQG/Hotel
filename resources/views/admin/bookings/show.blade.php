@@ -20,7 +20,18 @@
                             <i class="fas fa-info-circle me-1"></i>
                             Thông tin đặt phòng #{{ $booking->booking_id }}
                         </div>
-                        <div>
+                        <div class="d-flex gap-2">
+                            <form action="{{ route('admin.bookings.room-change.immediate', $booking->id) }}" method="POST" onsubmit="return confirm('Xác nhận đổi phòng ngay? Hệ thống sẽ tự chọn phòng cùng loại, tầng cao hơn và trống.')">
+                                @csrf
+                                <input type="hidden" name="reason" value="Khách yêu cầu lên tầng cao hơn - cùng loại">
+                                <input type="hidden" name="old_status" value="available">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-random"></i> Đổi phòng ngay (tự chọn)
+                                </button>
+                            </form>
+                            <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#manualRoomChange" aria-expanded="false" aria-controls="manualRoomChange">
+                                <i class="fas fa-cog"></i>
+                            </button>
                             <a href="{{ route('admin.bookings.edit', $booking->id) }}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-edit"></i> Chỉnh sửa
                             </a>
@@ -28,6 +39,67 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <div class="collapse mb-3" id="manualRoomChange">
+                        <div class="card card-body border">
+                            <form id="manualRoomChangeForm" action="{{ route('admin.bookings.room-change.immediate', $booking->id) }}" method="POST">
+                                @csrf
+                                <div class="row g-2 align-items-end mb-2">
+                                    <div class="col-md-2">
+                                        <div class="form-check mt-4">
+                                            <input class="form-check-input" type="checkbox" id="higherThanCurrent" checked>
+                                            <label class="form-check-label small" for="higherThanCurrent">Chỉ tầng cao hơn</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-1">Tầng (chính xác)</label>
+                                        <input type="number" id="filterFloor" class="form-control" placeholder="VD: 5">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-1">Tầng tối thiểu</label>
+                                        <input type="number" id="filterMinFloor" class="form-control" placeholder="VD: 3">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-1 d-block">&nbsp;</label>
+                                        <button type="button" id="btnLoadRooms" class="btn btn-outline-primary w-100">
+                                            <i class="fas fa-sync"></i> Tải danh sách phòng
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-1">Chọn phòng đích (từ API)</label>
+                                        <select id="availableRoomsSelect" class="form-select">
+                                            <option value="">-- Chưa tải danh sách --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="form-label small mb-1">Phòng đích (ID cụ thể)</label>
+                                        <input type="number" name="to_room_id" id="toRoomIdInput" class="form-control" placeholder="VD: 203">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small mb-1">Trạng thái phòng cũ sau đổi</label>
+                                        <select name="old_status" class="form-select">
+                                            <option value="available">Trống (mặc định)</option>
+                                            <option value="dirty">Chờ</option>
+                                            <option value="repair">Bảo trì</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-1">Lý do đổi phòng</label>
+                                        <input type="text" name="reason" class="form-control" value="Khách yêu cầu lên tầng cao hơn - cùng loại">
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button type="submit" class="btn btn-warning w-100">
+                                            <i class="fas fa-exchange-alt"></i> Đổi theo chỉ định
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="small text-muted mt-2">
+                                    Hệ thống sẽ kiểm tra: cùng loại phòng, tầng cao hơn, trống toàn bộ khoảng ở, không bị Tour giữ. Nếu không hợp lệ, thao tác sẽ bị từ chối.
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="card h-100">
@@ -338,6 +410,57 @@
                             </div>
                         </div>
                     </div>
+
+                    @push('scripts')
+                    <script>
+                        (function(){
+                            const btn = document.getElementById('btnLoadRooms');
+                            if (!btn) return;
+                            const select = document.getElementById('availableRoomsSelect');
+                            const toRoomInput = document.getElementById('toRoomIdInput');
+                            const apiUrl = @json(route('admin.bookings.room-change.available-rooms', $booking->id));
+                            const higherChk = document.getElementById('higherThanCurrent');
+                            const floorInp = document.getElementById('filterFloor');
+                            const minFloorInp = document.getElementById('filterMinFloor');
+
+                            btn.addEventListener('click', async function(){
+                                try {
+                                    const params = new URLSearchParams();
+                                    if (higherChk && higherChk.checked) params.append('higher_than_current', '1');
+                                    if (floorInp && floorInp.value) params.append('floor', floorInp.value);
+                                    if (minFloorInp && minFloorInp.value) params.append('min_floor', minFloorInp.value);
+                                    const url = apiUrl + '?' + params.toString();
+                                    select.innerHTML = '<option value="">Đang tải...</option>';
+                                    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                                    const data = await res.json();
+                                    select.innerHTML = '';
+                                    if (!data.success || !Array.isArray(data.rooms) || data.rooms.length === 0) {
+                                        select.innerHTML = '<option value="">Không có phòng phù hợp</option>';
+                                        return;
+                                    }
+                                    const placeholder = document.createElement('option');
+                                    placeholder.value = '';
+                                    placeholder.textContent = '-- Chọn phòng --';
+                                    select.appendChild(placeholder);
+                                    data.rooms.forEach(r => {
+                                        const opt = document.createElement('option');
+                                        opt.value = r.id;
+                                        opt.textContent = `Phòng ${r.room_number} (tầng ${r.floor})`;
+                                        select.appendChild(opt);
+                                    });
+                                } catch (e) {
+                                    select.innerHTML = '<option value="">Lỗi tải danh sách</option>';
+                                }
+                            });
+
+                            if (select) {
+                                select.addEventListener('change', function(){
+                                    if (this.value && toRoomInput) toRoomInput.value = this.value;
+                                });
+                            }
+                        })();
+                    </script>
+                    @endpush
 
                     <!-- Thông tin thanh toán -->
                     <div class="row mb-4">

@@ -75,6 +75,8 @@ Route::prefix('/staff')->name('staff.')->middleware(['auth', 'admin'])->group(fu
     Route::delete('bookings/{id}/services/{bookingServiceId}', [AdminBookingController::class, 'destroyServiceFromBooking'])->name('bookings.services.destroy');
     Route::post('bookings/{id}/confirm-payment', [AdminBookingController::class, 'confirmPayment'])->name('bookings.confirm-payment');
     Route::post('bookings/{id}/payments/collect', [AdminBookingController::class, 'collectAdditionalPayment'])->name('bookings.payments.collect');
+    // Immediate room change (admin)
+    Route::post('bookings/{id}/room-change/immediate', [AdminBookingController::class, 'immediateRoomChange'])->name('bookings.room-change.immediate');
 
     // Room changes
     Route::get('room-changes', [AdminRoomChangeController::class, 'index'])->name('room-changes.index');
@@ -276,6 +278,10 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'admin'])->group(fu
     Route::get('bookings/report', [AdminBookingController::class, 'report'])->name('bookings.report')->middleware('admin.only');
     Route::patch('bookings/{booking}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.update-status');
     Route::resource('bookings', AdminBookingController::class)->except(['destroy']);
+    // Đổi phòng ngay (Admin)
+    Route::post('bookings/{id}/room-change/immediate', [AdminBookingController::class, 'immediateRoomChange'])->name('bookings.room-change.immediate');
+    // API lấy danh sách phòng có thể đổi
+    Route::get('bookings/{id}/room-change/available-rooms', [AdminBookingController::class, 'availableRoomsForChange'])->name('bookings.room-change.available-rooms');
 
     // Giấy đăng ký tạm chú tạm vắng
     Route::get('bookings/{booking}/registration/preview', [AdminBookingController::class, 'previewRegistration'])->name('bookings.registration.preview');

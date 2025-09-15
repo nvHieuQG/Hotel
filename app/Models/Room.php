@@ -227,7 +227,10 @@ class Room extends Model
             return 'pending';
         }
 
-        // 3) Fallback: nếu không bị giữ bởi booking/tour trong ngày, hiển thị 'available' trừ khi đang 'repair'
+        // 3) Fallback: nếu không bị giữ bởi booking/tour trong ngày
+        // Chỉ tôn trọng trạng thái 'repair' (bảo trì). Các trạng thái 'booked'/'pending'
+        // ở cột rooms.status KHÔNG được dùng để đánh dấu kín lịch ngoài phạm vi ngày ở thực tế.
+        // Như vậy, nếu hôm nay là 14 và booking là 17-20 thì ngày 14 vẫn hiển thị 'available'.
         if ($this->status === 'repair') {
             return 'repair';
         }
